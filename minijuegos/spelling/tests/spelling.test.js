@@ -7,7 +7,7 @@ import { faltas, opciones, letrasParaArmar, diferencias, igual, esReal } from ".
 import { rngConSemilla } from "../src/rng.js";
 import { nuevo, cargar, registrar, dominio, cerrarRonda, armarRonda, cumplirReto, racha, semana, resumen, sumarDias, elegido } from "../src/progreso.js";
 import { retoDelDia, alcance } from "../src/reto.js";
-import { escogerVoz, letraPorLetra } from "../src/voz.js";
+import { escogerVoz, ordenarVoces, letraPorLetra } from "../src/voz.js";
 
 const HOY = "2026-10-08";
 const todas = LISTAS.flatMap((l) => l.palabras);
@@ -255,6 +255,9 @@ test("voz: prefiere inglés de EE. UU. y voces conocidas; sin inglés no hay voz
   assert.equal(escogerVoz([v("Paulina", "es-MX"), v("Daniel", "en-GB"), v("Samantha", "en-US")]).name, "Samantha");
   assert.equal(escogerVoz([v("Paulina", "es-MX"), v("Daniel", "en-GB")]).name, "Daniel");
   assert.equal(escogerVoz([v("Fred", "en-US"), v("Google US English", "en-US", false)]).name, "Google US English");
+  // Voces de broma al final; las de red después de las locales del mismo tipo; solo inglés
+  assert.deepEqual(ordenarVoces([v("Bubbles", "en-US"), v("Tom", "en-US", false), v("Tom", "en_US"), v("Paulina", "es-MX")]).map((x) => `${x.name}${x.localService ? "" : "*"}`),
+    ["Tom", "Tom*", "Bubbles"]);
   assert.equal(escogerVoz([v("Paulina", "es-MX")]), null);
   assert.equal(escogerVoz([]), null);
   assert.equal(letraPorLetra("cake"), "C. A. K. E.");
