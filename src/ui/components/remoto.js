@@ -1,8 +1,11 @@
 // Control remoto en la TV (issue #3): el botón de los filtros, el recuadro con el código y el QR, y el aviso de
 // "Teléfono conectado". El recuadro vive fuera de #app (como el aviso de versión nueva) para no redibujar el catálogo.
+// Sin emojis: en la TV LG salen en blanco y negro (#5). El teléfono se dibuja en SVG y los estados con un punto.
 import { state, remoto } from "../../app/index.js";
 import { qr, qrSvg, urlControl } from "../../engine/index.js";
 import { esc } from "../dom.js";
+
+const TELEFONO = `<svg class="ico-tel" viewBox="0 0 24 24" width="1.1em" height="1.1em" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.6" fill="#4cb3ff" stroke="#2b2236" stroke-width="1.6"/><rect x="8.2" y="5.2" width="7.6" height="11.6" rx="1" fill="#fff"/><circle cx="12" cy="19" r="1" fill="#2b2236"/></svg>`;
 
 // ---------- El botón (va al final de los filtros, solo en la TV) ----------
 export function chipRemoto() {
@@ -12,7 +15,7 @@ function etiquetaChip() {
   const r = state.remoto;
   const txt = { apagado: "Usar mi teléfono", preparando: "Preparando…", esperando: `Código ${r.codigo || ""}`,
     conectado: "Teléfono conectado", error: "Usar mi teléfono" }[r.estado] || "Usar mi teléfono";
-  return `<span aria-hidden="true">📱</span>${esc(txt)}${r.estado === "conectado" ? `<span class="punto" aria-hidden="true"></span>` : ""}`;
+  return `${TELEFONO}${esc(txt)}${r.estado === "conectado" ? `<span class="punto" aria-hidden="true"></span>` : ""}`;
 }
 export function instalarChipRemoto(raiz = document) {
   const b = raiz.querySelector("#chip-remoto");
@@ -36,8 +39,8 @@ export function renderRemoto() {
   const chip = document.getElementById("chip-remoto");
   if (chip) { chip.className = `chip remoto ${r.estado}`; chip.innerHTML = etiquetaChip(); }
 
-  if (r.estado === "conectado" && estadoAntes !== "conectado") aviso("📱 ¡Teléfono conectado!");
-  if (estadoAntes === "conectado" && r.estado === "esperando") aviso("📱 Se desconectó el teléfono");
+  if (r.estado === "conectado" && estadoAntes !== "conectado") aviso("¡Teléfono conectado!");
+  if (estadoAntes === "conectado" && r.estado === "esperando") aviso("Se desconectó el teléfono");
   estadoAntes = r.estado;
 
   let el = document.getElementById("remoto");
@@ -77,7 +80,7 @@ function contenido(r) {
         <p>Apunta la cámara del teléfono a este código…</p>
         <p>…o abre <b>${esc(corta)}</b> y escribe:</p>
         <p class="remoto-codigo" aria-label="Código ${esc(r.codigo.split("").join(" "))}">${r.codigo.split("").map((d) => `<span>${d}</span>`).join("")}</p>
-        <p class="remoto-estado ${r.estado}">${r.estado === "conectado" ? "✅ Teléfono conectado" : "⏳ Esperando al teléfono…"}</p>
+        <p class="remoto-estado ${r.estado}"><span class="punto" aria-hidden="true"></span>${r.estado === "conectado" ? "Teléfono conectado" : "Esperando al teléfono…"}</p>
       </div>
     </div>
     ${botones(["listo", "apagar"])}`;
@@ -112,7 +115,7 @@ function aviso(txt) {
     el.id = "remoto-aviso"; el.className = "remoto-aviso"; el.setAttribute("role", "status");
     document.body.appendChild(el);
   }
-  el.textContent = txt;
+  el.innerHTML = TELEFONO + esc(txt);
   el.classList.remove("ver"); void el.offsetWidth; el.classList.add("ver");
   clearTimeout(avisoTimer);
   avisoTimer = setTimeout(() => el.classList.remove("ver"), 2600);
