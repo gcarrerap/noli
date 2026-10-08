@@ -1,0 +1,12 @@
+{
+  "id": "sumas-restas",
+  "titulo": "Sumas y restas",
+  "descripcion": "Sube de nivel y cumple el reto del día.",
+  "icono": "icono.svg",
+  "color": "#4cb3ff",
+  "materia": "matemáticas",
+  "edades": [6, 8],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1"
+}

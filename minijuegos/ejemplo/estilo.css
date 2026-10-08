@@ -9,7 +9,8 @@ main{padding:24px 16px;width:100%;max-width:900px}
 h1{font-size:2.2rem;margin:.2em 0}
 .ronda{letter-spacing:.3em;font-size:1.1rem;opacity:.6;margin:0}
 .cosas{display:flex;flex-wrap:wrap;justify-content:center;gap:.3em;font-size:4.2rem;min-height:1.4em;margin:.3em 0 .5em}
-.cosas span{animation:sale .4s cubic-bezier(.3,1.6,.6,1) both;animation-delay:calc(var(--i) * 90ms)}
+.cosas svg{width:100%;height:100%;display:block}
+.cosas span{width:1.1em;height:1.1em;display:inline-block;animation:sale .4s cubic-bezier(.3,1.6,.6,1) both;animation-delay:calc(var(--i) * 90ms)}
 @keyframes sale{from{transform:scale(0)}to{transform:scale(1)}}
 .opciones{display:flex;justify-content:center;gap:1rem}
 .op{font:inherit;font-size:2.6rem;font-weight:700;width:2.3em;height:2.3em;border-radius:28px;border:4px solid transparent;

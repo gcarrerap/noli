@@ -1,0 +1,121 @@
+/* Sumas y restas: estilos propios (el juego no depende de los del catálogo). Todo crece en la TV. */
+:root{
+  --bg:#fff7ec; --fg:#2b2236; --muted:#76698a; --card:#fff; --line:#ecdcc6;
+  --azul:#4cb3ff; --coral:#ff6b4a; --sol:#ffc43d; --verde:#3ccf8e; --morado:#c86bfa;
+  --bien:#2fbf7f; --mal:#ff6b4a; --star:#ffb400; --off:#e7dccb; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12), 0 10px 20px rgba(43,34,54,.08);
+}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1726;--fg:#f6f0ff;--muted:#b5a9c9;--card:#2a2338;--line:#342b45;--off:#4a4060;--foco:#fff;
+  --sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.3)}}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, 2.3vmin, 22px)}
+html[data-modo="tv"]{font-size:clamp(18px, 3.1vmin, 44px)}
+html[data-modo="tv"] main.p-problema{justify-content:center}
+html[data-modo="tv"] .cab{position:absolute;top:2vh;left:4vw;right:4vw;width:auto;padding-left:0}
+body{margin:0;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:"Nunito",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent}
+main{max-width:900px;margin:0 auto;padding:max(16px, env(safe-area-inset-top)) 16px 28px;padding-left:max(16px, env(safe-area-inset-left));
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:.9rem;min-height:100dvh}
+main.p-inicio,main.p-fin,main.p-finReto,main.p-retoIntro{justify-content:center}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+:focus{outline:none}
+html.teclado :focus-visible{outline:5px solid var(--foco);outline-offset:4px;box-shadow:0 0 0 12px var(--halo)}
+
+.titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:2.4rem;margin:.2em 0 0;line-height:1.1}
+.titulo.chico{font-size:1.8rem}
+.sub{font-size:1.15rem;color:var(--muted);margin:0}
+.ej{white-space:nowrap}
+h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.6em 0 0}
+
+/* Botones */
+.boton{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.55em 1.3em;font-weight:800;font-size:1.05rem;box-shadow:var(--sombra)}
+.boton.grande{font-family:"Fredoka",system-ui,sans-serif;font-size:1.45rem;font-weight:600;padding:.6em 1.2em;border-radius:24px;min-width:12em;
+  display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.boton.grande small{font-family:"Nunito",sans-serif;font-size:.8rem;font-weight:700;opacity:.85}
+.boton.primario{background:var(--azul);color:#fff;border-color:transparent}
+.boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
+.boton.hecho{background:var(--verde);color:#fff;border-color:transparent}
+.boton.chico{font-size:.95rem;padding:.4em 1.1em}
+.boton:active{transform:translateY(2px)}
+.menu{display:flex;flex-direction:column;gap:.8rem;align-items:center;margin-top:.4rem}
+.menu.fila{flex-direction:row;flex-wrap:wrap;justify-content:center}
+.menu.fila .boton.grande{min-width:9em}
+
+/* Dominio y racha */
+.dominio{width:min(420px, 90%);display:flex;flex-direction:column;gap:.3rem;color:var(--muted)}
+.dominio.ok{color:var(--bien);font-weight:800;margin:0}
+.barra{height:12px;background:var(--off);border-radius:999px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--verde);border-radius:999px}
+.racha{display:flex;align-items:center;gap:.4rem;font-size:1.1rem;margin:.3rem 0 0}
+.racha.grande{font-size:1.5rem}
+.ico{width:1.4em;height:1.4em;flex:none}
+
+/* Problema */
+.cab{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--muted);gap:1rem;padding-left:56px}
+.puntos{display:flex;gap:5px}.puntos i{width:12px;height:12px;border-radius:50%;background:var(--off)}.puntos i.lleno{background:var(--verde)}
+.reloj{flex:1;max-width:50%;height:14px;background:var(--off);border-radius:999px;overflow:hidden}
+.reloj i{display:block;height:100%;background:var(--coral);transition:width .2s linear}
+.cuenta{font-family:"Fredoka",sans-serif;font-size:1.3rem;color:var(--fg)}
+.historia{font-size:1.45rem;line-height:1.35;max-width:32ch;margin:.4rem 0 0;font-weight:700}
+.problema{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:4.2rem;display:flex;gap:.35em;align-items:center;justify-content:center;
+  flex-wrap:wrap;margin:.6rem 0;line-height:1}
+.historia + .problema{font-size:2.6rem;margin:.2rem 0}
+.problema .signo{color:var(--muted)}
+.caja{display:inline-grid;place-items:center;min-width:1.3em;height:1.3em;padding:0 .15em;border:5px dashed var(--coral);border-radius:.25em;color:var(--coral)}
+.caja.bien{border-style:solid;border-color:var(--bien);color:var(--bien)}
+.opciones{display:grid;grid-template-columns:repeat(2, minmax(0, 8rem));gap:1rem}
+@media (min-width:700px){.opciones{grid-template-columns:repeat(4, minmax(0, 8rem))}}
+.op{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:2.6rem;height:2.1em;border-radius:24px;background:var(--card);
+  border:4px solid transparent;box-shadow:var(--sombra);transition:transform .12s}
+.op:active{transform:scale(.96)}
+.op.bien{background:var(--bien);color:#fff}
+.op.mal{background:var(--mal);color:#fff;animation:no .3s}
+.op:disabled{cursor:default}
+.op:disabled:not(.bien):not(.mal){opacity:.45}
+@keyframes no{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.abajo{min-height:3rem;display:flex;gap:1rem;justify-content:center}
+.aviso{font-size:1.3rem;font-weight:800;min-height:1.5em;margin:0;max-width:30ch}
+.aviso.bien{color:var(--bien)}.aviso.mal{color:var(--mal)}
+.pista{background:var(--card);border-radius:20px;padding:12px 16px;box-shadow:var(--sombra);max-width:100%;overflow-x:auto}
+.pista-svg{display:block;height:7rem;max-width:100%}
+
+/* Fin, reto */
+.estrellas .on{color:var(--star)}.estrellas .off{color:var(--off)}
+.estrellas.grande{font-size:4.5rem;margin:0;line-height:1}
+.subio{display:flex;flex-direction:column;gap:.2rem;background:var(--sol);color:#2b2236;padding:.8rem 1.4rem;border-radius:20px;font-size:1.2rem;
+  animation:sube .6s cubic-bezier(.3,1.6,.6,1)}
+.subio b{font-family:"Fredoka",sans-serif;font-size:1.5rem}
+@keyframes sube{from{transform:scale(.6);opacity:0}}
+.tarjeta-reto{background:var(--card);border-radius:24px;padding:1rem 1.6rem;box-shadow:var(--sombra);max-width:30rem;font-size:1.15rem}
+.tarjeta-reto b{font-family:"Fredoka",sans-serif;font-size:1.6rem}
+.tarjeta-reto p{margin:.4rem 0}.tarjeta-reto small{color:var(--muted)}
+.hecho-txt{color:var(--bien);font-weight:800}
+.semana{display:flex;gap:.5rem;justify-content:center;margin-top:.4rem}
+.dia{display:flex;flex-direction:column;align-items:center;gap:.2rem;font-weight:800;color:var(--muted);font-size:.9rem}
+.dia i{width:2rem;height:2rem;border-radius:50%;background:var(--off);display:grid;place-items:center;font-style:normal;color:#fff;font-size:1.1rem}
+.dia.jugo i{background:var(--azul);opacity:.5}
+.dia.reto i{background:var(--verde);opacity:1}
+
+/* Mapa de niveles */
+.mapa{list-style:none;padding:0;margin:.4rem 0;display:grid;gap:.55rem;width:min(560px, 100%)}
+.nivel{width:100%;display:flex;align-items:center;gap:.8rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:.5rem .9rem}
+.nivel b{font-family:"Fredoka",sans-serif;font-size:1.4rem;width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;background:var(--off);flex:none}
+.nivel .nom{flex:1;display:flex;flex-direction:column;font-weight:800}.nivel .nom small{font-weight:600;color:var(--muted)}
+.nivel.dominado b{background:var(--verde);color:#fff}
+.nivel.abierto b{background:var(--azul);color:#fff}
+.nivel.actual{border-color:var(--azul)}
+.nivel.cerrado{opacity:.55}
+.en-curso{font-weight:800;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.candado{color:var(--muted)}
+
+/* Para papás */
+.nota{color:var(--muted);max-width:40rem;margin:0}
+.tabla{border-collapse:collapse;width:min(720px, 100%);font-size:.95rem;text-align:left}
+.tabla th,.tabla td{padding:.4rem .5rem;border-bottom:1px solid var(--line)}
+.tabla th{color:var(--muted);font-weight:800}
+.fallos{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.fallos span{background:var(--card);border-radius:999px;padding:.3rem .9rem;font-weight:800;box-shadow:var(--sombra)}
+.fallos small{color:var(--mal)}
+.cargando{color:var(--muted);margin:auto}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

@@ -8,7 +8,8 @@ La página principal es un **catálogo**: cada juego es una tarjeta, y cada jueg
 
 | Juego | Materia | Edades | Issue |
 |---|---|---|---|
-| Cuenta y toca (`ejemplo`) | Números | 4–7 | #1 (ejemplo del contrato; se reemplaza con el primer juego de verdad) |
+| Sumas y restas (`sumas-restas`) | Matemáticas | 6–8 | #4: 12 niveles (de sumas hasta 10 a restas pidiendo prestado hasta 100), sube de nivel al dominar, reto del día con racha, progreso para Noelia y para papás |
+| Cuenta y toca (`ejemplo`) | Matemáticas | 4–7 | #1: ejemplo del contrato y plantilla para juegos nuevos |
 
 Cada juego nuevo se agrega con su propio issue.
 
@@ -57,8 +58,11 @@ En cada cambio que se publique (del catálogo o de cualquier juego), **cambia el
    ```js
    import { Noli } from "../../kit/noli.js";
    Noli.alEntrar((accion) => { /* arriba, abajo, izquierda, derecha, ok, atras */ });
+   const datos = await Noli.datos;   // su progreso guardado (o null)
+   Noli.guardar(datos);              // el catálogo lo guarda
    Noli.terminar({ estrellas: 3 });
    ```
+   Nada de emojis para lo que importa visualmente: en la TV LG salen en blanco y negro (#5). Usa SVG.
 4. Agrega el id a `minijuegos/catalogo.json` (el orden ahí es el orden del catálogo).
 5. Corre `npm test`, cambia `src/version.js` y abre el PR.
 
@@ -81,10 +85,11 @@ ui/  →  app/  →  engine/          kit/  (protocolo, teclas, SDK de los juego
 noli/
 ├── index.html          # catálogo (esqueleto: estilos y src/main.js)
 ├── sw.js               # service worker: siempre la versión más reciente
-├── kit/                # protocolo.js, teclas.js, noli.js (SDK de los juegos)
+├── kit/                # protocolo.js, teclas.js, foco.js (flechas entre botones), noli.js (SDK de los juegos)
 ├── minijuegos/
 │   ├── catalogo.json   # registro de juegos, en orden
-│   └── ejemplo/        # un juego: juego.json, index.html, juego.js, estilo.css
+│   ├── sumas-restas/   # juego.json, index.html, estilo.css, icono.svg, src/ (lógica pura + pantallas), tests/
+│   └── ejemplo/        # un juego mínimo: juego.json, index.html, juego.js, estilo.css
 ├── src/
 │   ├── main.js, version.js
 │   ├── engine/         # manifiesto.js, catalogo.js
@@ -106,7 +111,7 @@ Corren con Node 18 o más nuevo, sin instalar nada:
 npm test
 ```
 
-Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, y que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**.
+Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, y que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
 
 ## Stack
 

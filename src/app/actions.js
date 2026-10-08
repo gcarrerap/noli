@@ -1,5 +1,5 @@
 // Acciones: lo único que cambia el estado. La interfaz y (en la fase 2) el control remoto solo llaman aquí.
-import { cargarCatalogo, ls } from "../services/index.js";
+import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../services/index.js";
 import { mover, materias } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
@@ -53,6 +53,10 @@ export const actions = {
     state.celebrar = { id, estrellas: e };
     notify();
   },
+
+  // Datos propios de un juego (su progreso). El catálogo es el dueño del almacenamiento.
+  datosDe(id) { return leerDatosJuego(id); },
+  guardarDatos(id, datos) { guardarDatosJuego(id, datos); },
 
   // Punto único de entrada para el control: dedo, teclado, control de la TV o teléfono remoto (fase 2)
   entrada(accion) {
