@@ -1,0 +1,73 @@
+rules_version = '2';
+// Reglas de Firestore del proyecto dominomx, que comparten tres apps: Noli (gcarrerap/noli), La Pata
+// (gcarrerap/myPata) y el dominó (gcarrerap/myDomino). Firestore tiene UN solo archivo de reglas por proyecto:
+// lo que se publique reemplaza todo, así que este archivo debe llevar los bloques de las tres apps.
+// Los bloques de La Pata y del dominó son copia exacta de myPata/firestore.rules (al 2026-10-08); si cambian allá,
+// hay que copiarlos aquí (y agregar el bloque de Noli allá) antes de volver a publicar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ---- Noli (gcarrerap/noli, #7) ----
+    // Perfil: su id es aleatorio de 24 caracteres y funciona como llave. Se puede leer con get (sabiendo el id),
+    // nunca listar, así que nadie descubre perfiles ajenos.
+    match /noli_perfiles/{perfil} {
+      allow get, create: if request.auth != null && perfil.size() >= 20;
+      allow list, update, delete: if false;
+      // Progreso por juego: { json (texto), actualizado (ms), dispositivo }
+      match /juegos/{juego} {
+        allow read: if request.auth != null && perfil.size() >= 20;
+        allow write: if request.auth != null && perfil.size() >= 20
+          && request.resource.data.json is string
+          && request.resource.data.json.size() < 200000
+          && request.resource.data.actualizado is number;
+      }
+    }
+    // Códigos para vincular un dispositivo: 6 dígitos, duran 10 minutos. Se leen con get (no se pueden listar);
+    // el dispositivo que ya tiene el perfil solo puede escribirle el perfil una vez.
+    match /noli_vinculos/{codigo} {
+      allow get, delete: if request.auth != null;
+      allow list: if false;
+      allow create: if request.auth != null && codigo.matches('^[0-9]{6}$')
+        && request.resource.data.perfil == null
+        && request.resource.data.expira is number;
+      // Crear de nuevo un código vencido (la TV pidió uno que coincidió con otro viejo)
+      allow update: if request.auth != null && (
+        (resource.data.perfil == null && request.resource.data.perfil is string
+          && request.resource.data.perfil.size() >= 20
+          && request.resource.data.expira == resource.data.expira
+          && request.time.toMillis() < resource.data.expira)
+        || (resource.data.expira < request.time.toMillis() && request.resource.data.perfil == null));
+    }
+    // ---- La Pata ----
+    // Mesas en línea: cualquier jugador con sesión (los invitados entran de forma anónima)
+    match /pata_mesas/{mesa} {
+      allow read, write: if request.auth != null;
+    }
+    // Rondas grabadas: los teléfonos solo pueden CREAR. Como el id de cada ronda es fijo, si dos teléfonos graban
+    // la misma ronda, el segundo intento es una actualización y se rechaza: nunca hay duplicados.
+    // Nadie las lee, cambia ni borra desde el juego; se leen con scripts/export-partidas.mjs (cuenta de servicio).
+    match /pata_rondas/{ronda} {
+      allow create: if request.auth != null
+        && request.resource.data.json is string
+        && request.resource.data.json.size() < 400000;
+      allow read, update, delete: if false;
+    }
+    // Llamadas de voz y video: quién está en la llamada de cada mesa (peers) y los mensajes para conectarse
+    // (signals). El audio y el video no pasan por Firestore, van directo entre teléfonos.
+    match /pata_llamadas/{mesa}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    // ---- Dominó de la Familia (myDomino), mismo proyecto ----
+    match /mesas/{mesa} {
+      allow read, write: if request.auth != null;
+    }
+    match /manos/{mano} {
+      allow create: if request.auth != null
+        && request.resource.data.json is string
+        && request.resource.data.json.size() < 200000;
+      allow read, update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

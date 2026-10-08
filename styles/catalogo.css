@@ -1,5 +1,5 @@
 /* Catálogo: marca, saludo, filtros y cuadrícula de tarjetas. Reproductor del juego a pantalla completa. */
-.cabeza{text-align:center;margin:8px 0 18px}
+.cabeza{position:relative;text-align:center;margin:8px 0 18px}
 .marca{font-family:var(--display);font-weight:700;font-size:clamp(3rem, 12vw, 5.5rem);line-height:1;margin:0;letter-spacing:.02em}
 :root[data-modo="tv"] .marca{font-size:5rem}
 .marca span{display:inline-block;text-shadow:0 5px 0 rgba(43,34,54,.15)}

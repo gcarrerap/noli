@@ -1,0 +1,32 @@
+/* Nube (#7): pastilla en el catálogo y ventana para activar o vincular */
+.nube-btn{position:absolute;right:0;top:0;width:3rem;height:3rem;border-radius:50%;background:var(--card);box-shadow:var(--shadow);
+  display:grid;place-items:center}
+.nube-btn svg{width:1.4rem;height:1.4rem}
+.nube-btn .punto{position:absolute;right:6px;bottom:6px}
+.punto{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--card);background:#b7aec4}
+.punto.verde{background:#2fbf7f}.punto.amarillo{background:#ffb400}.punto.rojo{background:#ff4a4a}
+
+.fondo{position:fixed;inset:0;z-index:40;background:rgba(28,23,38,.45);display:grid;place-items:center;padding:16px}
+.ventana{background:var(--bg);color:var(--fg);border-radius:var(--radius);box-shadow:var(--shadow);width:min(520px, 100%);
+  max-height:calc(100dvh - 32px);overflow:auto;padding:18px 20px 22px;display:flex;flex-direction:column;gap:12px}
+:root[data-modo="tv"] .ventana{width:min(900px, 70vw)}
+.ventana header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ventana h2{font-family:var(--display);font-size:1.35rem;margin:0;display:flex;gap:.4em;align-items:center}
+.ventana p{margin:0;line-height:1.4}
+.ventana .cerrar{font-size:1.8rem;width:44px;height:44px;border-radius:50%;line-height:1}
+.ventana .estado{display:flex;align-items:center;gap:.5em;font-weight:800;color:var(--muted)}
+.ventana .nota{color:var(--muted);font-size:.9rem}
+.ventana .aviso{font-weight:800;padding:.5em .8em;border-radius:14px}
+.ventana .aviso.ok{background:rgba(47,191,127,.15);color:#1f8a5a}
+.ventana .aviso.mal{background:rgba(255,107,74,.15);color:#c4553f}
+.ventana .botones{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.ventana .botones.col{flex-direction:column;align-items:stretch}
+.ventana .boton{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.6em 1.2em;font-weight:800}
+.ventana .boton.primario{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.ventana .boton.chico{font-size:.9rem;color:var(--muted)}
+.ventana .codigo{font-family:var(--display);font-size:3.4rem;letter-spacing:.12em;text-align:center;margin:.2em 0}
+:root[data-modo="tv"] .ventana .codigo{font-size:6rem}
+.ventana .otro{display:flex;flex-direction:column;gap:8px;font-weight:700}
+.ventana .fila{display:flex;gap:8px}
+.ventana input{flex:1;min-width:0;font:inherit;font-family:var(--display);font-size:1.6rem;letter-spacing:.15em;text-align:center;
+  padding:.3em .5em;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--fg)}

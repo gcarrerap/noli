@@ -3,6 +3,7 @@ import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../servic
 import { mover, materias } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
+import * as sync from "./sync.js";
 
 // El reproductor (ui/screens/jugando.js) se registra aquí para recibir las acciones mientras hay un juego abierto
 let alJuego = null;
@@ -21,7 +22,18 @@ export const actions = {
     }
     if (state.materia && !materias(state.juegos).includes(state.materia)) state.materia = null;
     state.foco = 0; state.cargando = false; notify();
+    if (state.nube.perfil) sync.conectar(); // la nube después del catálogo: nunca lo retrasa
   },
+
+  // ---------- Nube (#7) ----------
+  abrirNube() { state.nubeAbierta = true; state.nube.aviso = ""; if (state.nube.estado !== "error") state.nube.error = ""; notify(); },
+  cerrarNube() { if (state.nube.codigo) sync.cancelarVinculo(); state.nubeAbierta = false; notify(); },
+  activarNube: () => sync.activar(),
+  empezarVinculo: () => sync.empezarVinculo(),
+  cancelarVinculo: () => sync.cancelarVinculo(),
+  vincularOtro: (codigo) => sync.vincularOtro(codigo),
+  desvincular: () => sync.desvincular(),
+  reintentarNube: () => sync.conectar(),
 
   elegirMateria(m) {
     state.materia = m || null; state.foco = 0;
@@ -50,13 +62,14 @@ export const actions = {
     const p = state.progreso[id] || { estrellas: 0, veces: 0, ultima: 0 };
     state.progreso = { ...state.progreso, [id]: { estrellas: Math.max(p.estrellas, e), veces: p.veces + 1, ultima: Date.now() } };
     ls.set("noli.progreso", JSON.stringify(state.progreso));
+    sync.marcarCambio(sync.CATALOGO);
     state.celebrar = { id, estrellas: e };
     notify();
   },
 
   // Datos propios de un juego (su progreso). El catálogo es el dueño del almacenamiento.
   datosDe(id) { return leerDatosJuego(id); },
-  guardarDatos(id, datos) { guardarDatosJuego(id, datos); },
+  guardarDatos(id, datos) { guardarDatosJuego(id, datos); sync.marcarCambio(id); },
 
   // Punto único de entrada para el control: dedo, teclado, control de la TV o teléfono remoto (fase 2)
   entrada(accion) {

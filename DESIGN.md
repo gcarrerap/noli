@@ -41,8 +41,9 @@ noli/
 │   ├── main.js                # arranque
 │   ├── version.js             # versión publicada (cámbiala en cada publicación)
 │   ├── engine/                # manifiesto.js, catalogo.js
-│   ├── services/              # catalogo-repo.js, prefs.js, updates.js
-│   ├── app/                   # store.js, actions.js, updates.js
+│   ├── config.js              # FIREBASE_CONFIG (dominomx; script clásico)
+│   ├── services/              # catalogo-repo.js, prefs.js, updates.js, firebase.js, nube.js
+│   ├── app/                   # store.js, actions.js, updates.js, sync.js
 │   └── ui/                    # render.js, entrada.js, labels.js, screens/{catalogo,jugando}.js, components/
 ├── styles/                    # tokens.css (colores, tema, escala TV), base.css, catalogo.css
 └── tests/                     # node:test, sin dependencias
@@ -162,11 +163,27 @@ Nada más cambia: el catálogo lo sigue encontrando por `catalogo.json` y su `ju
 
 GitHub Pages publica submódulos si son públicos y usan URL `https://`. Un juego que viva aparte y quiera probarse solo puede traer una copia de `kit/` (los tres archivos no importan nada); si el protocolo cambia, `noli: 1` sube de versión y el catálogo puede seguir aceptando la anterior.
 
-## 7. Estado y progreso
+## 7. Estado, progreso y nube
 
-- `state.juegos`, `state.materia` (filtro), `state.foco`, `state.cols` (columnas reales de la cuadrícula, para que "abajo" baje una fila), `state.jugando`.
-- **Progreso por dispositivo** en `localStorage` (`noli.progreso`): por juego, la mejor cantidad de estrellas, cuántas veces se jugó y cuándo. La tarjeta muestra las estrellas. No hay cuentas ni nube por ahora.
-- `noli.materia` recuerda el último filtro.
+- `state.juegos`, `state.materia` (filtro), `state.foco`, `state.cols` (columnas reales de la cuadrícula, para que "abajo" baje una fila), `state.jugando`, `state.nube`.
+- **En el dispositivo**, en `localStorage`: `noli.progreso` (estrellas de cada juego en el catálogo), `noli.datos.<id>` (lo que cada juego guarda con `Noli.guardar`) y `noli.materia` (último filtro).
+
+### Nube (#7)
+
+El progreso se sincroniza entre la TV y el teléfono con Firestore (proyecto `dominomx`, colecciones `noli_`). Lo hace solo el catálogo (`app/sync.js`); los juegos no se enteran.
+
+```
+noli_perfiles/{perfil}                  { creado }                            perfil: 24 caracteres aleatorios
+noli_perfiles/{perfil}/juegos/{juego}   { json, actualizado, dispositivo }    "_catalogo" = las estrellas
+noli_vinculos/{código}                  { creado, expira, perfil }            6 dígitos, 10 minutos
+```
+
+- **Perfil sin cuentas.** El id del perfil es la llave: las reglas dejan leerlo con `get` (sabiendo el id) pero no listar perfiles. La entrada es anónima, como en el dominó. Con un id de 24 caracteres (unos 124 bits), adivinarlo no es práctico. Lo que hay ahí es el progreso de un juego de sumas, no datos personales.
+- **Vincular sin teclear en la TV.** El dispositivo nuevo (la TV) **enseña** un código de 6 dígitos; el que ya tiene el perfil (el teléfono) lo **escribe**. El teléfono pone el id del perfil en `noli_vinculos/{código}`, la TV lo recibe, lo guarda y borra el código. El primer dispositivo crea el perfil con "Es el primero: guardar en la nube".
+- **Quién gana.** Cada guardado marca `noli.nube.meta[id] = { actualizado, pendiente }`, haya nube o no. Al conectar y con cada cambio que llega (`onSnapshot`) gana, **por juego**, la versión con el `actualizado` más reciente. Lo pendiente se sube con una espera de 1.5 s y, si no hay internet, al regresar la conexión.
+- **Límite conocido:** si se juega el mismo juego en dos dispositivos sin conexión, al reconectar se queda el más reciente y lo del otro se pierde. Lo que ya había en un dispositivo antes de esta versión no tiene fecha, así que al vincularlo pierde contra la nube.
+- **El SDK de Firebase se carga solo si la nube está activada** y después de dibujar el catálogo: sin nube, Noli no descarga nada de Firebase.
+- **Reglas:** `firestore.rules` lleva las de las tres apps del proyecto (Noli, La Pata y el dominó), porque Firestore tiene un solo archivo de reglas y publicar uno reemplaza todo.
 
 ## 8. Versiones y sin conexión
 
@@ -192,6 +209,6 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 
 ## 11. Fuera de alcance (por ahora)
 
-- Cuentas, varios niños o progreso en la nube (el siguiente paso natural: sincronizar `noli.datos.<id>` en Firestore).
+- Cuentas o varios niños (un perfil por niño sería un selector antes del catálogo; el diseño de la nube ya lo permite).
 - Sonido y voz compartidos en el kit (cada juego trae los suyos; si se repiten, se suben al kit).
 - Un juego de varios jugadores en la misma TV (posible con dos teléfonos remotos, fase 2+).

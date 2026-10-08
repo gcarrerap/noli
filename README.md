@@ -47,6 +47,20 @@ python3 -m http.server 8000
 
 En cada cambio que se publique (del catálogo o de cualquier juego), **cambia el número en `src/version.js`** (por ejemplo de `2026-10-08.1` a `2026-10-08.2`). Así, quien tenga Noli abierto verá "Hay juegos nuevos · Actualizar".
 
+## Progreso en la nube
+
+El progreso (niveles, rachas, estrellas) se puede compartir entre la TV y el teléfono. Toca la **nube** arriba a la derecha del catálogo:
+
+1. **En el primer dispositivo** (el que ya tiene el progreso, por ejemplo el teléfono): **Es el primero: guardar en la nube**.
+2. **En cada dispositivo nuevo** (la TV): **Ya lo tengo en otro dispositivo: vincular**. La TV enseña un código de 6 números.
+3. **En el teléfono**: nube → escribe ese código → **Vincular**. Listo: los dos tienen el mismo progreso y se actualizan solos.
+
+Sin internet se sigue jugando; lo nuevo se sube al regresar la conexión.
+
+### Firebase
+
+Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `noli_` (`src/config.js`). **Antes de usar la nube hay que publicar las reglas:** copia [`firestore.rules`](firestore.rules) completo en **Firebase → Firestore → Reglas** y publícalas. Trae también los bloques de La Pata y el dominó (Firestore tiene un solo archivo de reglas por proyecto y publicar reemplaza todo), así que esas apps siguen funcionando igual. **Ojo:** si después se publican las reglas de myPata o myDomino, se borran las de Noli; hay que mantener los tres bloques juntos. El dominio `gcarrerap.github.io` ya está autorizado por el dominó.
+
 ## Agregar un juego
 
 1. Abre un issue para el juego.
@@ -77,7 +91,7 @@ ui/  →  app/  →  engine/          kit/  (protocolo, teclas, SDK de los juego
 ```
 
 - **`engine/`** valida manifiestos, filtra por materia y mueve el foco con flechas (funciones puras).
-- **`services/`** lee `minijuegos/catalogo.json` y cada `juego.json`, y guarda preferencias.
+- **`services/`** lee `minijuegos/catalogo.json` y cada `juego.json`, guarda preferencias y habla con Firebase.
 - **`app/`** guarda el estado y lo cambia con acciones; toda la entrada pasa por `actions.entrada(accion)`.
 - **`ui/`** dibuja el catálogo y abre cada juego en un iframe, con un puente de mensajes.
 - **`kit/`** lo comparten catálogo y juegos.
@@ -86,6 +100,7 @@ ui/  →  app/  →  engine/          kit/  (protocolo, teclas, SDK de los juego
 noli/
 ├── index.html          # catálogo (esqueleto: estilos y src/main.js)
 ├── sw.js               # service worker: siempre la versión más reciente
+├── firestore.rules     # reglas del proyecto dominomx (Noli, La Pata y el dominó)
 ├── kit/                # protocolo.js, teclas.js, foco.js (flechas entre botones), noli.js (SDK de los juegos)
 ├── minijuegos/
 │   ├── catalogo.json   # registro de juegos, en orden
@@ -119,4 +134,5 @@ Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, e
 
 - HTML, CSS y JavaScript (módulos ES nativos), sin frameworks ni compilación
 - Tipografías: Fredoka y Nunito (Google Fonts)
-- Fase 2: WebRTC del navegador para el control remoto, con señalización en Firebase (proyecto `dominomx`, colecciones `noli_`)
+- Firebase 10.12 (SDK compat del CDN, solo si la nube está activada): Authentication anónima y Cloud Firestore (proyecto `dominomx`, colecciones `noli_`)
+- Fase 2: WebRTC del navegador para el control remoto, con señalización en Firebase
