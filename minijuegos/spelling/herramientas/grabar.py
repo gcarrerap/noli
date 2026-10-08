@@ -36,14 +36,22 @@ def listas():
     return json.loads(out.stdout)
 
 
-def a_mp3(wav_bytes, destino):
+# Silencio al principio de cada grabación. Las TVs (y barras de sonido) tardan unas décimas en "despertar" el
+# audio y se comen el principio: sin este colchón, de "six" solo se oía la "x".
+ANTES_MS = 450
+ANTES_LETRA_MS = 200   # las letras van seguidas al deletrear: el audio ya está despierto
+
+
+def a_mp3(wav_bytes, destino, antes_ms=ANTES_MS):
     destino.parent.mkdir(parents=True, exist_ok=True)
-    # Quita el silencio del principio y del final, deja 80 ms de aire, y comprime para voz (mono, 40 kb/s)
-    filtro = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.02,"
-              "areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse,"
-              "adelay=60|60,apad=pad_dur=0.08")
+    # No se recorta el principio (la voz empieza justo en el primer instante y un recorte se come las consonantes
+    # suaves como la s); se quita el silencio del final, se agrega el colchón del principio y un respiro al final,
+    # y se comprime para voz (mono, 48 kb/s).
+    filtro = ("afade=t=in:d=0.008,"
+              "areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.1,areverse,"
+              f"adelay={antes_ms}|{antes_ms},apad=pad_dur=0.12")
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "wav", "-i", "pipe:0", "-af", filtro,
-                    "-ac", "1", "-ar", "22050", "-codec:a", "libmp3lame", "-b:a", "40k", str(destino)],
+                    "-ac", "1", "-ar", "22050", "-codec:a", "libmp3lame", "-b:a", "48k", str(destino)],
                    input=wav_bytes, check=True)
 
 
@@ -59,13 +67,13 @@ def main():
     # length_scale > 1 = más despacio. Para niños, un poco más lento que lo normal.
     normal, lenta, frase = (SynthesisConfig(length_scale=s, noise_scale=0.5, noise_w_scale=0.6) for s in (1.15, 2.4, 1.1))
 
-    def grabar(texto, destino, cfg):
+    def grabar(texto, destino, cfg, antes_ms=ANTES_MS):
         if destino.exists() and not args.todo:
             return False
         buf = io.BytesIO()
         with wave.open(buf, "wb") as w:
             voz.synthesize_wav(texto, w, syn_config=cfg)
-        a_mp3(buf.getvalue(), destino)
+        a_mp3(buf.getvalue(), destino, antes_ms)
         return True
 
     hechos = 0
@@ -77,7 +85,7 @@ def main():
             hechos += grabar(p["frase"], AUDIO / "f" / f"{slug}.mp3", frase)
         print(f"lista {l['n']} lista", file=sys.stderr)
     for letra, nombre in LETRAS.items():
-        hechos += grabar(f"{nombre}.", AUDIO / "l" / f"{letra}.mp3", normal)
+        hechos += grabar(f"{nombre}.", AUDIO / "l" / f"{letra}.mp3", normal, ANTES_LETRA_MS)
     hechos += grabar(PRUEBA, AUDIO / "prueba.mp3", frase)
     total = sum(f.stat().st_size for f in AUDIO.rglob("*.mp3"))
     print(f"{hechos} audios nuevos; {len(list(AUDIO.rglob('*.mp3')))} en total, {total / 1e6:.1f} MB")
