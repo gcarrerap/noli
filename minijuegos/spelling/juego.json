@@ -1,0 +1,12 @@
+{
+  "id": "spelling",
+  "titulo": "Spelling",
+  "descripcion": "Escucha la palabra en inglés y deletréala.",
+  "icono": "icono.svg",
+  "color": "#c86bfa",
+  "materia": "inglés",
+  "edades": [6, 11],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1"
+}
