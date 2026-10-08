@@ -48,7 +48,7 @@ function inicio() {
       <button class="boton grande" data-foco data-ir="progreso">Mi progreso</button>
     </div>
     <p class="racha">${FLAMA}<span>${r ? `Racha: <b>${r}</b> ${r === 1 ? "día" : "días"}` : "Cumple el reto de hoy para empezar una racha"}</span></p>
-    ${conVoz() ? "" : `<p class="nota">${Voz.hay ? "La voz está apagada" : "Este aparato no tiene voz en inglés"}: te enseñaré cada palabra un momento.</p>`}`, "inicio");
+    ${conVoz() ? "" : `<p class="nota">${Voz.hay ? "La voz está apagada" : "La voz en inglés no funciona en este aparato"}: te enseñaré cada palabra un momento.</p>`}`, "inicio");
 }
 
 function barraDominio(i) {
@@ -411,17 +411,45 @@ function papas() {
       ${R.dias.reverse().map((d) => `<tr><td>${d.fecha}</td><td>${d.palabras}</td><td>${d.palabras ? Math.round((100 * d.aciertos) / d.palabras) + " %" : "–"}</td><td>${d.reto ? "✓" : ""}</td></tr>`).join("")}
     </tbody></table>` : `<p class="nota">Todavía no hay días jugados.</p>`}
     <h2>Voz</h2>
-    <p class="nota">${Voz.hay ? `Voz en inglés: ${esc(Voz.nombre)}.` : "Este navegador no tiene voz en inglés, así que el juego enseña cada palabra 3 segundos y la tapa."}</p>
+    <p class="nota">${Voz.hay ? `Voz en inglés: ${esc(Voz.nombre)}.` : "La voz en inglés no funciona en este aparato, así que el juego enseña cada palabra 3 segundos y la tapa."}
+      Si no se oye: sube el volumen y, en iPhone, quita el modo silencio (el switch de un lado).</p>
     <div class="menu fila">
+      <button class="boton" data-foco data-ir="probarVoz">${ALTAVOZ_CHICO} Probar la voz</button>
       ${Voz.hay ? `<button class="boton" data-foco data-ir="cambiarVoz">${pr.sinVoz ? "Encender la voz" : "Apagar la voz (enseñar la palabra)"}</button>` : ""}
       <button class="boton" data-foco="inicial" data-ir="progreso">Regresar</button>
-    </div>`, "papas");
+    </div>
+    <pre class="diagnostico" aria-live="polite">${esc(diagnostico())}</pre>`, "papas");
 }
+
+// Lo que sabe el juego de la voz de este aparato (para saber qué pasa en cada teléfono o TV)
+function diagnostico() {
+  const e = Voz.estado();
+  return [
+    `speechSynthesis: ${e.soporte ? "sí" : "no"} · voces: ${e.voces} · en inglés: ${e.ingles.length}`,
+    `Usando: ${e.usando || "ninguna"}${e.rota ? " (no suena)" : ""}`,
+    ...e.ingles.slice(0, 6).map((v) => "  · " + v),
+    ...(e.bitacora.length ? ["", ...e.bitacora] : []),
+  ].join("\n");
+}
+
+function probarVoz() {
+  Voz.reintentar();
+  const pre = () => $main.querySelector(".diagnostico");
+  Voz.decir("Hello Noli! Can you spell cat? C. A. T. Cat.").then(() => { if (pantalla === "papas") pre().textContent = diagnostico(); });
+  setTimeout(() => { if (pantalla === "papas") pre().textContent = diagnostico(); }, 1500);
+}
+
+// Si la voz deja de funcionar a media partida, la palabra se enseña en lugar de decirse
+Voz.alFallar(() => {
+  if (pantalla === "palabra" && !juego.contestado && !juego.escrito.length) palabra();
+  else if (pantalla === "inicio") inicio();
+  else $main.querySelector('[data-ir="oirFrase"]')?.remove();
+});
 
 // ---------- Navegación ----------
 
 const IR = {
-  inicio, progreso, papas, retoIntro, retoJugar, decir, despacio, frase, mirar, listo,
+  inicio, progreso, papas, retoIntro, retoJugar, decir, despacio, frase, mirar, listo, probarVoz,
   ronda: nuevaRonda,
   borrar: () => borrar(),
   oirFrase: () => Voz.decir(actual().frase, 0.85),
