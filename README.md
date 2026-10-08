@@ -1,0 +1,115 @@
+# Noli
+
+Juegos educativos para Noelia, en el navegador. Se juegan en el **teléfono o la tableta** con el dedo, o en la **smart TV** con el control de la tele (y, en la siguiente fase, usando un teléfono como control remoto).
+
+La página principal es un **catálogo**: cada juego es una tarjeta, y cada juego vive en su propia carpeta dentro de `minijuegos/`. Está hecho con HTML, CSS y JavaScript en módulos, sin dependencias ni paso de compilación, con la misma filosofía que [Dominó de la Familia](https://github.com/gcarrerap/myDomino) y [La Pata de la Familia](https://github.com/gcarrerap/myPata). El diseño completo está en [DESIGN.md](DESIGN.md).
+
+## Juegos
+
+| Juego | Materia | Edades | Issue |
+|---|---|---|---|
+| Cuenta y toca (`ejemplo`) | Números | 3–6 | #1 (ejemplo del contrato; se reemplaza con el primer juego de verdad) |
+
+Cada juego nuevo se agrega con su propio issue.
+
+## Cómo jugarlo
+
+### En el teléfono o la tableta
+
+Abre la página y toca un juego. La casita 🏠 regresa al catálogo. Las estrellas de cada juego (la mejor partida) se guardan en el dispositivo.
+
+### En la TV
+
+Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele; **Atrás** regresa al catálogo.
+
+**Teléfono como control remoto:** en camino (ver [DESIGN.md §5](DESIGN.md#fase-2-el-teléfono-como-control-remoto-issue-aparte)). La TV mostrará un código y un QR; el teléfono lo abre y queda como control.
+
+## Publicarlo
+
+### GitHub Pages (recomendado)
+
+1. En el repo, ve a **Settings → Pages**.
+2. En *Source*, elige **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
+3. En uno o dos minutos estará en `https://gcarrerap.github.io/noli/`.
+
+### Localmente
+
+Sírvelo con cualquier servidor estático (abrirlo con doble clic no funciona: los módulos ES no cargan desde `file://`):
+
+```bash
+python3 -m http.server 8000
+# abre http://localhost:8000  (o http://localhost:8000/?modo=tv)
+```
+
+### Publicar una versión nueva
+
+En cada cambio que se publique (del catálogo o de cualquier juego), **cambia el número en `src/version.js`** (por ejemplo de `2026-10-08.1` a `2026-10-08.2`). Así, quien tenga Noli abierto verá "Hay juegos nuevos · Actualizar".
+
+## Agregar un juego
+
+1. Abre un issue para el juego.
+2. Copia `minijuegos/ejemplo/` a `minijuegos/<id>/` y edita su `juego.json`:
+   ```json
+   { "id": "sumas", "titulo": "Sumas con manzanas", "icono": "🍎", "color": "#3ccf8e",
+     "materia": "números", "edades": [5, 7], "controles": ["tactil", "flechas"] }
+   ```
+3. En el código del juego usa el kit para jugar con flechas/OK y avisar cuando termina:
+   ```js
+   import { Noli } from "../../kit/noli.js";
+   Noli.alEntrar((accion) => { /* arriba, abajo, izquierda, derecha, ok, atras */ });
+   Noli.terminar({ estrellas: 3 });
+   ```
+4. Agrega el id a `minijuegos/catalogo.json` (el orden ahí es el orden del catálogo).
+5. Corre `npm test`, cambia `src/version.js` y abre el PR.
+
+Cada juego es autocontenido (sus propios estilos, rutas relativas), así que más adelante puede vivir en su propio repo y montarse aquí como **submódulo de git** sin tocar el catálogo (ver [DESIGN.md §6](DESIGN.md#6-juegos-como-submódulos)).
+
+## Arquitectura
+
+```
+ui/  →  app/  →  engine/          kit/  (protocolo, teclas, SDK de los juegos)
+          ↘ services/ (archivos del sitio, localStorage)
+```
+
+- **`engine/`** valida manifiestos, filtra por materia y mueve el foco con flechas (funciones puras).
+- **`services/`** lee `minijuegos/catalogo.json` y cada `juego.json`, y guarda preferencias.
+- **`app/`** guarda el estado y lo cambia con acciones; toda la entrada pasa por `actions.entrada(accion)`.
+- **`ui/`** dibuja el catálogo y abre cada juego en un iframe, con un puente de mensajes.
+- **`kit/`** lo comparten catálogo y juegos.
+
+```
+noli/
+├── index.html          # catálogo (esqueleto: estilos y src/main.js)
+├── sw.js               # service worker: siempre la versión más reciente
+├── kit/                # protocolo.js, teclas.js, noli.js (SDK de los juegos)
+├── minijuegos/
+│   ├── catalogo.json   # registro de juegos, en orden
+│   └── ejemplo/        # un juego: juego.json, index.html, juego.js, estilo.css
+├── src/
+│   ├── main.js, version.js
+│   ├── engine/         # manifiesto.js, catalogo.js
+│   ├── services/       # catalogo-repo.js, prefs.js, updates.js
+│   ├── app/            # store.js, actions.js, updates.js
+│   └── ui/             # render.js, entrada.js, labels.js, screens/, components/
+├── styles/             # tokens (colores, tema, escala TV), base, catálogo
+├── tests/              # node:test, sin dependencias
+├── package.json        # solo para correr las pruebas
+├── DESIGN.md
+└── README.md
+```
+
+### Pruebas
+
+Corren con Node 18 o más nuevo, sin instalar nada:
+
+```bash
+npm test
+```
+
+Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, y que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**.
+
+## Stack
+
+- HTML, CSS y JavaScript (módulos ES nativos), sin frameworks ni compilación
+- Tipografías: Fredoka y Nunito (Google Fonts)
+- Fase 2: WebRTC del navegador para el control remoto, con señalización en Firebase

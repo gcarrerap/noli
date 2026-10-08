@@ -1,0 +1,23 @@
+/* Estilos propios del juego: cada juego trae los suyos y no depende de los del catálogo */
+:root{--bg:#fff7ec;--fg:#2b2236;--card:#fff;--sel:#2b2236;--bien:#3ccf8e;--mal:#ff6b4a;--star:#ffb400;--off:#e7dccb}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1726;--fg:#f6f0ff;--card:#2a2338;--sel:#ffc43d;--off:#4a4060}}
+*{box-sizing:border-box}
+html{font-size:clamp(16px, 2.2vmin, 40px)}
+body{margin:0;min-height:100dvh;display:grid;place-items:center;background:var(--bg);color:var(--fg);
+  font-family:"Fredoka",system-ui,sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
+main{padding:24px 16px;width:100%;max-width:900px}
+h1{font-size:2.2rem;margin:.2em 0}
+.ronda{letter-spacing:.3em;font-size:1.1rem;opacity:.6;margin:0}
+.cosas{display:flex;flex-wrap:wrap;justify-content:center;gap:.3em;font-size:4.2rem;min-height:1.4em;margin:.3em 0 .5em}
+.cosas span{animation:sale .4s cubic-bezier(.3,1.6,.6,1) both;animation-delay:calc(var(--i) * 90ms)}
+@keyframes sale{from{transform:scale(0)}to{transform:scale(1)}}
+.opciones{display:flex;justify-content:center;gap:1rem}
+.op{font:inherit;font-size:2.6rem;font-weight:700;width:2.3em;height:2.3em;border-radius:28px;border:4px solid transparent;
+  background:var(--card);color:var(--fg);box-shadow:0 6px 0 rgba(0,0,0,.12);cursor:pointer;transition:transform .15s}
+.op.sel{border-color:var(--sel);transform:translateY(-4px)}
+.op.bien{background:var(--bien);color:#fff}
+.op.mal{background:var(--mal);color:#fff;animation:no .3s}
+.op.ancho{width:auto;padding:0 .8em;font-size:1.8rem;height:2.2em}
+@keyframes no{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.grande{font-size:4rem;color:var(--star);margin:.1em 0}.apagada{color:var(--off)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

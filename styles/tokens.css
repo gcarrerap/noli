@@ -1,0 +1,24 @@
+/* Tokens de diseño: colores, tipografía, tamaños y tema claro/oscuro.
+   Escala: en modo TV todo crece (se ve desde el sillón); en teléfono, tarjetas grandes para dedos chiquitos. */
+:root{
+  --bg:#fff7ec; --bg-dot:#f6e6cf; --fg:#2b2236; --muted:#76698a; --line:#ecdcc6; --card:#ffffff;
+  --accent:#ff6b4a; --accent-fg:#ffffff;
+  --sun:#ffc43d; --sky:#4cb3ff; --leaf:#3ccf8e; --berry:#c86bfa; --coral:#ff6b4a;
+  --star:#ffb400; --star-off:#e7dccb;
+  --focus:#2b2236; --focus-halo:#ffc43d;
+  --shadow:0 6px 0 rgba(43,34,54,.12), 0 12px 24px rgba(43,34,54,.10);
+  --radius:28px;
+  --display:"Fredoka", "Baloo 2", "Comic Sans MS", system-ui, sans-serif;
+  --body:"Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --base:16px;
+}
+:root[data-modo="tv"]{ --base:clamp(18px, 1.6vw, 34px); --radius:clamp(28px, 2vw, 44px); }
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1c1726; --bg-dot:#251f33; --fg:#f6f0ff; --muted:#b5a9c9; --line:#342b45; --card:#2a2338;
+  --star-off:#4a4060; --focus:#ffffff; --shadow:0 6px 0 rgba(0,0,0,.35), 0 12px 24px rgba(0,0,0,.3);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1c1726; --bg-dot:#251f33; --fg:#f6f0ff; --muted:#b5a9c9; --line:#342b45; --card:#2a2338;
+  --star-off:#4a4060; --focus:#ffffff; --shadow:0 6px 0 rgba(0,0,0,.35), 0 12px 24px rgba(0,0,0,.3);
+  color-scheme:dark}
