@@ -4,7 +4,7 @@
 import { state, actions, visibles } from "../../app/index.js";
 import { materias, jugableEn } from "../../engine/index.js";
 import { esc } from "../dom.js";
-import { iconoMateria, nombreMateria, estrellasHtml } from "../labels.js";
+import { nombreMateria, estrellasHtml } from "../labels.js";
 
 const LETRAS = ["N", "o", "l", "i"];
 
@@ -18,7 +18,7 @@ export function renderCatalogo(app) {
     </header>
     ${mats.length > 1 ? `<nav class="chips" aria-label="Materias">
       ${[null, ...mats].map((m) => `<button class="chip${m === state.materia ? " sel" : ""}" data-materia="${esc(m || "")}" aria-pressed="${m === state.materia}">
-        <span aria-hidden="true">${m ? iconoMateria(m) : "✨"}</span>${esc(nombreMateria(m))}</button>`).join("")}
+        ${esc(nombreMateria(m))}</button>`).join("")}
     </nav>` : ""}
     <main class="rejilla" id="rejilla">
       ${state.cargando ? `<p class="vacio">Cargando juegos…</p>`
@@ -39,10 +39,10 @@ function tarjeta(j, i) {
   const color = j.color ? ` style="--c:${esc(j.color)}"` : "";
   return `<button class="tarjeta${i === state.foco ? " foco" : ""}" data-id="${esc(j.id)}" data-i="${i}"${color}
       tabindex="${i === state.foco ? 0 : -1}" aria-label="${esc(j.titulo)}">
-    <span class="icono" aria-hidden="true">${esc(j.icono)}</span>
+    <span class="icono" aria-hidden="true">${j.iconoUrl ? `<img src="${esc(j.iconoUrl)}" alt="">` : esc(j.icono)}</span>
     <span class="titulo">${esc(j.titulo)}</span>
     ${j.descripcion ? `<span class="desc">${esc(j.descripcion)}</span>` : ""}
-    <span class="pie">${estrellasHtml(p ? p.estrellas : 0)}<span class="materia" aria-hidden="true">${iconoMateria(j.materia)}</span></span>
+    <span class="pie">${estrellasHtml(p ? p.estrellas : 0)}</span>
   </button>`;
 }
 

@@ -1,10 +1,4 @@
-// Textos e íconos que ve Noelia. Las materias vienen de los manifiestos; aquí solo se les pone cara.
-const MATERIAS = {
-  "números": "🔢", "matemáticas": "➕", "letras": "🔤", "lectura": "📖", "inglés": "🗣️",
-  "colores": "🎨", "formas": "🔺", "memoria": "🧠", "música": "🎵", "ciencia": "🔬", "otros": "🎲",
-};
-
-export const iconoMateria = (m) => MATERIAS[m] || "🎲";
+// Textos que ve Noelia. Sin emojis: en la TV LG salen en blanco y negro (#5).
 export const nombreMateria = (m) => (m ? m.charAt(0).toUpperCase() + m.slice(1) : "Todos");
 
 export function estrellasHtml(n, max = 3) {

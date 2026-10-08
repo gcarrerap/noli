@@ -22,7 +22,7 @@ export async function cargarCatalogo({ base = BASE, fetchFn = fetch } = {}) {
     try {
       const { juego, errores: e } = validarManifiesto(await leerJson(new URL("juego.json", carpeta), fetchFn), id);
       if (e) { errores.push(...e); return null; }
-      return { ...juego, url: new URL(juego.entrada, carpeta).href };
+      return { ...juego, url: new URL(juego.entrada, carpeta).href, iconoUrl: juego.iconoArchivo ? new URL(juego.icono, carpeta).href : null };
     } catch (err) { errores.push(`${id}: ${err.message}`); return null; }
   }));
   return { juegos: leidos.filter(Boolean), errores };

@@ -22,6 +22,11 @@ export function validarManifiesto(m, idCarpeta) {
   if (!Array.isArray(controles) || !controles.length || controles.some((c) => !CONTROLES.includes(c)))
     errores.push(`${idCarpeta}: "controles" debe ser una lista con ${CONTROLES.join(", ")}`);
 
+  // Ícono: un archivo de la carpeta del juego (recomendado: .svg) o, para prototipos, un emoji/texto corto
+  const icono = txt(m.icono) ? m.icono.trim() : "🎲";
+  const iconoArchivo = /\.(svg|png|webp|jpe?g)$/i.test(icono);
+  if (iconoArchivo && /^([a-z]+:|\/|\.\.)/i.test(icono)) errores.push(`${idCarpeta}: "icono" debe ser un archivo dentro de la carpeta`);
+
   let edades = m.edades ?? null;
   if (edades !== null && !(Array.isArray(edades) && edades.length === 2 && edades.every(Number.isInteger) && edades[0] <= edades[1]))
     errores.push(`${idCarpeta}: "edades" debe ser [mínima, máxima]`);
@@ -32,7 +37,7 @@ export function validarManifiesto(m, idCarpeta) {
       id: m.id,
       titulo: m.titulo.trim(),
       descripcion: txt(m.descripcion) ? m.descripcion.trim() : "",
-      icono: txt(m.icono) ? m.icono : "🎲",
+      icono, iconoArchivo,
       color: txt(m.color) ? m.color : null,
       materia: txt(m.materia) ? m.materia.trim().toLowerCase() : "otros",
       edades,

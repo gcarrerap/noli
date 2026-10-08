@@ -69,7 +69,7 @@ noli/
 |---|---|---|
 | `id` | sí | Minúsculas, números y guiones. **Igual al nombre de la carpeta** y al que está en `catalogo.json`. |
 | `titulo` | sí | Lo que lee Noelia en la tarjeta. |
-| `descripcion`, `icono`, `color` | no | Tarjeta: una línea, un emoji (o texto corto) y el color de fondo. |
+| `descripcion`, `icono`, `color` | no | Tarjeta: una línea, el ícono y el color de fondo. `icono` es un archivo de la carpeta del juego (`"icono.svg"`, recomendado) o, para prototipos, un emoji. |
 | `materia` | no | Agrupa los filtros (`números`, `letras`, `inglés`, `colores`…). Por omisión `otros`. |
 | `edades` | no | `[mínima, máxima]`. Por ahora informativo; servirá para filtrar cuando haya muchos juegos. |
 | `controles` | no | Con qué se puede jugar: `tactil`, `flechas` (teclado/control de la TV), `remoto` (teléfono como control). Por omisión `["tactil", "flechas"]`. En modo TV solo tienen sentido los que aceptan `flechas` o `remoto`. |
@@ -86,10 +86,11 @@ El juego abierto corre en un `<iframe>` a pantalla completa (`ui/screens/jugando
 
 | Dirección | Mensaje | Cuándo |
 |---|---|---|
-| catálogo → juego | `{ tipo: "hola", modo }` | Al cargar. `modo` es `"tactil"` o `"tv"` (el kit lo pone en `<html data-modo>` para que el juego ajuste tamaños). |
+| catálogo → juego | `{ tipo: "hola", modo, datos }` | Al cargar. `modo` es `"tactil"` o `"tv"` (el kit lo pone en `<html data-modo>` para que el juego ajuste tamaños). `datos`: lo que el juego guardó la última vez (o `null`). |
 | catálogo → juego | `{ tipo: "entrada", accion }` | Una acción que llegó al catálogo (hoy: teclas con el foco fuera del iframe; en la fase 2: el teléfono remoto). |
 | juego → catálogo | `{ tipo: "listo" }` | El kit ya escucha. |
 | juego → catálogo | `{ tipo: "terminar", estrellas }` | Terminó una partida (0 a 3 estrellas). El catálogo guarda la mejor y cuántas veces se ha jugado. |
+| juego → catálogo | `{ tipo: "guardar", datos }` | Guardar el progreso propio del juego (un objeto JSON). |
 | juego → catálogo | `{ tipo: "salir" }` | Regresar al catálogo. |
 
 **El kit (`kit/noli.js`)** es lo único que un juego necesita:
@@ -97,9 +98,14 @@ El juego abierto corre en un `<iframe>` a pantalla completa (`ui/screens/jugando
 ```js
 import { Noli } from "../../kit/noli.js";
 Noli.alEntrar((accion) => { /* "arriba" | "abajo" | "izquierda" | "derecha" | "ok" | "atras" */ });
+const datos = await Noli.datos;   // progreso guardado (o null)
+Noli.guardar(datos);
 Noli.terminar({ estrellas: 2 });
 Noli.salir();
+moverFoco(accion);                // flechas entre los botones [data-foco] según dónde están dibujados (kit/foco.js)
 ```
+
+- **El catálogo es el dueño del almacenamiento.** Los juegos no escriben en `localStorage` directamente: mandan `guardar` y el catálogo lo guarda en `noli.datos.<id>`. Así, sincronizar el progreso entre el teléfono y la TV (Firestore, `noli_`) se hace una vez en el catálogo y todos los juegos lo ganan sin cambiar. Mientras tanto, **el progreso vive en cada dispositivo**. Con el juego abierto solo, el kit guarda en `localStorage` del propio juego.
 
 - Junta en `alEntrar` las acciones que llegan del catálogo **y** las teclas pulsadas con el foco dentro del juego (en la TV el foco queda en el iframe).
 - `atras` que ningún oyente atiende (no devuelve `true`) = salir. Un juego puede usar `atras` para cerrar algo propio devolviendo `true`.
@@ -174,10 +180,17 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 4. Agregar el id a `minijuegos/catalogo.json`.
 5. `npm test`, cambiar `src/version.js` y abrir el PR que cierra el issue.
 
-**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que las instrucciones pueden ir en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`.
+**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que las instrucciones pueden ir en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`. **Sin emojis para nada que importe:** el navegador de la TV LG no tiene emojis a color y salen en blanco y negro (#5); dibujar con SVG. **Sin `await` al nivel del módulo** (algunos navegadores de TV no lo soportan): usar `Noli.datos.then(…)`. Las pruebas de cada juego viven en su carpeta (`minijuegos/<id>/tests/*.test.js`) para que viajen con él si se vuelve submódulo.
 
-## 10. Fuera de alcance (por ahora)
+## 10. Juegos
 
-- Cuentas, varios niños o progreso en la nube.
+| Juego | Issue | Qué tiene de particular |
+|---|---|---|
+| `sumas-restas` | #4 | 12 niveles; sube con 18 de los últimos 20 bien y la mediana del tiempo dentro del límite; opciones con errores típicos que se explican; problemas fallados que regresan; repaso de niveles dominados; reto del día con semilla de la fecha (contrarreloj, sin errores, con palabras) y racha. Lógica pura en `src/` con pruebas. |
+| `ejemplo` | #1 | Plantilla mínima del contrato. |
+
+## 11. Fuera de alcance (por ahora)
+
+- Cuentas, varios niños o progreso en la nube (el siguiente paso natural: sincronizar `noli.datos.<id>` en Firestore).
 - Sonido y voz compartidos en el kit (cada juego trae los suyos; si se repiten, se suben al kit).
 - Un juego de varios jugadores en la misma TV (posible con dos teléfonos remotos, fase 2+).

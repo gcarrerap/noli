@@ -18,7 +18,7 @@ const { state, actions, conectarJuego, visibles } = await import("../src/app/ind
 test("manifiesto: completa los valores por omisión", () => {
   const { juego, errores } = validarManifiesto({ id: "sumas", titulo: " Sumas " }, "sumas");
   assert.equal(errores, undefined);
-  assert.deepEqual(juego, { id: "sumas", titulo: "Sumas", descripcion: "", icono: "🎲", color: null, materia: "otros",
+  assert.deepEqual(juego, { id: "sumas", titulo: "Sumas", descripcion: "", icono: "🎲", iconoArchivo: false, color: null, materia: "otros",
     edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1" });
 });
 
@@ -29,6 +29,7 @@ test("manifiesto: rechaza id distinto a la carpeta, rutas fuera de la carpeta y 
   assert.ok(validarManifiesto({ id: "a", titulo: "x", controles: ["joystick"] }, "a").errores);
   assert.ok(validarManifiesto({ id: "a", titulo: "x", edades: [6, 3] }, "a").errores);
   assert.ok(validarManifiesto({ id: "A b", titulo: "x" }, "A b").errores);
+  assert.ok(validarManifiesto({ id: "a", titulo: "x", icono: "../otro/icono.svg" }, "a").errores);
   assert.ok(validarManifiesto(null, "a").errores);
 });
 
@@ -72,6 +73,8 @@ test("mover: cuadrícula de 3 columnas y 7 tarjetas, sin dar la vuelta", () => {
 test("protocolo: solo se aceptan mensajes de Noli con acciones conocidas", () => {
   assert.ok(esMensaje(mensaje("entrada", { accion: "ok" })));
   assert.ok(esMensaje(mensaje("terminar", { estrellas: 2 })));
+  assert.ok(esMensaje(mensaje("guardar", { datos: { nivel: 1 } })));
+  assert.equal(esMensaje(mensaje("guardar", { datos: "x" })), false);
   assert.equal(esMensaje(mensaje("entrada", { accion: "saltar" })), false);
   assert.equal(esMensaje({ tipo: "salir" }), false);
   assert.equal(esMensaje({ noli: 2, tipo: "salir" }), false);
@@ -87,6 +90,21 @@ test("teclas: flechas, OK y el botón atrás de las TVs", () => {
   assert.equal(teclaAAccion({ key: "GoBack" }), "atras");                      // Android TV
   assert.equal(teclaAAccion({ key: "a", keyCode: 65 }), null);
   assert.equal(teclaAAccion({ key: "ArrowUp", ctrlKey: true }), null);
+});
+
+test("foco: elegir el botón más cercano en la dirección de la flecha", async () => {
+  const { elegir } = await import("../kit/foco.js");
+  // [0] [1]
+  // [2] [3]
+  //   [4]  (ancho)
+  const r = [{ x: 0, y: 0, w: 10, h: 10 }, { x: 20, y: 0, w: 10, h: 10 }, { x: 0, y: 20, w: 10, h: 10 }, { x: 20, y: 20, w: 10, h: 10 }, { x: 0, y: 40, w: 30, h: 10 }];
+  assert.equal(elegir(r, 0, "derecha"), 1);
+  assert.equal(elegir(r, 0, "abajo"), 2);
+  assert.equal(elegir(r, 1, "abajo"), 3);
+  assert.equal(elegir(r, 3, "abajo"), 4);
+  assert.equal(elegir(r, 4, "arriba") === 2 || elegir(r, 4, "arriba") === 3, true);
+  assert.equal(elegir(r, 0, "izquierda"), 0);  // no hay nada: se queda
+  assert.equal(elegir(r, -1, "abajo"), 0);     // sin foco: el primero
 });
 
 // ---------- Cargar el catálogo ----------
@@ -105,12 +123,14 @@ test("cargarCatalogo: en orden, con la url de entrada; un juego roto no tumba a 
     "catalogo.json": { juegos: ["letras", "roto", "falta", "sumas", "../x"] },
     "letras/juego.json": { id: "letras", titulo: "Letras", materia: "Letras" },
     "roto/juego.json": { id: "otro", titulo: "Roto" },
-    "sumas/juego.json": { id: "sumas", titulo: "Sumas", entrada: "juego/inicio.html" },
+    "sumas/juego.json": { id: "sumas", titulo: "Sumas", entrada: "juego/inicio.html", icono: "img/icono.svg" },
   }) });
   assert.deepEqual(juegos.map((j) => j.id), ["letras", "sumas"]);
   assert.equal(juegos[0].url, "https://noli.test/minijuegos/letras/index.html");
   assert.equal(juegos[0].materia, "letras");
   assert.equal(juegos[1].url, "https://noli.test/minijuegos/sumas/juego/inicio.html");
+  assert.equal(juegos[1].iconoUrl, "https://noli.test/minijuegos/sumas/img/icono.svg");
+  assert.equal(juegos[0].iconoUrl, null);
   assert.equal(errores.length, 3);
 });
 
@@ -141,6 +161,10 @@ test("app: cargar, navegar, abrir, reenviar la entrada al juego, terminar y regr
   assert.equal(state.progreso.c.estrellas, 2); // se queda la mejor
   assert.equal(state.progreso.c.veces, 2);
   assert.equal(JSON.parse(localStorage.getItem("noli.progreso")).c.estrellas, 2);
+
+  actions.guardarDatos("c", { nivel: 3 });
+  assert.deepEqual(actions.datosDe("c"), { nivel: 3 });
+  assert.equal(actions.datosDe("a"), null);
 
   actions.cerrar(); desconectar();
   assert.equal(state.jugando, null);

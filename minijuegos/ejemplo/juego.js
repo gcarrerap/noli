@@ -5,7 +5,17 @@
 import { Noli } from "../../kit/noli.js";
 
 const RONDAS = 5;
-const COSAS = ["🍓", "🐞", "⭐", "🐟", "🌼", "🍪", "🐣", "🎈"];
+// Figuras en SVG (no emojis: en la TV LG salen en blanco y negro, #5)
+const FORMAS = {
+  circulo: '<circle cx="50" cy="50" r="40"/>',
+  estrella: '<path d="M50 6l12.9 27.5 30.1 3.6-22.2 20.6 5.8 29.8L50 72.6 23.4 87.5l5.8-29.8L7 37.1l30.1-3.6z"/>',
+  corazon: '<path d="M50 88S8 62 8 34a21 21 0 0 1 42-4 21 21 0 0 1 42 4c0 28-42 54-42 54z"/>',
+  cuadro: '<rect x="12" y="12" width="76" height="76" rx="16"/>',
+  triangulo: '<path d="M50 8l44 80H6z" stroke-linejoin="round"/>',
+};
+const COLORES = ["#ff6b4a", "#ffb400", "#3ccf8e", "#4cb3ff", "#c86bfa"];
+const COSAS = Object.keys(FORMAS).flatMap((f) => COLORES.map((c) => ({ f, c })));
+const figura = ({ f, c }) => `<svg viewBox="0 0 100 100" aria-hidden="true"><g fill="${c}" stroke="rgba(0,0,0,.18)" stroke-width="4">${FORMAS[f]}</g></svg>`;
 const $juego = document.getElementById("juego");
 
 let ronda, aciertos, pregunta, sel, fin, bloqueado;
@@ -28,7 +38,7 @@ function dibujar() {
   $juego.innerHTML = `
     <p class="ronda">${"●".repeat(ronda)}${"○".repeat(RONDAS - ronda)}</p>
     <h1>¿Cuántos hay?</h1>
-    <div class="cosas" aria-label="${n}">${Array.from({ length: n }, (_, i) => `<span style="--i:${i}">${cosa}</span>`).join("")}</div>
+    <div class="cosas" aria-label="${n}">${Array.from({ length: n }, (_, i) => `<span style="--i:${i}">${figura(cosa)}</span>`).join("")}</div>
     <div class="opciones">${opciones.map((o, i) => `<button class="op${i === sel ? " sel" : ""}" data-i="${i}">${o}</button>`).join("")}</div>`;
   $juego.querySelectorAll(".op").forEach((b) => (b.onclick = () => { sel = +b.dataset.i; elegir(); }));
 }
