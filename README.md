@@ -9,7 +9,7 @@ La página principal es un **catálogo**: cada juego es una tarjeta, y cada jueg
 | Juego | Materia | Edades | Issue |
 |---|---|---|---|
 | Sumas y restas (`sumas-restas`) | Matemáticas | 6–8 | #4: 12 niveles (de sumas hasta 10 a restas pidiendo prestado hasta 100), sube de nivel al dominar, reto del día con racha, progreso para Noelia y para papás |
-| Spelling (`spelling`) | Inglés | 6–11 | #8, #13: dictado: dice la palabra en inglés (nunca la enseña) y la usa en una frase si se le pide; prueba de nivel al empezar; 16 listas (de *cat* a *necessary*), se pasa con 18 de 20; práctica opcional (escoger la bien escrita, armarla con letras); reto del día (spelling bee, detective, contrarreloj) con racha |
+| Spelling (`spelling`) | Inglés | 6–11 | #8, #13, #15: dictado: dice la palabra en inglés con grabaciones que suenan en cualquier navegador (nunca la enseña) y la usa en una frase si se le pide; prueba de nivel al empezar; 16 listas (de *cat* a *necessary*), se pasa con 18 de 20; práctica opcional (escoger la bien escrita, armarla con letras); reto del día (spelling bee, detective, contrarreloj) con racha |
 | Cuenta y toca (`ejemplo`) | Matemáticas | 4–7 | #1: ejemplo del contrato y plantilla para juegos nuevos |
 
 Cada juego nuevo se agrega con su propio issue.
@@ -108,7 +108,7 @@ noli/
 ├── kit/                # protocolo.js, teclas.js, foco.js (flechas entre botones), noli.js (SDK de los juegos)
 ├── minijuegos/
 │   ├── catalogo.json   # registro de juegos, en orden
-│   ├── spelling/       # juego.json, index.html, estilo.css, icono.svg, src/ (listas, faltas típicas, progreso, prueba de nivel, reto, voz), tests/
+│   ├── spelling/       # juego.json, index.html, estilo.css, icono.svg, src/ (listas, faltas típicas, progreso, prueba de nivel, reto, voz), audio/ (grabaciones), herramientas/grabar.py, tests/
 │   ├── sumas-restas/   # juego.json, index.html, estilo.css, icono.svg, src/ (lógica pura + pantallas), tests/
 │   └── ejemplo/        # un juego mínimo: juego.json, index.html, juego.js, estilo.css
 ├── src/
