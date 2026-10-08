@@ -187,6 +187,7 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 | Juego | Issue | Qué tiene de particular |
 |---|---|---|
 | `sumas-restas` | #4 | 12 niveles; sube con 18 de los últimos 20 bien y la mediana del tiempo dentro del límite; opciones con errores típicos que se explican; problemas fallados que regresan; repaso de niveles dominados; reto del día con semilla de la fecha (contrarreloj, sin errores, con palabras) y racha. Lógica pura en `src/` con pruebas. |
+| `spelling` | #8 | Voz con `speechSynthesis` (en-US, más lenta para niños) y botones Otra vez / Despacio / Frase; sin voz en inglés (algunas TVs) enseña la frase con hueco o la palabra 3 s y la tapa. 16 listas × 3 etapas (escoge, arma, escribe) = 48 pasos; se pasa con 9/10 (18/20 en Escribe). Las opciones incorrectas son faltas típicas (e mágica, consonante doble, *ee* como *i*, letras mudas, *e* antes de *s*), nunca palabras reales ni homófonos. Al fallar la deletrea en voz alta y marca las letras. Reto del día con semilla de la fecha (spelling bee, detective, contrarreloj) y racha. "Atrás" borra la última letra. |
 | `ejemplo` | #1 | Plantilla mínima del contrato. |
 
 ## 11. Fuera de alcance (por ahora)
