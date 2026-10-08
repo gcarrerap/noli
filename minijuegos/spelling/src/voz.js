@@ -133,6 +133,11 @@ const Sintesis = {
 };
 
 // ---------- Grabaciones ----------
+//
+// Tres maneras de sonar, de la más común a la más rara; se queda con la primera que funcione en el aparato:
+//   1. "audio":    un <audio> con la URL del archivo (lo más compatible, incluidas las TVs)
+//   2. "webaudio": Web Audio (AudioContext): baja el archivo, lo decodifica y lo suena (si el <audio> falla)
+//   3. la voz del navegador (speechSynthesis), si ninguna de las dos suena
 
 const BASE = typeof window !== "undefined" ? new URL("../audio/", import.meta.url).href : "";
 const ARCHIVO = {
@@ -144,111 +149,173 @@ const ARCHIVO = {
 };
 export const archivos = ARCHIVO;   // para las pruebas
 
+let modo = "audio";          // "audio" | "webaudio" | "ninguno"
 let el = null;               // el único <audio>: el que se desbloquea con el primer toque
+let ctx = null;              // AudioContext (modo webaudio)
 let turno = 0;               // cada cosa nueva que se dice cancela la anterior
-let audioRoto = false;       // las grabaciones no suenan en este aparato
-let bloqueado = false;       // el navegador no dejó reproducir (falta un toque)
-let ultimoAudio = null;      // "sonó", o el error
-const blobs = new Map();     // url → promesa de objectURL (precargado)
+let bloqueado = false;       // el navegador no dejó sonar (falta un toque)
+let sono = 0;                // cuántas grabaciones han sonado en este aparato
+const fallas = [];           // por qué no sonó cada modo (para papás)
+const bajados = new Map();   // url → promesa de ArrayBuffer (precarga y Web Audio)
+const decodificados = new Map();
 
 const elemento = () => { if (!el) { el = new Audio(); el.preload = "auto"; } return el; };
+const AC = typeof window !== "undefined" ? window.AudioContext || window.webkitAudioContext : null;
+const contexto = () => { if (!ctx && AC) { try { ctx = new AC(); } catch (e) { fallas.push("AudioContext: " + e.message); } } return ctx; };
+const nombre = (u) => u.slice(BASE.length);
+const ERROR_MEDIA = { 1: "abortado", 2: "red", 3: "no se pudo decodificar", 4: "formato no soportado" };
 
 // Un WAV mudo de 50 ms, para desbloquear el <audio> dentro del primer toque
 function silencio() {
   const n = 400, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
-  const txt = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  const txt = (o, s) => s.split("").forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
   txt(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); txt(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
   v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
   txt(36, "data"); v.setUint32(40, n * 2, true);
   return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
 }
 
+// Con el primer toque o tecla: deja listos el <audio>, el AudioContext y la voz del navegador
 let desbloqueado = false;
 function desbloquear() {
   if (desbloqueado || typeof Audio === "undefined") return;
   desbloqueado = true;
-  if (el && !el.paused) return desbloquearSintesis();   // ya está sonando algo: ya quedó desbloqueado
-  try { const a = elemento(); a.src = silencio(); const p = a.play(); p?.catch?.(() => { desbloqueado = false; }); } catch { desbloqueado = false; }
+  try {
+    const c = contexto();
+    if (c && c.state === "suspended") c.resume();
+    if (c) { const s = c.createBufferSource(); s.buffer = c.createBuffer(1, 1, 22050); s.connect(c.destination); s.start(0); }
+  } catch {}
+  if (!el || el.paused) {
+    try { const a = elemento(); a.src = silencio(); const p = a.play(); if (p && p.catch) p.catch(() => { desbloqueado = false; }); } catch { desbloqueado = false; }
+  }
   desbloquearSintesis();
 }
 if (typeof document !== "undefined") {
-  for (const ev of ["pointerdown", "keydown", "touchend"]) document.addEventListener(ev, desbloquear, { capture: true, passive: true });
+  for (const ev of ["pointerdown", "mousedown", "keydown", "touchend"]) document.addEventListener(ev, desbloquear, true);
 }
 
-// Baja el archivo una vez (queda en memoria y en la caché del service worker para jugar sin internet)
-function cargar(url) {
-  if (!blobs.has(url)) {
-    blobs.set(url, fetch(url).then((r) => (r.ok ? r.blob() : Promise.reject(new Error("HTTP " + r.status))))
-      .then((b) => URL.createObjectURL(b))
-      .catch((e) => { anotar(`No se pudo bajar ${url.slice(BASE.length)}: ${e.message}`); blobs.delete(url); return null; }));
+// Baja el archivo (queda en la caché del navegador y del service worker para jugar sin internet)
+function bajar(url) {
+  if (!bajados.has(url)) {
+    bajados.set(url, fetch(url).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error("HTTP " + r.status))))
+      .catch((e) => { bajados.delete(url); throw e; }));
   }
-  return blobs.get(url);
+  return bajados.get(url);
 }
 
-// Suena un archivo; true si sonó hasta el final, "bloqueado" si el navegador no dejó, false si falló
-function sonar(src, mio) {
+// 1. <audio> con la URL. Resuelve true (sonó), "bloqueado" o un texto con el error.
+function sonarAudio(url, mio) {
   return new Promise((res) => {
     const a = elemento();
-    let listo = false;
-    const fin = (r) => { if (!listo) { listo = true; res(r); } };
+    let listo = false, empezo = false;
+    const fin = (r) => { if (!listo) { listo = true; clearInterval(vigilar); res(r); } };
+    a.onplaying = () => { empezo = true; };
     a.onended = () => fin(true);
-    a.onerror = () => fin(false);
-    a.src = src;
+    a.onerror = () => fin("error del <audio>: " + (ERROR_MEDIA[a.error && a.error.code] || "desconocido"));
+    a.src = url;
     try {
       const p = a.play();
-      p?.then?.(() => { bloqueado = false; ultimoAudio = "sonó"; }, (e) => fin(e?.name === "NotAllowedError" ? "bloqueado" : false));
-    } catch { fin(false); }
-    // Por si el navegador nunca avisa que terminó
-    setTimeout(() => fin(true), 9000);
-    const vigilar = setInterval(() => { if (mio !== turno) { clearInterval(vigilar); fin(true); } else if (listo) clearInterval(vigilar); }, 200);
+      if (p && p.then) p.then(() => { empezo = true; }, (e) => fin(e && e.name === "NotAllowedError" ? "bloqueado" : "play(): " + (e && (e.name || e.message))));
+    } catch (e) { fin("play(): " + e.message); }
+    // Si en 5 s no empezó, no va a sonar; si empezó y nunca avisa que terminó, a los 10 s se sigue
+    setTimeout(() => fin(empezo ? true : "no empezó en 5 s"), 5000);
+    setTimeout(() => fin(true), 10000);
+    const vigilar = setInterval(() => { if (mio !== turno) fin(true); else if (empezo && a.ended) fin(true); }, 150);
   });
 }
 
-// Dice una serie de grabaciones una tras otra; si una no está o no suena, dice `respaldo` con la voz del navegador
+// 2. Web Audio
+function decodificar(url) {
+  if (!decodificados.has(url)) {
+    decodificados.set(url, bajar(url).then((ab) => new Promise((ok, mal) => {
+      const r = contexto().decodeAudioData(ab.slice(0), ok, (e) => mal(new Error("no se pudo decodificar")));
+      if (r && r.then) r.then(ok, mal);
+    })).catch((e) => { decodificados.delete(url); throw e; }));
+  }
+  return decodificados.get(url);
+}
+async function sonarWebAudio(url, mio) {
+  const c = contexto();
+  if (!c) return "no hay AudioContext";
+  try {
+    if (c.state === "suspended") await c.resume();
+    const buf = await decodificar(url);
+    if (mio !== turno) return true;
+    if (c.state !== "running") return "bloqueado";
+    return await new Promise((res) => {
+      const s = c.createBufferSource();
+      s.buffer = buf; s.connect(c.destination);
+      s.onended = () => res(true);
+      s.start(0);
+      setTimeout(() => res(true), buf.duration * 1000 + 600);
+      const vigilar = setInterval(() => { if (mio !== turno) { clearInterval(vigilar); try { s.stop(); } catch {} res(true); } }, 150);
+    });
+  } catch (e) { return "Web Audio: " + e.message; }
+}
+
+// Suena una grabación con el modo que funciona; si falla, prueba el siguiente modo con la misma
+async function sonar(url, mio) {
+  while (modo !== "ninguno") {
+    const r = modo === "audio" ? await sonarAudio(url, mio) : await sonarWebAudio(url, mio);
+    if (mio !== turno) return true;
+    if (r === true) { sono++; bloqueado = false; return true; }
+    if (r === "bloqueado") { bloqueado = true; anotar(`${modo}: el navegador pidió un toque antes de sonar`); avisarSiNadaSuena(); return "bloqueado"; }
+    fallas.push(`${modo}: ${r} (${nombre(url)})`);
+    anotar(`${modo} no sonó: ${r}`);
+    // Si ya había sonado antes con este modo, fue este archivo: no cambiar de modo por uno solo
+    if (sono > 0) return false;
+    modo = modo === "audio" ? "webaudio" : "ninguno";
+    if (modo !== "ninguno") anotar("Probando con " + modo);
+  }
+  avisarSiNadaSuena();
+  return false;
+}
+
+// Dice una serie de grabaciones una tras otra; si una no suena, dice `respaldo` con la voz del navegador
 async function reproducir(urls, respaldo, velocidad = 0.85) {
   const mio = ++turno;
-  if (audioRoto) return Sintesis.decir(respaldo, velocidad);
+  if (modo === "ninguno") return Sintesis.decir(respaldo, velocidad);
   for (const u of urls) {
-    const src = await cargar(u);
-    if (mio !== turno) return;
-    if (!src) return Sintesis.decir(respaldo, velocidad);
-    const r = await sonar(src, mio);
-    if (mio !== turno) return;
-    if (r === "bloqueado") { bloqueado = true; ultimoAudio = "el navegador pidió un toque antes de sonar"; anotar("Audio bloqueado: falta un toque"); avisarSiNadaSuena(); return; }
-    if (r === false) {
-      ultimoAudio = "error al reproducir"; anotar("Error al reproducir " + u.slice(BASE.length));
-      audioRoto = true; avisarSiNadaSuena();
-      return Sintesis.decir(respaldo, velocidad);
-    }
+    const r = await sonar(u, mio);
+    if (mio !== turno || r === "bloqueado") return;
+    if (r === false) return Sintesis.decir(respaldo, velocidad);
   }
 }
 
 const oyentesFalla = new Set();
-function avisarSiNadaSuena() { if (!Voz.hay || bloqueado) for (const fn of oyentesFalla) fn(); }
+function avisarSiNadaSuena() { if (!Voz.hay || bloqueado) oyentesFalla.forEach((fn) => fn()); }
 
 export const Voz = {
   // Con grabaciones no hay que esperar a las voces del navegador (a lo más un momento, por el respaldo)
   listo: Promise.race([listoSintesis, new Promise((r) => setTimeout(r, 400))]),
-  get hay() { return !audioRoto || Sintesis.hay; },
-  get nombre() { return audioRoto ? Sintesis.nombre : "grabaciones (voz en inglés de EE. UU.)"; },
+  get hay() { return modo !== "ninguno" || Sintesis.hay; },
+  get nombre() { return modo === "ninguno" ? Sintesis.nombre : "grabaciones (voz en inglés de EE. UU.)"; },
   palabra(w, lento = false) { return reproducir([lento ? ARCHIVO.despacio(w) : ARCHIVO.palabra(w)], w, lento ? 0.5 : 0.85); },
   frase(w) { const p = buscar(w); return reproducir([ARCHIVO.frase(w)], p ? p.frase : w, 0.85); },
   // "cake. C. A. K. E. cake."
   deletrear(w) {
-    const letras = [...w.toLowerCase()].map(ARCHIVO.letra);
+    const letras = w.toLowerCase().split("").map(ARCHIVO.letra);
     return reproducir([ARCHIVO.palabra(w), ...letras, ARCHIVO.palabra(w)], `${w}. ${letraPorLetra(w)} ${w}.`, 0.75);
   },
   prueba() { return reproducir([ARCHIVO.prueba()], "Hello Noli! Can you spell cat? C. A. T. Cat."); },
   // Baja de una vez las grabaciones de una ronda (y las letras), para que suenen al instante
   precargar(palabras) {
-    for (const w of palabras) { cargar(ARCHIVO.palabra(w)); cargar(ARCHIVO.frase(w)); }
-    for (const c of "abcdefghijklmnopqrstuvwxyz") cargar(ARCHIVO.letra(c));
+    const quieto = (p) => p.catch(() => {});
+    for (const w of palabras) { quieto(bajar(ARCHIVO.palabra(w))); quieto(bajar(ARCHIVO.frase(w))); }
+    for (const c of "abcdefghijklmnopqrstuvwxyz") quieto(bajar(ARCHIVO.letra(c)));
   },
-  callar() { turno++; try { el?.pause(); } catch {} Sintesis.callar(); },
+  callar() { turno++; try { if (el) el.pause(); } catch {} Sintesis.callar(); },
   alFallar(fn) { oyentesFalla.add(fn); },
-  reintentar() { audioRoto = false; bloqueado = false; Sintesis.reintentar(); anotar("Reintentando"); },
+  // Volver a empezar con el primer modo (botón "Probar la voz")
+  reintentar() { modo = "audio"; bloqueado = false; sono = 0; fallas.length = 0; desbloqueado = false; desbloquear(); Sintesis.reintentar(); anotar("Reintentando"); },
   estado() {
     const s = Sintesis.estado();
-    return { ...s, grabaciones: audioRoto ? "no suenan" : bloqueado ? "esperan un toque" : ultimoAudio || "sin probar todavía", rota: audioRoto && s.rota };
+    const mp3 = typeof Audio !== "undefined" ? new Audio().canPlayType("audio/mpeg") || "no" : "no";
+    return {
+      ...s,
+      grabaciones: modo === "ninguno" ? "no suenan" : bloqueado ? "esperan un toque" : sono ? `suenan (${modo})` : "sin probar todavía",
+      detalles: [`MP3 en <audio>: ${mp3} · Web Audio: ${AC ? (ctx ? ctx.state : "sí") : "no"} · modo: ${modo}`, ...fallas.slice(-4)],
+      navegador: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    };
   },
 };
