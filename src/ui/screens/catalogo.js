@@ -5,6 +5,7 @@ import { state, actions, visibles } from "../../app/index.js";
 import { materias, jugableEn } from "../../engine/index.js";
 import { esc } from "../dom.js";
 import { nombreMateria, estrellasHtml } from "../labels.js";
+import { botonNube } from "../components/nube.js";
 
 const LETRAS = ["N", "o", "l", "i"];
 
@@ -13,6 +14,7 @@ export function renderCatalogo(app) {
   const mats = materias(state.juegos.filter((j) => jugableEn(j, state.modo)));
   app.innerHTML = `
     <header class="cabeza">
+      ${botonNube()}
       <h1 class="marca" aria-label="Noli">${LETRAS.map((l, i) => `<span class="l${i}">${l}</span>`).join("")}</h1>
       <p class="saludo">¡Hola, Noelia! ¿A qué jugamos hoy?</p>
     </header>
@@ -26,6 +28,7 @@ export function renderCatalogo(app) {
         : lista.map((j, i) => tarjeta(j, i)).join("")}
     </main>`;
 
+  app.querySelector("#nubeBtn").onclick = actions.abrirNube;
   for (const b of app.querySelectorAll(".chip")) b.onclick = () => actions.elegirMateria(b.dataset.materia || null);
   for (const t of app.querySelectorAll(".tarjeta")) {
     t.onclick = () => actions.abrir(t.dataset.id);
@@ -67,6 +70,7 @@ export function moverFoco(conTeclado) {
 export function teclaEnFiltros(accion, el) {
   const chips = [...document.querySelectorAll(".chip")];
   const i = chips.indexOf(el);
+  if (accion === "arriba") { document.getElementById("nubeBtn")?.focus(); return true; }
   if (accion === "izquierda" && i > 0) chips[i - 1].focus();
   else if (accion === "derecha" && i < chips.length - 1) chips[i + 1].focus();
   else if (accion === "ok") el.click();

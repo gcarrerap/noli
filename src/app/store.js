@@ -19,6 +19,8 @@ export const state = {
   progreso: leerJsonLs("noli.progreso", {}), // por id: { estrellas (la mejor), veces, ultima (ms) }
   celebrar: null,            // { id, estrellas } recién terminado, para el aviso
   updateAvailable: false,
+  nube: {},                  // sincronización (ver app/sync.js): estado, perfil, código para vincular, avisos
+  nubeAbierta: false,        // la ventana de la nube
 };
 
 const listeners = new Set();
