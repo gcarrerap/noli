@@ -1,6 +1,6 @@
 # Diseño de Noli
 
-Noli es un catálogo de minijuegos educativos para Noelia. Usa la misma filosofía que [myDomino](https://github.com/gcarrerap/myDomino/blob/main/DESIGN.md) y [myPata](https://github.com/gcarrerap/myPata/blob/main/DESIGN.md): módulos ES nativos sin compilación, publicados tal cual en GitHub Pages, lógica pura separada de la interfaz y pruebas con `node:test` sin dependencias. Lo nuevo aquí es que la plataforma no es un juego sino un **catálogo de juegos independientes**, y que se juega en el teléfono **o en la TV con el teléfono de control**.
+Noli es un catálogo de minijuegos educativos para Noelia (7 años). Usa la misma filosofía que [myDomino](https://github.com/gcarrerap/myDomino/blob/main/DESIGN.md) y [myPata](https://github.com/gcarrerap/myPata/blob/main/DESIGN.md): módulos ES nativos sin compilación, publicados tal cual en GitHub Pages, lógica pura separada de la interfaz y pruebas con `node:test` sin dependencias. Lo nuevo aquí es que la plataforma no es un juego sino un **catálogo de juegos independientes**, y que se juega en el teléfono **o en la TV con el teléfono de control**.
 
 Issue: #1
 
@@ -58,7 +58,7 @@ noli/
   "icono": "🍓",
   "color": "#ff6b4a",
   "materia": "números",
-  "edades": [3, 6],
+  "edades": [4, 7],
   "controles": ["tactil", "flechas", "remoto"],
   "entrada": "index.html",
   "version": "1"
@@ -114,6 +114,8 @@ Noli.salir();
 
 **En la TV (`?modo=tv`)** todo crece (`styles/tokens.css` escala con el ancho), la cuadrícula es de 4 columnas, el foco se ve desde el sillón (contorno grueso y halo amarillo) y la casita se oculta: se regresa con "atrás". Las flechas y OK del **control de la propia TV** ya funcionan, porque los navegadores de TV los mandan como teclas. El botón "atrás" cambia por marca (`kit/teclas.js`): Samsung Tizen `10009`, LG webOS `461`, Android TV `GoBack`/`Backspace`.
 
+**TVs objetivo:** una **LG con webOS** y una **Samsung OLED de 77" (Tizen)**. En la LG, el Magic Remote además funciona como puntero: sus clics llegan como toques normales (`pointerdown`/`click`), así que las tarjetas y los juegos responden igual que al dedo. Lo que falta confirmar en cada TV (depende del año del modelo y de la versión de su navegador): que cargue módulos ES, que tenga WebRTC (`RTCDataChannel`) y qué códigos manda cada botón. Por eso el primer paso del control remoto es una página de diagnóstico (§5, fase 2).
+
 En el catálogo, las flechas se mueven en la cuadrícula (`engine/catalogo.js → mover`, sin dar la vuelta; "abajo" en una fila incompleta va a la última tarjeta), "arriba" desde la primera fila pasa a los filtros, y OK abre. Con el dedo no se ve el contorno de foco; con la primera tecla sí (`html.teclado`).
 
 ### Fase 2: el teléfono como control remoto (issue aparte)
@@ -128,11 +130,12 @@ En el catálogo, las flechas se mueven en la cuadrícula (`engine/catalogo.js �
            └──────── señalización (Firestore) ────────┘
 ```
 
+0. **Diagnóstico en las TVs** (`diagnostico.html`): enseña qué tecla y código manda cada botón del control, y si el navegador tiene módulos ES, WebRTC y `localStorage`. Se abre una vez en la LG y otra en la Samsung, y con eso se confirma `kit/teclas.js` y se decide si hace falta el respaldo por Firestore.
 1. La TV muestra un **código de sala** de 4 dígitos y un QR a `control.html?sala=4729`.
 2. El teléfono abre `control.html` (o lee el QR) y se empareja.
 3. El teléfono manda acciones; en la TV entran por **`actions.entrada(accion)`**, el mismo punto que el teclado, así que ni el catálogo ni los juegos cambian.
 
-**Canal propuesto:** `RTCDataChannel` de WebRTC directo entre teléfono y TV (latencia de decenas de ms, sin servidor de por medio), con la **señalización por Firestore** que ya funciona en las llamadas de myPata (`services/call-signaling.js`: un solo lado ofrece, el otro responde). Si WebRTC no conecta (algunas redes con CGNAT), respaldo: las acciones van como documentos en Firestore (unos 100–300 ms, suficiente para juegos por turnos). Colecciones con prefijo `noli_` en el proyecto `dominomx`, o un proyecto nuevo (por decidir en ese issue).
+**Canal propuesto:** `RTCDataChannel` de WebRTC directo entre teléfono y TV (latencia de decenas de ms, sin servidor de por medio), con la **señalización por Firestore** que ya funciona en las llamadas de myPata (`services/call-signaling.js`: un solo lado ofrece, el otro responde). Si WebRTC no conecta (algunas redes con CGNAT), respaldo: las acciones van como documentos en Firestore (unos 100–300 ms, suficiente para juegos por turnos). **Firebase:** el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones con prefijo `noli_` (`noli_salas`) y preferencias con prefijo `noli.`; sus reglas se agregan al `firestore.rules` compartido sin tocar las del dominó ni las de la pata. Al conectarse, se reutiliza `services/firebase.js` del dominó (SDK compat del CDN, cargado después de dibujar, entrada anónima).
 
 **Más adelante:** el juego podrá mandar al teléfono **botones propios** (`{ tipo: "botones", botones: ["1", "4", "5"] }`) para que Noelia conteste tocando su teléfono en lugar de moverse con flechas; y dos teléfonos podrán ser dos jugadores. Por eso `controles` distingue `flechas` de `remoto`.
 
@@ -171,7 +174,7 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 4. Agregar el id a `minijuegos/catalogo.json`.
 5. `npm test`, cambiar `src/version.js` y abrir el PR que cierra el issue.
 
-**Guía para los juegos:** botones grandes (mínimo ~64 px en teléfono), sin texto obligatorio para quien todavía no lee (íconos, sonidos), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`.
+**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que las instrucciones pueden ir en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`.
 
 ## 10. Fuera de alcance (por ahora)
 

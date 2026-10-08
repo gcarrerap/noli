@@ -5,7 +5,7 @@
   "icono": "🍓",
   "color": "#ff6b4a",
   "materia": "números",
-  "edades": [3, 6],
+  "edades": [4, 7],
   "controles": ["tactil", "flechas", "remoto"],
   "entrada": "index.html",
   "version": "1"

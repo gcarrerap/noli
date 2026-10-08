@@ -1,6 +1,6 @@
 # Noli
 
-Juegos educativos para Noelia, en el navegador. Se juegan en el **teléfono o la tableta** con el dedo, o en la **smart TV** con el control de la tele (y, en la siguiente fase, usando un teléfono como control remoto).
+Juegos educativos para Noelia (7 años), en el navegador. Se juegan en el **teléfono o la tableta** con el dedo, o en la **smart TV** con el control de la tele (y, en la siguiente fase, usando un teléfono como control remoto).
 
 La página principal es un **catálogo**: cada juego es una tarjeta, y cada juego vive en su propia carpeta dentro de `minijuegos/`. Está hecho con HTML, CSS y JavaScript en módulos, sin dependencias ni paso de compilación, con la misma filosofía que [Dominó de la Familia](https://github.com/gcarrerap/myDomino) y [La Pata de la Familia](https://github.com/gcarrerap/myPata). El diseño completo está en [DESIGN.md](DESIGN.md).
 
@@ -8,7 +8,7 @@ La página principal es un **catálogo**: cada juego es una tarjeta, y cada jueg
 
 | Juego | Materia | Edades | Issue |
 |---|---|---|---|
-| Cuenta y toca (`ejemplo`) | Números | 3–6 | #1 (ejemplo del contrato; se reemplaza con el primer juego de verdad) |
+| Cuenta y toca (`ejemplo`) | Números | 4–7 | #1 (ejemplo del contrato; se reemplaza con el primer juego de verdad) |
 
 Cada juego nuevo se agrega con su propio issue.
 
@@ -20,7 +20,7 @@ Abre la página y toca un juego. La casita 🏠 regresa al catálogo. Las estrel
 
 ### En la TV
 
-Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele; **Atrás** regresa al catálogo.
+Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele; **Atrás** regresa al catálogo.
 
 **Teléfono como control remoto:** en camino (ver [DESIGN.md §5](DESIGN.md#fase-2-el-teléfono-como-control-remoto-issue-aparte)). La TV mostrará un código y un QR; el teléfono lo abre y queda como control.
 
@@ -112,4 +112,4 @@ Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, e
 
 - HTML, CSS y JavaScript (módulos ES nativos), sin frameworks ni compilación
 - Tipografías: Fredoka y Nunito (Google Fonts)
-- Fase 2: WebRTC del navegador para el control remoto, con señalización en Firebase
+- Fase 2: WebRTC del navegador para el control remoto, con señalización en Firebase (proyecto `dominomx`, colecciones `noli_`)
