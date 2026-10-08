@@ -1,0 +1,43 @@
+/* El teléfono como control remoto (control.html, issue #3): cruceta grande, OK, Atrás y el estado de la conexión */
+html,body{height:100%}
+body{overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.control{height:100dvh;display:flex;flex-direction:column;align-items:center;gap:2vh;max-width:520px;margin:0 auto;
+  padding:max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom))}
+
+.control-cabeza{text-align:center}
+.control-marca{font-family:var(--display);font-weight:700;font-size:2.2rem;margin:0;color:var(--coral);line-height:1}
+.control-marca span{color:var(--sky);font-weight:600;font-size:.6em}
+.control-estado{margin:.5em 0 0;font-weight:800;border-radius:999px;padding:.35em 1em;background:var(--card);border:2px solid var(--line);min-height:1em}
+.control-estado:empty{visibility:hidden}
+.control-estado.ok{border-color:var(--leaf)}
+.control-estado.mal{border-color:var(--coral)}
+
+.control-codigo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:6vh;width:100%}
+.control-codigo[hidden]{display:none}
+.control-codigo label{font-family:var(--display);font-size:1.4rem;text-align:center}
+.control-codigo input{font-family:var(--display);font-weight:700;font-size:3.4rem;letter-spacing:.3em;text-align:center;width:6.2em;
+  padding:.15em 0 .15em .3em;border-radius:20px;border:3px solid var(--line);background:var(--card);color:var(--fg)}
+.control-codigo input:focus{outline:none;border-color:var(--sky)}
+.control-codigo .primario{font-size:1.3rem;padding:.6em 2em}
+.control-error{color:var(--coral);font-weight:800;margin:0;min-height:1.3em;text-align:center}
+
+.mando{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh}
+.mando[hidden]{display:none}
+.cruceta{width:min(88vw, 52vh, 420px);aspect-ratio:1;display:grid;grid-template:repeat(3, 1fr) / repeat(3, 1fr);gap:10px}
+.b{border-radius:24px;background:var(--card);box-shadow:var(--shadow);font-size:2.4rem;font-weight:800;color:var(--fg);
+  transition:transform .08s ease, background .08s ease}
+.b.arriba{grid-area:1/2} .b.izquierda{grid-area:2/1} .b.ok{grid-area:2/2} .b.derecha{grid-area:2/3} .b.abajo{grid-area:3/2}
+.b.ok{border-radius:50%;background:var(--accent);color:var(--accent-fg);font-family:var(--display);font-size:2.2rem}
+.b.atras{width:min(88vw, 420px);padding:.55em;font-size:1.5rem;font-family:var(--display);border-radius:999px}
+.b.apretado,.b.toque{transform:scale(.93)}
+.b.apretado{background:var(--sun)} .b.ok.apretado{background:#e8553a}
+:root:not(.activo) .b{opacity:.55}
+
+.control-aviso{position:fixed;inset:auto 16px max(70px, calc(env(safe-area-inset-bottom) + 60px));background:var(--card);border-radius:20px;
+  box-shadow:var(--shadow);padding:1em;text-align:center;font-weight:700;z-index:5}
+.control-aviso[hidden]{display:none}
+.control-aviso p{margin:0 0 .7em}
+
+.control-pie{display:flex;gap:1em;align-items:center;color:var(--muted);font-size:.95rem}
+.control-pie button{text-decoration:underline;color:var(--muted);font-weight:700}
+.control-pie button[hidden]{display:none}

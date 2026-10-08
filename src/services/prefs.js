@@ -1,8 +1,9 @@
 // Preferencias y progreso de este dispositivo en localStorage. Nunca truena: si el navegador bloquea el
 // almacenamiento (modo privado, permisos), get devuelve null y set no hace nada.
-// Claves en uso: noli.progreso ({ id: { estrellas, veces, ultima } }), noli.materia (filtro elegido) y
-// noli.datos.<id> (lo que cada juego guarda con Noli.guardar), noli.dev (id del dispositivo), y para la nube
-// noli.nube.perfil y noli.nube.meta (ver app/sync.js).
+// Claves en uso: noli.progreso ({ id: { estrellas, veces, ultima } }), noli.materia (filtro elegido),
+// noli.datos.<id> (lo que cada juego guarda con Noli.guardar), noli.dev (id del dispositivo), para la nube
+// noli.nube.perfil y noli.nube.meta (ver app/sync.js), y para el control remoto noli.remoto ("1" si la TV lo tenía
+// prendido), noli.sala (su último código) y noli.control (en el teléfono, el último código al que se conectó).
 export const ls = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch {} },

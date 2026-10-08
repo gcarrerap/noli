@@ -1,0 +1,44 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Noli · control</title>
+<meta name="theme-color" content="#fff7ec">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/control.css">
+</head><body>
+<!-- El teléfono como control remoto de la TV (issue #3). La TV enseña un código y un QR a esta página. -->
+<main class="control" id="control">
+  <header class="control-cabeza">
+    <h1 class="control-marca">Noli <span>control</span></h1>
+    <p class="control-estado" id="estado" role="status" aria-live="polite">Cargando…</p>
+  </header>
+
+  <form class="control-codigo" id="pedir" hidden>
+    <label for="codigo">Escribe el código que sale en la TV</label>
+    <input id="codigo" inputmode="numeric" pattern="[0-9 ]*" maxlength="5" autocomplete="off" placeholder="0000" aria-describedby="codigo-error">
+    <p class="control-error" id="codigo-error"></p>
+    <button class="primario" type="submit">Conectar</button>
+  </form>
+
+  <section class="mando" id="mando" hidden aria-label="Control">
+    <div class="cruceta">
+      <button class="b arriba" data-accion="arriba" aria-label="Arriba">▲</button>
+      <button class="b izquierda" data-accion="izquierda" aria-label="Izquierda">◀</button>
+      <button class="b ok" data-accion="ok" aria-label="OK">OK</button>
+      <button class="b derecha" data-accion="derecha" aria-label="Derecha">▶</button>
+      <button class="b abajo" data-accion="abajo" aria-label="Abajo">▼</button>
+    </div>
+    <button class="b atras" data-accion="atras">↩ Atrás</button>
+  </section>
+
+  <div class="control-aviso" id="aviso" hidden></div>
+  <footer class="control-pie"><button id="cambiar" hidden>Cambiar de TV</button><span id="codigo-actual"></span></footer>
+</main>
+
+<script src="src/config.js"></script>
+<script type="module" src="src/control/main.js"></script>
+</body></html>

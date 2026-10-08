@@ -1,0 +1,193 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Noli · diagnóstico de la TV</title>
+<!--
+  Diagnóstico para las smart TVs (issue #3, fase 0). Ábrela en el navegador de la TV:
+    https://gcarrerap.github.io/noli/diagnostico.html
+  Enseña qué manda cada botón del control (key, keyCode, code) y qué tiene el navegador (módulos ES, WebRTC,
+  localStorage, service worker), además del user agent y el tamaño de la pantalla. Al final hay un bloque de
+  texto para copiar al issue (o tomarle foto).
+  Está escrita a propósito en JavaScript viejo (ES5, sin módulos ni dependencias): tiene que funcionar justo en
+  los navegadores donde lo moderno podría fallar.
+-->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#1c1726;color:#f6f0ff;font:clamp(16px,1.5vw,30px)/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;padding:3vh 4vw}
+  h1{margin:0 0 .3em;font-size:2em}
+  h2{margin:1.2em 0 .4em;font-size:1.25em;color:#ffc43d}
+  p{margin:.3em 0;color:#b5a9c9}
+  .cols{display:flex;gap:3vw;flex-wrap:wrap}
+  .cols>section{flex:1 1 420px;min-width:0}
+  table{border-collapse:collapse;width:100%}
+  td,th{text-align:left;padding:.25em .5em;border-bottom:1px solid #342b45;vertical-align:top}
+  th{color:#b5a9c9;font-weight:600}
+  .si{color:#3ccf8e;font-weight:700} .no{color:#ff6b4a;font-weight:700} .tal{color:#ffc43d;font-weight:700}
+  #ultima{font-size:2.2em;font-weight:800;padding:.3em .5em;border-radius:.4em;background:#2a2338;margin:.2em 0;min-height:1.6em}
+  #teclas td{font-family:ui-monospace,Menlo,Consolas,monospace}
+  pre{white-space:pre-wrap;word-break:break-all;background:#2a2338;padding:1em;border-radius:.5em;font-size:.8em;max-height:40vh;overflow:auto}
+  button{font:inherit;padding:.4em 1em;border-radius:999px;border:0;background:#ff6b4a;color:#fff;font-weight:700;margin-right:.5em}
+  button:focus{outline:5px solid #fff;outline-offset:3px}
+</style>
+</head><body>
+<h1>Diagnóstico de la TV</h1>
+<p>Aprieta cada botón del control: flechas, OK, atrás, los de colores, play/pausa… Cada uno aparece en la tabla.
+  <b>Atrás</b> no saca de esta página (se intercepta), salvo que el navegador no lo permita.</p>
+
+<div class="cols">
+  <section>
+    <h2>Botones del control</h2>
+    <div id="ultima">—</div>
+    <table id="teclas"><thead><tr><th>key</th><th>keyCode</th><th>code</th><th>Noli entiende</th><th>veces</th></tr></thead><tbody></tbody></table>
+  </section>
+  <section>
+    <h2>Navegador</h2>
+    <table id="caps"><tbody></tbody></table>
+  </section>
+</div>
+
+<h2>Para pegar en el issue #3</h2>
+<p><button id="copiar">Copiar</button><span id="copiado"></span></p>
+<pre id="reporte"></pre>
+
+<script>
+(function () {
+  "use strict";
+
+  // Igual que kit/teclas.js (copiado aquí porque esta página no usa módulos). Si cambias uno, cambia el otro.
+  var POR_NOMBRE = {
+    ArrowUp: "arriba", ArrowDown: "abajo", ArrowLeft: "izquierda", ArrowRight: "derecha",
+    Up: "arriba", Down: "abajo", Left: "izquierda", Right: "derecha",
+    Enter: "ok", " ": "ok", Spacebar: "ok", Select: "ok",
+    Escape: "atras", Backspace: "atras", GoBack: "atras", BrowserBack: "atras", Back: "atras"
+  };
+  var POR_CODIGO = { 10009: "atras", 461: "atras", 8: "atras", 27: "atras", 13: "ok", 32: "ok", 37: "izquierda", 38: "arriba", 39: "derecha", 40: "abajo" };
+  function accion(e) { return POR_NOMBRE[e.key] || POR_CODIGO[e.keyCode] || ""; }
+
+  var caps = []; // [nombre, valor, clase]
+  var teclas = {}; // "key|keyCode|code" -> { key, keyCode, code, accion, veces }
+  var orden = [];
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function cap(nombre, valor, clase) {
+    for (var i = 0; i < caps.length; i++) if (caps[i][0] === nombre) { caps[i][1] = valor; caps[i][2] = clase; pintar(); return; }
+    caps.push([nombre, valor, clase]); pintar();
+  }
+  var si = function (b) { return b ? "sí" : "no"; };
+
+  // ---------- Botones ----------
+  function tecla(e) {
+    var k = (e.key === undefined ? "(sin key)" : e.key) + "|" + e.keyCode + "|" + (e.code || "");
+    var t = teclas[k];
+    if (!t) { t = teclas[k] = { key: e.key === undefined ? "(sin key)" : e.key, keyCode: e.keyCode, code: e.code || "", accion: accion(e), veces: 0 }; orden.unshift(k); }
+    t.veces++;
+    $("#ultima").innerHTML = esc(JSON.stringify(t.key)) + " · " + t.keyCode + (t.accion ? " → <span class=si>" + t.accion + "</span>" : " → <span class=no>(nada)</span>");
+    // Que "atrás" y las flechas no muevan ni cierren la página (salvo Tab, para poder llegar al botón Copiar)
+    if (e.key !== "Tab" && e.keyCode !== 9) { try { e.preventDefault(); } catch (x) {} }
+    pintar();
+  }
+  document.addEventListener("keydown", tecla, true);
+  // En Tizen, sin registrar las teclas extra (colores, play…) el navegador no siempre las manda; en el navegador
+  // normal de la TV no existe tizen.tvinputdevice, pero si existe se registran todas.
+  try {
+    if (window.tizen && tizen.tvinputdevice) {
+      var sup = tizen.tvinputdevice.getSupportedKeys();
+      for (var i = 0; i < sup.length; i++) { try { tizen.tvinputdevice.registerKey(sup[i].name); } catch (x) {} }
+      cap("tizen.tvinputdevice", sup.length + " teclas registradas", "si");
+    }
+  } catch (x) {}
+
+  // ---------- Capacidades ----------
+  var ua = navigator.userAgent;
+  cap("User agent", ua, "");
+  cap("Pantalla (screen)", screen.width + "×" + screen.height + " · devicePixelRatio " + (window.devicePixelRatio || 1), "");
+  function ventana() { cap("Ventana (innerWidth×innerHeight)", window.innerWidth + "×" + window.innerHeight, ""); }
+  ventana(); window.addEventListener("resize", ventana);
+  var chrome = ua.match(/Chrome\/(\d+)/);
+  cap("Versión de Chromium", chrome ? chrome[1] : "no se ve en el user agent", chrome ? (+chrome[1] >= 61 ? "si" : "tal") : "tal");
+
+  var s = document.createElement("script");
+  cap("Módulos ES (soporte declarado)", si("noModule" in s), "noModule" in s ? "si" : "no");
+  cap("Módulos ES (cargó uno de verdad)", "probando…", "tal");
+  setTimeout(function () { if (!window.__noliModulo) cap("Módulos ES (cargó uno de verdad)", "no", "no"); }, 3000);
+
+  var ls = false;
+  try { localStorage.setItem("noli.diag", "1"); ls = localStorage.getItem("noli.diag") === "1"; localStorage.removeItem("noli.diag"); } catch (x) {}
+  cap("localStorage", si(ls), ls ? "si" : "no");
+  cap("Service worker", si("serviceWorker" in navigator), "serviceWorker" in navigator ? "si" : "no");
+  cap("fetch / Promise", si(!!window.fetch) + " / " + si(!!window.Promise), window.fetch && window.Promise ? "si" : "no");
+  cap("navigator.vibrate", si(!!navigator.vibrate), "");
+  cap("RTCPeerConnection", si(!!window.RTCPeerConnection) + (window.webkitRTCPeerConnection && !window.RTCPeerConnection ? " (solo webkitRTCPeerConnection)" : ""), window.RTCPeerConnection ? "si" : "no");
+
+  // RTCDataChannel: no basta con que exista; se conectan dos conexiones dentro de la misma página y se manda un mensaje
+  function probarDataChannel() {
+    var RTC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+    if (!RTC) { cap("RTCDataChannel (prueba local)", "no hay RTCPeerConnection", "no"); return; }
+    cap("RTCDataChannel (prueba local)", "probando…", "tal");
+    var listo = false;
+    var timer = setTimeout(function () { if (!listo) cap("RTCDataChannel (prueba local)", "no conectó en 10 s", "no"); }, 10000);
+    try {
+      var a = new RTC({ iceServers: [] }), b = new RTC({ iceServers: [] });
+      a.onicecandidate = function (e) { if (e.candidate) b.addIceCandidate(e.candidate).catch(function () {}); };
+      b.onicecandidate = function (e) { if (e.candidate) a.addIceCandidate(e.candidate).catch(function () {}); };
+      var dc = a.createDataChannel("diag");
+      var t0 = Date.now();
+      dc.onopen = function () { t0 = Date.now(); dc.send("hola"); };
+      b.ondatachannel = function (e) {
+        e.channel.onmessage = function (m) {
+          if (m.data !== "hola") return;
+          listo = true; clearTimeout(timer);
+          cap("RTCDataChannel (prueba local)", "sí, el mensaje llegó en " + (Date.now() - t0) + " ms", "si");
+          try { a.close(); b.close(); } catch (x) {}
+        };
+      };
+      a.createOffer().then(function (o) { return a.setLocalDescription(o); })
+        .then(function () { return b.setRemoteDescription(a.localDescription); })
+        .then(function () { return b.createAnswer(); })
+        .then(function (r) { return b.setLocalDescription(r); })
+        .then(function () { return a.setRemoteDescription(b.localDescription); })
+        .catch(function (e) { listo = true; clearTimeout(timer); cap("RTCDataChannel (prueba local)", "error: " + (e && (e.name || e.message)), "no"); });
+    } catch (e) { clearTimeout(timer); cap("RTCDataChannel (prueba local)", "error: " + (e && (e.name || e.message)), "no"); }
+  }
+  probarDataChannel();
+
+  // ---------- Pintar y reporte ----------
+  function pintar() {
+    var tb = "";
+    for (var i = 0; i < caps.length; i++) tb += "<tr><th>" + esc(caps[i][0]) + "</th><td class='" + caps[i][2] + "'>" + esc(caps[i][1]) + "</td></tr>";
+    $("#caps tbody").innerHTML = tb;
+    var tk = "";
+    for (var j = 0; j < orden.length; j++) {
+      var t = teclas[orden[j]];
+      tk += "<tr><td>" + esc(JSON.stringify(t.key)) + "</td><td>" + t.keyCode + "</td><td>" + esc(t.code) + "</td><td class='" + (t.accion ? "si" : "no") + "'>" + (t.accion || "—") + "</td><td>" + t.veces + "</td></tr>";
+    }
+    $("#teclas tbody").innerHTML = tk;
+    $("#reporte").textContent = reporte();
+  }
+  function reporte() {
+    var r = "### Diagnóstico (" + new Date().toISOString().slice(0, 16).replace("T", " ") + ")\n\n| | |\n|---|---|\n";
+    for (var i = 0; i < caps.length; i++) r += "| " + caps[i][0] + " | " + String(caps[i][1]).replace(/\|/g, "\\|") + " |\n";
+    r += "\n| key | keyCode | code | Noli entiende |\n|---|---|---|---|\n";
+    for (var j = orden.length - 1; j >= 0; j--) { var t = teclas[orden[j]]; r += "| `" + JSON.stringify(t.key) + "` | " + t.keyCode + " | " + (t.code || "") + " | " + (t.accion || "—") + " |\n"; }
+    return r;
+  }
+  $("#copiar").onclick = function () {
+    var txt = reporte();
+    function ok() { $("#copiado").textContent = " ¡Copiado!"; }
+    try { navigator.clipboard.writeText(txt).then(ok, viejo); } catch (x) { viejo(); }
+    function viejo() {
+      var ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); ok(); } catch (x) { $("#copiado").textContent = " No se pudo copiar: tómale foto."; }
+      document.body.removeChild(ta);
+    }
+  };
+  window.__noliCap = cap;
+  pintar();
+})();
+</script>
+<!-- Si el navegador carga módulos ES, este bloque corre y lo marca -->
+<script type="module">
+  window.__noliModulo = true;
+  if (window.__noliCap) window.__noliCap("Módulos ES (cargó uno de verdad)", "sí", "si");
+</script>
+</body></html>

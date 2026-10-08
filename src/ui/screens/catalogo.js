@@ -6,21 +6,24 @@ import { materias, jugableEn } from "../../engine/index.js";
 import { esc } from "../dom.js";
 import { nombreMateria, estrellasHtml } from "../labels.js";
 import { botonNube } from "../components/nube.js";
+import { chipRemoto, instalarChipRemoto } from "../components/remoto.js";
 
 const LETRAS = ["N", "o", "l", "i"];
 
 export function renderCatalogo(app) {
   const lista = visibles();
   const mats = materias(state.juegos.filter((j) => jugableEn(j, state.modo)));
+  const tv = state.modo === "tv"; // en la TV, al final de los filtros va el botón del control remoto (issue #3)
   app.innerHTML = `
     <header class="cabeza">
       ${botonNube()}
       <h1 class="marca" aria-label="Noli">${LETRAS.map((l, i) => `<span class="l${i}">${l}</span>`).join("")}</h1>
       <p class="saludo">¡Hola, Noelia! ¿A qué jugamos hoy?</p>
     </header>
-    ${mats.length > 1 ? `<nav class="chips" aria-label="Materias">
-      ${[null, ...mats].map((m) => `<button class="chip${m === state.materia ? " sel" : ""}" data-materia="${esc(m || "")}" aria-pressed="${m === state.materia}">
+    ${mats.length > 1 || tv ? `<nav class="chips" aria-label="Materias">
+      ${(mats.length > 1 ? [null, ...mats] : []).map((m) => `<button class="chip${m === state.materia ? " sel" : ""}" data-materia="${esc(m || "")}" aria-pressed="${m === state.materia}">
         ${esc(nombreMateria(m))}</button>`).join("")}
+      ${tv ? chipRemoto() : ""}
     </nav>` : ""}
     <main class="rejilla" id="rejilla">
       ${state.cargando ? `<p class="vacio">Cargando juegos…</p>`
@@ -29,11 +32,12 @@ export function renderCatalogo(app) {
     </main>`;
 
   app.querySelector("#nubeBtn").onclick = actions.abrirNube;
-  for (const b of app.querySelectorAll(".chip")) b.onclick = () => actions.elegirMateria(b.dataset.materia || null);
+  for (const b of app.querySelectorAll(".chip[data-materia]")) b.onclick = () => actions.elegirMateria(b.dataset.materia || null);
   for (const t of app.querySelectorAll(".tarjeta")) {
     t.onclick = () => actions.abrir(t.dataset.id);
     t.onfocus = () => actions.enfocar(+t.dataset.i);
   }
+  instalarChipRemoto(app);
   medirColumnas();
 }
 
@@ -68,7 +72,7 @@ export function moverFoco(conTeclado) {
 
 // Teclas cuando el foco está en los filtros: izquierda/derecha entre filtros, abajo a la cuadrícula
 export function teclaEnFiltros(accion, el) {
-  const chips = [...document.querySelectorAll(".chip")];
+  const chips = [...document.querySelectorAll(".chips .chip")];
   const i = chips.indexOf(el);
   if (accion === "arriba") { document.getElementById("nubeBtn")?.focus(); return true; }
   if (accion === "izquierda" && i > 0) chips[i - 1].focus();
@@ -81,10 +85,11 @@ export function teclaEnFiltros(accion, el) {
 export function enfocarTarjeta() {
   const t = document.querySelectorAll(".tarjeta")[state.foco];
   if (t) t.focus();
+  return !!t;
 }
 
 export function enfocarFiltros() {
-  const c = document.querySelector(".chip.sel") || document.querySelector(".chip");
+  const c = document.querySelector(".chips .chip.sel") || document.querySelector(".chips .chip");
   if (c) { c.focus(); return true; }
   return false;
 }

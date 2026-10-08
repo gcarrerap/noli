@@ -1,6 +1,6 @@
 # Noli
 
-Juegos educativos para Noelia (7 años), en el navegador. Se juegan en el **teléfono o la tableta** con el dedo, o en la **smart TV** con el control de la tele (y, en la siguiente fase, usando un teléfono como control remoto).
+Juegos educativos para Noelia (7 años), en el navegador. Se juegan en el **teléfono o la tableta** con el dedo, o en la **smart TV** con el control de la tele o usando un **teléfono como control remoto**.
 
 La página principal es un **catálogo**: cada juego es una tarjeta, y cada juego vive en su propia carpeta dentro de `minijuegos/`. Está hecho con HTML, CSS y JavaScript en módulos, sin dependencias ni paso de compilación, con la misma filosofía que [Dominó de la Familia](https://github.com/gcarrerap/myDomino) y [La Pata de la Familia](https://github.com/gcarrerap/myPata). El diseño completo está en [DESIGN.md](DESIGN.md).
 
@@ -24,7 +24,9 @@ Abre la página y toca un juego. La casita 🏠 regresa al catálogo. Las estrel
 
 Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele; **Atrás** regresa al catálogo.
 
-**Teléfono como control remoto:** en camino (ver [DESIGN.md §5](DESIGN.md#fase-2-el-teléfono-como-control-remoto-issue-aparte)). La TV mostrará un código y un QR; el teléfono lo abre y queda como control.
+**Teléfono como control remoto:** en la TV, sube con las flechas hasta **📱 Usar mi teléfono** y aprieta OK. Sale un código de 4 números y un QR: apunta la cámara del teléfono al QR (o abre `https://gcarrerap.github.io/noli/control.html` y escribe el código). El teléfono queda como control: cruceta, OK y Atrás, igual que el de la tele. Si el teléfono se bloquea o la TV recarga la página, se vuelven a conectar solos con el mismo código. Va directo del teléfono a la TV por WebRTC; si eso no conecta en unos segundos, por Firestore (dice "por internet" en el teléfono).
+
+**Diagnóstico de la TV:** `https://gcarrerap.github.io/noli/diagnostico.html` enseña qué manda cada botón del control y qué tiene el navegador de la TV (módulos, WebRTC…), con un bloque para pegar en el issue #3.
 
 ## Publicarlo
 
@@ -59,7 +61,7 @@ Sin internet se sigue jugando; lo nuevo se sube al regresar la conexión.
 
 ### Firebase
 
-Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `noli_` (`src/config.js`). **Antes de usar la nube hay que publicar las reglas:** copia [`firestore.rules`](firestore.rules) completo en **Firebase → Firestore → Reglas** y publícalas. Trae también los bloques de La Pata y el dominó (Firestore tiene un solo archivo de reglas por proyecto y publicar reemplaza todo), así que esas apps siguen funcionando igual. **Ojo:** si después se publican las reglas de myPata o myDomino, se borran las de Noli; hay que mantener los tres bloques juntos. El dominio `gcarrerap.github.io` ya está autorizado por el dominó.
+Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `noli_` (`src/config.js`). **Antes de usar la nube o el control remoto hay que publicar las reglas:** copia [`firestore.rules`](firestore.rules) completo en **Firebase → Firestore → Reglas** y publícalas. Trae también los bloques de La Pata y el dominó (Firestore tiene un solo archivo de reglas por proyecto y publicar reemplaza todo), así que esas apps siguen funcionando igual. **Ojo:** si después se publican las reglas de myPata o myDomino, se borran las de Noli; hay que mantener los tres bloques juntos. El dominio `gcarrerap.github.io` ya está autorizado por el dominó.
 
 ## Agregar un juego
 
@@ -99,6 +101,8 @@ ui/  →  app/  →  engine/          kit/  (protocolo, teclas, SDK de los juego
 ```
 noli/
 ├── index.html          # catálogo (esqueleto: estilos y src/main.js)
+├── control.html        # el teléfono como control remoto (src/control/main.js)
+├── diagnostico.html    # qué manda el control de la TV y qué tiene su navegador
 ├── sw.js               # service worker: siempre la versión más reciente
 ├── firestore.rules     # reglas del proyecto dominomx (Noli, La Pata y el dominó)
 ├── kit/                # protocolo.js, teclas.js, foco.js (flechas entre botones), noli.js (SDK de los juegos)
@@ -108,13 +112,14 @@ noli/
 │   ├── sumas-restas/   # juego.json, index.html, estilo.css, icono.svg, src/ (lógica pura + pantallas), tests/
 │   └── ejemplo/        # un juego mínimo: juego.json, index.html, juego.js, estilo.css
 ├── src/
-│   ├── main.js, version.js
-│   ├── engine/         # manifiesto.js, catalogo.js
-│   ├── services/       # catalogo-repo.js, prefs.js, updates.js
-│   ├── app/            # store.js, actions.js, updates.js
+│   ├── main.js, version.js, config.js (Firebase)
+│   ├── engine/         # manifiesto.js, catalogo.js, sala.js, qr.js
+│   ├── services/       # catalogo-repo.js, prefs.js, updates.js, firebase.js, salas.js
+│   ├── app/            # store.js, actions.js, updates.js, enlace.js, remoto.js (TV), telefono.js
+│   ├── control/        # main.js: la pantalla del teléfono
 │   └── ui/             # render.js, entrada.js, labels.js, screens/, components/
-├── styles/             # tokens (colores, tema, escala TV), base, catálogo
-├── tests/              # node:test, sin dependencias
+├── styles/             # tokens (colores, tema, escala TV), base, catálogo, remoto, control
+├── tests/              # node:test, sin dependencias (fakes/: Firebase y WebRTC de mentira)
 ├── package.json        # solo para correr las pruebas
 ├── DESIGN.md
 └── README.md
@@ -128,11 +133,11 @@ Corren con Node 18 o más nuevo, sin instalar nada:
 npm test
 ```
 
-Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, y que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
+Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**, y el control remoto: códigos y salas, el QR (comparado con una librería de referencia), y una TV y un teléfono de mentira que se emparejan, mandan acciones, se pasan al respaldo por Firestore y se vuelven a conectar. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
 
 ## Stack
 
 - HTML, CSS y JavaScript (módulos ES nativos), sin frameworks ni compilación
 - Tipografías: Fredoka y Nunito (Google Fonts)
 - Firebase 10.12 (SDK compat del CDN, solo si la nube está activada): Authentication anónima y Cloud Firestore (proyecto `dominomx`, colecciones `noli_`)
-- Fase 2: WebRTC del navegador para el control remoto, con señalización en Firebase
+- Control remoto: WebRTC del navegador (`RTCDataChannel`), con señalización y respaldo en Firestore (proyecto `dominomx`, colección `noli_salas`, SDK compat del CDN, cargado solo al usarlo); QR generado aquí mismo (`engine/qr.js`)

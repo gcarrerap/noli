@@ -88,7 +88,7 @@ El juego abierto corre en un `<iframe>` a pantalla completa (`ui/screens/jugando
 | Dirección | Mensaje | Cuándo |
 |---|---|---|
 | catálogo → juego | `{ tipo: "hola", modo, datos }` | Al cargar. `modo` es `"tactil"` o `"tv"` (el kit lo pone en `<html data-modo>` para que el juego ajuste tamaños). `datos`: lo que el juego guardó la última vez (o `null`). |
-| catálogo → juego | `{ tipo: "entrada", accion }` | Una acción que llegó al catálogo (hoy: teclas con el foco fuera del iframe; en la fase 2: el teléfono remoto). |
+| catálogo → juego | `{ tipo: "entrada", accion }` | Una acción que llegó al catálogo (teclas con el foco fuera del iframe y el teléfono remoto). |
 | juego → catálogo | `{ tipo: "listo" }` | El kit ya escucha. |
 | juego → catálogo | `{ tipo: "terminar", estrellas }` | Terminó una partida (0 a 3 estrellas). El catálogo guarda la mejor y cuántas veces se ha jugado. |
 | juego → catálogo | `{ tipo: "guardar", datos }` | Guardar el progreso propio del juego (un objeto JSON). |
@@ -125,7 +125,7 @@ moverFoco(accion);                // flechas entre los botones [data-foco] segú
 
 En el catálogo, las flechas se mueven en la cuadrícula (`engine/catalogo.js → mover`, sin dar la vuelta; "abajo" en una fila incompleta va a la última tarjeta), "arriba" desde la primera fila pasa a los filtros, y OK abre. Con el dedo no se ve el contorno de foco; con la primera tecla sí (`html.teclado`).
 
-### Fase 2: el teléfono como control remoto (issue aparte)
+### Fase 2: el teléfono como control remoto (#3)
 
 ```
  TV (index.html?modo=tv)                     teléfono (control.html)
@@ -143,6 +143,15 @@ En el catálogo, las flechas se mueven en la cuadrícula (`engine/catalogo.js �
 3. El teléfono manda acciones; en la TV entran por **`actions.entrada(accion)`**, el mismo punto que el teclado, así que ni el catálogo ni los juegos cambian.
 
 **Canal propuesto:** `RTCDataChannel` de WebRTC directo entre teléfono y TV (latencia de decenas de ms, sin servidor de por medio), con la **señalización por Firestore** que ya funciona en las llamadas de myPata (`services/call-signaling.js`: un solo lado ofrece, el otro responde). Si WebRTC no conecta (algunas redes con CGNAT), respaldo: las acciones van como documentos en Firestore (unos 100–300 ms, suficiente para juegos por turnos). **Firebase:** el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones con prefijo `noli_` (`noli_salas`) y preferencias con prefijo `noli.`; sus reglas se agregan al `firestore.rules` compartido sin tocar las del dominó ni las de la pata. Al conectarse, se reutiliza `services/firebase.js` del dominó (SDK compat del CDN, cargado después de dibujar, entrada anónima).
+
+**Cómo quedó (#3):**
+
+- **Sala** (`engine/sala.js`, `services/salas.js`): `noli_salas/{código}` con `tv` (usuario anónimo), `sesion`, `vence`, `tvVisto` y `control: { id, sid, visto }`. La TV la renueva cada minuto; sin renovar, se vence en 3 minutos y su código queda libre (no hace falta servidor ni limpieza aparte). La TV recuerda su código (`noli.sala`) y si recarga la página vuelve a abrir el mismo con otra sesión; el teléfono lo nota en la sala y se vuelve a conectar solo. El código es de 4 dígitos sin cero al principio.
+- **Canal** (`app/enlace.js`): el teléfono crea el `RTCDataChannel` y ofrece; la TV solo responde. Señales en `noli_salas/{código}/senales` (igual que `call-signaling.js` de myPata: ids ordenados por hora, quien recibe borra, `sid` por conexión). Mientras el canal no abre —o si nunca abre— las acciones van como documentos en `noli_salas/{código}/acciones` (filtradas por la sesión de la TV); la TV escucha las dos vías siempre. Se usa `createOffer`/`createAnswer` explícitos y nada de `?.`/`??` en este archivo, por los navegadores de TV.
+- **Reconexión**: el teléfono ofrece un canal nuevo al regresar a la pantalla, al recuperar la red, si el canal se cierra o si falla la conexión; la TV cambia al nuevo `sid` y cierra el viejo. Si otro teléfono se une, el último gana y el primero ve "Otro teléfono tomó el control" con un botón para recuperarlo.
+- **En la TV** (`app/remoto.js`, `ui/components/remoto.js`): el botón **📱 Usar mi teléfono** va al final de los filtros; el recuadro enseña el QR (`engine/qr.js`, sin dependencias) y el código, y se quita solo al conectarse el teléfono. Las acciones del teléfono pasan por `ui/entrada.js → aplicarAccion`, lo mismo que las teclas, y de ahí a `actions.entrada`: ni el catálogo ni los juegos cambian. Firebase se carga solo al prender el control remoto (y al recargar si estaba prendido: `noli.remoto`).
+- **En el teléfono** (`control.html`, `app/telefono.js`, `src/control/main.js`): cruceta, OK y Atrás con `pointerdown` (respuesta inmediata), vibración corta, repetición al dejar el dedo en una flecha, pantalla siempre prendida (Wake Lock) y el estado de la conexión ("por internet" = respaldo por Firestore).
+- **Pendiente de las TVs reales**: correr `diagnostico.html` en la LG y la Samsung y ajustar `kit/teclas.js`. Ojo: el catálogo ya usa `??` (Chromium 80 o más nuevo); si alguna TV es más vieja, hay que quitarlo de `engine/manifiesto.js`, `services/prefs.js` y `ui/dom.js`.
 
 **Más adelante:** el juego podrá mandar al teléfono **botones propios** (`{ tipo: "botones", botones: ["1", "4", "5"] }`) para que Noelia conteste tocando su teléfono en lugar de moverse con flechas; y dos teléfonos podrán ser dos jugadores. Por eso `controles` distingue `flechas` de `remoto`.
 
@@ -211,4 +220,4 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 
 - Cuentas o varios niños (un perfil por niño sería un selector antes del catálogo; el diseño de la nube ya lo permite).
 - Sonido y voz compartidos en el kit (cada juego trae los suyos; si se repiten, se suben al kit).
-- Un juego de varios jugadores en la misma TV (posible con dos teléfonos remotos, fase 2+).
+- Un juego de varios jugadores en la misma TV (posible con dos teléfonos remotos, después de #3).
