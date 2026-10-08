@@ -478,9 +478,11 @@ function diagnostico() {
   const e = Voz.estado();
   return [
     `Grabaciones: ${e.grabaciones}`,
+    ...e.detalles.map((d) => "  " + d),
     `Respaldo (voz del navegador): speechSynthesis ${e.soporte ? "sí" : "no"} · voces: ${e.voces} · en inglés: ${e.ingles.length}${e.usando ? " · usando " + e.usando : ""}`,
     ...e.ingles.slice(0, 6).map((v) => "  · " + v),
     ...(e.bitacora.length ? ["", ...e.bitacora] : []),
+    "", e.navegador,
   ].join("\n");
 }
 
