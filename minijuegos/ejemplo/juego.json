@@ -1,0 +1,12 @@
+{
+  "id": "ejemplo",
+  "titulo": "Cuenta y toca",
+  "descripcion": "¿Cuántos hay? Escoge el número.",
+  "icono": "🍓",
+  "color": "#ff6b4a",
+  "materia": "números",
+  "edades": [4, 7],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1"
+}
