@@ -7,7 +7,7 @@
 // - Chrome puede quedarse en pausa (resume() antes de hablar) y pierde la frase si nadie la guarda (se guarda).
 // - Hay voces que existen pero no suenan (voces de red sin internet, TVs): si una frase no empieza en unos
 //   segundos o da error, se prueba la siguiente voz en inglés; si ninguna suena, Voz.hay pasa a false y el juego
-//   enseña la palabra en lugar de decirla (avisa con Voz.alFallar).
+//   avisa (Voz.alFallar) para que el juego diga cómo arreglarlo. Nunca se enseña la palabra en su lugar.
 // - Voz.estado() junta todo lo anterior para la pantalla "Para papás" (probar la voz en cada aparato).
 
 const PREFERIDAS = /samantha|google us english|aria|jenny|allison|ava|zira|karen|serena|moira|daniel|english united states/i;
@@ -118,7 +118,7 @@ export const Voz = {
     });
   },
   callar() { actual = null; if (sintesis && (sintesis.speaking || sintesis.pending)) sintesis.cancel(); },
-  // fn() cuando la voz deja de funcionar en este aparato (el juego cambia a enseñar la palabra)
+  // fn() cuando la voz deja de funcionar en este aparato (el juego enseña un aviso)
   alFallar(fn) { oyentesFalla.add(fn); },
   // Volver a intentar desde la primera voz (botón "Probar la voz" de papás)
   reintentar() { rota = false; k = 0; fallasSeguidas = 0; anotar("Reintentando"); },
