@@ -8,7 +8,7 @@ import { opciones, letrasParaArmar, diferencias, igual } from "./faltas.js";
 import { cargar, registrar, cerrarRonda, armarRonda, colocar, dominio, cumplirReto, racha, semana, resumen, fechaLocal, elegida, estrellasRonda, POR_RONDA, VENTANA, NECESITA } from "./progreso.js";
 import { empezarPrueba, responderPrueba, palabraActual } from "./nivelacion.js";
 import { retoDelDia } from "./reto.js";
-import { Voz, letraPorLetra } from "./voz.js";
+import { Voz } from "./voz.js";
 
 const $main = document.getElementById("juego");
 const rnd = Math.random;
@@ -55,6 +55,7 @@ function bienvenida() {
 
 function prueba() {
   juego = { modo: "prueba", etapa: "escribe", prueba: empezarPrueba(rnd), i: 0 };
+  Voz.precargar(juego.prueba.palabras.map((x) => x.palabra));
   palabra();
 }
 
@@ -118,6 +119,7 @@ function practicar() {
 function nuevaRonda(etapa = "escribe") {
   const n = elegida(pr);
   juego = { modo: etapa === "escribe" ? "dictado" : "practica", n, etapa, lista: armarRonda(pr, n, rnd), i: 0, aciertos: 0, repetidas: 0 };
+  Voz.precargar(juego.lista.map((x) => x.palabra));
   palabra();
 }
 
@@ -179,14 +181,14 @@ function cabecera() {
 
 // Si la voz se dio por perdida, un toque en "Otra vez" la vuelve a intentar (a veces solo faltaba el volumen)
 const intentar = () => { if (!Voz.hay) Voz.reintentar(); };
-function decir() { intentar(); Voz.decir(actual().palabra); }
-function despacio() { intentar(); Voz.decir(actual().palabra, 0.5); }
+function decir() { intentar(); Voz.palabra(actual().palabra); }
+function despacio() { intentar(); Voz.palabra(actual().palabra, true); }
 function frase() {
   const it = actual(), p = $main.querySelector(".frase");
   p.textContent = conHueco(it.frase, it.palabra);
   p.hidden = false;
   intentar();
-  Voz.decir(it.frase, 0.85);
+  Voz.frase(it.palabra);
 }
 
 // ---------- Contestar ----------
@@ -271,7 +273,7 @@ function contestar(ok, intento, motivo = null) {
   }
   // Error: enseñar cómo se escribe, deletrearla en voz alta y esperar a "Seguir"
   aviso(m === "prueba" ? "¡No pasa nada! Así se escribe." : motivo || (juego.etapa === "escoge" ? `Se escribe ${it.palabra}.` : "Fíjate en las letras marcadas."), "mal");
-  Voz.decir(`${it.palabra}. ${letraPorLetra(it.palabra)} ${it.palabra}.`, 0.75);
+  Voz.deletrear(it.palabra);
   ponerSeguir();
 }
 
@@ -347,6 +349,7 @@ function retoIntro() {
 function retoJugar() {
   const reto = retoDelDia(hoy(), pr.lista);
   juego = { modo: reto.tipo, reto, etapa: reto.modo || null, lista: reto.palabras || reto.frases, i: 0, aciertos: 0, fin: performance.now() + (reto.segundos || 0) * 1000 };
+  Voz.precargar(juego.lista.slice(0, 20).map((x) => x.palabra));
   if (reto.tipo === "detective") detective(); else palabra();
 }
 
@@ -387,7 +390,7 @@ function senalar(k, partes) {
   for (const b of botones) { b.disabled = true; b.removeAttribute("data-foco"); }
   aviso(ok ? `¡La encontraste! Se escribe ${it.palabra}.` : `La mal escrita era "${it.falta}". Se escribe ${it.palabra}.`, ok ? "bien" : "mal");
   $main.querySelector(".zona").innerHTML = correccion(it.palabra, it.falta, false);
-  Voz.decir(`${it.palabra}. ${letraPorLetra(it.palabra)}`, 0.75);
+  Voz.deletrear(it.palabra);
   ponerSeguir();
 }
 
@@ -474,8 +477,8 @@ function papas() {
 function diagnostico() {
   const e = Voz.estado();
   return [
-    `speechSynthesis: ${e.soporte ? "sí" : "no"} · voces: ${e.voces} · en inglés: ${e.ingles.length}`,
-    `Usando: ${e.usando || "ninguna"}${e.rota ? " (no suena)" : ""}`,
+    `Grabaciones: ${e.grabaciones}`,
+    `Respaldo (voz del navegador): speechSynthesis ${e.soporte ? "sí" : "no"} · voces: ${e.voces} · en inglés: ${e.ingles.length}${e.usando ? " · usando " + e.usando : ""}`,
     ...e.ingles.slice(0, 6).map((v) => "  · " + v),
     ...(e.bitacora.length ? ["", ...e.bitacora] : []),
   ].join("\n");
@@ -484,7 +487,7 @@ function diagnostico() {
 function probarVoz() {
   Voz.reintentar();
   const pintar = () => { if (pantalla === "papas") $main.querySelector(".diagnostico").textContent = diagnostico(); };
-  Voz.decir("Hello Noli! Can you spell cat? C. A. T. Cat.").then(pintar);
+  Voz.prueba().then(pintar);
   setTimeout(pintar, 1500);
 }
 
@@ -504,7 +507,7 @@ const IR = {
   ronda: ({ etapa }) => nuevaRonda(etapa || "escribe"),
   practica: ({ etapa }) => nuevaRonda(etapa),
   borrar: () => borrar(),
-  oirFrase: () => { intentar(); Voz.decir(actual().frase, 0.85); },
+  oirFrase: () => { intentar(); Voz.frase(actual().palabra); },
   elegir: ({ n }) => { pr = { ...pr, elegida: +n }; guardar(); inicio(); },
   saltarPrueba: () => { pr = colocar(pr, 1); guardar(); inicio(); },
   repetirPrueba: () => { pr = { ...pr, nivelado: false }; guardar(); bienvenida(); },

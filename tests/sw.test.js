@@ -46,3 +46,12 @@ test("sw: sin conexión y sin copia, falla como sin service worker", async () =>
   const { sw } = loadSW({ network: async () => { throw new TypeError("Failed to fetch"); } });
   await assert.rejects(sw.handle(req(SITE + "src/x.js"), "https://gcarrerap.github.io"), /Failed to fetch/);
 });
+
+test("sw: no se mete con peticiones de pedazos (audio con Range) y no falla si no puede guardar", async () => {
+  const { sw, store } = loadSW({ network: async () => new Response("parte", { status: 206 }) });
+  const conRange = { url: SITE + "minijuegos/spelling/audio/p/cat.mp3", method: "GET", headers: new Headers({ range: "bytes=0-" }) };
+  assert.equal(sw.handle(conRange, "https://gcarrerap.github.io"), null);
+  const res = await sw.handle(req(SITE + "minijuegos/spelling/audio/p/cat.mp3"), "https://gcarrerap.github.io");
+  assert.equal(res.status, 206);
+  assert.equal(store.size, 0, "un 206 no se guarda");
+});

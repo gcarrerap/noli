@@ -7,6 +7,8 @@ const CACHE = "noli-v1";
 // Decide qué hacer con una petición; devuelve una promesa de respuesta, o null para no intervenir
 function handle(request, origin) {
   if (request.method !== "GET") return null;
+  // Audio y video piden pedazos (Range → 206): esos no se pueden guardar en la caché; que el navegador los maneje
+  if (request.headers && request.headers.get && request.headers.get("range")) return null;
   if (new URL(request.url).origin !== origin) return null;
   return networkFirst(request);
 }
@@ -15,7 +17,8 @@ async function networkFirst(request) {
   const cache = await caches.open(CACHE);
   try {
     const response = await fetch(request, { cache: "no-cache" });
-    if (response && response.ok) await cache.put(request, response.clone());
+    // Solo respuestas completas (200); si guardar falla, igual se entrega la respuesta
+    if (response && response.status === 200) await cache.put(request, response.clone()).catch(() => {});
     return response;
   } catch (e) {
     const cached = await cache.match(request, { ignoreSearch: true });

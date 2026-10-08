@@ -9,6 +9,7 @@ import { nuevo, cargar, registrar, dominio, cerrarRonda, armarRonda, colocar, cu
 import { empezarPrueba, responderPrueba, palabraActual } from "../src/nivelacion.js";
 import { retoDelDia, alcance } from "../src/reto.js";
 import { escogerVoz, ordenarVoces, letraPorLetra } from "../src/voz.js";
+import fs from "node:fs";
 
 const HOY = "2026-10-08";
 const todas = LISTAS.flatMap((l) => l.palabras);
@@ -280,6 +281,15 @@ test("resumen para papás", () => {
 });
 
 // ---------- Voz ----------
+
+test("grabaciones: cada palabra tiene su audio (normal, despacio y frase), las 26 letras y la prueba", () => {
+  const hay = (r) => fs.existsSync(new URL(`../audio/${r}.mp3`, import.meta.url));
+  const faltan = [];
+  for (const { palabra } of todas) for (const d of ["p", "d", "f"]) if (!hay(`${d}/${palabra.toLowerCase()}`)) faltan.push(`${d}/${palabra}`);
+  for (const c of "abcdefghijklmnopqrstuvwxyz") if (!hay(`l/${c}`)) faltan.push(`l/${c}`);
+  if (!hay("prueba")) faltan.push("prueba");
+  assert.deepEqual(faltan, [], "graba lo que falta con: python3 minijuegos/spelling/herramientas/grabar.py --voz …");
+});
 
 test("voz: prefiere inglés de EE. UU. y voces conocidas; sin inglés no hay voz", () => {
   const v = (name, lang, localService = true) => ({ name, lang, localService });
