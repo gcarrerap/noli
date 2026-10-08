@@ -1,47 +1,58 @@
 // Progreso de Noelia en spelling: funciones puras sobre un objeto JSON que el juego guarda con Noli.guardar.
 //
+// El juego principal es el DICTADO: el juego dice la palabra y ella la escribe. Cada lista se pasa con 18 de
+// las últimas 20 bien en dictado, y entonces se abre la siguiente. "Escoge" y "Arma" son práctica opcional.
+//
 // {
-//   v: 1,
-//   paso: 4,                         // el paso más alto abierto (paso = lista × etapa; ver palabras.js)
-//   elegido: 3,                      // el paso que escogió jugar (si volvió a uno anterior)
-//   pasos: { "0": { ultimos: [1, 0, …], total, aciertos, dominado, estrellas, rondas } },
+//   v: 2,
+//   lista: 5,                        // la lista más alta abierta
+//   elegida: 4,                      // la que escogió jugar (si volvió a una anterior)
+//   nivelado: true,                  // ya hizo la prueba de nivel (o la saltó)
+//   listas: { "5": { ultimos: [1, 0, …20], total, aciertos, dominada, estrellas, rondas, porPrueba } },
 //   palabras: { "cake": { total, aciertos } },
 //   fallos: { "cake": { lista, veces, seguidos } },   // palabras que falló; salen con 2 bien seguidas
 //   dias: { "2026-10-08": { palabras, aciertos, reto } },
 //   retos: { "2026-10-08": { tipo, cumplido, puntos } },
-//   sinVoz: false,                   // papás: enseñar la palabra en lugar de decirla
 // }
-import { LISTAS, ETAPAS, PASOS, paso as datosPaso, lista as datosLista, buscar } from "./palabras.js";
+import { LISTAS, lista as datosLista, buscar } from "./palabras.js";
 import { revolver } from "./rng.js";
 
 export const POR_RONDA = 10;
+export const VENTANA = 20;       // respuestas de dictado que cuentan para pasar la lista
+export const NECESITA = 18;      // cuántas de ellas bien
 
 export function nuevo() {
-  return { v: 1, paso: 0, elegido: null, pasos: {}, palabras: {}, fallos: {}, dias: {}, retos: {}, sinVoz: false };
+  return { v: 2, lista: 1, elegida: null, nivelado: false, listas: {}, palabras: {}, fallos: {}, dias: {}, retos: {} };
 }
 
-// Datos guardados que pueden venir rotos o de otra versión: siempre devuelve un progreso válido
+// Datos guardados que pueden venir rotos o de la versión anterior: siempre devuelve un progreso válido.
+// La v1 tenía "pasos" (lista × etapa): se conserva la lista en la que iba y lo que jugó, y se le ofrece la prueba.
 export function cargar(d) {
-  if (!d || typeof d !== "object" || d.v !== 1) return nuevo();
+  if (!d || typeof d !== "object") return nuevo();
+  if (d.v === 1) {
+    const lista = Math.floor((d.paso | 0) / 3) + 1;
+    return cargar({ ...nuevo(), lista, palabras: d.palabras || {}, fallos: d.fallos || {}, dias: d.dias || {}, retos: d.retos || {} });
+  }
+  if (d.v !== 2) return nuevo();
   const p = { ...nuevo(), ...d };
-  p.paso = Math.max(0, Math.min(PASOS - 1, p.paso | 0));
-  if (p.elegido != null) p.elegido = Math.max(0, Math.min(p.paso, p.elegido | 0));
+  p.lista = Math.max(1, Math.min(LISTAS.length, p.lista | 0));
+  if (p.elegida != null) p.elegida = Math.max(1, Math.min(p.lista, p.elegida | 0));
   return p;
 }
 
-// El paso que se juega: el que escogió (si sigue abierto) o el más alto
-export const elegido = (pr) => (pr.elegido == null ? pr.paso : Math.min(pr.elegido, pr.paso));
+// La lista que se juega: la que escogió (si sigue abierta) o la más alta
+export const elegida = (pr) => (pr.elegida == null ? pr.lista : Math.min(pr.elegida, pr.lista));
 
-const pasoDe = (pr, i) => pr.pasos[i] || { ultimos: [], total: 0, aciertos: 0, dominado: false, estrellas: 0, rondas: 0 };
+const listaDe = (pr, n) => pr.listas[n] || { ultimos: [], total: 0, aciertos: 0, dominada: false, estrellas: 0, rondas: 0 };
 const clave = (w) => w.toLowerCase();
 
-// Registra una respuesta. i: el paso en el que se contestó (cuenta para su dominio); null en los retos, que
-// cuentan para las palabras, los fallos y el día, pero no para subir. Devuelve un progreso nuevo.
-export function registrar(pr, i, palabra, ok, hoy) {
-  let pasos = pr.pasos;
-  if (i != null) {
-    const ventana = datosPaso(i).etapa.ventana, ps = pasoDe(pr, i);
-    pasos = { ...pasos, [i]: { ...ps, ultimos: [...ps.ultimos, ok ? 1 : 0].slice(-ventana), total: ps.total + 1, aciertos: ps.aciertos + (ok ? 1 : 0) } };
+// Registra una respuesta. n: la lista del dictado en curso (cuenta para pasarla); null en la práctica y los
+// retos, que cuentan para las palabras, los fallos y el día, pero no para pasar. Devuelve un progreso nuevo.
+export function registrar(pr, n, palabra, ok, hoy) {
+  let listas = pr.listas;
+  if (n != null) {
+    const ls = listaDe(pr, n);
+    listas = { ...listas, [n]: { ...ls, ultimos: [...ls.ultimos, ok ? 1 : 0].slice(-VENTANA), total: ls.total + 1, aciertos: ls.aciertos + (ok ? 1 : 0) } };
   }
   const k = clave(palabra), pw = pr.palabras[k] || { total: 0, aciertos: 0 };
   const palabras = { ...pr.palabras, [k]: { total: pw.total + 1, aciertos: pw.aciertos + (ok ? 1 : 0) } };
@@ -53,36 +64,40 @@ export function registrar(pr, i, palabra, ok, hoy) {
   }
   const dia = pr.dias[hoy] || { palabras: 0, aciertos: 0, reto: false };
   const dias = { ...pr.dias, [hoy]: { ...dia, palabras: dia.palabras + 1, aciertos: dia.aciertos + (ok ? 1 : 0) } };
-  return { ...pr, pasos, palabras, fallos, dias };
+  return { ...pr, listas, palabras, fallos, dias };
 }
 
-// ¿Ya domina el paso? Con las últimas respuestas de su ventana (10 o 20), al menos las que pide la etapa.
-export function dominio(pr, i) {
-  const { etapa } = datosPaso(i);
-  const u = pasoDe(pr, i).ultimos;
-  const aciertos = u.reduce((s, x) => s + x, 0);
-  return { intentos: u.length, aciertos, ventana: etapa.ventana, necesita: etapa.necesita, listo: u.length >= etapa.ventana && aciertos >= etapa.necesita };
+// ¿Ya domina la lista en dictado? 18 de las últimas 20.
+export function dominio(pr, n) {
+  const u = listaDe(pr, n).ultimos, aciertos = u.reduce((s, x) => s + x, 0);
+  return { intentos: u.length, aciertos, ventana: VENTANA, necesita: NECESITA, listo: u.length >= VENTANA && aciertos >= NECESITA };
 }
 
 export const estrellasRonda = (aciertos, de = POR_RONDA) => (aciertos >= de ? 3 : aciertos >= de * 0.8 ? 2 : aciertos >= de * 0.5 ? 1 : 0);
 
-// Al terminar una ronda del paso i: guarda las estrellas y, si ya lo domina, abre el siguiente.
-// Devuelve { pr, subio, estrellas }  (subio: el paso nuevo, o null)
-export function cerrarRonda(pr, i, aciertos, de = POR_RONDA) {
-  const ps = pasoDe(pr, i), est = estrellasRonda(aciertos, de);
-  const pasos = { ...pr.pasos, [i]: { ...ps, estrellas: Math.max(ps.estrellas, est), rondas: ps.rondas + 1 } };
-  let paso = pr.paso, subio = null;
-  if (!ps.dominado && dominio(pr, i).listo) {
-    pasos[i] = { ...pasos[i], dominado: true };
-    if (i === pr.paso && i < PASOS - 1) { paso = i + 1; subio = paso; }
+// Al terminar una ronda de dictado de la lista n: guarda las estrellas y, si ya la domina, abre la siguiente.
+// Devuelve { pr, subio, estrellas }  (subio: la lista nueva, o null)
+export function cerrarRonda(pr, n, aciertos, de = POR_RONDA) {
+  const ls = listaDe(pr, n), est = estrellasRonda(aciertos, de);
+  const listas = { ...pr.listas, [n]: { ...ls, estrellas: Math.max(ls.estrellas, est), rondas: ls.rondas + 1 } };
+  let lista = pr.lista, subio = null;
+  if (!ls.dominada && dominio(pr, n).listo) {
+    listas[n] = { ...listas[n], dominada: true };
+    if (n === pr.lista && n < LISTAS.length) { lista = n + 1; subio = lista; }
   }
-  return { pr: { ...pr, pasos, paso, elegido: subio ?? pr.elegido }, subio, estrellas: est };
+  return { pr: { ...pr, listas, lista, elegida: subio ?? pr.elegida }, subio, estrellas: est };
 }
 
-// Las palabras de una ronda del paso i: hasta 2 que falló antes (de esta lista o anteriores), 2 de repaso de
-// listas anteriores y el resto de la lista. Sin repetir. [{ palabra, frase, lista, tipo }]
-export function armarRonda(pr, i, rnd, cuantas = POR_RONDA) {
-  const { lista: n } = datosPaso(i);
+// Después de la prueba de nivel: empieza en la lista `n`; las de abajo quedan dominadas (para el repaso)
+export function colocar(pr, n) {
+  const listas = { ...pr.listas };
+  for (let i = 1; i < n; i++) if (!listas[i]?.dominada) listas[i] = { ...listaDe(pr, i), dominada: true, porPrueba: true };
+  return { ...pr, lista: n, elegida: null, nivelado: true, listas };
+}
+
+// Las palabras de una ronda de la lista n: hasta 2 que falló antes (de esta lista o anteriores), 2 de repaso de
+// listas anteriores (las más recientes primero) y el resto de la lista. Sin repetir. [{ palabra, frase, lista, tipo }]
+export function armarRonda(pr, n, rnd, cuantas = POR_RONDA) {
   const ronda = [], vistas = new Set();
   const meter = (w, tipo) => {
     const p = buscar(w);
@@ -91,7 +106,7 @@ export function armarRonda(pr, i, rnd, cuantas = POR_RONDA) {
   };
   const fallos = revolver(rnd, Object.entries(pr.fallos).filter(([, f]) => f.lista <= n).map(([w]) => w));
   for (const w of fallos.slice(0, 2)) meter(w, "fallo");
-  const anteriores = LISTAS.filter((l) => l.n < n).flatMap((l) => l.palabras.map((p) => p.palabra));
+  const anteriores = LISTAS.filter((l) => l.n < n && l.n >= n - 3).flatMap((l) => l.palabras.map((p) => p.palabra));
   for (const w of revolver(rnd, anteriores)) { if (ronda.length >= 4 || ronda.filter((r) => r.tipo === "repaso").length >= 2) break; meter(w, "repaso"); }
   for (const p of revolver(rnd, datosLista(n).palabras)) { if (ronda.length >= cuantas) break; meter(p.palabra, "nueva"); }
   return revolver(rnd, ronda);
@@ -129,15 +144,13 @@ export function semana(pr, hoy) {
   });
 }
 
-// Para papás: por lista y etapa, las palabras que más falla y los últimos días
+// Para papás: dictado por lista, las palabras que más falla y los últimos días
 export function resumen(pr) {
-  const listas = LISTAS.map((l) => ({
-    n: l.n, nombre: l.nombre,
-    etapas: ETAPAS.map((e, k) => {
-      const i = (l.n - 1) * ETAPAS.length + k, ps = pasoDe(pr, i);
-      return { id: e.id, nombre: e.nombre, total: ps.total, pct: ps.total ? Math.round((100 * ps.aciertos) / ps.total) : null, dominado: ps.dominado, abierto: i <= pr.paso };
-    }),
-  }));
+  const listas = LISTAS.map((l) => {
+    const ls = listaDe(pr, l.n), dm = dominio(pr, l.n);
+    return { n: l.n, nombre: l.nombre, total: ls.total, pct: ls.total ? Math.round((100 * ls.aciertos) / ls.total) : null,
+      recientes: dm.intentos ? `${dm.aciertos}/${dm.intentos}` : null, dominada: ls.dominada, porPrueba: !!ls.porPrueba, abierta: l.n <= pr.lista };
+  });
   const fallos = Object.entries(pr.fallos).map(([w, f]) => ({ palabra: buscar(w)?.palabra || w, veces: f.veces })).sort((a, b) => b.veces - a.veces).slice(0, 10);
   const dias = Object.keys(pr.dias).sort().slice(-14).map((f) => ({ fecha: f, ...pr.dias[f] }));
   return { listas, fallos, dias };

@@ -1,11 +1,12 @@
 // Pruebas de "Spelling": listas y frases, faltas típicas y opciones, letras para armar, diferencias,
-// progreso (dominio por etapa, ronda, fallos), reto del día, racha y elección de voz. Todo es lógica pura.
+// progreso del dictado (dominio, ronda, fallos), prueba de nivel, reto del día, racha y elección de voz. Todo es lógica pura.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { LISTAS, ETAPAS, PASOS, paso, pasoDe, buscar, conHueco, partir } from "../src/palabras.js";
 import { faltas, opciones, letrasParaArmar, diferencias, igual, esReal } from "../src/faltas.js";
 import { rngConSemilla } from "../src/rng.js";
-import { nuevo, cargar, registrar, dominio, cerrarRonda, armarRonda, cumplirReto, racha, semana, resumen, sumarDias, elegido } from "../src/progreso.js";
+import { nuevo, cargar, registrar, dominio, cerrarRonda, armarRonda, colocar, cumplirReto, racha, semana, resumen, sumarDias, elegida, VENTANA, NECESITA } from "../src/progreso.js";
+import { empezarPrueba, responderPrueba, palabraActual } from "../src/nivelacion.js";
 import { retoDelDia, alcance } from "../src/reto.js";
 import { escogerVoz, ordenarVoces, letraPorLetra } from "../src/voz.js";
 
@@ -120,108 +121,137 @@ test("diferencias: marca solo las letras que faltaron o cambiaron", () => {
   assert.ok(!igual("June", "jun"));
 });
 
-// ---------- Progreso ----------
+// ---------- Progreso (dictado) ----------
 
-const responder = (pr, i, oks) => oks.reduce((p, ok, k) => registrar(p, i, "cat", !!ok, sumarDias(HOY, 0)), pr);
+const responder = (pr, n, oks) => oks.reduce((p, ok) => registrar(p, n, "cat", !!ok, HOY), pr);
+const veinte = (malas) => Array.from({ length: 20 }, (_, k) => (k < malas ? 0 : 1));
 
-test("cargar: datos rotos o viejos dan un progreso nuevo; el paso se mantiene en rango", () => {
+test("cargar: datos rotos dan un progreso nuevo; la lista se mantiene en rango; la v1 se convierte", () => {
   assert.deepEqual(cargar(null), nuevo());
   assert.deepEqual(cargar({ v: 99 }), nuevo());
-  assert.equal(cargar({ v: 1, paso: 500 }).paso, PASOS - 1);
-  assert.equal(cargar({ v: 1, paso: 3, elegido: 9 }).elegido, 3);
-  assert.equal(elegido({ ...nuevo(), paso: 5, elegido: 2 }), 2);
-  assert.equal(elegido({ ...nuevo(), paso: 5 }), 5);
+  assert.equal(cargar({ v: 2, lista: 500 }).lista, LISTAS.length);
+  assert.equal(cargar({ v: 2, lista: 3, elegida: 9 }).elegida, 3);
+  assert.equal(elegida({ ...nuevo(), lista: 5, elegida: 2 }), 2);
+  assert.equal(elegida({ ...nuevo(), lista: 5 }), 5);
+  // v1: iba en el paso 7 (lista 3, arma) con una palabra fallada y un reto cumplido
+  const v1 = { v: 1, paso: 7, pasos: {}, palabras: { cat: { total: 2, aciertos: 1 } }, fallos: { cat: { lista: 1, veces: 1, seguidos: 0 } }, dias: {}, retos: { [HOY]: { tipo: "abeja", cumplido: true, puntos: 7 } } };
+  const c = cargar(v1);
+  assert.equal(c.v, 2);
+  assert.equal(c.lista, 3);
+  assert.equal(c.nivelado, false, "se le ofrece la prueba de nivel");
+  assert.ok(c.fallos.cat && c.retos[HOY].cumplido);
 });
 
-test("dominio: Escoge pasa con 9 de 10 y no con 8; Escribe pide 18 de 20", () => {
-  assert.equal(dominio(responder(nuevo(), 0, [1, 1, 1, 1, 0, 1, 1, 1, 1, 1]), 0).listo, true);
-  assert.equal(dominio(responder(nuevo(), 0, [1, 1, 0, 1, 0, 1, 1, 1, 1, 1]), 0).listo, false);
-  assert.equal(dominio(responder(nuevo(), 0, [1, 1, 1, 1, 1, 1, 1, 1, 1]), 0).listo, false, "faltan respuestas");
-  const veinte = (malas) => Array.from({ length: 20 }, (_, k) => (k < malas ? 0 : 1));
-  assert.equal(dominio(responder(nuevo(), 2, veinte(2)), 2).listo, true);
-  assert.equal(dominio(responder(nuevo(), 2, veinte(3)), 2).listo, false);
-  assert.equal(dominio(responder(nuevo(), 2, veinte(0)), 2).ventana, 20);
+test("dominio del dictado: pasa con 18 de las últimas 20 y no con 17 ni con menos de 20", () => {
+  assert.equal(dominio(responder(nuevo(), 1, veinte(2)), 1).listo, true);
+  assert.equal(dominio(responder(nuevo(), 1, veinte(3)), 1).listo, false);
+  assert.equal(dominio(responder(nuevo(), 1, Array(19).fill(1)), 1).listo, false);
+  // Solo cuentan las últimas 20
+  assert.equal(dominio(responder(nuevo(), 1, [...Array(10).fill(0), ...veinte(0)]), 1).listo, true);
+  assert.deepEqual([VENTANA, NECESITA], [20, 18]);
 });
 
-test("cerrar ronda: al dominar abre el paso siguiente (y lo deja escogido); repasar un paso viejo no abre nada", () => {
-  let pr = responder(nuevo(), 0, Array(10).fill(1));
-  const r = cerrarRonda(pr, 0, 10);
-  assert.equal(r.subio, 1);
-  assert.equal(r.pr.paso, 1);
-  assert.equal(r.pr.elegido, 1);
-  assert.equal(r.estrellas, 3);
-  assert.equal(r.pr.pasos[0].dominado, true);
-  // Volver a jugar el paso 0 ya dominado no sube otra vez
-  pr = responder(r.pr, 0, Array(10).fill(1));
-  assert.equal(cerrarRonda(pr, 0, 10).subio, null);
-  // El último paso no abre nada más
-  pr = { ...nuevo(), paso: PASOS - 1 };
-  pr = responder(pr, PASOS - 1, Array(20).fill(1));
-  const fin = cerrarRonda(pr, PASOS - 1, 10);
+test("cerrar ronda: al dominar abre la lista siguiente (y la deja escogida); repasar una vieja no abre nada", () => {
+  let pr = responder(nuevo(), 1, veinte(0));
+  const r = cerrarRonda(pr, 1, 10);
+  assert.deepEqual([r.subio, r.pr.lista, r.pr.elegida, r.estrellas, r.pr.listas[1].dominada], [2, 2, 2, 3, true]);
+  pr = responder(r.pr, 1, veinte(0));
+  assert.equal(cerrarRonda(pr, 1, 10).subio, null);
+  pr = responder({ ...nuevo(), lista: 16 }, 16, veinte(0));
+  const fin = cerrarRonda(pr, 16, 10);
   assert.equal(fin.subio, null);
-  assert.equal(fin.pr.pasos[PASOS - 1].dominado, true);
+  assert.equal(fin.pr.listas[16].dominada, true);
+});
+
+test("la práctica y los retos (lista null) cuentan para las palabras pero no para pasar la lista", () => {
+  const r = registrar(nuevo(), null, "cake", false, HOY);
+  assert.deepEqual(r.listas, {});
+  assert.equal(r.fallos.cake.lista, 5);
+  assert.deepEqual(r.dias[HOY], { palabras: 1, aciertos: 0, reto: false });
 });
 
 test("fallos: la palabra fallada se va con 2 bien seguidas", () => {
-  let pr = registrar(nuevo(), 0, "cat", false, HOY);
+  let pr = registrar(nuevo(), 1, "cat", false, HOY);
   assert.equal(pr.fallos.cat.veces, 1);
-  pr = registrar(pr, 0, "cat", true, HOY);
+  pr = registrar(pr, 1, "cat", true, HOY);
   assert.ok(pr.fallos.cat);
-  pr = registrar(pr, 0, "cat", true, HOY);
+  pr = registrar(pr, 1, "cat", true, HOY);
   assert.equal(pr.fallos.cat, undefined);
   assert.deepEqual(pr.palabras.cat, { total: 3, aciertos: 2 });
-  assert.deepEqual(pr.dias[HOY], { palabras: 3, aciertos: 2, reto: false });
-  // En los retos (paso null) cuenta la palabra pero no el dominio
-  const r = registrar(nuevo(), null, "cake", false, HOY);
-  assert.deepEqual(r.pasos, {});
-  assert.equal(r.fallos.cake.lista, 5);
 });
 
-test("armar ronda: 10 palabras sin repetir; primero las falladas, repaso de listas anteriores y el resto de la lista", () => {
+test("armar ronda: 10 palabras sin repetir; primero las falladas, repaso de las 3 listas anteriores y el resto de la lista", () => {
   const rnd = rngConSemilla(3);
-  let pr = { ...nuevo(), paso: pasoDe(4, "escoge") };
-  pr = registrar(pr, 0, "pig", false, HOY);
-  pr = registrar(pr, 0, "Wednesday", false, HOY);   // de una lista que todavía no ve: no sale
-  const r = armarRonda(pr, pr.paso, rnd);
+  let pr = { ...nuevo(), lista: 6 };
+  pr = registrar(pr, null, "pig", false, HOY);
+  pr = registrar(pr, null, "Wednesday", false, HOY);   // de una lista que todavía no ve: no sale
+  const r = armarRonda(pr, 6, rnd);
   assert.equal(r.length, 10);
   assert.equal(new Set(r.map((x) => x.palabra)).size, 10);
   assert.ok(r.some((x) => x.palabra === "pig" && x.tipo === "fallo"));
   assert.ok(!r.some((x) => x.palabra === "Wednesday"));
-  assert.equal(r.filter((x) => x.tipo === "repaso").length, 2);
-  assert.ok(r.filter((x) => x.tipo === "nueva").every((x) => x.lista === 4));
-  // La primera lista no tiene repaso
-  const r1 = armarRonda(nuevo(), 0, rnd);
-  assert.equal(r1.length, 10);
-  assert.ok(r1.every((x) => x.lista === 1));
+  const repaso = r.filter((x) => x.tipo === "repaso");
+  assert.equal(repaso.length, 2);
+  assert.ok(repaso.every((x) => x.lista >= 3 && x.lista < 6));
+  assert.ok(r.filter((x) => x.tipo === "nueva").every((x) => x.lista === 6));
+  assert.ok(armarRonda(nuevo(), 1, rnd).every((x) => x.lista === 1));
+});
+
+// ---------- Prueba de nivel ----------
+
+// Simula a una niña que escribe bien todas las palabras de las listas < sabe, y mal las demás
+function nivelar(sabe, semilla = 1) {
+  const rnd = rngConSemilla(semilla);
+  let e = empezarPrueba(rnd), n = 0;
+  while (!e.fin && n++ < 100) e = responderPrueba(e, palabraActual(e).lista < sabe, rnd);
+  return e;
+}
+
+test("prueba de nivel: empieza en la primera lista que no sabe, con pocas palabras", () => {
+  for (let sabe = 1; sabe <= 16; sabe++) {
+    const e = nivelar(sabe);
+    assert.equal(e.fin, sabe, `sabe hasta la ${sabe - 1}`);
+    assert.ok(e.total <= 20, `${e.total} palabras para ${sabe}`);
+  }
+  // Si sabe todas, empieza en la última
+  assert.equal(nivelar(99).fin, 16);
+  // Una niña de segundo grado (sabe hasta la 8) termina en unas 12 palabras
+  assert.ok(nivelar(9).total <= 12, String(nivelar(9).total));
+});
+
+test("prueba de nivel: dicta palabras de la lista que está probando; colocar deja dominadas las de abajo", () => {
+  const rnd = rngConSemilla(2);
+  const e = empezarPrueba(rnd);
+  assert.equal(e.lista, 1);
+  assert.equal(e.palabras.length, 2);
+  assert.ok(e.palabras.every((p) => p.lista === 1 && p.frase));
+  const e2 = responderPrueba(responderPrueba(e, true, rnd), true, rnd);
+  assert.equal(e2.lista, 3);
+  const pr = colocar(nuevo(), 7);
+  assert.equal(pr.lista, 7);
+  assert.equal(pr.nivelado, true);
+  assert.ok([1, 2, 3, 4, 5, 6].every((n) => pr.listas[n].dominada && pr.listas[n].porPrueba));
+  assert.equal(pr.listas[7], undefined);
 });
 
 // ---------- Reto del día y racha ----------
 
 test("reto del día: la misma fecha da el mismo reto; rota entre los tres tipos", () => {
-  assert.deepEqual(retoDelDia(HOY, 10), retoDelDia(HOY, 10));
-  const tipos = new Set([0, 1, 2].map((k) => retoDelDia(sumarDias(HOY, k), 10).tipo));
+  assert.deepEqual(retoDelDia(HOY, 6), retoDelDia(HOY, 6));
+  const tipos = new Set([0, 1, 2].map((k) => retoDelDia(sumarDias(HOY, k), 6).tipo));
   assert.deepEqual([...tipos].sort(), ["abeja", "contrarreloj", "detective"]);
 });
 
-test("reto del día: usa palabras que ya vio, y el bee se escribe en cuanto llegó a Escribe", () => {
-  assert.deepEqual(alcance(0), { hasta: 1, hastaBee: 1, modo: "escoge" });
-  assert.deepEqual(alcance(1), { hasta: 1, hastaBee: 1, modo: "arma" });
-  assert.deepEqual(alcance(2), { hasta: 1, hastaBee: 1, modo: "escribe" });
-  assert.deepEqual(alcance(pasoDe(5, "escoge")), { hasta: 4, hastaBee: 4, modo: "escribe" });
-  assert.deepEqual(alcance(pasoDe(5, "arma")), { hasta: 5, hastaBee: 4, modo: "escribe" });
+test("reto del día: palabras de las 3 listas más recientes; el spelling bee siempre es dictado", () => {
+  assert.deepEqual(alcance(1), { hasta: 1, desde: 1 });
+  assert.deepEqual(alcance(6), { hasta: 6, desde: 4 });
   for (let k = 0; k < 9; k++) {
-    const fecha = sumarDias(HOY, k), i = pasoDe(5, "arma"), r = retoDelDia(fecha, i);
-    if (r.tipo === "abeja") { assert.equal(r.palabras.length, 8); assert.ok(r.palabras.every((p) => p.lista <= 4 && p.lista >= 2)); }
-    if (r.tipo === "detective") {
-      assert.equal(r.frases.length, 5);
-      for (const f of r.frases) { assert.ok(f.lista <= 5); assert.notEqual(f.falta.toLowerCase(), f.palabra.toLowerCase()); assert.ok(!esReal(f.falta)); }
-    }
-    if (r.tipo === "contrarreloj") { assert.ok(r.palabras.length >= 40); assert.ok(r.palabras.every((p) => p.lista <= 5 && p.lista >= 2)); }
-  }
-  // Recién empezando, el reto sale de la lista 1
-  for (let k = 0; k < 3; k++) {
-    const r = retoDelDia(sumarDias(HOY, k), 0);
-    for (const p of r.palabras || r.frases) assert.equal(p.lista, 1);
+    const r = retoDelDia(sumarDias(HOY, k), 6);
+    const ps = r.palabras || r.frases;
+    assert.ok(ps.every((p) => p.lista >= 4 && p.lista <= 6), r.tipo);
+    if (r.tipo === "abeja") { assert.equal(r.palabras.length, 8); assert.equal(r.modo, "escribe"); }
+    if (r.tipo === "detective") for (const f of r.frases) { assert.notEqual(f.falta.toLowerCase(), f.palabra.toLowerCase()); assert.ok(!esReal(f.falta)); }
+    if (r.tipo === "contrarreloj") assert.ok(r.palabras.length >= 40);
   }
 });
 
@@ -232,20 +262,21 @@ test("racha: días seguidos con el reto cumplido; se rompe si falta un día; la 
   pr = cumplirReto(pr, HOY, "abeja", 7, true);
   assert.equal(racha(pr, HOY), 4);
   assert.equal(racha(pr, sumarDias(HOY, 2)), 0);
-  // Un intento fallido no borra uno cumplido ese mismo día
   assert.equal(cumplirReto(pr, HOY, "abeja", 2, false).retos[HOY].cumplido, true);
   assert.equal(semana(pr, HOY).filter((d) => d.reto).length, 4);
 });
 
 test("resumen para papás", () => {
-  let pr = registrar(nuevo(), 0, "cat", false, HOY);
-  pr = registrar(pr, 0, "cat", false, HOY);
-  pr = registrar(pr, 0, "map", true, HOY);
+  let pr = colocar(nuevo(), 3);
+  pr = registrar(pr, 3, "ship", false, HOY);
+  pr = registrar(pr, 3, "ship", false, HOY);
+  pr = registrar(pr, 3, "fish", true, HOY);
   const R = resumen(pr);
   assert.equal(R.listas.length, 16);
-  assert.deepEqual(R.listas[0].etapas[0], { id: "escoge", nombre: "Escoge", total: 3, pct: 33, dominado: false, abierto: true });
-  assert.equal(R.listas[0].etapas[1].abierto, false);
-  assert.deepEqual(R.fallos[0], { palabra: "cat", veces: 2 });
+  assert.deepEqual(R.listas[2], { n: 3, nombre: LISTAS[2].nombre, total: 3, pct: 33, recientes: "1/3", dominada: false, porPrueba: false, abierta: true });
+  assert.equal(R.listas[0].porPrueba, true);
+  assert.equal(R.listas[3].abierta, false);
+  assert.deepEqual(R.fallos[0], { palabra: "ship", veces: 2 });
 });
 
 // ---------- Voz ----------

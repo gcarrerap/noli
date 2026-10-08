@@ -51,10 +51,6 @@ h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.6em 0 0}
 .ico{width:1.4em;height:1.4em;flex:none}
 .barra i{display:block;height:100%;background:var(--verde);border-radius:999px}
 .abeja{width:1.15em;height:1.15em;vertical-align:-.18em;margin-right:.15em}
-.etapa-chip{display:flex;align-items:center;gap:.2rem;margin:0;font-weight:800;color:var(--muted)}
-.etapa-chip span{padding:.15em .7em;border-radius:999px}
-.etapa-chip span.on{background:var(--morado);color:#fff}
-.flechita{width:1em;height:1em;opacity:.5}
 
 /* Cabecera de la palabra */
 .cab{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--muted);gap:1rem;padding-left:56px}
@@ -72,10 +68,6 @@ h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.6em 0 0}
 .altavoz:active{transform:scale(.95)}
 .oir .boton.chico{display:flex;align-items:center;gap:.35rem}
 .frase{font-size:1.45rem;font-weight:700;margin:0;max-width:30ch;line-height:1.35}
-.mirar{display:flex;flex-direction:column;align-items:center;gap:.4rem}
-.mira{font-family:"Fredoka",sans-serif;font-size:3rem;font-weight:700;letter-spacing:.06em;min-height:1.3em;padding:0 .5em;border-radius:16px;
-  background:var(--card);box-shadow:var(--sombra);transition:color .3s}
-.mira.tapada{color:transparent;background:repeating-linear-gradient(45deg,var(--off) 0 10px,var(--card) 10px 20px)}
 
 /* Zona de respuesta */
 .zona{display:flex;flex-direction:column;align-items:center;gap:.8rem;width:100%}
@@ -150,20 +142,22 @@ h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.6em 0 0}
 .dia.reto i{background:var(--verde);opacity:1}
 
 /* Mapa de listas */
-.mapa{list-style:none;padding:0;margin:.4rem 0;display:grid;gap:.55rem;width:min(640px, 100%)}
-.mapa li{display:flex;align-items:center;gap:.7rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:.5rem .7rem;flex-wrap:wrap}
-.mapa li.cerrada{opacity:.55}
+.mapa{list-style:none;padding:0;margin:.4rem 0;display:grid;gap:.55rem;width:min(560px, 100%)}
+.lista{width:100%;display:flex;align-items:center;gap:.8rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:.5rem .9rem}
 .num{font-family:"Fredoka",sans-serif;font-size:1.3rem;width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;background:var(--off);flex:none}
-.mapa .nom{flex:1 1 10rem;display:flex;flex-direction:column;font-weight:800}.mapa .nom small{font-weight:600;color:var(--muted)}
-.etapas{display:flex;gap:.35rem}
-.et{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:4.6rem;min-height:2.6rem;border-radius:14px;padding:.2rem .5rem;
-  font-weight:800;font-size:.85rem;background:var(--off);color:var(--muted)}
-.et.abierto{background:var(--azul);color:#fff}
-.et.dominado{background:var(--verde);color:#fff}
-.et.actual{outline:3px solid var(--morado);outline-offset:2px}
-.et .estrellas{font-style:normal;font-size:.8rem;line-height:1}
-.et.dominado .estrellas .off{color:rgba(255,255,255,.4)}
-.et:disabled{cursor:default}
+.lista .nom{flex:1;display:flex;flex-direction:column;font-weight:800}.lista .nom small{font-weight:600;color:var(--muted)}
+.lista.dominada .num{background:var(--verde);color:#fff}
+.lista.abierta .num{background:var(--azul);color:#fff}
+.lista.actual{border-color:var(--morado)}
+.lista.cerrada{opacity:.55}
+.lista:disabled{cursor:default}
+.en-curso{font-weight:800;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.candado{color:var(--muted)}
+
+/* Sin voz */
+.sin-voz{display:flex;align-items:center;gap:.6rem;text-align:left;background:#fff3d6;color:#5c4300;border-radius:16px;padding:.6rem 1rem;margin:0;
+  font-weight:700;max-width:34rem}
+.sin-voz .ico{color:var(--coral)}
 
 /* Para papás */
 .nota{color:var(--muted);max-width:40rem;margin:0}
