@@ -21,6 +21,7 @@ export const state = {
   updateAvailable: false,
   nube: {},                  // sincronización (ver app/sync.js): estado, perfil, código para vincular, avisos
   nubeAbierta: false,        // la ventana de la nube
+  remoto: { estado: "apagado", codigo: null, via: null, panel: false, error: "" }, // teléfono como control (app/remoto.js)
 };
 
 const listeners = new Set();

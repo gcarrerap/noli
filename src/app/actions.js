@@ -1,4 +1,4 @@
-// Acciones: lo único que cambia el estado. La interfaz y (en la fase 2) el control remoto solo llaman aquí.
+// Acciones: lo único que cambia el estado. La interfaz y el control remoto (app/remoto.js) solo llaman aquí.
 import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../services/index.js";
 import { mover, materias } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
@@ -71,7 +71,7 @@ export const actions = {
   datosDe(id) { return leerDatosJuego(id); },
   guardarDatos(id, datos) { guardarDatosJuego(id, datos); sync.marcarCambio(id); },
 
-  // Punto único de entrada para el control: dedo, teclado, control de la TV o teléfono remoto (fase 2)
+  // Punto único de entrada para el control: dedo, teclado, control de la TV o teléfono remoto
   entrada(accion) {
     if (state.jugando) { if (alJuego) alJuego(accion); return; }
     const lista = visibles();

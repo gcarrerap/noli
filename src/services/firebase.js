@@ -8,6 +8,7 @@ const CDN = "https://www.gstatic.com/firebasejs/10.12.2/";
 const SDK = ["firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"];
 let iniciado = null;
 let loading = null;
+let usuario = null; // el usuario (anónimo) actual
 export function loadFirebaseSdk() {
   if (window.firebase) return Promise.resolve();
   if (!loading) {
@@ -31,7 +32,15 @@ export function initFirebase(onUser = () => {}, config = window.FIREBASE_CONFIG)
   if (!iniciado) iniciado = iniciar(onUser, config).catch((e) => { iniciado = null; throw e; });
   return iniciado;
 }
-export function _resetInitForTests() { iniciado = null; }
+export function _resetInitForTests() { iniciado = null; usuario = null; }
+
+// Para el control remoto (issue #3): Firestore y el id del usuario anónimo, que identifica a la TV y al teléfono
+// en la sala. Comparte la misma conexión que la nube.
+export async function conectarFirebase(config = window.FIREBASE_CONFIG) {
+  const fs = await initFirebase(undefined, config);
+  if (!usuario) throw new Error("sin usuario");
+  return { fs, uid: usuario.uid };
+}
 
 async function iniciar(onUser, config) {
   if (!config || !config.projectId) throw new Error("sin config");
@@ -45,6 +54,7 @@ async function iniciar(onUser, config) {
     auth.onAuthStateChanged(async (u) => {
       if (!u) { try { await auth.signInAnonymously(); } catch (e) { console.warn(e); if (first) { first = false; res(); } } return; }
       const wasFirst = first;
+      usuario = u;
       onUser(u, wasFirst);
       if (first) { first = false; res(); }
     });

@@ -1,0 +1,33 @@
+/* Control remoto en la TV (issue #3): botón en los filtros, recuadro con código y QR, aviso de conexión */
+.chip.remoto{margin-left:auto}
+.chip.remoto .punto{width:.6em;height:.6em;border-radius:50%;background:var(--leaf);box-shadow:0 0 0 3px rgba(60,207,142,.25)}
+.chip.remoto.conectado{border-color:var(--leaf)}
+
+.remoto-fondo{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:4vh 4vw;
+  background:rgba(28,23,38,.55);animation:aparecer .25s ease-out}
+.remoto-caja{background:var(--card);color:var(--fg);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.6em 2em;
+  max-width:min(1100px, 100%);max-height:100%;overflow:auto}
+.remoto-caja h2{font-family:var(--display);font-weight:600;font-size:1.6rem;margin:0 0 .5em;text-align:center}
+.remoto-cuerpo{display:flex;gap:2em;align-items:center;flex-wrap:wrap;justify-content:center}
+.remoto-qr{flex:none;width:min(40vh, 70vw);aspect-ratio:1;border-radius:18px;overflow:hidden;background:#fff}
+.remoto-qr svg{display:block;width:100%;height:100%}
+.remoto-pasos{flex:1 1 300px;min-width:0;font-size:1.1rem}
+:root[data-modo="tv"] .remoto-cuerpo{flex-wrap:nowrap}
+.remoto-pasos p{margin:.35em 0}
+.remoto-codigo{display:flex;gap:.25em;margin:.4em 0 .5em!important}
+.remoto-codigo span{font-family:var(--display);font-weight:700;font-size:3rem;line-height:1;min-width:1.15em;text-align:center;
+  padding:.12em .1em;border-radius:16px;background:var(--bg);border:3px solid var(--line)}
+.remoto-codigo span:nth-child(1){color:var(--coral)} .remoto-codigo span:nth-child(2){color:var(--sun)}
+.remoto-codigo span:nth-child(3){color:var(--leaf)} .remoto-codigo span:nth-child(4){color:var(--sky)}
+.remoto-estado{font-weight:800;color:var(--muted)}
+.remoto-estado.conectado{color:var(--leaf)}
+.remoto-estado.error{color:var(--coral);text-align:center}
+.remoto-botones{display:flex;gap:14px;justify-content:center;margin-top:1.2em}
+.remoto-botones button{font-size:1.1rem}
+
+.remoto-aviso{position:fixed;right:max(16px, 3vw);top:max(16px, 3vh);z-index:45;background:var(--card);border-radius:999px;
+  padding:.6em 1.2em;box-shadow:var(--shadow);font-weight:800;font-size:1.1rem;opacity:0;transform:translateY(-12px);
+  transition:all .3s ease;pointer-events:none}
+.remoto-aviso.ver{opacity:1;transform:none}
+
+@keyframes aparecer{from{opacity:0}to{opacity:1}}

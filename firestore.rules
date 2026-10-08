@@ -37,6 +37,30 @@ service cloud.firestore {
           && request.time.toMillis() < resource.data.expira)
         || (resource.data.expira < request.time.toMillis() && request.resource.data.perfil == null));
     }
+    // ---- Noli: salas del control remoto (gcarrerap/noli, #3) ----
+    // La TV abre la sala (su usuario anónimo queda en "tv") y la renueva cada minuto; el teléfono se une
+    // escribiendo "control". Otra TV solo puede tomar el código cuando la sala ya se venció (campo "vence").
+    match /noli_salas/{codigo} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && codigo.matches('^[0-9]{4}$')
+        && request.resource.data.codigo == codigo
+        && request.resource.data.keys().hasOnly(['codigo', 'tv', 'sesion', 'creada', 'vence', 'tvVisto', 'control'])
+        && ((resource == null && request.resource.data.tv == request.auth.uid)
+          || request.resource.data.tv == resource.data.tv
+          || (request.resource.data.tv == request.auth.uid && resource.data.vence < request.time.toMillis()));
+      allow delete: if request.auth != null && resource.data.tv == request.auth.uid;
+      // Mensajes para conectar el teléfono con la TV por WebRTC (quien los recibe los borra)
+      match /senales/{id} {
+        allow read, write: if request.auth != null;
+      }
+      // Respaldo cuando WebRTC no conecta: una acción del control por documento (la TV las borra al recibirlas)
+      match /acciones/{id} {
+        allow read, delete: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.accion in ['arriba', 'abajo', 'izquierda', 'derecha', 'ok', 'atras'];
+      }
+    }
     // ---- La Pata ----
     // Mesas en línea: cualquier jugador con sesión (los invitados entran de forma anónima)
     match /pata_mesas/{mesa} {
