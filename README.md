@@ -72,7 +72,7 @@ Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `nol
 
 ## Agregar un juego
 
-1. Abre un issue para el juego.
+1. Abre un issue con la plantilla de juego (`.github/ISSUE_TEMPLATE/juego.md`).
 2. Copia `minijuegos/ejemplo/` a `minijuegos/<id>/` y edita su `juego.json`:
    ```json
    { "id": "sumas", "titulo": "Sumas con manzanas", "icono": "🍎", "color": "#3ccf8e",
@@ -89,6 +89,13 @@ Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `nol
    Nada de emojis para lo que importa visualmente: en la TV LG salen en blanco y negro (#5). Usa SVG.
 4. Agrega el id a `minijuegos/catalogo.json` (el orden ahí es el orden del catálogo).
 5. Corre `npm test`, cambia `src/version.js` y abre el PR.
+
+Para juntar el PR hace falta, además:
+
+- Capturas de un teléfono en vertical, angosto, a 360 px y a 412 px de ancho: sin scroll horizontal y con el botón de la acción principal a la vista.
+- Probado en la TV, en horizontal (`?modo=tv`), jugado solo con el control (flechas, OK y Atrás), con captura.
+- Guía la primera vez, o pistas claras en cada paso, para que una niña de 7 años entienda cómo jugar sin ayuda.
+- Visto bueno de claridad de Ñoño (diseño del juego).
 
 Cada juego es autocontenido (sus propios estilos, rutas relativas), así que más adelante puede vivir en su propio repo y montarse aquí como **submódulo de git** sin tocar el catálogo (ver [DESIGN.md §6](DESIGN.md#6-juegos-como-submódulos)).
 
