@@ -36,17 +36,17 @@ export function alAgregar(visita, id, precio, piezas) {
   const antes = sumaOrden(visita.orden, piezas);
   const suma = sumaOrden(orden, piezas);
   const fallos = suma > precio && antes <= precio ? visita.fallos + 1 : visita.fallos;
-  return { ...visita, orden, fallos };
+  return { ...visita, orden, fallos, corto: false };
 }
 
 export function alQuitar(visita) {
-  if (!visita.orden?.length) return visita;
-  return { ...visita, orden: quitarUltima(visita.orden) };
+  if (!visita.orden?.length) return { ...visita, corto: false };
+  return { ...visita, orden: quitarUltima(visita.orden), corto: false };
 }
 
 export function alPagar(visita, precio, piezas) {
   const suma = sumaOrden(visita.orden, piezas);
-  if (suma !== precio) return { ok: false, visita: { ...visita, fallos: visita.fallos + 1 } };
+  if (suma !== precio) return { ok: false, visita: { ...visita, fallos: visita.fallos + 1, corto: suma < precio } };
   const gastado = conteoDe(visita.orden);
   return {
     ok: true,
@@ -56,6 +56,7 @@ export function alPagar(visita, precio, piezas) {
       gastado,
       orden: [],
       fallos: 0,
+      corto: false,
       fase: "acomodar",
       x: 0,
       y: 0,
@@ -68,7 +69,26 @@ export function alPagar(visita, precio, piezas) {
 }
 
 export function elegirMueble(visita, id) {
-  return { ...visita, fase: "pagar", mueble: id, orden: [], fallos: 0, gastado: null, ayuda: false, ayudaDesde: 0 };
+  return {
+    ...visita,
+    fase: "pagar",
+    mueble: id,
+    orden: [],
+    fallos: 0,
+    corto: false,
+    gastado: null,
+    ayuda: false,
+    ayudaDesde: 0,
+  };
+}
+
+/** «Te pasaste» y «¡Listo!» se borran al empezar otra compra o otro paso. */
+export function avisoDePago({ empezar = false, suma = 0, precio = 0, corto = false } = {}) {
+  if (empezar) return "";
+  if (suma > precio) return "pasaste";
+  if (suma === precio) return "brilla";
+  if (corto) return "corto";
+  return "";
 }
 
 export function moverPieza(visita, cuarto, dir, mueble) {

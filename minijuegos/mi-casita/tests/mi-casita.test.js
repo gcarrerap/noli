@@ -28,12 +28,14 @@ const {
 } = await import("../src/guia.js");
 const {
   visitaNueva, debeCobrar, alAgregar, alPagar, alQuitar, dejarPieza, devolverPieza,
-  algunoAlcanza, cerrarVisita, elegirMueble, moverPieza, tocarCuadro,
+  algunoAlcanza, cerrarVisita, elegirMueble, moverPieza, tocarCuadro, avisoDePago,
 } = await import("../src/visita.js");
 const { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } = await import("../src/progreso.js");
 const { fraseMedida, fraseGiro, fraseFaltan, fraseToca, fraseBrilla } = await import("../src/frases.js");
 const { paraVoz } = await import("../src/voz.js");
-const { resolverAtras, dosAtras } = await import("../src/salida.js");
+const {
+  resolverAtras, dosAtras, resolverToque, teclaConDialogo, atrasEnPantalla, FASES_CON_GUARDIA,
+} = await import("../src/salida.js");
 const { piezaSvg } = await import("../src/monedas.js");
 
 const porId = Object.fromEntries(muebles.map((m) => [m.id, m]));
@@ -325,6 +327,46 @@ test("la guía: mostrar, acción, Pagar, foco, Atrás y el modo", () => {
   assert.equal(atras.cobra, false);
   assert.equal(resolverAtras(false), "abrir");
   assert.equal(resolverAtras(true), "cerrar");
+
+  for (const fase of FASES_CON_GUARDIA) {
+    assert.equal(resolverToque("seguir", fase), "seguir", fase);
+    assert.equal(resolverToque("salir", fase), "salir", fase);
+  }
+  assert.equal(resolverToque("pagar", "cobrando"), "nada");
+  assert.equal(resolverToque("dejar", "cobrando"), "nada");
+  assert.equal(resolverToque("dejar", "acomodar"), "juego");
+  assert.equal(resolverToque("inicio", "fin"), "juego");
+
+  for (const act of ["escoger", "moneda", "pagar", "dejar", "celda", "saltar", "mover"]) {
+    for (const fase of ["pagar", "acomodar", "fin", "guia", "cobrando"]) {
+      assert.equal(resolverToque(act, fase, true), "nada", act + " " + fase);
+    }
+  }
+  assert.equal(teclaConDialogo("ok", "pagar"), "nada");
+  assert.equal(teclaConDialogo("ok", "dejar"), "nada");
+  assert.equal(teclaConDialogo("ok", "saltar"), "nada");
+  assert.equal(teclaConDialogo("ok", "seguir"), "seguir");
+  assert.equal(teclaConDialogo("ok", "salir"), "salir");
+  assert.equal(teclaConDialogo("atras", "dejar"), "cerrar");
+  assert.equal(teclaConDialogo("arriba", "seguir"), "foco");
+
+  for (const pantalla of ["fin", "resultado", "guia-fin", "pagar", "acomodar"]) {
+    assert.equal(atrasEnPantalla(pantalla, false), "abrir", pantalla);
+    assert.equal(atrasEnPantalla(pantalla, true), "cerrar", pantalla);
+  }
+
+  const sucia = elegirMueble({
+    ...visitaNueva(HOY, { penny: 1 }, "recamara"),
+    corto: true,
+    orden: ["penny"],
+    fallos: 2,
+  }, "silla");
+  assert.equal(sucia.corto, false);
+  assert.deepEqual(sucia.orden, []);
+  assert.equal(sucia.fallos, 0);
+  assert.equal(avisoDePago({ suma: 8, precio: 6, corto: true }), "pasaste");
+  assert.equal(avisoDePago({ empezar: true, suma: 8, precio: 6, corto: true }), "");
+  assert.equal(avisoDePago({ suma: 0, precio: 6, corto: sucia.corto }), "");
 
   const css = fs.readFileSync(path.join(raiz, "estilo.css"), "utf8");
   assert.match(css, /\.cab \.saltar\s*\{[^}]*min-height:\s*64px/);

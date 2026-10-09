@@ -13,13 +13,13 @@ import {
 import {
   visitaNueva, debeCobrar, alAgregar, alQuitar, alPagar, elegirMueble, moverPieza,
   tocarCuadro, girarPieza, abrirBarra, dejarPieza, devolverPieza, preciosAbiertos,
-  algunoAlcanza, cerrarVisita,
+  algunoAlcanza, cerrarVisita, avisoDePago,
 } from "./visita.js";
 import { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } from "./progreso.js";
 import { fraseMedida, fraseGiro, fraseFaltan, fraseBrilla, rellenar } from "./frases.js";
 import { decir } from "./voz.js";
 import { desbloquear, clic, brillo, dejar as sonidoDejar } from "./sonido.js";
-import { resolverAtras } from "./salida.js";
+import { resolverToque, teclaConDialogo, atrasEnPantalla } from "./salida.js";
 
 const $main = document.getElementById("juego");
 try { if (/[?&]modo=tv\b/.test(location.search)) document.documentElement.dataset.modo = "tv"; } catch { /* sin location */ }
@@ -100,7 +100,7 @@ function dialogo() {
 function cabecera(extra) {
   const total = pr.visita ? sumaBolsa(pr.visita.bolsa, piezas()) : 0;
   const derecha = guia
-    ? `<button type="button" class="boton saltar" data-foco data-foco-id="saltar" data-act="saltar">${esc(textos.saltar)}</button>`
+    ? `<button type="button" class="boton saltar" ${salir ? "" : 'data-foco data-foco-id="saltar"'} data-act="saltar">${esc(textos.saltar)}</button>`
     : extra || "";
   const bolsa = pr.visita && !guia ? `<span class="bolsa" aria-label="Bolsa">${svgBolsa(total)}</span>` : `<span></span>`;
   return `<header class="cab">${bolsa}${derecha}</header>`;
@@ -248,10 +248,11 @@ function htmlPagar(opts) {
     const p = piezas().find((x) => x.id === id);
     return p ? `<span class="mini${p.tipo === "billete" ? " billete" : ""}">${piezaSvg(p)}</span>` : "";
   }).join("");
+  const tipoAviso = avisoDePago({ suma, precio: m.precio, corto: !!opts.corto });
   let aviso = "";
-  if (suma > m.precio) aviso = textos.tePasaste;
-  else if (!opts.linea && exacto) aviso = fraseBrilla(modo(), textos);
-  else if (!opts.linea && opts.corto) aviso = textos.todaviaNo;
+  if (tipoAviso === "pasaste") aviso = textos.tePasaste;
+  else if (!opts.linea && tipoAviso === "brilla") aviso = fraseBrilla(modo(), textos);
+  else if (!opts.linea && tipoAviso === "corto") aviso = textos.todaviaNo;
   const lineaPista = opts.linea || (exacto || suma > m.precio ? "" : (pista.texto || ""));
   const pagarActivo = opts.pagarActivo !== false;
   const pagarCls = `boton grande${pagarActivo && exacto ? " primario brilla" : " apagado"}`;
@@ -520,9 +521,10 @@ function asegurarGuiaLugar() {
 }
 
 function actuar(act, ds) {
-  if (cobrando) return;
-  if (act === "seguir") { salir = false; pintar(); return; }
-  if (act === "salir") { salir = false; guardar(); Noli.salir(); return; }
+  const via = resolverToque(act, cobrando ? "cobrando" : pantalla, salir);
+  if (via === "seguir") { salir = false; pintar(); return; }
+  if (via === "salir") { salir = false; guardar(); Noli.salir(); return; }
+  if (via === "nada") return;
   if (act === "saltar" || act === "fin-guia") { terminarGuia(); return; }
   if (act === "voz") { pr = { ...pr, voz: !pr.voz }; guardar(); dicho = ""; pintar(); return; }
   if (act === "como") { empezarGuia(); return; }
@@ -752,7 +754,13 @@ function abrirSalir() {
 
 $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
-  if (pantalla === "guia" && guia && !salir && guiaAvanzaConToque(guia.paso)) {
+  if (salir) {
+    if (t && $main.contains(t) && !t.disabled && (t.dataset.act === "seguir" || t.dataset.act === "salir")) {
+      actuar(t.dataset.act, t.dataset);
+    }
+    return;
+  }
+  if (pantalla === "guia" && guia && guiaAvanzaConToque(guia.paso)) {
     if (t && t.dataset.act === "saltar") { actuar("saltar", t.dataset); return; }
     avanzarMuestra("toque");
     return;
@@ -765,16 +773,17 @@ $main.addEventListener("click", (ev) => {
 Noli.alEntrar((accion) => {
   document.documentElement.classList.add("teclado");
   if (accion === "atras") {
-    if (resolverAtras(salir) === "cerrar") { salir = false; pintar(); return true; }
+    const donde = pantalla === "fin" || (pantalla === "guia" && guia && guia.paso === "fin") ? "fin" : pantalla;
+    if (atrasEnPantalla(donde, salir) === "cerrar") { salir = false; pintar(); return true; }
     abrirSalir();
     return true;
   }
   if (salir) {
-    if (moverFoco(accion, $main)) return true;
-    if (accion === "ok") {
-      const e = document.activeElement;
-      if (e && $main.contains(e) && !e.disabled) e.click();
-    }
+    const e = document.activeElement;
+    const act = e && $main.contains(e) ? e.dataset.act : "";
+    const que = teclaConDialogo(accion, act);
+    if (que === "foco" && moverFoco(accion, $main)) return true;
+    if ((que === "seguir" || que === "salir") && e && !e.disabled) e.click();
     return true;
   }
   const enLugar = pantalla === "acomodar" || (pantalla === "guia" && guia && guia.paso === "cuadro");
