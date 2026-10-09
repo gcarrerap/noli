@@ -6,6 +6,13 @@ export const PASO = 5;
 export const VUELTAS_MAX = 12; // más de una vuelta del minutero no cuenta como a la primera
 export const GAG_MS = 1500;
 
+// Atrás en el chiste o en el acierto pregunta si salir. Otra tecla salta la espera.
+export function atrasEnEspera(fase) {
+  if (fase === "gag" || fase === "bien") return "salir";
+  if (fase) return "seguir";
+  return "";
+}
+
 export function hora12(h) {
   return ((h % 12) + 12) % 12 || 12;
 }

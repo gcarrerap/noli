@@ -88,6 +88,14 @@ export function vozCuanto(h0, m0, h1, m1) {
   return `Son ${decirHora(h0, m0)}. ¿Cuánto falta para ${decirHora(h1, m1)}?`;
 }
 
+export const EXITOS = ["¡A tiempo!", "¡Eso es!", "¡Muy bien!", "¡Justo así!"];
+
+export function fraseExito(i) {
+  const n = EXITOS.length;
+  const k = ((i % n) + n) % n;
+  return EXITOS[k];
+}
+
 export const OPCIONES_CUANTO = [
   { id: "cuarto", texto: "un cuarto" },
   { id: "media", texto: "media hora" },

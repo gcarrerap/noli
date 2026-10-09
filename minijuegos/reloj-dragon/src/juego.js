@@ -5,18 +5,20 @@ import { decir, callar } from "./voz.js";
 import { clic, listo as sonidoListo, campanada, desbloquear } from "./sonido.js";
 import {
   anguloHorario, anguloMinutero, digital, sectorPath, moverMinutos, moverHora,
-  misma, arrastre, cuentaPrimera, hora12, GAG_MS,
+  misma, arrastre, cuentaPrimera, hora12, GAG_MS, atrasEnEspera,
 } from "./reloj.js";
 import { NIVELES, ALBUM, MOMENTOS, planDia, POR_TURNO } from "./niveles.js";
 import { pista } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA, INICIO_GUIA,
+  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS,
 } from "./guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, nivelDe, cumplirReto,
   textoRacha, semana, resumen, fechaLocal, VENTANA, PARA_SUBIR,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
+import { fraseExito } from "./frases.js";
 
 const $main = document.getElementById("juego");
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -38,6 +40,7 @@ let tragar = false;
 let drag = null;
 let guiaBrillo = false;
 let focoSalir = "";
+let relojFocus = false;
 
 try {
   if (new URLSearchParams(location.search).get("modo") === "tv") document.documentElement.dataset.modo = "tv";
@@ -372,6 +375,7 @@ function pintarGuia(focoId) {
   aplicarSvgs($main);
   const el = $main.querySelector(`[data-foco-id="${focoId || "escena"}"]`);
   if (el) el.focus({ preventScroll: true });
+  programarExplicacion();
   if (listoOn && !guiaBrillo) {
     guiaBrillo = true;
     sonidoListo();
@@ -440,6 +444,22 @@ function pasoGuia(ctrl, dir) {
   moverRelojGuia(ctrl, dir);
 }
 
+function programarExplicacion() {
+  cortar();
+  if (!guia || !esExplicacion(guia.paso)) return;
+  const paso = guia.paso;
+  luego(() => {
+    if (guia && guia.paso === paso && !overlay) seguirExplicacion();
+  }, ESPERA_EXPLICAR_MS);
+}
+
+function seguirExplicacion() {
+  if (!guia || !esExplicacion(guia.paso)) return;
+  guia = aplicarGuia(guia, { tipo: "seguir", reloj: guia.reloj });
+  pintarGuia(focoTrasExplicacion(guia.paso));
+  hablar(vozPaso(guia.paso));
+}
+
 function listoGuia() {
   if (!guia) return;
   if (!(guia.paso === 4 && misma(guia.reloj, META_GUIA))) return;
@@ -494,7 +514,7 @@ function cargarEscena() {
   partida.trasError = partida.modo === "turno" && nivelDe(pr, partida.n).seguidosMal >= 3;
   partida.vozDicha = "";
   overlay = false;
-  const foco = e.tipo === "poner" ? "hora" : "reloj";
+  const foco = e.tipo === "poner" ? "hora" : "op0";
   pintarJuego(foco);
   anunciar();
 }
@@ -522,7 +542,7 @@ function pintarJuego(focoId) {
   const poner = e.tipo === "poner";
   const coincide = poner && !fase && misma(t, e);
   const dragon = fase === "gag" ? "dragon-pijama" : fase === "bien" ? "dragon-feliz" : "dragon";
-  const frase = fase === "gag" ? e.chiste : fase === "manos" ? "Así era." : fase === "bien" ? "¡A tiempo!" : e.frase;
+  const frase = fase === "gag" ? e.chiste : fase === "manos" ? "Así era." : fase === "bien" ? (partida.linea || fraseExito(partida.i)) : e.frase;
   const ingles = pr.ingles && e.ingles && !fase ? e.ingles : "";
   const momento = MOMENTOS.find((m) => m.id === e.momento);
   $main.dataset.luzMano = fase === "manos" || fase === "bien" ? "horario" : (p.luz === "horario" ? "horario" : p.luz === "minutero" ? "minutero" : "");
@@ -707,7 +727,7 @@ function reintentar() {
   partida.yaBrillo = false;
   partida.t0 = Date.now();
   partida.vozDicha = "";
-  pintarJuego(partida.escena.tipo === "poner" ? "hora" : "reloj");
+  pintarJuego(partida.escena.tipo === "poner" ? "hora" : "op0");
   const p = infoPista();
   partida.vozDicha = p.voz;
   hablar(p.voz);
@@ -715,6 +735,7 @@ function reintentar() {
 
 function exito() {
   partida.fase = "bien";
+  partida.linea = fraseExito(partida.i);
   partida.vista = { h: partida.escena.h, m: partida.escena.m };
   campanada();
   pintarJuego("reloj");
@@ -745,6 +766,7 @@ function saltarFase() {
 
 function preguntarSalir() {
   if (overlay) return;
+  if (partida && atrasEnEspera(partida.fase) === "salir") cortar();
   focoSalir = document.activeElement?.dataset?.focoId || "";
   overlay = true;
   const velo = document.createElement("div");
@@ -764,6 +786,8 @@ function cerrarSalir() {
   const el = (focoSalir && $main.querySelector(`[data-foco-id="${focoSalir}"]`)) || $main.querySelector("[data-foco]");
   el?.focus({ preventScroll: true });
   focoSalir = "";
+  if (partida?.fase === "gag") luego(() => { if (partida?.fase === "gag" && !overlay) ensenarManos(); }, GAG_MS);
+  if (partida?.fase === "bien") luego(() => { if (partida?.fase === "bien" && !overlay) avanzar(); }, reducido() ? 350 : 800);
 }
 
 // ---------- Teclas ----------
@@ -787,6 +811,13 @@ function moverCiclo(dir) {
 }
 
 function teclaPoner(accion) {
+  if (guia && esExplicacion(guia.paso) && accion === "ok") {
+    const act = document.activeElement?.dataset?.act;
+    if (act !== "saltar" && act !== "oir") {
+      seguirExplicacion();
+      return true;
+    }
+  }
   const ctrl = document.activeElement?.dataset?.ctrl;
   if ((accion === "arriba" || accion === "abajo") && (ctrl === "hora" || ctrl === "minutos")) {
     if (guia) pasoGuia(ctrl, accion === "arriba" ? 1 : -1);
@@ -827,6 +858,13 @@ const IR = {
 
 $main.addEventListener("click", (ev) => {
   if (tragar) { tragar = false; return; }
+  if (guia && esExplicacion(guia.paso)) {
+    const act = ev.target.closest("[data-act]")?.dataset?.act;
+    if (act !== "saltar" && act !== "oir") {
+      seguirExplicacion();
+      return;
+    }
+  }
   const t = ev.target.closest("[data-act], [data-ctrl]");
   if (!t || !$main.contains(t)) return;
   if (partida?.fase) return;
@@ -887,6 +925,7 @@ $main.addEventListener("pointerdown", (ev) => {
   if (!cara || ev.target.closest("button")) return;
   drag = { m: partida.actual.m };
   relojFocus = true;
+  cara.focus({ preventScroll: true });
 }, true);
 
 $main.addEventListener("pointermove", (ev) => {
@@ -906,7 +945,10 @@ $main.addEventListener("pointermove", (ev) => {
   refrescarJuego();
 });
 
-function soltar() { drag = null; }
+function soltar() {
+  if (relojFocus) relojFocus = false;
+  drag = null;
+}
 $main.addEventListener("pointerup", soltar);
 $main.addEventListener("pointercancel", soltar);
 
@@ -923,7 +965,14 @@ Noli.alEntrar((accion) => {
     }
     return true;
   }
-  if (partida?.fase) { saltarFase(); return true; }
+  if (partida?.fase) {
+    if (accion === "atras" && atrasEnEspera(partida.fase) === "salir") {
+      preguntarSalir();
+      return true;
+    }
+    saltarFase();
+    return true;
+  }
   if (guia || (partida && partida.escena.tipo === "poner")) return teclaPoner(accion);
   if (moverFoco(accion, $main)) return true;
   if (accion === "ok") {

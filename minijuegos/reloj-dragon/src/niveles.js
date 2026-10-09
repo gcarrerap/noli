@@ -16,7 +16,7 @@ export const MOMENTOS = [
   { id: "comida", que: "La comida", voz: "La comida", hora: 14, parte: "tarde", cielo: "cielo-tarde", escena: "escena-comida", chiste: "¡El dragón llegó a comer en pijama!" },
   { id: "parque", que: "El parque", voz: "El parque", hora: 16, parte: "tarde", cielo: "cielo-tarde", escena: "escena-parque", chiste: "¡El dragón fue al parque en pijama!" },
   { id: "cena", que: "La cena", voz: "La cena", hora: 19, parte: "noche", cielo: "cielo-noche", escena: "escena-cena", chiste: "¡El dragón cenó en pijama!" },
-  { id: "dormir", que: "A dormir", voz: "A dormir", hora: 20, parte: "noche", cielo: "cielo-noche", escena: "escena-dormir", chiste: "¡El dragón se acostó a destiempo!" },
+  { id: "dormir", que: "A dormir", voz: "A dormir", hora: 20, parte: "noche", cielo: "cielo-noche", escena: "escena-dormir", chiste: "¡El dragón se quedó dormido!" },
 ];
 
 export const ALBUM = [
@@ -76,10 +76,18 @@ function minutosReto(nivelN, rnd) {
   return uno(rnd, QUINTOS);
 }
 
+function quitarDoce(h) {
+  let x = ((h % 24) + 24) % 24;
+  if (x % 12 === 0) x = (x + 1) % 24;
+  return x;
+}
+
 function inicioPoner(h, m, rnd) {
-  if (m !== 0) return { h, m: 0 };
+  if (m !== 0) return { h: quitarDoce(h), m: 0 };
   const dh = 1 + Math.floor(rnd() * 4);
-  return { h: (h + dh) % 24, m: 0 };
+  let hh = quitarDoce((h + dh) % 24);
+  if (hora12(hh) === hora12(h)) hh = quitarDoce((hh + 1) % 24);
+  return { h: hh, m: 0 };
 }
 
 function opcionesLectura(h, m, rnd) {
@@ -101,7 +109,8 @@ function armar(tipo, momento, h, m, rnd, extra = {}) {
   };
   if (tipo === "poner") {
     let inicio = inicioPoner(h, m, rnd);
-    if (hora12(inicio.h) === hora12(h) && inicio.m === m) inicio = { h: (h + 2) % 24, m: 0 };
+    if (hora12(inicio.h) === hora12(h) && inicio.m === m) inicio = { h: quitarDoce((h + 2) % 24), m: 0 };
+    if (inicio.m === 0 && inicio.h % 12 === 0) inicio = { h: quitarDoce(inicio.h), m: 0 };
     return {
       ...base, inicio, opciones: null,
       frase: frasePoner(momento, h, m), voz: vozPoner(momento, h, m),

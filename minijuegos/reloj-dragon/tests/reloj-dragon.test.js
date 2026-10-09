@@ -1,19 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { rngConSemilla } from "../src/rng.js";
 import { TEXTOS } from "../src/textos.js";
 import {
   anguloMinutero, anguloHorario, digital, entreNumeros, misma, esDoceEnPunto,
   moverMinutos, moverHora, lecturaRayitas, lecturaCambiada, lecturaPasada,
   candidatosLectura, gradosTranscurridos, sectorPath, minutosDesdeAngulo, arrastre,
-  cuentaPrimera, hora12, VUELTAS_MAX, GAG_MS,
+  cuentaPrimera, hora12, VUELTAS_MAX, GAG_MS, atrasEnEspera,
 } from "../src/reloj.js";
 import {
   fraseMenosCuarto, horaMenosCuarto, decirHora, etiquetaIngles, frasePoner, vozPoner, fraseCuanto,
+  fraseExito, EXITOS,
 } from "../src/frases.js";
 import { MOMENTOS, NIVELES, ALBUM, planDia, escenaDe, POR_TURNO } from "../src/niveles.js";
 import { pista } from "../src/pista.js";
-import { guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA } from "../src/guia.js";
+import {
+  guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA,
+  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS,
+} from "../src/guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, estrellasTurno, racha, textoRacha,
   cumplirReto, VENTANA, PARA_SUBIR,
@@ -115,6 +120,7 @@ test("el día no usa las 12:00 y va en orden", () => {
       for (const e of dia) {
         assert.equal(esDoceEnPunto(e.h, e.m), false);
         assert.notEqual(hora12(e.h), 12);
+        if (e.tipo === "poner") assert.equal(esDoceEnPunto(e.inicio.h, e.inicio.m), false, "no arranca en las 12");
         if (e.h2 != null) assert.equal(esDoceEnPunto(e.h2, e.m2), false);
         assert.equal(e.m % 5, 0);
       }
@@ -184,11 +190,56 @@ test("la guía de las 3:00 solo avanza cuando ella hace el paso", () => {
   g = aplicarGuia(g, { tipo: "listo", reloj: { ...META_GUIA } });
   assert.equal(g.fin, true);
   assert.equal(aplicarGuia(guiaNueva(), { tipo: "saltar" }).fin, true);
+  assert.equal(aplicarGuia(guiaNueva(), { tipo: "seguir" }).paso, 0, "el primer paso no se salta solo");
+  let explica = aplicarGuia(guiaNueva(), { tipo: "escena" });
+  assert.equal(esExplicacion(explica.paso), true);
+  assert.equal(ESPERA_EXPLICAR_MS, 2000);
+  explica = aplicarGuia(explica, { tipo: "seguir" });
+  assert.equal(explica.paso, 2);
+  assert.equal(focoTrasExplicacion(explica.paso), "hora");
+  explica = aplicarGuia(explica, { tipo: "mover", reloj: { h: 3, m: 0 } });
+  assert.equal(esExplicacion(explica.paso), true);
+  assert.equal(aplicarGuia(explica, { tipo: "seguir" }).paso, 4);
+  assert.equal(focoTrasExplicacion(4), "listo");
   assert.equal(PASOS.length, 5);
   assert.match(textoPaso(2, true), /▲/);
   assert.match(textoPaso(2, false), /\+/);
   assert.equal(SIN_SIMBOLO.test(vozPaso(2)), false);
   for (let i = 0; i < PASOS.length; i++) assert.equal(SIN_SIMBOLO.test(vozPaso(i)), false);
+});
+
+test("poner no arranca a las 12:00", () => {
+  for (let seed = 0; seed < 50; seed++) {
+    const rnd = rngConSemilla("doce-" + seed);
+    for (const momento of MOMENTOS) {
+      for (const m of [0, 15, 30, 45]) {
+        const e = escenaDe("poner", momento.id, momento.hora, m, rnd);
+        assert.equal(esDoceEnPunto(e.inicio.h, e.inicio.m), false, `${momento.id} ${m}`);
+        assert.equal(hora12(e.inicio.h) === hora12(e.h) && e.inicio.m === e.m, false);
+      }
+    }
+  }
+});
+
+test("el acierto varía y el chiste no dice a destiempo", () => {
+  assert.ok(EXITOS.length >= 3);
+  assert.equal(new Set(EXITOS).size, EXITOS.length);
+  assert.equal(fraseExito(0), EXITOS[0]);
+  assert.equal(fraseExito(EXITOS.length), EXITOS[0]);
+  assert.equal(EXITOS.some((t) => /destiempo/.test(t)), false);
+  assert.equal(MOMENTOS.some((m) => /destiempo/.test(m.chiste)), false);
+  assert.equal(atrasEnEspera("gag"), "salir");
+  assert.equal(atrasEnEspera("bien"), "salir");
+  assert.equal(atrasEnEspera("manos"), "seguir");
+  assert.equal(GAG_MS <= 1500, true);
+});
+
+test("tocar el reloj no usa relojFocus sin declararla", () => {
+  const src = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const decl = src.search(/\blet relojFocus\b/);
+  const uso = src.search(/\brelojFocus\s*=/);
+  assert.ok(decl >= 0, "falta let relojFocus");
+  assert.ok(uso > decl, "la asignación va antes de la declaración");
 });
 
 test("pistas: el nivel 1 es el paso completo y menos cuarto sube hacia el 9", () => {
