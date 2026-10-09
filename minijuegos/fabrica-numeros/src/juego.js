@@ -18,11 +18,12 @@ import { retoDelDia } from "./reto.js";
 import { enIngles } from "./palabras.js";
 import {
   siguientePaso, puedeHablarDeCanje, pistaCorta, fasePista, cuentaParaDominio,
-  textoRomper, canjeEsLargo, exigeCanje, textoEnPantalla, avisoDiez, IDLE_FLECHA_MS, IDLE_COMPLETA_MS,
+  textoRomper, canjeEsLargo, exigeCanje, textoEnPantalla, avisoDiez, repetirAvisoDiez,
+  IDLE_FLECHA_MS, IDLE_COMPLETA_MS,
 } from "./pista.js";
 import { resolverAtras, accionAtras } from "./salida.js";
 import {
-  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, GUIA_TOQUE_MS,
+  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, esperaVozGuia,
 } from "./guia.js";
 
 const $main = document.getElementById("juego");
@@ -53,6 +54,7 @@ let focoAntes = null;
 let relojPista = 0;
 let relojDiez = 0;
 let relojGuia = 0;
+let guiaVozToken = 0;
 
 function luego(fn, ms) {
   const t = ++token;
@@ -261,7 +263,6 @@ function empezarGuia(destino) {
     ultima: "d", primerDelNivel: false, idleDesde: Date.now(), vioPasoCompleto: false, eraListo: false,
   };
   pintar("camion");
-  decir(vozDeGuia(0));
 }
 
 function marcarGuia() {
@@ -286,6 +287,7 @@ function focoDeGuia() {
 function limpiarRelojGuia() {
   clearTimeout(relojGuia);
   relojGuia = 0;
+  guiaVozToken++;
   if (partida) partida.relojPaso = null;
 }
 
@@ -297,12 +299,32 @@ function programarGuia() {
   if (partida.relojPaso === partida.paso && relojGuia) return;
   clearTimeout(relojGuia);
   const paso = partida.paso;
+  const token = ++guiaVozToken;
   partida.relojPaso = paso;
-  relojGuia = setTimeout(() => {
+  const t0 = Date.now();
+  const seguir = () => {
+    if (token !== guiaVozToken) return;
+    guiaVozToken++;
+    clearTimeout(relojGuia);
     relojGuia = 0;
-    if (saliendo || !esGuia() || partida.paso !== paso) return;
+    if (saliendo || !esGuia() || !partida || partida.paso !== paso) return;
     avanzarGuia();
-  }, GUIA_TOQUE_MS);
+  };
+  relojGuia = setTimeout(seguir, esperaVozGuia(0));
+  decir(vozDeGuia(paso, modoJuego()), "es-ES", () => {
+    if (token !== guiaVozToken) return;
+    const pasoMs = Date.now() - t0;
+    // Un cierre al instante es un aparato sin voz: se queda el tope de 3 s.
+    if (pasoMs < 200) return;
+    const falta = esperaVozGuia(pasoMs) - pasoMs;
+    if (falta > 30) {
+      clearTimeout(relojGuia);
+      relojGuia = setTimeout(seguir, falta);
+      return;
+    }
+    clearTimeout(relojGuia);
+    seguir();
+  });
 }
 
 function avanzarGuia() {
@@ -312,7 +334,7 @@ function avanzarGuia() {
   partida.paso += 1;
   partida.eraListo = false;
   pintar(focoDeGuia());
-  decir(vozDeGuia(partida.paso));
+  if (!guiaAvanzaConToque(partida.paso)) decir(vozDeGuia(partida.paso, modoJuego()));
 }
 
 function guiaAvanza() {
@@ -457,6 +479,7 @@ function pintar(focoId) {
     <div class="canje" hidden></div>
     <p class="aviso" aria-live="polite"></p>
     ${htmlFeedback()}`, "problema", focoId || defecto);
+  if (guia) $main.classList.add("guia");
   if (guia && guiaAvanzaConToque(partida.paso)) $main.classList.add("guia-mira");
   programarGuia();
   programarPista();
@@ -575,7 +598,7 @@ function limpiarDiez() {
 
 function avisarDiez(banda) {
   const frase = avisoDiez(banda, modoJuego());
-  aviso(frase.pantalla);
+  if (repetirAvisoDiez(calcularPista())) aviso(frase.pantalla);
   if (!dijoDiez) {
     dijoDiez = true;
     decir(frase.voz);

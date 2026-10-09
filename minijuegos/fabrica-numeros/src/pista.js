@@ -67,9 +67,14 @@ export function glifoSubir(modo) {
   return modo === "tv" ? "▲" : "+";
 }
 
-// En pantalla el control es + o ▲. La voz dice «sube», sin símbolos.
+// En pantalla, «sube» es el botón: «toca +» o «toca ▲». La voz dice «sube», sin símbolos.
 export function textoEnPantalla(texto, modo = "tactil") {
-  return String(texto).replaceAll(" sube ", ` ${glifoSubir(modo)} `);
+  return String(texto).replaceAll(" sube ", ` toca ${glifoSubir(modo)} `);
+}
+
+/** La frase del 10 ya está en la pista completa: el aviso de abajo no la repite. */
+export function repetirAvisoDiez(info) {
+  return !(info && info.fase === "completa" && info.paso && info.paso.canje === "pegar");
 }
 
 export function avisoDiez(banda, modo = "tactil") {
