@@ -1,0 +1,32 @@
+{
+  "_ayuda": "Textos del reto del día. El tipo rota con la fecha; la semilla es la fecha, así que sale igual en todos los aparatos.",
+  "orden": ["horaPico", "cambioPerfecto", "misterioso"],
+  "horaPico": {
+    "nombre": "Hora pico",
+    "segundos": 90,
+    "objetivo": 5,
+    "meta": "¿A cuántos clientes atiendes bien en 90 segundos? Meta: 5."
+  },
+  "cambioPerfecto": {
+    "nombre": "Cambio perfecto",
+    "nombreAntes": "Día perfecto",
+    "cuantos": 8,
+    "meta": "Atiende a 8 clientes sin equivocarte."
+  },
+  "misterioso": {
+    "nombre": "Cliente misterioso",
+    "cuantos": 4,
+    "necesita": 3,
+    "meta": "Lee el problema y contesta. Necesitas 3 de 4."
+  },
+  "plantillas": {
+    "contar": [
+      "{nombre} pone en el mostrador {descripcion}. ¿Cuánto dinero es?",
+      "En la caja de {nombre} hay {descripcion}. ¿Cuánto hay en total?"
+    ],
+    "cambio": [
+      "El {producto} cuesta {precio}. {nombre} paga con {pago}. ¿Cuánto cambio le das?",
+      "{nombre} compra {producto} de {precio} y paga con {pago}. ¿Cuánto le devuelves?"
+    ]
+  }
+}

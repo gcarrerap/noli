@@ -9,6 +9,7 @@ La página principal es un **catálogo**: cada juego es una tarjeta, y cada jueg
 | Juego | Materia | Edades | Issue |
 |---|---|---|---|
 | Sumas y restas (`sumas-restas`) | Matemáticas | 6–8 | #4: 12 niveles (de sumas hasta 10 a restas pidiendo prestado hasta 100), sube de nivel al dominar, reto del día con racha, progreso para Noelia y para papás |
+| La Tienda de Noli (`tienda`) | Matemáticas | 6–9 | #27: atiende la tienda, cuenta monedas y billetes, da el cambio y hace crecer el local. Dólares (por omisión) y pesos mexicanos, a elegir en el juego. 7 niveles, reto del día con racha |
 | Spelling (`spelling`) | Inglés | 6–11 | #8, #13, #15: dictado: dice la palabra en inglés con grabaciones que suenan en cualquier navegador (nunca la enseña) y la usa en una frase si se le pide; prueba de nivel al empezar; 16 listas (de *cat* a *necessary*), se pasa con 18 de 20; práctica opcional (escoger la bien escrita, armarla con letras); reto del día (spelling bee, detective, contrarreloj) con racha; sección **Sonidos de CH** (los 3 sonidos de *ch*: *chips*, *school*, *chef*) con banco de 133 palabras en 5 niveles (empieza fácil y sube) |
 | Pasarela (`pasarela`) | Inglés (premio) | 6–11 | #19: juego de vestir en 3D: camina por un estudio hasta los percheros, vístete según el tema en 2:30, desfila y tres jueces te califican con un consejo; cada prenda y color en inglés; cuesta 3 créditos; los puntos de estilo abren ropa, colores y temas (8 niveles); modo sencillo 2D si el aparato no puede con el 3D. Documentación en [minijuegos/pasarela/docs](minijuegos/pasarela/docs/README.md) |
 | Cuenta y toca (`ejemplo`) | Matemáticas | 4–7 | #1: ejemplo del contrato y plantilla para juegos nuevos |
@@ -115,6 +116,7 @@ noli/
 │   ├── catalogo.json   # registro de juegos, en orden
 │   ├── spelling/       # juego.json, index.html, estilo.css, icono.svg, src/ (listas, faltas típicas, progreso, prueba de nivel, reto, banco de CH, voz), audio/ (grabaciones), herramientas/grabar.py, tests/
 │   ├── sumas-restas/   # juego.json, index.html, estilo.css, icono.svg, src/ (lógica pura + pantallas), tests/
+│   ├── tienda/         # juego.json, index.html, estilo.css, icono.svg, datos/ (dólares, pesos, productos, clientes), src/, tests/
 │   └── ejemplo/        # un juego mínimo: juego.json, index.html, juego.js, estilo.css
 ├── src/
 │   ├── main.js, version.js, config.js (Firebase)

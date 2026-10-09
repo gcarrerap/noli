@@ -1,0 +1,145 @@
+/* La Tienda de Noli: estilos propios. Todo crece en la TV. */
+:root{
+  --bg:#fff6ea; --fg:#2b2236; --muted:#76698a; --card:#fff; --line:#ecdcc6;
+  --azul:#4cb3ff; --coral:#ff6b4a; --sol:#ffc43d; --verde:#3ccf8e; --naranja:#ef8b2c;
+  --bien:#2fbf7f; --mal:#ff6b4a; --star:#ffb400; --off:#e7dccb; --foco:#2b2236; --halo:#ffc43d;
+  --madera:#f3e2c8;
+  --sombra:0 6px 0 rgba(43,34,54,.12), 0 10px 20px rgba(43,34,54,.08);
+}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1726;--fg:#f6f0ff;--muted:#b5a9c9;--card:#2a2338;--line:#342b45;--off:#4a4060;--foco:#fff;--madera:#3a2e24;
+  --sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.3)}}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, 2.3vmin, 22px)}
+html[data-modo="tv"]{font-size:clamp(18px, 3.1vmin, 40px)}
+html[data-modo="tv"] .cab{position:relative;top:auto;left:auto;right:auto;padding-left:0}
+body{margin:0;min-height:100dvh;background:
+  radial-gradient(circle at 20% 0%, #ffe7c2 0%, transparent 42%),
+  var(--bg);color:var(--fg);font-family:"Nunito",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:980px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 16px 24px;padding-left:max(16px, env(safe-area-inset-left));
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:.7rem;min-height:100dvh}
+main.p-inicio,main.p-fin,main.p-finReto,main.p-retoIntro,main.p-salir{justify-content:center}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus{outline:none}
+html.teclado :focus-visible{outline:5px solid var(--foco);outline-offset:4px;box-shadow:0 0 0 12px var(--halo)}
+
+.titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:2.2rem;margin:.15em 0 0;line-height:1.1}
+.titulo.chico{font-size:1.7rem}
+.sub{font-size:1.12rem;color:var(--muted);margin:0}
+h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.4em 0 0}
+.cargando{color:var(--muted);margin:auto}
+.fachada svg{width:7.2rem;height:auto;display:block}
+.fachada.grande svg{width:min(14rem, 64vw)}
+.moneda-activa{margin:0;font-weight:800;color:var(--naranja)}
+
+.boton{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.55em 1.2em;font-weight:800;font-size:1.05rem;box-shadow:var(--sombra)}
+.boton.grande{font-family:"Fredoka",system-ui,sans-serif;font-size:1.35rem;font-weight:600;padding:.55em 1.1em;border-radius:22px;min-width:11em;min-height:4rem;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.boton.grande small{font-family:"Nunito",sans-serif;font-size:.78rem;font-weight:700;opacity:.85}
+.boton.primario{background:var(--naranja);color:#fff;border-color:transparent}
+.boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
+.boton.hecho{background:var(--verde);color:#fff;border-color:transparent}
+.boton:active{transform:translateY(2px)}
+.boton:disabled{opacity:.45}
+.menu{display:flex;flex-direction:column;gap:.7rem;align-items:center;margin-top:.2rem}
+.menu.fila{flex-direction:row;flex-wrap:wrap;justify-content:center}
+.menu.fila .boton.grande{min-width:8em}
+.monedas-sel{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+
+.dominio{width:min(440px, 92%);display:flex;flex-direction:column;gap:.3rem;color:var(--muted)}
+.dominio.ok{color:var(--bien);font-weight:800;margin:0}
+.dominio small{font-size:.92rem}
+.barra{height:12px;background:var(--off);border-radius:999px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--verde);border-radius:999px}
+.racha{display:flex;align-items:center;gap:.4rem;font-size:1.05rem;margin:.2rem 0 0}
+.racha.grande{font-size:1.4rem}
+.ico{width:1.4em;height:1.4em;flex:none}
+
+.cab{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--muted);gap:1rem}
+.puntos{display:flex;gap:5px}.puntos i{width:12px;height:12px;border-radius:50%;background:var(--off)}.puntos i.lleno{background:var(--verde)}
+.reloj{flex:1;max-width:46%;height:14px;background:var(--off);border-radius:999px;overflow:hidden}
+.reloj i{display:block;height:100%;background:var(--coral)}
+.cuenta{font-family:"Fredoka",sans-serif;font-size:1.25rem;color:var(--fg)}
+
+.persona{display:flex;align-items:center;gap:.7rem;text-align:left;max-width:40rem}
+.persona svg{width:6.4rem;height:auto;flex:none}
+.burbuja{margin:0;background:var(--card);border-radius:18px;padding:.55rem .9rem;font-weight:800;font-size:1.15rem;box-shadow:var(--sombra)}
+.pedido{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap}
+.producto{background:var(--card);border-radius:18px;padding:.45rem .7rem .55rem;box-shadow:var(--sombra);min-width:6.2rem;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+.producto svg{width:3.4rem;height:3.4rem}
+.producto b{font-size:.95rem}
+.precio{font-family:"Fredoka",sans-serif;font-size:1.55rem;color:var(--naranja);line-height:1}
+
+.mostrador{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;align-items:flex-end;background:var(--madera);border-radius:18px;padding:.55rem .7rem;min-height:4.4rem;width:min(100%, 42rem)}
+.pieza{width:calc(3.3rem * var(--tam, 1));display:flex;flex-direction:column;align-items:center}
+.pieza.billete{width:calc(6.4rem * var(--tam, 1))}
+.pieza svg{width:100%;height:auto;display:block}
+.pieza small{font-size:.68rem;font-weight:800;color:var(--muted);line-height:1.1}
+.vacio{color:var(--muted);font-weight:800;align-self:center}
+.pregunta{font-family:"Fredoka",sans-serif;font-size:1.55rem;margin:.1rem 0;font-weight:600}
+.llevas{margin:0;font-size:1.2rem}
+.pista-control{margin:.15rem 0 0;color:var(--muted);font-size:.9rem;font-weight:700}
+
+.opciones{display:grid;grid-template-columns:repeat(2, minmax(0, 9.5rem));gap:.7rem;justify-content:center;width:min(100%, 28rem)}
+.opciones.dos{grid-template-columns:repeat(2, minmax(0, 8rem))}
+.op{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.7rem;min-height:4.2rem;padding:.35em .4em;border-radius:20px;background:var(--card);
+  border:4px solid transparent;box-shadow:var(--sombra)}
+.opciones.dos .op{font-size:2.1rem}
+.op:active{transform:scale(.97)}
+.op.bien{background:var(--bien);color:#fff}
+.op.mal{background:var(--mal);color:#fff;animation:no .3s}
+@keyframes no{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+.zona-caja{position:sticky;bottom:0;width:100%;background:linear-gradient(transparent, var(--bg) 14px);padding-top:.45rem}
+.gaveta{display:flex;gap:.4rem;overflow-x:auto;max-width:100%;padding:.15rem .1rem .35rem;justify-content:safe center}
+.ficha{flex:none;width:calc(4.2rem * var(--tam, 1));min-height:4.4rem;background:var(--card);border-radius:16px;padding:.25rem .2rem .15rem;box-shadow:var(--sombra);border:3px solid transparent}
+.ficha.billete{width:6.6rem}
+.ficha svg{width:100%;height:auto;display:block}
+.ficha small{display:block;font-size:.68rem;font-weight:800;color:var(--muted)}
+.ficha:disabled{opacity:.35}
+.abajo{display:flex;gap:.7rem;justify-content:center;padding-bottom:.2rem}
+.aviso{font-size:1.2rem;font-weight:800;margin:0;max-width:36ch}
+.aviso.bien{color:var(--bien)}.aviso.mal{color:var(--mal)}
+.desglose{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center}
+.desglose span{background:var(--card);border-radius:999px;padding:.25rem .7rem;font-weight:800}
+.cuenta-larga{font-size:1.25rem;font-weight:800;margin:.2rem 0}
+.historia{font-size:1.45rem;line-height:1.35;max-width:34ch;margin:.3rem 0;font-weight:800}
+
+.estrellas{display:flex;gap:.15rem;align-items:center}
+.estrella{width:1.15rem;height:1.15rem}
+.estrella.on{fill:var(--star)}.estrella.off{fill:var(--off)}
+.estrellas.grande{gap:.3rem}
+.estrellas.grande .estrella{width:3rem;height:3rem}
+.subio{display:flex;flex-direction:column;gap:.15rem;background:var(--sol);color:#2b2236;padding:.7rem 1.2rem;border-radius:18px;font-size:1.1rem}
+.subio b{font-family:"Fredoka",sans-serif;font-size:1.4rem}
+.tarjeta-reto{background:var(--card);border-radius:22px;padding:1rem 1.4rem;box-shadow:var(--sombra);max-width:30rem;font-size:1.12rem}
+.tarjeta-reto b{font-family:"Fredoka",sans-serif;font-size:1.5rem}
+.tarjeta-reto p{margin:.35rem 0}.tarjeta-reto small{color:var(--muted)}
+.hecho-txt{color:var(--bien);font-weight:800}
+.semana{display:flex;gap:.45rem;justify-content:center}
+.dia{display:flex;flex-direction:column;align-items:center;gap:.15rem;font-weight:800;color:var(--muted);font-size:.85rem}
+.dia i{width:2rem;height:2rem;border-radius:50%;background:var(--off);display:grid;place-items:center}
+.dia i svg{width:1.15rem;height:1.15rem}
+.dia.jugo i{background:var(--azul);opacity:.55}
+.dia.reto i{background:var(--verde);opacity:1}
+
+.mapa,.mejoras{list-style:none;padding:0;margin:.2rem 0;display:grid;gap:.45rem;width:min(560px, 100%)}
+.nivel{width:100%;display:flex;align-items:center;gap:.7rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:.45rem .8rem}
+.nivel b{font-family:"Fredoka",sans-serif;font-size:1.2rem;min-width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;background:var(--off);flex:none}
+.nivel .nom{flex:1;display:flex;flex-direction:column;font-weight:800}.nivel .nom small{font-weight:600;color:var(--muted)}
+.nivel.dominado b,.nivel.dominado{border-color:transparent}
+.nivel.dominado b{background:var(--verde);color:#fff}
+.nivel.abierto b{background:var(--azul);color:#fff}
+.nivel.actual{border-color:var(--naranja)}
+.nivel:disabled{opacity:.55}
+.en-curso{font-weight:800;color:var(--muted);font-size:.85rem;white-space:nowrap}
+.candado{color:var(--muted)}
+.nota{color:var(--muted);max-width:40rem;margin:0}
+.tabla{border-collapse:collapse;width:min(720px, 100%);font-size:.95rem;text-align:left}
+.tabla th,.tabla td{padding:.35rem .45rem;border-bottom:1px solid var(--line)}
+.tabla th{color:var(--muted);font-weight:800}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){
+  .persona{flex-direction:column;text-align:center}
+  .persona svg{width:5.4rem}
+}

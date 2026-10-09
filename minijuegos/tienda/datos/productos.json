@@ -1,0 +1,10 @@
+[
+  { "id": "manzana", "nombre": "Manzana", "dibujo": "manzana", "color": "#e23d3d" },
+  { "id": "pan", "nombre": "Pan", "dibujo": "pan", "color": "#e6b15a" },
+  { "id": "leche", "nombre": "Leche", "dibujo": "leche", "color": "#f7f4ee" },
+  { "id": "galleta", "nombre": "Galleta", "dibujo": "galleta", "color": "#d4a15a" },
+  { "id": "jugo", "nombre": "Jugo", "dibujo": "jugo", "color": "#f0a020" },
+  { "id": "flor", "nombre": "Flor", "dibujo": "flor", "color": "#e45b8a" },
+  { "id": "lapiz", "nombre": "Lápiz", "dibujo": "lapiz", "color": "#f2c14e" },
+  { "id": "cuaderno", "nombre": "Cuaderno", "dibujo": "cuaderno", "color": "#6db3e8" }
+]
