@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 160">
+<!-- nova -->
+<ellipse cx="64" cy="98" rx="36" ry="46" fill="#cfc6dc"/>
+<path d="M64 22c10 14 10 26 0 30c-10-4-10-16 0-30z" fill="#cfc6dc"/>
+<path d="M40 52c-10-12-2-20 8-16" fill="none" stroke="#cfc6dc" stroke-width="7" stroke-linecap="round"/>
+<path d="M88 52c10-12 2-20-8-16" fill="none" stroke="#cfc6dc" stroke-width="7" stroke-linecap="round"/>
+</svg>
