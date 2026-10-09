@@ -59,11 +59,13 @@ export function calentarVoces(synth) {
 /**
  * Habla `texto`. Devuelve { sono }.
  * onend solo corre si el habla termina de verdad. onerror no lo dispara,
- * aunque después llegue onend. getVoices() vacío no impide speak().
+ * aunque después llegue onend: avisa por onerror y no cuenta como final.
+ * getVoices() vacío no impide speak().
  */
 export function decir(texto, opciones = {}) {
   const opt = opciones || {};
   const onend = opt.onend;
+  const onerror = opt.onerror;
   const limpio = paraVoz(opt.textoLimpio != null ? opt.textoLimpio : texto);
   const s = opt.speechSynthesis || (typeof window !== "undefined" ? window.speechSynthesis : null);
   const Utter = opt.SpeechSynthesisUtterance || (typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null);
@@ -79,7 +81,10 @@ export function decir(texto, opciones = {}) {
     const voz = ingles ? vozIngles : vozElegida;
     if (voz) u.voice = voz;
     let fallo = false;
-    u.onerror = () => { fallo = true; };
+    u.onerror = () => {
+      fallo = true;
+      if (typeof onerror === "function") onerror();
+    };
     u.onend = () => { if (!fallo && typeof onend === "function") onend(); };
     s.speak(u);
     return { sono: true };

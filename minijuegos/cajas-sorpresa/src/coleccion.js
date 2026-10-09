@@ -1,10 +1,25 @@
 // Colección, polvo de estrellas, garantías y límite del día.
 // Funciones puras: el azar entra por `rng` y el reloj por `fecha`.
-import { CONFIG, RAREZAS, LIMITE_MIN, LIMITE_MAX, HISTORIAL_MAX } from "./reglas.js";
+import { RAREZAS, LIMITE_MIN, LIMITE_MAX, HISTORIAL_MAX } from "./reglas.js";
 
 const ORDEN = { ultra: 3, rara: 2, comun: 1 };
 
-export function estadoNuevo(config = CONFIG) {
+let reglasActivas = null;
+
+/** Las reglas llegan del JSON. Las pruebas y el juego las instalan antes de jugar. */
+export function usarReglas(config) {
+  reglasActivas = config;
+  return reglasActivas;
+}
+
+function cfg(config) {
+  const c = config || reglasActivas;
+  if (!c) throw new Error("faltan las reglas");
+  return c;
+}
+
+export function estadoNuevo(config) {
+  const reglas = cfg(config);
   return {
     v: 1,
     tenidas: [],
@@ -14,12 +29,14 @@ export function estadoNuevo(config = CONFIG) {
     cajas: 0,
     dia: "",
     hoy: 0,
-    limite: config.limiteDiario,
+    limite: reglas.limiteDiario,
     cerrada: false,
     historial: [],
     guiaHecha: false,
     voz: true,
     semilla: null,
+    meta: "",
+    pendiente: null,
   };
 }
 
@@ -30,7 +47,18 @@ function listaIds(v) {
   return ids.sort();
 }
 
-export function cargar(datos, config = CONFIG) {
+function pendienteDe(p) {
+  if (!p || typeof p !== "object") return null;
+  if (typeof p.id !== "string" || !p.id) return null;
+  return {
+    id: p.id,
+    duplicado: p.duplicado === true,
+    polvoGanado: entero(p.polvoGanado, 0),
+    familiaNueva: typeof p.familiaNueva === "string" && p.familiaNueva ? p.familiaNueva : null,
+  };
+}
+
+export function cargar(datos, config) {
   const base = estadoNuevo(config);
   if (!datos || typeof datos !== "object") return base;
   const limite = Number.isInteger(datos.limite) ? datos.limite : base.limite;
@@ -49,6 +77,8 @@ export function cargar(datos, config = CONFIG) {
     guiaHecha: datos.guiaHecha === true,
     voz: datos.voz !== false,
     semilla: Number.isInteger(datos.semilla) ? datos.semilla : null,
+    meta: typeof datos.meta === "string" ? datos.meta : "",
+    pendiente: pendienteDe(datos.pendiente),
   };
 }
 
@@ -73,20 +103,26 @@ function historialDe(v) {
   return out.slice(-HISTORIAL_MAX);
 }
 
+/**
+ * Si el reloj del aparato va hacia atrás, el día guardado (el más nuevo) sigue
+ * valiendo. Solo un día posterior reinicia la cuenta.
+ */
 export function abiertasHoy(estado, fecha) {
-  return estado.dia === fecha ? estado.hoy : 0;
+  if (!estado || !estado.dia) return 0;
+  return fecha <= estado.dia ? estado.hoy : 0;
 }
 
-export function cuentaRara(estado, config = CONFIG) {
-  return Math.max(1, config.garantiaRara - estado.desdeRara);
+export function cuentaRara(estado, config) {
+  return Math.max(1, cfg(config).garantiaRara - estado.desdeRara);
 }
 
-export function cuentaUltra(estado, config = CONFIG) {
-  return Math.max(1, config.garantiaUltra - estado.desdeUltra);
+export function cuentaUltra(estado, config) {
+  return Math.max(1, cfg(config).garantiaUltra - estado.desdeUltra);
 }
 
 /** «cerrada» y «limite» se dicen igual: la tienda descansa. */
-export function puedeAbrir(estado, { creditos, fecha, config = CONFIG, piezas = null } = {}) {
+export function puedeAbrir(estado, { creditos, fecha, config, piezas = null } = {}) {
+  config = cfg(config);
   if (estado.cerrada) return { ok: false, razon: "cerrada" };
   if (abiertasHoy(estado, fecha) >= estado.limite) return { ok: false, razon: "limite" };
   if (piezas && estado.tenidas.length >= piezas.length) return { ok: false, razon: "completa" };
@@ -94,7 +130,8 @@ export function puedeAbrir(estado, { creditos, fecha, config = CONFIG, piezas = 
   return { ok: true, costo: config.costoCaja };
 }
 
-export function sortearRareza(rng, config = CONFIG) {
+export function sortearRareza(rng, config) {
+  config = cfg(config);
   const { comun, rara, ultra } = config.pesos;
   const total = comun + rara + ultra;
   let t = rng() * total;
@@ -119,7 +156,8 @@ function poolDe(rareza, estado, piezas, config) {
  * Abre una caja. No mira créditos ni el límite: eso lo decide `puedeAbrir`
  * antes de cobrar. `rarezaForzada` solo la usa la captura de pantalla.
  */
-export function abrirCaja(estado, { rng, piezas, fecha, config = CONFIG, registrar = true, rarezaForzada = null } = {}) {
+export function abrirCaja(estado, { rng, piezas, fecha, config, registrar = true, rarezaForzada = null } = {}) {
+  config = cfg(config);
   let rareza = rarezaForzada;
   if (!RAREZAS.includes(rareza)) {
     const tocaUltra = estado.desdeUltra + 1 >= config.garantiaUltra;
@@ -140,8 +178,9 @@ export function abrirCaja(estado, { rng, piezas, fecha, config = CONFIG, registr
   if (pieza.rareza === "ultra") { desdeUltra = 0; desdeRara = 0; }
   else if (pieza.rareza === "rara") { desdeRara = 0; desdeUltra += 1; }
   else { desdeRara += 1; desdeUltra += 1; }
-  const dia = fecha;
-  const hoy = (estado.dia === fecha ? estado.hoy : 0) + 1;
+  const conservar = !!(estado.dia && fecha <= estado.dia);
+  const dia = conservar ? estado.dia : fecha;
+  const hoy = (conservar ? estado.hoy : 0) + 1;
   const mov = { dia, id: pieza.id, rareza: pieza.rareza, nueva: !duplicado, polvo: polvoGanado };
   const historial = registrar ? [...estado.historial, mov].slice(-HISTORIAL_MAX) : estado.historial;
   return {
@@ -158,11 +197,19 @@ export function abrirCaja(estado, { rng, piezas, fecha, config = CONFIG, registr
       dia,
       hoy,
       historial,
+      meta: !duplicado && estado.meta === pieza.id ? "" : estado.meta,
     },
   };
 }
 
-export function comprar(estado, id, piezas, config = CONFIG) {
+export function ponerMeta(estado, id) {
+  if (typeof id !== "string" || !id) return estado;
+  if (estado.tenidas.includes(id)) return estado;
+  return { ...estado, meta: id };
+}
+
+export function comprar(estado, id, piezas, config) {
+  config = cfg(config);
   const pieza = (piezas || []).find((p) => p.id === id);
   if (!pieza) return { ok: false, razon: "no-existe", estado };
   if (estado.tenidas.includes(pieza.id)) return { ok: false, razon: "ya-la-tiene", estado };
@@ -176,12 +223,14 @@ export function comprar(estado, id, piezas, config = CONFIG) {
       ...estado,
       polvo: estado.polvo - precio,
       tenidas: [...estado.tenidas, pieza.id].sort(),
+      meta: estado.meta === pieza.id ? "" : estado.meta,
     },
   };
 }
 
 /** Compra la que falta de mayor rareza, en cuanto el polvo alcanza. */
-export function comprarMayorPosible(estado, piezas, config = CONFIG) {
+export function comprarMayorPosible(estado, piezas, config) {
+  config = cfg(config);
   const faltan = piezas
     .filter((p) => !estado.tenidas.includes(p.id))
     .sort((a, b) => (ORDEN[b.rareza] - ORDEN[a.rareza]) || (a.id < b.id ? -1 : 1));
@@ -197,7 +246,8 @@ export function comprarMayorPosible(estado, piezas, config = CONFIG) {
  * en la pieza que falta de mayor rareza. Ignora el límite del día y los créditos:
  * aquí se cuentan cajas, no días.
  */
-export function simularColeccion(rng, piezas, config = CONFIG) {
+export function simularColeccion(rng, piezas, config) {
+  config = cfg(config);
   let estado = estadoNuevo(config);
   let guard = 0;
   while (estado.tenidas.length < piezas.length && guard < 400) {
@@ -238,7 +288,7 @@ export function marcarGuia(estado) {
 
 /** Cobra con `gastar` solo si la tienda deja abrir. Si no alcanza, el estado no cambia. */
 export async function abrirConCreditos(estado, opts) {
-  const config = opts.config || CONFIG;
+  const config = cfg(opts.config);
   const p = puedeAbrir(estado, {
     creditos: opts.creditos, fecha: opts.fecha, config, piezas: opts.piezas,
   });
@@ -248,9 +298,14 @@ export async function abrirConCreditos(estado, opts) {
     const creditos = cobro && typeof cobro.saldo === "number" ? cobro.saldo : opts.creditos;
     return { ok: false, razon: "creditos", estado, creditos };
   }
-  const r = abrirCaja(estado, opts);
+  const r = abrirCaja(estado, { ...opts, config });
   const creditos = typeof cobro.saldo === "number" ? cobro.saldo : opts.creditos - p.costo;
-  return { ok: true, ...r, creditos, costo: p.costo };
+  let estadoListo = r.estado;
+  if (typeof opts.alCobrar === "function") {
+    const extra = opts.alCobrar({ ...r, creditos, costo: p.costo });
+    if (extra) estadoListo = extra;
+  }
+  return { ok: true, ...r, estado: estadoListo, creditos, costo: p.costo };
 }
 
 /** Día local AAAA-MM-DD. El reloj entra entero: nunca se recorta a 32 bits. */

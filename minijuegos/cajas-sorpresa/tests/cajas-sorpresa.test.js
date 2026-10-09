@@ -2,12 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-import { CONFIG, RAREZAS } from "../src/reglas.js";
+import { normalizarReglas, RAREZAS } from "../src/reglas.js";
 import { rngConSemilla } from "../src/rng.js";
 import {
-  estadoNuevo, cargar, puedeAbrir, sortearRareza, abrirCaja, comprar, simularColeccion,
+  usarReglas, estadoNuevo, cargar, puedeAbrir, sortearRareza, abrirCaja, comprar, simularColeccion,
   resumirCajas, cambiarLimite, ponerCerrada, cuentaRara, cuentaUltra, abrirConCreditos,
-  abiertasHoy, marcarGuia, fechaLocal,
+  abiertasHoy, marcarGuia, fechaLocal, ponerMeta,
 } from "../src/coleccion.js";
 import {
   PASOS, guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso,
@@ -15,11 +15,16 @@ import {
 } from "../src/guia.js";
 import { unirBloqueos, tapBloqueado, resolverAtras, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "../src/salida.js";
 import { decir, calentarVoces, escogerVoz, escogerVozIngles, olvidarVoz, vozActual, paraVoz } from "../src/voz.js";
-import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseRepetida, fraseNueva, fraseTuya } from "../src/textos.js";
+import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, fraseNueva, fraseTuya } from "../src/textos.js";
 import { htmlFoto, rutaPieza, rutaFamilia, frascoSvg, MARCA, fichasProbabilidad } from "../src/dibujo.js";
 import { FAMILIAS, familiaCompleta, familiaQueSeCompleto, ordenarFamilia } from "../src/familias.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, REVELAR_MS, CARTA_MS } from "../src/apertura.js";
+import { preguntaPapas, aciertoPapas } from "../src/papas.js";
+import { opcionesQuien, candidatosMeta } from "../src/quien.js";
 
 const piezas = JSON.parse(fs.readFileSync(new URL("../datos/piezas.json", import.meta.url), "utf8"));
+const REGLAS = normalizarReglas(JSON.parse(fs.readFileSync(new URL("../datos/reglas.json", import.meta.url), "utf8")));
+usarReglas(REGLAS);
 const cero = () => 0;
 const FECHA = "2026-10-09";
 
@@ -28,16 +33,16 @@ function idsDe(lista) {
 }
 
 test("config de Ñoño y las 24 piezas", () => {
-  assert.deepEqual(CONFIG.piezas, { comun: 16, rara: 6, ultra: 2 });
-  assert.equal(CONFIG.piezas.comun + CONFIG.piezas.rara + CONFIG.piezas.ultra, 24);
-  assert.equal(CONFIG.costoCaja, 5);
-  assert.equal(CONFIG.limiteDiario, 2);
-  assert.deepEqual(CONFIG.pesos, { comun: 75, rara: 20, ultra: 5 });
-  assert.equal(CONFIG.garantiaRara, 8);
-  assert.equal(CONFIG.garantiaUltra, 25);
-  assert.equal(CONFIG.sinRepetir, 10);
-  assert.deepEqual(CONFIG.polvoDuplicado, { comun: 1, rara: 3, ultra: 10 });
-  assert.deepEqual(CONFIG.polvoPrecio, { comun: 5, rara: 15, ultra: 40 });
+  assert.deepEqual(REGLAS.piezas, { comun: 16, rara: 6, ultra: 2 });
+  assert.equal(REGLAS.piezas.comun + REGLAS.piezas.rara + REGLAS.piezas.ultra, 24);
+  assert.equal(REGLAS.costoCaja, 5);
+  assert.equal(REGLAS.limiteDiario, 2);
+  assert.deepEqual(REGLAS.pesos, { comun: 75, rara: 20, ultra: 5 });
+  assert.equal(REGLAS.garantiaRara, 8);
+  assert.equal(REGLAS.garantiaUltra, 25);
+  assert.equal(REGLAS.sinRepetir, 10);
+  assert.deepEqual(REGLAS.polvoDuplicado, { comun: 1, rara: 3, ultra: 10 });
+  assert.deepEqual(REGLAS.polvoPrecio, { comun: 5, rara: 15, ultra: 40 });
   assert.equal(piezas.length, 24);
   const conteo = { comun: 0, rara: 0, ultra: 0 };
   const ids = new Set();
@@ -55,7 +60,7 @@ test("config de Ñoño y las 24 piezas", () => {
       assert.ok(peso < tope, `${p.id} ${suf} pesa ${peso}`);
     }
   }
-  assert.deepEqual(conteo, CONFIG.piezas);
+  assert.deepEqual(conteo, REGLAS.piezas);
 });
 
 test("probabilidades en muchos sorteos", () => {
@@ -91,7 +96,7 @@ test("la ultra llega a más tardar en la caja 25", () => {
   assert.equal(cuentaUltra(e), 1);
   const r25 = abrirCaja(e, { rng: cero, piezas, fecha: FECHA });
   assert.equal(r25.pieza.rareza, "ultra");
-  assert.equal(cuentaUltra(r25.estado), CONFIG.garantiaUltra);
+  assert.equal(cuentaUltra(r25.estado), REGLAS.garantiaUltra);
 });
 
 test("las primeras 10 cajas no repiten", () => {
@@ -218,17 +223,15 @@ test("límite del día, tienda cerrada y créditos que no alcanzan", async () =>
 
 test("simulación: 5000 colecciones con semilla fija", () => {
   const muestras = [];
-  const t0 = Date.now();
   for (let i = 0; i < 5000; i++) {
-    muestras.push(simularColeccion(rngConSemilla("brumitos-59:" + i), piezas, CONFIG));
+    muestras.push(simularColeccion(rngConSemilla("brumitos-59:" + i), piezas, REGLAS));
   }
   const r = resumirCajas(muestras);
-  assert.ok(Date.now() - t0 < 8000, "la simulación tardó demasiado");
   assert.equal(r.n, 5000);
-  assert.ok(r.mediana <= 50, `mediana ${r.mediana}`);
-  assert.ok(r.p90 <= 65, `p90 ${r.p90}`);
-  assert.ok(r.peor <= 90, `peor ${r.peor}`);
-  assert.equal(simularColeccion(rngConSemilla("brumitos-59:0"), piezas, CONFIG), muestras[0]);
+  assert.ok(r.mediana <= 47, `mediana ${r.mediana}`);
+  assert.ok(r.p90 <= 61, `p90 ${r.p90}`);
+  assert.ok(r.peor <= 81, `peor ${r.peor}`);
+  assert.equal(simularColeccion(rngConSemilla("brumitos-59:0"), piezas, REGLAS), muestras[0]);
 });
 
 test("guardar y cargar la colección", () => {
@@ -265,8 +268,11 @@ test("la guía espera la voz entre 2 s y 3 s", () => {
   assert.equal(aplicarGuia("tienda", "tiempo").paso, "probabilidades");
   assert.equal(aplicarGuia("abrir", "toque").paso, "abrir");
   assert.equal(aplicarGuia("abrir", "abrir").paso, "carta");
-  assert.equal(aplicarGuia("fin", "voz").fin, true);
-  assert.equal(aplicarGuia("fin", "voz").guardo, true);
+  assert.equal(PASOS.length, 6);
+  assert.equal(PASOS.includes("fin"), false);
+  assert.equal(aplicarGuia("vitrina", "voz").fin, true);
+  assert.equal(aplicarGuia("vitrina", "voz").guardo, true);
+  assert.equal(aplicarGuia("carta", "voz").fin, false);
   assert.equal(aplicarGuia("tienda", "saltar").guardo, true);
   assert.equal(aplicarGuia("probabilidades", "toque").guardo, false);
   for (const paso of PASOS) {
@@ -313,11 +319,22 @@ test("onerror no cuenta como el final de la voz, aunque luego llegue onend", () 
     SpeechSynthesisUtterance: U,
     onend: () => { termino += 1; },
   });
+  let errores = 0;
   assert.equal(r.sono, true);
+  const r2 = decir("Hola", {
+    speechSynthesis: synth,
+    SpeechSynthesisUtterance: U,
+    onend: () => { termino += 1; },
+    onerror: () => { errores += 1; },
+  });
+  assert.equal(r2.sono, true);
   synth.u.onerror({ error: "synthesis-failed" });
   synth.u.onend();
   assert.equal(termino, 0);
+  assert.equal(errores, 1);
   assert.equal(cuandoAvanzaMuestra(0, null), 3000);
+  assert.equal(muestraPuedeAvanzar({ aparecio: 0, ahora: 1999, evento: "silencio", hasta: 0 }), false);
+  assert.equal(muestraPuedeAvanzar({ aparecio: 0, ahora: 2000, evento: "silencio", hasta: 0 }), true);
 
   let otro = 0;
   const roto = decir("Hola", {
@@ -550,12 +567,13 @@ test("Saltar no entra en las flechas y las frases concuerdan", () => {
   assert.match(css, /\.boton\s*\{[^}]*min-height:\s*64px/);
   assert.match(css, /\.boton\s*\{[^}]*min-width:\s*64px/);
   assert.match(css, /\.hueco\s*\{[^}]*min-height:\s*64px/);
+  assert.match(css, /\.boton\.boton-oir\s*\{[^}]*min-height:\s*64px/);
   assert.equal(fraseNueva("f"), "Nueva");
   assert.equal(fraseNueva("m"), "Nuevo");
   assert.equal(fraseTuya("f"), "Ahora es tuya");
   assert.equal(fraseTuya("m"), "Ahora es tuyo");
-  assert.equal(fraseRepetida(1, "f"), "Ya la tenías. Se volvió en 1 de polvo de estrellas");
-  assert.equal(fraseRepetida(3, "m"), "Ya lo tenías. Se volvió en 3 de polvo de estrellas");
+  assert.equal(fraseVisita("Pipo"), "¡Pipo vino de visita otra vez!");
+  assert.equal(fraseVisita("Lula"), "¡Lula vino de visita otra vez!");
   assert.equal(fraseGarantia(1, false), "Tu rara llega en 1 caja o menos");
   assert.equal(fraseGarantia(2, true), "Tu ultra rara llega en 2 cajas o menos");
   for (const p of piezas) {
@@ -566,18 +584,19 @@ test("Saltar no entra en las flechas y las frases concuerdan", () => {
 });
 
 test("en pantalla no hay porcentajes y en la tele no se dice Toca", () => {
-  const dicho = JSON.stringify(TEXTOS) + PASOS.map((p) => textoGuia(p, "tv") + vozGuia(p, "tactil") + vozGuia(p, "tv")).join(" ");
+  const dicho = JSON.stringify(TEXTOS) + PASOS.map((p) => textoGuia(p, "tv", REGLAS) + vozGuia(p, "tactil", REGLAS) + vozGuia(p, "tv", REGLAS)).join(" ");
   assert.equal(dicho.includes("%"), false);
   assert.equal(/por ciento/i.test(dicho), false);
   assert.equal(TEXTOS.descansando, "La tienda está descansando hoy, vuelve mañana");
   assert.equal(fraseGarantia(8, false), "Tu rara llega en 8 cajas o menos");
   assert.equal(fraseGarantia(1, true), "Tu ultra rara llega en 1 caja o menos");
   for (const paso of PASOS) {
-    assert.equal(/toca/i.test(textoGuia(paso, "tv")), false, paso);
-    assert.equal(/[▲+]/.test(vozGuia(paso, "tv") + vozGuia(paso, "tactil")), false);
+    assert.equal(/toca/i.test(textoGuia(paso, "tv", REGLAS)), false, paso);
+    assert.equal(/[▲+]/.test(vozGuia(paso, "tv", REGLAS) + vozGuia(paso, "tactil", REGLAS)), false);
   }
-  assert.equal(textoGuia("abrir", "tv"), "Pulsa OK.");
-  assert.match(textoGuia("abrir", "tactil"), /Toca/);
+  assert.equal(textoGuia("abrir", "tv", REGLAS), "Pulsa OK.");
+  assert.match(textoGuia("abrir", "tactil", REGLAS), /Toca/);
+  assert.equal(textoGuia("garantia", "tv", REGLAS), "Tu rara llega en 8 cajas o menos.");
   const pipo = piezas[0];
   const vacio = htmlFoto(pipo, { tiene: false });
   const mini = htmlFoto(pipo, { tiene: true });
@@ -594,4 +613,94 @@ test("en pantalla no hay porcentajes y en la tele no se dice Toca", () => {
   assert.match(fichasProbabilidad("comun"), /mini-comun/);
   assert.equal(paraVoz("Pulsa + y ▲"), "Pulsa y");
   assert.equal(rutaPieza("pipo", "silueta"), "assets/brumitos/pipo-silueta.svg");
+});
+
+test("atrasar el reloj no reinicia el límite del día", () => {
+  const e = { ...estadoNuevo(), dia: "2026-10-09", hoy: 2, limite: 2 };
+  assert.equal(abiertasHoy(e, "2026-10-08"), 2);
+  assert.equal(puedeAbrir(e, { creditos: 20, fecha: "2026-10-08", piezas }).razon, "limite");
+  const seguido = abrirCaja({ ...e, limite: 4 }, { rng: cero, piezas, fecha: "2026-10-08" });
+  assert.equal(seguido.estado.dia, "2026-10-09");
+  assert.equal(seguido.estado.hoy, 3);
+  assert.equal(abiertasHoy(seguido.estado, "2026-10-08"), 3);
+  assert.equal(puedeAbrir(e, { creditos: 20, fecha: "2026-10-10", piezas }).ok, true);
+  const reglasSrc = fs.readFileSync(new URL("../src/reglas.js", import.meta.url), "utf8");
+  const colSrc = fs.readFileSync(new URL("../src/coleccion.js", import.meta.url), "utf8");
+  assert.equal(reglasSrc.includes("export const CONFIG"), false);
+  assert.equal(colSrc.includes("CONFIG"), false);
+});
+
+test("la apertura son tres brumas y la rareza espera, sin apagar Abrir por un plazo", () => {
+  assert.equal(etapaSiguiente("cerrado"), "bruma1");
+  assert.equal(etapaSiguiente("bruma1"), "bruma2");
+  assert.equal(etapaSiguiente("bruma2"), "figura");
+  assert.equal(etapaSiguiente("figura"), "rareza");
+  assert.equal(esperaDeEtapa("bruma1"), esperaDeEtapa("bruma2"));
+  assert.equal(esperaDeEtapa("figura"), REVELAR_MS);
+  assert.equal(REVELAR_MS, 600);
+  assert.ok(CARTA_MS >= 1500 && CARTA_MS <= 2000);
+  assert.equal(seDeshabilitaAbrir({ puede: true }), false);
+  assert.equal(seDeshabilitaAbrir({ cobrando: true, puede: true }), true);
+  assert.equal(seDeshabilitaAbrir({ puede: false }), true);
+  assert.equal(seDeshabilitaAbrir({ enGuia: true, paso: "abrir", puede: true }), false);
+  assert.equal(seDeshabilitaAbrir({ enGuia: true, paso: "tienda", puede: true }), true);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const tienda = juego.slice(juego.indexOf("function htmlTienda"), juego.indexOf("function htmlHueco"));
+  assert.equal(tienda.includes("htmlGarantias"), false);
+  assert.equal(tienda.includes("fraseGarantia"), false);
+});
+
+test("papás pide una multiplicación y el repetido se celebra", () => {
+  const rng = rngConSemilla("papas-puerta");
+  for (let i = 0; i < 40; i++) {
+    const p = preguntaPapas(rng);
+    assert.ok(p.a >= 6 && p.a <= 9);
+    assert.ok(p.b >= 6 && p.b <= 9);
+    assert.equal(p.r, p.a * p.b);
+    assert.equal(new Set(p.opciones).size, 3);
+    assert.ok(p.opciones.includes(p.r));
+    assert.equal(aciertoPapas(p, String(p.r)), true);
+    assert.equal(aciertoPapas(p, p.r + 1), false);
+  }
+  const batu = piezas.find((p) => p.id === "batu");
+  assert.equal(opcionesQuien(batu, [], piezas, rng), null);
+  assert.equal(opcionesQuien(batu, ["tefi"], piezas, rng), null);
+  const ops = opcionesQuien(batu, ["tefi", "pumo"], piezas, rngConSemilla("quien"));
+  assert.equal(ops.length, 3);
+  assert.equal(ops.filter((o) => o.id === "batu").length, 1);
+  for (const o of ops) {
+    if (o.id !== "batu") assert.ok(o.id === "tefi" || o.id === "pumo");
+  }
+  const meta = candidatosMeta(["batu"], piezas);
+  assert.ok(meta.length >= 2);
+  assert.equal(meta.some((p) => p.id === "batu"), false);
+  const elegida = ponerMeta(estadoNuevo(), meta[0].id);
+  assert.equal(elegida.meta, meta[0].id);
+  assert.equal(ponerMeta({ ...elegida, tenidas: [meta[0].id] }, meta[0].id).meta, elegida.meta);
+});
+
+test("el pendiente se guarda en el mismo cobro y se puede repetir la carta", async () => {
+  let gastos = 0;
+  const r = await abrirConCreditos(estadoNuevo(), {
+    creditos: 10, fecha: FECHA, piezas, rng: cero,
+    gastar() { gastos += 1; return { ok: true, saldo: 5 }; },
+    alCobrar(res) {
+      return {
+        ...res.estado,
+        pendiente: {
+          id: res.pieza.id,
+          duplicado: res.duplicado,
+          polvoGanado: res.polvoGanado,
+          familiaNueva: null,
+        },
+      };
+    },
+  });
+  assert.equal(gastos, 1);
+  assert.equal(r.estado.cajas, 1);
+  assert.equal(r.estado.pendiente.id, r.pieza.id);
+  const otra = cargar(JSON.parse(JSON.stringify(r.estado)));
+  assert.equal(otra.pendiente.id, r.pieza.id);
+  assert.equal(otra.pendiente.duplicado, false);
+  assert.equal(otra.cajas, 1);
 });

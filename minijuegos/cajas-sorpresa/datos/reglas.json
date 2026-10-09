@@ -1,0 +1,11 @@
+{
+  "costoCaja": 5,
+  "limiteDiario": 2,
+  "piezas": { "comun": 16, "rara": 6, "ultra": 2 },
+  "pesos": { "comun": 75, "rara": 20, "ultra": 5 },
+  "garantiaRara": 8,
+  "garantiaUltra": 25,
+  "sinRepetir": 10,
+  "polvoDuplicado": { "comun": 1, "rara": 3, "ultra": 10 },
+  "polvoPrecio": { "comun": 5, "rara": 15, "ultra": 40 }
+}

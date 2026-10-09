@@ -1,31 +1,37 @@
 // Tienda de cajas sorpresa. La lógica vive en coleccion.js; aquí solo se pinta y se cobra.
 // Sin await al nivel del módulo. Los créditos se piden con Noli.gastar, igual que los otros premios.
 import { Noli, moverFoco } from "../../../kit/noli.js";
-import { CONFIG, LIMITE_MIN, LIMITE_MAX } from "./reglas.js";
+import { normalizarReglas, LIMITE_MIN, LIMITE_MAX } from "./reglas.js";
+import { usarReglas } from "./coleccion.js";
 import { rngConSemilla } from "./rng.js";
 import {
   cargar, puedeAbrir, abrirConCreditos, comprar, cambiarLimite, ponerCerrada, ponerVoz,
-  marcarGuia, cuentaRara, cuentaUltra, fechaLocal,
+  marcarGuia, cuentaRara, cuentaUltra, fechaLocal, ponerMeta,
 } from "./coleccion.js";
 import {
   guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso, bloqueoAlSeguir, muestraPuedeAvanzar,
-  aplicarGuia, GUIA_MAX_MS, TRAS_GUIA_MS,
+  aplicarGuia, GUIA_MIN_MS, GUIA_MAX_MS, TRAS_GUIA_MS,
 } from "./guia.js";
 import { unirBloqueos, tapBloqueado, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "./salida.js";
 import { decir, calentarVoces } from "./voz.js";
 import { FAMILIAS, ordenarFamilia, familiaCompleta, familiaQueSeCompleto } from "./familias.js";
-import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseRepetida, frasePrecio, fraseNueva, fraseTuya, etiquetaRol, fraseFamilia } from "./textos.js";
+import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, frasePolvo, frasePrecio, fraseNueva, fraseTuya, etiquetaRol, fraseFamilia } from "./textos.js";
 import {
   MARCA, esc, estrellasSvg, claseMarco, frascoSvg, iconoPolvo, iconoCredito, iconoVoz,
   fichasProbabilidad, htmlFoto, rutaPieza, rutaFamilia,
 } from "./dibujo.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
+import { preguntaPapas, aciertoPapas } from "./papas.js";
+import { opcionesQuien, candidatosMeta } from "./quien.js";
+import { sonar } from "./sonido.js";
 
 const $main = document.getElementById("juego");
 try { if (/[?&]modo=tv\b/.test(location.search)) document.documentElement.dataset.modo = "tv"; } catch { /* sin location */ }
 try { calentarVoces(); } catch { /* sin voz en este aparato */ }
 
+let reglas = null;
 let piezas = [];
-let pr = cargar(null);
+let pr = null;
 let saldo = null;
 let pantalla = "tienda";
 let guia = null;
@@ -36,26 +42,34 @@ let fotoId = null;
 let fotoDesde = "vitrina";
 let familiaVista = "calabaza";
 let fotoPendiente = null;
-let aperturaHasta = 0;
-let pausaEn = 0;
-const APERTURA_MS = 1600;
+let etapa = "cerrado";
 let recien = false;
 let cobrando = false;
-let esperandoCarta = false;
+let papasOk = false;
+let pregunta = null;
+let falloPapas = false;
 
 let aparecio = 0;
 let vozTerminoEn = null;
+let vozSono = false;
+let vozFallo = false;
 let bloqueoPasoHasta = 0;
 let bloqueoDialogoHasta = 0;
+let cartaHasta = 0;
+let autoHasta = 0;
+let revelarHasta = 0;
+let pausaEn = 0;
 let pasoToken = 0;
-let cartaToken = 0;
+let aperturaToken = 0;
 let relojMuestra = 0;
-let relojCarta = 0;
+let relojEtapa = 0;
+let relojRevelar = 0;
 let relojBloqueo = 0;
 
 const modo = () => (document.documentElement.dataset.modo === "tv" || Noli.modo === "tv" ? "tv" : "tactil");
 const esTv = () => modo() === "tv";
-const guardar = () => Noli.guardar(pr);
+const guardar = () => { if (pr) Noli.guardar(pr); };
+const rngUi = () => Math.random();
 
 function pocaAnimacion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
@@ -98,17 +112,42 @@ function rarezaDeCaptura() {
   return null;
 }
 
-function abrirHabilitado() {
-  if (cobrando) return false;
-  if (bloqueado("abrir")) return false;
-  if (guia) return guia.paso === "abrir";
-  return puedeAbrir(pr, { creditos: saldo, fecha: fechaLocal(), piezas }).ok;
+function puedeAhora() {
+  if (!reglas || !pr) return false;
+  return puedeAbrir(pr, { creditos: saldo, fecha: fechaLocal(), config: reglas, piezas }).ok;
+}
+
+function abrirApagado() {
+  return seDeshabilitaAbrir({
+    enGuia: !!guia,
+    paso: guia ? guia.paso : "",
+    puede: puedeAhora(),
+  });
 }
 
 function focoAttr(id, inicial) {
   if (salir) return "";
   if (inicial) return `data-foco="inicial" data-foco-id="${esc(id)}"`;
   return `data-foco data-foco-id="${esc(id)}"`;
+}
+
+function metaPieza() {
+  if (!pr || !pr.meta) return null;
+  const p = piezas.find((x) => x.id === pr.meta);
+  if (!p || pr.tenidas.includes(p.id)) return null;
+  return p;
+}
+
+function htmlBarra(p) {
+  if (!p || !reglas) return "";
+  const precio = reglas.polvoPrecio[p.rareza] || 1;
+  const lleno = Math.max(0, Math.min(100, Math.round((pr.polvo / precio) * 100)));
+  return `<div class="meta-linea"><p>${esc(TEXTOS.metaPara)} ${esc(p.nombre)}</p>
+    <div class="barra-meta" style="--lleno:${lleno}%" role="img" aria-label="${esc(p.nombre)}, ${pr.polvo} de ${precio}"><span></span></div></div>`;
+}
+
+function htmlVuelo() {
+  return `<span class="polvo-vuela" aria-hidden="true">${iconoPolvo()}${iconoPolvo()}${iconoPolvo()}</span>`;
 }
 
 function cabecera() {
@@ -125,10 +164,15 @@ function cabecera() {
   </header>`;
 }
 
+function htmlGarantias() {
+  return `<p class="garantia">${esc(fraseGarantia(cuentaRara(pr, reglas), false))}</p>
+    <p class="garantia">${esc(fraseGarantia(cuentaUltra(pr, reglas), true))}</p>`;
+}
+
 function bannerGuia() {
   if (!guia || salir) return "";
   const inicial = focoDeGuia(guia.paso) === "frase-guia";
-  return `<button type="button" class="frase-guia" data-act="frase-guia" ${focoAttr("frase-guia", inicial)}>${esc(textoGuia(guia.paso, modo()))}</button>`;
+  return `<button type="button" class="frase-guia" data-act="frase-guia" ${focoAttr("frase-guia", inicial)}>${esc(textoGuia(guia.paso, modo(), reglas))}</button>`;
 }
 
 function dialogo() {
@@ -141,8 +185,8 @@ function dialogo() {
 }
 
 function htmlTienda() {
-  const bloqueo = guia ? null : puedeAbrir(pr, { creditos: saldo, fecha: fechaLocal(), piezas });
-  const on = abrirHabilitado();
+  const bloqueo = guia ? null : puedeAbrir(pr, { creditos: saldo, fecha: fechaLocal(), config: reglas, piezas });
+  const on = !abrirApagado();
   const inicial = (!guia || guia.paso === "abrir") && on;
   const aviso = !bloqueo ? ""
     : bloqueo.razon === "cerrada" || bloqueo.razon === "limite" ? `<p class="aviso descanso">${esc(TEXTOS.descansando)}</p>`
@@ -152,7 +196,7 @@ function htmlTienda() {
   return `${cabecera()}${bannerGuia()}
     <div class="layout-tienda">
       <div class="col-caja">
-        <div class="escena" aria-hidden="true">${frascoSvg()}</div>
+        <div class="escena etapa-cerrado" aria-hidden="true">${frascoSvg()}</div>
         <button type="button" class="boton grande primario" data-act="abrir" ${focoAttr("abrir", inicial)} ${on ? "" : "disabled"}>${esc(TEXTOS.abrir)}<small>${iconoCredito()} ${esc(TEXTOS.costo)}</small></button>
         ${aviso}
       </div>
@@ -163,8 +207,6 @@ function htmlTienda() {
           <li>${fichasProbabilidad("rara")}<span>${esc(TEXTOS.probRara)}</span></li>
           <li>${fichasProbabilidad("ultra")}<span>${esc(TEXTOS.probUltra)}</span></li>
         </ul>
-        <p class="garantia">${esc(fraseGarantia(cuentaRara(pr), false))}</p>
-        <p class="garantia">${esc(fraseGarantia(cuentaUltra(pr), true))}</p>
         <p class="cuenta">${pr.tenidas.length} ${esc(TEXTOS.de)} ${piezas.length}</p>
         <div class="fila">
           <button type="button" class="boton" data-act="vitrina" ${focoAttr("vitrina", false)} ${guia ? "disabled" : ""}>${esc(TEXTOS.vitrina)}</button>
@@ -216,8 +258,11 @@ function htmlVitrina() {
       <button type="button" class="boton" data-act="familia" data-delta="-1" ${focoAttr("familia-menos", false)}>${esc(TEXTOS.anterior)}</button>
       <button type="button" class="boton" data-act="familia" data-delta="1" ${focoAttr("familia-mas", false)}>${esc(TEXTOS.siguiente)}</button>
     </div>` : "";
+  const meta = metaPieza();
   return `${cabecera()}${bannerGuia()}
     <button type="button" class="boton" data-act="volver" ${focoAttr("volver", !guia && !esTv())} ${guia ? "disabled" : ""}>${esc(TEXTOS.volver)}</button>
+    ${htmlGarantias()}
+    ${meta ? htmlBarra(meta) : ""}
     ${bloques}
     ${nav}
     ${dialogo()}`;
@@ -225,7 +270,7 @@ function htmlVitrina() {
 
 function htmlAbriendo() {
   return `${cabecera()}${bannerGuia()}
-    <div class="escena abriendo" aria-hidden="true">${frascoSvg()}</div>
+    <button type="button" class="escena etapa-${esc(etapa)}" data-act="etapa" ${focoAttr("etapa", true)} aria-label="${esc(TEXTOS.abriendo)}">${frascoSvg()}</button>
     <p class="aviso">${esc(TEXTOS.abriendo)}</p>
     ${dialogo()}`;
 }
@@ -238,24 +283,72 @@ function htmlOir(p) {
     </button>`;
 }
 
+function htmlQuiz(quiz) {
+  const botones = quiz.map((o, i) =>
+    `<button type="button" class="boton" data-act="quien" data-id="${esc(o.id)}" ${focoAttr("quien-" + i, i === 0)}>${esc(o.nombre)}</button>`
+  ).join("");
+  return `<p class="aviso">${esc(TEXTOS.quien)}</p><div class="fila quiz">${botones}</div>`;
+}
+
+function htmlMetaCarta() {
+  const meta = metaPieza();
+  if (meta) {
+    const vuelo = carta.volar ? htmlVuelo() : "";
+    return `<div class="zona-meta">${htmlBarra(meta)}${vuelo}<p class="nota">${esc(frasePolvo(carta.polvoGanado))}</p></div>`;
+  }
+  const opciones = candidatosMeta(pr.tenidas, piezas);
+  if (!opciones.length) return `<p class="nota">${esc(frasePolvo(carta.polvoGanado))}</p>`;
+  const botones = opciones.map((p, i) =>
+    `<button type="button" class="boton" data-act="meta" data-id="${esc(p.id)}" ${focoAttr("meta-" + p.id, i === 0)}>${esc(TEXTOS.guardarPara)} ${esc(p.nombre)}</button>`
+  ).join("");
+  return `<p class="nota">${esc(frasePolvo(carta.polvoGanado))}</p><div class="fila">${botones}</div>`;
+}
+
 function htmlCarta() {
   const p = carta.pieza;
-  const linea = carta.ejemplo ? TEXTOS.ejemplo : carta.duplicado ? fraseRepetida(carta.polvoGanado, p.genero) : fraseNueva(p.genero);
-  const disfraz = p.disfraz ? ` · ${esc(p.disfraz)}` : "";
+  const revelada = carta.fase === "revelada";
+  const marco = revelada ? `festejo ${claseMarco(p.rareza, true)}` : "carta-plain";
+  const esconderNombre = !revelada && carta.quiz;
+  const nombre = esconderNombre ? "" : `<h2>${esc(p.nombre)}</h2>`;
   const rol = etiquetaRol(p.rol);
-  const verFoto = carta.familiaNueva && !guia;
-  const seguir = guia ? "" : `<button type="button" class="boton grande primario" data-act="guardar-carta" ${focoAttr("guardar-carta", !verFoto)}>${esc(TEXTOS.aVitrina)}</button>`;
-  const foto = verFoto ? `<button type="button" class="boton grande" data-act="ver-foto" data-familia="${esc(carta.familiaNueva)}" ${focoAttr("ver-foto", true)}>${esc(TEXTOS.verFoto)}</button>` : "";
+  const disfraz = p.disfraz ? ` · ${esc(p.disfraz)}` : "";
+  const detalle = revelada ? `<p>${esc(rol)} · ${esc(MARCA[p.rareza].nombre)}${disfraz}</p>` : "";
+  const estrellas = revelada ? estrellasSvg(MARCA[p.rareza].estrellas) : "";
+  const oir = revelada ? htmlOir(p) : "";
+  const linea = !revelada ? ""
+    : carta.ejemplo ? TEXTOS.ejemplo
+    : carta.duplicado ? fraseVisita(p.nombre)
+    : fraseNueva(p.genero);
+  const album = revelada && !carta.duplicado && !carta.ejemplo
+    ? `<p class="album entra-album">${esc(TEXTOS.album)}</p>` : "";
+  const visita = linea ? `<p class="aviso${carta.duplicado ? " visita" : ""}">${esc(linea)}</p>` : "";
+  const quiz = !revelada && carta.quiz ? htmlQuiz(carta.quiz) : "";
+  const meta = revelada && carta.duplicado && !carta.ejemplo ? htmlMetaCarta() : "";
+  const garantias = revelada && !guia && !carta.ejemplo ? htmlGarantias() : "";
+  const verFoto = revelada && carta.familiaNueva && !guia
+    ? `<button type="button" class="boton grande" data-act="ver-foto" data-familia="${esc(carta.familiaNueva)}" ${focoAttr("ver-foto", false)}>${esc(TEXTOS.verFoto)}</button>`
+    : "";
+  const seguir = !revelada || guia ? ""
+    : `<button type="button" class="boton grande primario" data-act="guardar-carta" ${focoAttr("guardar-carta", true)}>${esc(TEXTOS.aVitrina)}</button>`;
+  const apurar = !revelada && !carta.quiz
+    ? `<button type="button" class="carta-grande ${marco}" data-act="apurar" ${focoAttr("apurar", !guia)}>${htmlFoto(p, { grande: true, tiene: true })}${nombre}</button>`
+    : `<article class="carta-grande ${marco}">
+        ${htmlFoto(p, { grande: true, tiene: true })}
+        ${estrellas}
+        ${nombre}
+        ${detalle}
+        ${oir}
+        ${visita}
+        ${album}
+      </article>`;
+  const frasco = revelada ? "" : `<div class="escena etapa-figura" aria-hidden="true">${frascoSvg()}</div>`;
   return `${cabecera()}${bannerGuia()}
-    <article class="carta-grande festejo ${claseMarco(p.rareza, true)}">
-      ${htmlFoto(p, { grande: true, tiene: true })}
-      ${estrellasSvg(MARCA[p.rareza].estrellas)}
-      <h2>${esc(p.nombre)}</h2>
-      <p>${esc(rol)} · ${esc(MARCA[p.rareza].nombre)}${disfraz}</p>
-      ${htmlOir(p)}
-      <p class="aviso">${esc(linea)}</p>
-    </article>
-    ${foto}
+    ${frasco}
+    ${apurar}
+    ${quiz}
+    ${meta}
+    ${garantias}
+    ${verFoto}
     ${seguir}
     ${dialogo()}`;
 }
@@ -273,7 +366,7 @@ function htmlFotoFamiliar() {
 function htmlDetalle() {
   const p = piezas.find((x) => x.id === detalleId) || piezas[0];
   const tiene = pr.tenidas.includes(p.id);
-  const precio = CONFIG.polvoPrecio[p.rareza];
+  const precio = reglas.polvoPrecio[p.rareza];
   const puede = !tiene && pr.polvo >= precio;
   const disfraz = tiene && p.disfraz ? ` · ${esc(p.disfraz)}` : "";
   const rol = tiene ? `${esc(etiquetaRol(p.rol))} · ` : "";
@@ -281,10 +374,15 @@ function htmlDetalle() {
   const foto = tiene && fotoPendiente && fotoPendiente === p.familia
     ? `<button type="button" class="boton grande" data-act="ver-foto" data-familia="${esc(p.familia)}" ${focoAttr("ver-foto", false)}>${esc(TEXTOS.verFoto)}</button>`
     : "";
+  const guardarMeta = !tiene
+    ? `<button type="button" class="boton" data-act="meta" data-id="${esc(p.id)}" ${focoAttr("meta-" + p.id, false)}>${esc(TEXTOS.guardarPara)}</button>`
+    : "";
   const accion = tiene
     ? `<p class="aviso amable">${esc(recien ? fraseTuya(p.genero) : MARCA[p.rareza].nombre)}</p>`
     : `<p>${esc(frasePrecio(p.nombre, precio))}</p>
-       <button type="button" class="boton grande primario" data-act="conseguir" ${focoAttr("conseguir", true)} ${puede ? "" : "disabled"}>${esc(puede ? TEXTOS.conseguir : TEXTOS.noAlcanza)}</button>`;
+       <button type="button" class="boton grande primario" data-act="conseguir" ${focoAttr("conseguir", true)} ${puede ? "" : "disabled"}>${esc(puede ? TEXTOS.conseguir : TEXTOS.noAlcanza)}</button>
+       ${guardarMeta}`;
+  const barra = !tiene && pr.meta === p.id ? htmlBarra(p) : "";
   return `${cabecera()}
     <article class="carta-grande ${claseMarco(p.rareza, tiene)}">
       ${htmlFoto(p, { grande: tiene, tiene })}
@@ -293,13 +391,29 @@ function htmlDetalle() {
       <p>${rol}${esc(MARCA[p.rareza].nombre)}${disfraz}</p>
       ${oir}
     </article>
+    ${barra}
     ${foto}
     ${accion}
     <button type="button" class="boton" data-act="volver" ${focoAttr("volver", tiene)}>${esc(TEXTOS.volver)}</button>
     ${dialogo()}`;
 }
 
+function htmlPregunta() {
+  const aviso = falloPapas ? `<p class="aviso">${esc(TEXTOS.esaNo)}</p>` : "";
+  const ops = (pregunta ? pregunta.opciones : []).map((n, i) =>
+    `<button type="button" class="boton grande" data-act="respuesta" data-valor="${n}" ${focoAttr("op-" + i, i === 0)}>${n}</button>`
+  ).join("");
+  return `${cabecera()}
+    <h2>${esc(TEXTOS.papas)}</h2>
+    ${aviso}
+    <p class="aviso">${esc(TEXTOS.cuantoEs)} ${pregunta ? pregunta.a : ""} × ${pregunta ? pregunta.b : ""}?</p>
+    <div class="papas-opciones">${ops}</div>
+    <button type="button" class="boton" data-act="volver" ${focoAttr("volver", false)}>${esc(TEXTOS.volver)}</button>
+    ${dialogo()}`;
+}
+
 function htmlPapas() {
+  if (!papasOk) return htmlPregunta();
   const items = [...pr.historial].reverse().slice(0, 12).map((m) => {
     const p = piezas.find((x) => x.id === m.id);
     const extra = m.nueva ? fraseNueva(p && p.genero) : (m.polvo === 1 ? "1 de polvo" : `${m.polvo} de polvo`);
@@ -307,12 +421,12 @@ function htmlPapas() {
   }).join("");
   return `${cabecera()}
     <h2>${esc(TEXTOS.papas)}</h2>
-    <div class="fila limite">
-      <button type="button" class="boton" data-act="limite" data-delta="-1" ${focoAttr("menos", true)} ${pr.limite <= LIMITE_MIN ? "disabled" : ""}>${esc(TEXTOS.menos)}</button>
-      <p>${esc(TEXTOS.limite)}<br><b>${pr.limite}</b></p>
-      <button type="button" class="boton" data-act="limite" data-delta="1" ${focoAttr("mas", false)} ${pr.limite >= LIMITE_MAX ? "disabled" : ""}>${esc(TEXTOS.mas)}</button>
+    <div class="papas-mandos">
+      <button type="button" class="boton menos" data-act="limite" data-delta="-1" ${focoAttr("menos", true)} ${pr.limite <= LIMITE_MIN ? "disabled" : ""}>${esc(TEXTOS.menos)}</button>
+      <button type="button" class="boton mas" data-act="limite" data-delta="1" ${focoAttr("mas", false)} ${pr.limite >= LIMITE_MAX ? "disabled" : ""}>${esc(TEXTOS.mas)}</button>
+      <p class="cuenta-limite">${esc(TEXTOS.limite)} <b>${pr.limite}</b></p>
+      <button type="button" class="boton cerrar-tienda" data-act="cerrar-tienda" ${focoAttr("cerrar-tienda", false)}>${esc(pr.cerrada ? TEXTOS.abrirTienda : TEXTOS.cerrarTienda)}</button>
     </div>
-    <button type="button" class="boton" data-act="cerrar-tienda" ${focoAttr("cerrar-tienda", false)}>${esc(pr.cerrada ? TEXTOS.abrirTienda : TEXTOS.cerrarTienda)}</button>
     <p class="nota">${esc(pr.cerrada ? TEXTOS.cerradaNota : TEXTOS.abiertaNota)}</p>
     <button type="button" class="boton" data-act="voz" ${focoAttr("voz", false)}>${esc(pr.voz ? TEXTOS.vozSi : TEXTOS.vozNo)}</button>
     <h3>${esc(TEXTOS.historial)}</h3>
@@ -322,6 +436,7 @@ function htmlPapas() {
 }
 
 function html() {
+  if (!pr) return `<p class="aviso">${esc(TEXTOS.cargando)}</p>`;
   if (pantalla === "vitrina") return htmlVitrina();
   if (pantalla === "abriendo") return htmlAbriendo();
   if (pantalla === "carta" && carta) return htmlCarta();
@@ -332,16 +447,17 @@ function html() {
 }
 
 function enfocar(id) {
-  const lista = [...$main.querySelectorAll("[data-foco]")].filter((e) => !e.disabled);
-  const preferido = id && lista.find((e) => e.dataset.focoId === id && e.dataset.focoId !== "saltar");
-  const inicial = lista.find((e) => e.getAttribute("data-foco") === "inicial" && e.dataset.focoId !== "saltar");
-  const otro = lista.find((e) => e.dataset.focoId !== "saltar");
-  const el = preferido || inicial || otro || null;
+  const lista = [...$main.querySelectorAll("[data-foco]")].filter((e) => !e.disabled && e.offsetParent !== null);
+  const preferido = id && lista.find((e) => e.dataset.focoId === id);
+  const inicial = lista.find((e) => e.getAttribute("data-foco") === "inicial");
+  const el = preferido || inicial || lista[0] || null;
   if (el) el.focus({ preventScroll: true });
 }
 
 function pintar(foco) {
   $main.dataset.pantalla = guia ? "guia-" + guia.paso : pantalla;
+  $main.dataset.etapa = pantalla === "abriendo" || pantalla === "carta" ? etapa : "";
+  $main.dataset.fase = pantalla === "carta" && carta ? carta.fase || "" : "";
   $main.innerHTML = html();
   if (esTv()) document.documentElement.classList.add("teclado");
   enfocar(salir ? "seguir" : foco);
@@ -352,14 +468,32 @@ function cancelarVoz() {
   try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch { /* sin voz */ }
 }
 
+function limpiarApertura() {
+  clearTimeout(relojEtapa);
+  clearTimeout(relojRevelar);
+  aperturaToken += 1;
+  etapa = "cerrado";
+  autoHasta = 0;
+  revelarHasta = 0;
+}
+
 function programarAvance(token, evento) {
   if (!guia || !guiaAvanzaConToque(guia.paso)) return;
   clearTimeout(relojMuestra);
-  const cuando = evento === "voz" ? cuandoAvanzaMuestra(aparecio, vozTerminoEn) : aparecio + GUIA_MAX_MS;
+  const base = Number(aparecio) || 0;
+  let cuando = base + GUIA_MAX_MS;
+  if (evento === "voz") cuando = cuandoAvanzaMuestra(aparecio, vozTerminoEn);
+  else if (evento === "silencio") cuando = base + GUIA_MIN_MS;
   relojMuestra = setTimeout(() => {
     if (token !== pasoToken || salir || !guia) return;
     avanzarMuestra(evento);
   }, Math.max(0, cuando - Date.now()));
+}
+
+function eventoDeVoz() {
+  if (vozTerminoEn != null) return "voz";
+  if (vozFallo || !vozSono) return "silencio";
+  return "tiempo";
 }
 
 function programarPaso() {
@@ -368,16 +502,29 @@ function programarPaso() {
   const paso = guia.paso;
   aparecio = Date.now();
   vozTerminoEn = null;
-  const linea = pr.voz ? vozGuia(paso, modo()) : "";
-  const r = linea ? decir(linea, { onend: () => {
-    if (token !== pasoToken || salir) return;
-    vozTerminoEn = Date.now();
-    bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: true, vozTerminoEn });
-    programarAvance(token, "voz");
-    programarFinBloqueo();
-  } }) : { sono: false };
-  bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: !!r.sono, vozTerminoEn: null });
-  programarAvance(token, "tiempo");
+  vozFallo = false;
+  const linea = pr.voz ? vozGuia(paso, modo(), reglas) : "";
+  const r = linea ? decir(linea, {
+    onend: () => {
+      if (token !== pasoToken || salir || vozFallo) return;
+      vozTerminoEn = Date.now();
+      bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: true, vozTerminoEn });
+      programarAvance(token, "voz");
+      programarFinBloqueo();
+    },
+    onerror: () => {
+      if (token !== pasoToken || salir) return;
+      vozFallo = true;
+      vozTerminoEn = null;
+      bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: false });
+      programarAvance(token, "silencio");
+      programarFinBloqueo();
+    },
+  }) : { sono: false };
+  vozSono = !!r.sono && !vozFallo;
+  bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: vozSono, vozTerminoEn: null });
+  const evento = !vozSono ? "silencio" : vozTerminoEn != null ? "voz" : "tiempo";
+  programarAvance(token, evento);
 }
 
 function empezarGuia() {
@@ -385,17 +532,17 @@ function empezarGuia() {
   pantalla = "tienda";
   carta = null;
   detalleId = null;
+  limpiarApertura();
   programarPaso();
   pintar(focoDeGuia("tienda"));
 }
 
 function terminarGuia() {
   pasoToken += 1;
-  cartaToken += 1;
-  esperandoCarta = false;
+  esperandoNada();
   clearTimeout(relojMuestra);
-  clearTimeout(relojCarta);
   cancelarVoz();
+  limpiarApertura();
   guia = null;
   pantalla = "tienda";
   carta = null;
@@ -403,6 +550,10 @@ function terminarGuia() {
   guardar();
   bloqueoPasoHasta = Date.now() + TRAS_GUIA_MS;
   pintar("abrir");
+}
+
+function esperandoNada() {
+  cartaHasta = 0;
 }
 
 function saltarGuia() {
@@ -424,38 +575,92 @@ function avanzarMuestra(evento) {
   pintar(focoDeGuia(sig.paso));
 }
 
-function mostrarCarta(token) {
-  if (token !== cartaToken || salir) return;
-  esperandoCarta = false;
+function programarEtapa(espera) {
+  clearTimeout(relojEtapa);
+  if (!espera) return;
+  autoHasta = Date.now() + espera;
+  const token = aperturaToken;
+  relojEtapa = setTimeout(() => {
+    if (token !== aperturaToken || salir) return;
+    avanzarEtapa();
+  }, espera);
+}
+
+function programarRevelar(espera) {
+  clearTimeout(relojRevelar);
+  revelarHasta = Date.now() + espera;
+  const token = aperturaToken;
+  relojRevelar = setTimeout(() => {
+    if (token !== aperturaToken || salir) return;
+    entrarRareza();
+  }, espera);
+}
+
+function predecir(info) {
+  try {
+    const img = new Image();
+    img.src = rutaPieza(info.pieza.archivo, 512);
+  } catch { /* la carta se pinta igual */ }
+}
+
+function empezarApertura(info) {
+  carta = { ...info, fase: "plain", quiz: null, volar: false };
+  etapa = "bruma1";
+  pantalla = "abriendo";
+  aperturaToken += 1;
+  bloqueoPasoHasta = 0;
+  predecir(info);
+  sonar("bruma1");
+  programarEtapa(esperaDeEtapa("bruma1", { reducida: pocaAnimacion() }));
+  pintar("etapa");
+}
+
+function entrarFigura() {
+  if (!carta) return;
+  etapa = "figura";
   pantalla = "carta";
+  const quiz = carta.ejemplo ? null : opcionesQuien(carta.pieza, pr.tenidas, piezas, rngUi);
+  carta = { ...carta, fase: "plain", quiz, volar: false };
+  cartaHasta = Date.now() + CARTA_MS;
+  aperturaToken += 1;
+  clearTimeout(relojEtapa);
+  sonar("figura");
   if (guia && guia.paso === "abrir") {
     const sig = aplicarGuia("abrir", "abrir");
     if (sig.fin) { terminarGuia(); return; }
     guia = { paso: sig.paso };
     programarPaso();
-    pintar(focoDeGuia(sig.paso));
-    return;
   }
-  const foco = carta && carta.familiaNueva ? "ver-foto" : "guardar-carta";
+  const espera = esperaDeEtapa("figura", { reducida: pocaAnimacion() });
+  if (espera === 0) { entrarRareza(); return; }
+  programarRevelar(espera);
+  const foco = guia ? focoDeGuia(guia.paso) : (carta.quiz ? "quien-0" : "apurar");
   pintar(foco);
-  if (pr.voz && carta && carta.pieza && carta.pieza.ingles) decir(carta.pieza.ingles, { lang: "en-US" });
 }
 
-function empezarApertura(info) {
-  carta = info;
-  pantalla = "abriendo";
-  esperandoCarta = true;
-  try {
-    const img = new Image();
-    img.src = rutaPieza(info.pieza.archivo, 512);
-  } catch { /* la carta se pinta igual */ }
-  pintar();
-  const token = ++cartaToken;
-  clearTimeout(relojCarta);
-  const espera = pocaAnimacion() ? 0 : APERTURA_MS;
-  aperturaHasta = Date.now() + espera;
-  if (espera === 0) mostrarCarta(token);
-  else relojCarta = setTimeout(() => mostrarCarta(token), espera);
+function entrarRareza() {
+  if (!carta || carta.fase === "revelada") return;
+  clearTimeout(relojRevelar);
+  etapa = "rareza";
+  const conMeta = !!(carta.duplicado && metaPieza());
+  carta = { ...carta, fase: "revelada", volar: conMeta };
+  sonar("rareza");
+  const foco = guia ? focoDeGuia(guia.paso) : "guardar-carta";
+  pintar(foco);
+  if (!guia && pr.voz && carta.pieza && carta.pieza.ingles) decir(carta.pieza.ingles, { lang: "en-US" });
+}
+
+function avanzarEtapa() {
+  if (salir || !carta) return;
+  if (pantalla === "carta" && carta.fase === "plain") { entrarRareza(); return; }
+  if (pantalla !== "abriendo") return;
+  const sig = etapaSiguiente(etapa);
+  if (sig === "figura") { entrarFigura(); return; }
+  etapa = sig;
+  aperturaToken += 1;
+  sonar(sig);
+  programarEtapa(esperaDeEtapa(sig, { reducida: pocaAnimacion() }));
+  pintar("etapa");
 }
 
 function abrirDemo() {
@@ -466,16 +671,33 @@ function abrirDemo() {
 async function abrirDeVerdad() {
   if (cobrando || guia) return;
   const fecha = fechaLocal();
-  if (!puedeAbrir(pr, { creditos: saldo, fecha, piezas }).ok) { pintar("abrir"); return; }
+  if (!puedeAbrir(pr, { creditos: saldo, fecha, config: reglas, piezas }).ok) { pintar("abrir"); return; }
   cobrando = true;
   pintar("abrir");
   const r = await abrirConCreditos(pr, {
     creditos: saldo,
     fecha,
     piezas,
+    config: reglas,
     rng: rngDeCaja(),
     rarezaForzada: rarezaDeCaptura(),
     gastar: (n) => Noli.gastar(n, "cajas-sorpresa"),
+    alCobrar(resultado) {
+      const antes = pr.tenidas.slice();
+      const familiaNueva = resultado.duplicado ? null : familiaQueSeCompleto(antes, resultado.estado.tenidas, piezas);
+      saldo = resultado.creditos;
+      pr = {
+        ...resultado.estado,
+        pendiente: {
+          id: resultado.pieza.id,
+          duplicado: !!resultado.duplicado,
+          polvoGanado: resultado.polvoGanado || 0,
+          familiaNueva: familiaNueva || null,
+        },
+      };
+      guardar();
+      return pr;
+    },
   });
   cobrando = false;
   if (!r.ok) {
@@ -483,17 +705,25 @@ async function abrirDeVerdad() {
     pintar("abrir");
     return;
   }
-  const antes = pr.tenidas.slice();
   saldo = r.creditos;
   pr = r.estado;
-  guardar();
-  const familiaNueva = r.duplicado ? null : familiaQueSeCompleto(antes, pr.tenidas, piezas);
-  empezarApertura({ pieza: r.pieza, duplicado: r.duplicado, polvoGanado: r.polvoGanado, ejemplo: false, familiaNueva });
+  const pen = pr.pendiente || {};
+  const pieza = piezas.find((p) => p.id === pen.id) || r.pieza;
+  empezarApertura({
+    pieza,
+    duplicado: !!pen.duplicado,
+    polvoGanado: pen.polvoGanado || 0,
+    ejemplo: false,
+    familiaNueva: pen.familiaNueva || null,
+  });
 }
 
 function pulsarAbrir() {
-  if (!abrirHabilitado()) return;
+  if (cobrando || abrirApagado()) return;
+  if (bloqueado("abrir")) return;
+  if (pantalla === "abriendo" || pantalla === "carta") return;
   if (guia && guia.paso === "abrir") { abrirDemo(); return; }
+  if (guia) return;
   abrirDeVerdad();
 }
 
@@ -518,17 +748,44 @@ function abrirDetalle(id) {
 }
 
 function comprarPieza() {
+  if (bloqueado("conseguir")) return;
   const antes = pr.tenidas.slice();
-  const r = comprar(pr, detalleId, piezas);
+  const r = comprar(pr, detalleId, piezas, reglas);
   if (!r.ok) return;
   pr = r.estado;
   recien = true;
   fotoPendiente = familiaQueSeCompleto(antes, pr.tenidas, piezas);
+  bloqueoPasoHasta = Date.now() + TRAS_COMPRA_MS;
   guardar();
   const p = piezas.find((x) => x.id === detalleId);
   if (p) { try { const img = new Image(); img.src = rutaPieza(p.archivo, 512); } catch { /* ya es tuya */ } }
   pintar(fotoPendiente ? "ver-foto" : "volver");
   if (pr.voz) hablarIngles(p);
+}
+
+function cartaQuieta() {
+  return pantalla === "carta" && carta && Date.now() < cartaHasta;
+}
+
+function terminarCarta() {
+  if (cartaQuieta()) return;
+  if (pr.pendiente) pr = { ...pr, pendiente: null };
+  carta = null;
+  limpiarApertura();
+  cartaHasta = 0;
+  pantalla = "tienda";
+  bloqueoPasoHasta = Date.now() + TRAS_ABRIR_MS;
+  guardar();
+  pintar("abrir");
+}
+
+function elegirMeta(id) {
+  const antes = pr.meta;
+  pr = ponerMeta(pr, id);
+  if (pr.meta === antes) return;
+  if (carta && carta.duplicado) carta = { ...carta, volar: true };
+  guardar();
+  pintar(pantalla === "carta" ? "guardar-carta" : "meta-" + id);
 }
 
 function actuar(act, data) {
@@ -537,10 +794,32 @@ function actuar(act, data) {
     if (guia && guiaAvanzaConToque(guia.paso)) avanzarMuestra("toque");
     return;
   }
+  if (act === "etapa" || act === "apurar") return avanzarEtapa();
+  if (act === "quien") return avanzarEtapa();
   if (act === "abrir") return pulsarAbrir();
-  if (act === "vitrina") { pantalla = "vitrina"; pintar("volver"); return; }
+  if (act === "vitrina") { pantalla = "vitrina"; pintar(esTv() ? "hueco-" + (ordenarFamilia(piezas, familiaVista)[0] || {}).id : "volver"); return; }
   if (act === "como") return empezarGuia();
-  if (act === "papas") { pantalla = "papas"; pintar("menos"); return; }
+  if (act === "papas") {
+    pantalla = "papas";
+    if (!papasOk) {
+      pregunta = preguntaPapas(rngUi);
+      falloPapas = false;
+    }
+    pintar(papasOk ? "menos" : "op-0");
+    return;
+  }
+  if (act === "respuesta") {
+    if (aciertoPapas(pregunta, data.valor)) {
+      papasOk = true;
+      falloPapas = false;
+      pintar("menos");
+      return;
+    }
+    falloPapas = true;
+    pregunta = preguntaPapas(rngUi);
+    pintar("op-0");
+    return;
+  }
   if (act === "volver") {
     pantalla = "tienda";
     detalleId = null;
@@ -563,6 +842,7 @@ function actuar(act, data) {
     return;
   }
   if (act === "ver-foto") {
+    if (cartaQuieta()) return;
     fotoId = data.familia || (carta && carta.familiaNueva) || familiaVista;
     fotoDesde = pantalla;
     pantalla = "foto";
@@ -571,17 +851,13 @@ function actuar(act, data) {
   }
   if (act === "cerrar-foto") {
     pantalla = fotoDesde === "carta" ? "carta" : fotoDesde === "detalle" ? "detalle" : "vitrina";
-    pintar(pantalla === "carta" ? "guardar-carta" : pantalla === "detalle" ? "volver" : "volver");
+    pintar(pantalla === "carta" ? "guardar-carta" : "volver");
     return;
   }
   if (act === "hueco") return abrirDetalle(data.id);
   if (act === "conseguir") return comprarPieza();
-  if (act === "guardar-carta") {
-    pantalla = "tienda";
-    carta = null;
-    pintar("abrir");
-    return;
-  }
+  if (act === "meta") return elegirMeta(data.id);
+  if (act === "guardar-carta") return terminarCarta();
   if (act === "limite") {
     pr = cambiarLimite(pr, Number(data.delta));
     guardar();
@@ -607,10 +883,35 @@ function abrirSalir() {
   salir = true;
   pausaEn = Number(Date.now()) || 0;
   clearTimeout(relojMuestra);
-  clearTimeout(relojCarta);
+  clearTimeout(relojEtapa);
+  clearTimeout(relojRevelar);
   pasoToken += 1;
   cancelarVoz();
   pintar("seguir");
+}
+
+function reanudarRelojes(pausa, ahora) {
+  if (pantalla === "abriendo" && autoHasta) {
+    autoHasta = (Number(autoHasta) || 0) + pausa;
+    const falta = Math.max(0, autoHasta - ahora);
+    const token = aperturaToken;
+    relojEtapa = setTimeout(() => {
+      if (token !== aperturaToken || salir) return;
+      avanzarEtapa();
+    }, falta);
+  }
+  if (pantalla === "carta" && carta && carta.fase === "plain" && revelarHasta) {
+    revelarHasta = (Number(revelarHasta) || 0) + pausa;
+    cartaHasta = (Number(cartaHasta) || 0) + pausa;
+    const falta = Math.max(0, revelarHasta - ahora);
+    const token = aperturaToken;
+    relojRevelar = setTimeout(() => {
+      if (token !== aperturaToken || salir) return;
+      entrarRareza();
+    }, falta);
+  } else if (cartaHasta) {
+    cartaHasta = (Number(cartaHasta) || 0) + pausa;
+  }
 }
 
 function cerrarDialogo() {
@@ -626,17 +927,16 @@ function cerrarDialogo() {
     bloqueoPasoHasta = b.hastaPaso;
     bloqueoDialogoHasta = b.hastaDialogo;
     const token = ++pasoToken;
-    programarAvance(token, vozTerminoEn != null ? "voz" : "tiempo");
+    programarAvance(token, eventoDeVoz());
   } else {
     bloqueoDialogoHasta = ahora + TRAS_DIALOGO_MS;
   }
-  if (esperandoCarta && pantalla === "abriendo") {
-    aperturaHasta = (Number(aperturaHasta) || 0) + pausa;
-    const token = cartaToken;
-    clearTimeout(relojCarta);
-    relojCarta = setTimeout(() => mostrarCarta(token), Math.max(0, aperturaHasta - ahora));
-  }
+  reanudarRelojes(pausa, ahora);
   pintar(guia ? focoDeGuia(guia.paso) : undefined);
+}
+
+function prepararPregunta() {
+  if (!papasOk && !pregunta) pregunta = preguntaPapas(rngUi);
 }
 
 $main.addEventListener("click", (ev) => {
@@ -659,6 +959,7 @@ $main.addEventListener("click", (ev) => {
   }
   if (bloqueado(act)) return;
   if (!t || t.disabled) return;
+  if ((act === "guardar-carta" || act === "ver-foto") && cartaQuieta()) return;
   actuar(act, t.dataset);
 });
 
@@ -678,6 +979,23 @@ Noli.alEntrar((accion) => {
     return true;
   }
   if (accion === "ok" && bloqueado(idFoco() === "saltar" ? "saltar" : "ok")) return true;
+  if (accion === "ok" && pantalla === "abriendo") {
+    const e = document.activeElement;
+    if (e && $main.contains(e) && !e.disabled) e.click();
+    else avanzarEtapa();
+    return true;
+  }
+  if (accion === "ok" && pantalla === "carta" && carta && carta.fase === "plain") {
+    const e = document.activeElement;
+    if (e && $main.contains(e) && (e.dataset.act === "quien" || e.dataset.act === "oir" || e.dataset.act === "apurar")) e.click();
+    else avanzarEtapa();
+    return true;
+  }
+  if (accion === "ok" && cartaQuieta()) {
+    const e = document.activeElement;
+    if (e && $main.contains(e) && e.dataset.act === "oir") e.click();
+    return true;
+  }
   if (guia && accion === "ok") {
     const enfocado = document.activeElement;
     if (enfocado && $main.contains(enfocado) && enfocado.dataset.act === "oir") {
@@ -707,15 +1025,40 @@ document.addEventListener("pointerdown", () => {
   if (!esTv()) document.documentElement.classList.remove("teclado");
 }, true);
 
-function leerPiezas() {
-  return fetch(new URL("../datos/piezas.json", import.meta.url)).then((r) => r.json());
+function leerJson(nombre) {
+  return fetch(new URL("../datos/" + nombre, import.meta.url)).then((r) => {
+    if (!r.ok) throw new Error(nombre);
+    return r.json();
+  });
 }
 
-Promise.all([Noli.datos, Noli.creditos, leerPiezas()]).then(([datos, creditos, lista]) => {
+function reanudarPendiente() {
+  const pen = pr.pendiente;
+  const pieza = piezas.find((p) => p.id === pen.id);
+  if (!pieza) {
+    pr = { ...pr, pendiente: null };
+    guardar();
+    pintar("abrir");
+    return;
+  }
+  empezarApertura({
+    pieza,
+    duplicado: !!pen.duplicado,
+    polvoGanado: pen.polvoGanado || 0,
+    ejemplo: false,
+    familiaNueva: pen.familiaNueva || null,
+  });
+}
+
+Promise.all([Noli.datos, Noli.creditos, leerJson("piezas.json"), leerJson("reglas.json")]).then(([datos, creditos, lista, reglasJson]) => {
+  reglas = normalizarReglas(reglasJson);
+  usarReglas(reglas);
   piezas = Array.isArray(lista) ? lista : [];
-  pr = cargar(datos);
+  pr = cargar(datos, reglas);
   saldo = typeof creditos === "number" ? creditos : null;
-  if (!pr.guiaHecha) empezarGuia();
+  prepararPregunta();
+  if (pr.pendiente) reanudarPendiente();
+  else if (!pr.guiaHecha) empezarGuia();
   else pintar("abrir");
 }).catch(() => {
   $main.innerHTML = `<p class="aviso">${esc(TEXTOS.noAbrio)}</p>`;

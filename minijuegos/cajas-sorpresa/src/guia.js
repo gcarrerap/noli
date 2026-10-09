@@ -9,7 +9,7 @@ export const GUIA_MAX_MS = 3000;
 export const GUIA_BLOQUEO_MS = 1000;
 export const TRAS_GUIA_MS = 1000;
 
-export const PASOS = ["tienda", "probabilidades", "garantia", "abrir", "carta", "vitrina", "fin"];
+export const PASOS = ["tienda", "probabilidades", "garantia", "abrir", "carta", "vitrina"];
 
 const SIGUIENTE = {
   tienda: "probabilidades",
@@ -17,7 +17,6 @@ const SIGUIENTE = {
   garantia: "abrir",
   abrir: "carta",
   carta: "vitrina",
-  vitrina: "fin",
 };
 
 export function guiaAvanzaConToque(paso) {
@@ -31,9 +30,10 @@ export function focoDeGuia(paso) {
 }
 
 /**
- * Cuándo puede avanzar un paso de mirar.
- * Sin fin de voz (error, no empezó, o todavía habla): a los 3 s.
+ * Cuándo puede avanzar un paso de mirar si la voz sí terminó.
+ * Sin fin de voz todavía: el tope es 3 s (sigue hablando).
  * Si la voz termina, en ese momento, pero no antes de 2 s ni después de 3 s.
+ * La voz apagada y el error no usan esto: duran 2 s (evento «silencio»).
  */
 export function cuandoAvanzaMuestra(aparecio, vozTerminoEn) {
   const base = Number(aparecio) || 0;
@@ -97,6 +97,7 @@ export function muestraPuedeAvanzar({ aparecio, ahora, evento, vozTerminoEn = nu
     const fin = Number(vozTerminoEn);
     return Number.isFinite(fin) && t >= cuandoAvanzaMuestra(t0, fin);
   }
+  if (evento === "silencio") return t - t0 >= GUIA_MIN_MS;
   if (evento === "tiempo") return t >= t0 + GUIA_MAX_MS;
   return false;
 }
@@ -108,7 +109,7 @@ export function muestraPuedeAvanzar({ aparecio, ahora, evento, vozTerminoEn = nu
 export function aplicarGuia(paso, evento) {
   if (evento === "saltar") return { paso, fin: true, guardo: true };
   const muestra = guiaAvanzaConToque(paso);
-  const avanza = (muestra && (evento === "toque" || evento === "ok" || evento === "tiempo" || evento === "voz"))
+  const avanza = (muestra && (evento === "toque" || evento === "ok" || evento === "tiempo" || evento === "voz" || evento === "silencio"))
     || (paso === "abrir" && evento === "abrir");
   if (!avanza) return { paso, fin: false, guardo: false };
   const sig = SIGUIENTE[paso];

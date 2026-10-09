@@ -1,6 +1,6 @@
 // Todo lo que se lee o se dice, en un solo sitio.
 // En pantalla no hay porcentajes: se dice «3 de cada 4».
-import { CONFIG } from "./reglas.js";
+// El número de la garantía entra por argumento: vive en datos/reglas.json.
 
 export const TEXTOS = {
   titulo: "Cajas sorpresa",
@@ -56,6 +56,12 @@ export const TEXTOS = {
   creditos: "créditos",
   cargando: "Cargando…",
   noAbrio: "No se pudo abrir la tienda.",
+  quien: "¿Quién crees que es?",
+  esaNo: "Esa no es. Intenta otra vez.",
+  guardarPara: "Guardar para este",
+  album: "Ya está en el álbum",
+  cuantoEs: "¿Cuánto es",
+  metaPara: "Guardas polvo para",
 };
 
 export function fraseGarantia(n, ultra = false) {
@@ -72,10 +78,12 @@ export function fraseTuya(genero) {
   return genero === "f" ? "Ahora es tuya" : "Ahora es tuyo";
 }
 
-export function fraseRepetida(n, genero = "m") {
-  const cuanto = n === 1 ? "1 de polvo de estrellas" : `${n} de polvo de estrellas`;
-  const la = genero === "f" ? "la" : "lo";
-  return `Ya ${la} tenías. Se volvió en ${cuanto}`;
+export function fraseVisita(nombre) {
+  return `¡${nombre} vino de visita otra vez!`;
+}
+
+export function frasePolvo(n) {
+  return n === 1 ? "1 de polvo de estrellas" : `${n} de polvo de estrellas`;
 }
 
 export function frasePrecio(nombre, precio) {
@@ -101,11 +109,11 @@ export function fraseFamilia(nombre) {
   return `La familia ${nombre} está completa`;
 }
 
-export function textoGuia(paso, modo) {
+export function textoGuia(paso, modo, reglas) {
   const tv = modo === "tv";
   if (paso === "tienda") return "Cada frasco trae un Brumito.";
   if (paso === "probabilidades") return TEXTOS.probComun + ".";
-  if (paso === "garantia") return `Tu rara llega en ${CONFIG.garantiaRara} cajas o menos.`;
+  if (paso === "garantia") return `Tu rara llega en ${reglas ? reglas.garantiaRara : ""} cajas o menos.`;
   if (paso === "abrir") return tv ? "Pulsa OK." : "Toca Abrir frasco.";
   if (paso === "carta") return "Las estrellas dicen si es rara.";
   if (paso === "vitrina") return "Con polvo escoges la que te falta.";
