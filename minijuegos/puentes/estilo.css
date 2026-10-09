@@ -47,7 +47,7 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .pedido{font-family:"Fredoka",system-ui,sans-serif;font-size:1.2rem;margin:0;line-height:1.15}
 .guia-texto{font-size:1.3rem}
 .zona-nombre{font-weight:800;color:var(--bosque)}
-.medidor{width:100%;min-height:0;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.medidor{width:100%;min-height:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;position:relative}
 .escena{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;max-height:none;overflow:visible}
 .banco,.hueco{height:100%;min-height:0}
 .banco{flex:none;overflow:hidden}
@@ -92,7 +92,8 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .referencia .dibujo svg{height:36px;width:auto;display:block}
 .referencia p{margin:0;font-weight:800;text-align:left;font-size:.85rem}
 .bloques{position:relative;width:min(100%,420px);height:64px;margin:0 auto}
-.hueco .bloques{position:absolute;left:0;width:100%;bottom:18%;height:42%;margin:0;z-index:2}
+.hueco .bloques{position:absolute;left:0;width:100%;bottom:22%;height:46%;margin:0;z-index:2}
+.hueco .cubo{height:100%;top:0}
 .sombra-hueco{position:absolute;left:0;right:0;bottom:16%;height:24%;z-index:1}
 .sombra-hueco svg{width:100%;height:100%;display:block}
 .comp-leyenda{display:flex;justify-content:space-between;gap:8px;width:min(100%,520px);margin:.15rem auto 0;font-weight:800}
