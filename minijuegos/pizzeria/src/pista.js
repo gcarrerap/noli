@@ -12,6 +12,21 @@ export function glifoMenos(modo) {
   return modo === "tv" ? "▼" : "−";
 }
 
+// En la TV el contador enfocado sube con ▲. En el teléfono, con +.
+// La voz dice la misma idea sin símbolos.
+export function textoContador(modo) {
+  return modo === "tv" ? "Pulsa ▲" : "Pulsa +";
+}
+
+export function vozContador(modo) {
+  return modo === "tv" ? "Pulsa arriba" : "Pulsa más";
+}
+
+export function pistaVisible(texto, { resuelto = false, revelado = false } = {}) {
+  if (resuelto || revelado) return "";
+  return texto || "";
+}
+
 // Quita símbolos que no se deben oír.
 export function hablaSegura(texto) {
   return String(texto || "").replace(/[▲▼+−½¼⅓⅔]/g, " ").replace(/\s+/g, " ").trim();

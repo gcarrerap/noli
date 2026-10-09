@@ -35,7 +35,7 @@ html[data-modo="tv"] main{padding:5vh 6vw 4vh}
 .boton.primario{background:var(--verde);color:#143024;border-color:transparent}
 .boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
 .boton.hecho{background:var(--azul);color:#fff;border-color:transparent}
-button:disabled{opacity:.38;filter:grayscale(.4);box-shadow:none}
+button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default}
 .menu{display:flex;flex-direction:column;gap:.4rem;width:min(420px,100%)}
 .menu.fila{flex-direction:row;flex-wrap:wrap;justify-content:center}
 .menu.chica .boton{flex:1 1 140px;min-height:64px}
@@ -62,7 +62,7 @@ button:disabled{opacity:.38;filter:grayscale(.4);box-shadow:none}
 .puntos{display:flex;gap:4px}
 .puntos i{width:12px;height:12px;border-radius:50%;background:var(--off);display:block}
 .puntos i.lleno{background:var(--verde)}
-.saltar{min-height:64px;min-width:64px;border-radius:16px;background:var(--card);font-weight:800;padding:0 .8em;box-shadow:var(--sombra)}
+.saltar{min-height:64px;min-width:64px;flex:none;border-radius:16px;background:var(--card);font-weight:800;padding:0 .8em;box-shadow:var(--sombra)}
 .comanda{width:100%;display:flex;gap:.6rem;align-items:center;text-align:left}
 .cliente{width:72px;height:74px;flex:none}
 .cliente svg{width:72px;height:74px;display:block}

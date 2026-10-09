@@ -6,10 +6,10 @@ import { analizar, sonIguales } from "../src/area.js";
 import { medir, lineasSvg, patron, opcionesCorte } from "../src/cortes.js";
 import { ladosDe, opcionesForma, crearFigura, reiniciarIds } from "../src/figuras.js";
 import { crearPedido, esCorrecto, POR_TURNO } from "../src/pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia } from "../src/guia.js";
-import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos } from "../src/pista.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, GUIA_TOQUE_MS } from "../src/guia.js";
+import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_COMPLETA_MS } from "../src/pista.js";
 import { abiertos, recienAbierto, sumarPropinas, PROPINA, ADORNOS } from "../src/deco.js";
-import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista } from "../src/bandeja.js";
+import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista, focoTrasContador } from "../src/bandeja.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, estrellasTurno, quiereFacil,
   marcarGuia, textoRacha, racha, cumplirReto, VENTANA, PARA_SUBIR,
@@ -175,6 +175,12 @@ test("la bandeja usa filas horizontales y columnas verticales, hasta 5", () => {
   assert.ok(ops.includes(12));
   assert.equal(bandejaLista(3, 4, { filas: 3, columnas: 4 }), true);
   assert.equal(bandejaLista(2, 4, { filas: 3, columnas: 4 }), false);
+  const pedido = { filas: 3, columnas: 4 };
+  assert.equal(focoTrasContador("filas", { filas: 3, columnas: 1 }, pedido), "columnas");
+  assert.equal(focoTrasContador("columnas", { filas: 1, columnas: 4 }, pedido), "filas");
+  assert.equal(focoTrasContador("columnas", { filas: 3, columnas: 4 }, pedido), "listo");
+  assert.equal(focoTrasContador("filas", { filas: 2, columnas: 4 }, pedido), "filas");
+  assert.notEqual(focoTrasContador("filas", { filas: 3, columnas: 4 }, pedido), "saltar");
 });
 
 test("el brillo solo cabe en decora y bandeja", () => {
@@ -189,29 +195,49 @@ test("el brillo solo cabe en decora y bandeja", () => {
   assert.equal(hablaSegura("Filas + ▲"), "Filas");
 });
 
-test("la guía solo avanza cuando ella hace el paso", () => {
+test("la guía: mirar avanza solo, la acción no, y servir espera su paso", () => {
+  assert.equal(GUIA_TOQUE_MS, 2000);
+  assert.equal(guiaAvanzaConToque(0), true);
+  assert.equal(guiaAvanzaConToque(1), false);
+  assert.equal(guiaAvanzaConToque(2), true);
+  assert.equal(guiaAvanzaConToque(3), false);
   assert.equal(textoDeGuia(0, textos), "Corta en 2 partes iguales.");
   assert.equal(textoDeGuia(1, textos), "Esta no: una es más grande.");
   assert.equal(textoDeGuia(2, textos), "Esta sí: las 2 son iguales.");
-  assert.equal(textoDeGuia(3, textos), "Tócala para servir.");
-  let paso = 0;
-  paso = siguientePasoGuia(paso, { tipo: "activar", opcion: "buena" });
-  assert.equal(paso, 0);
-  paso = siguientePasoGuia(paso, { tipo: "foco", opcion: "mala" });
+  assert.equal(textoDeGuia(3, textos, "tactil"), "Tócala para servir.");
+  assert.equal(textoDeGuia(3, textos, "tv"), "Pulsa OK para servir.");
+  assert.equal(vozDeGuia(3, textos, "tv"), "Pulsa OK para servir.");
+  assert.equal(/[▲▼+−½¼]/.test([0, 1, 2, 3].map((p) => vozDeGuia(p, textos, "tv")).join(" ")), false);
+  assert.doesNotMatch(textoDeGuia(3, textos, "tv"), /Toca/);
+  for (const paso of [0, 1, 2, 3]) {
+    assert.equal(focoDeGuia(paso), "pedido-guia");
+    assert.notEqual(focoDeGuia(paso), "saltar");
+    assert.equal(guiaServirActivo(paso), paso === 3);
+  }
+  assert.equal(siguientePasoGuia(0, { tipo: "toque", opcion: "mala" }), 1);
+  assert.equal(siguientePasoGuia(0, { tipo: "toque", opcion: "buena" }), 1);
+  assert.equal(siguientePasoGuia(0, { tipo: "ok" }), 1);
+  assert.equal(siguientePasoGuia(0, { tipo: "tiempo" }), 1);
+  assert.equal(siguientePasoGuia(2, { tipo: "ok" }), 3);
+  let paso = 1;
+  for (let i = 0; i < 6; i++) paso = siguientePasoGuia(paso, { tipo: "ok", repetido: i > 0 });
   assert.equal(paso, 1);
-  paso = siguientePasoGuia(paso, { tipo: "activar", opcion: "buena" });
-  assert.equal(paso, 1);
-  paso = siguientePasoGuia(paso, { tipo: "activar", opcion: "mala" });
-  assert.equal(paso, 2);
-  paso = siguientePasoGuia(paso, { tipo: "foco", opcion: "mala" });
-  assert.equal(paso, 2);
-  paso = siguientePasoGuia(paso, { tipo: "foco", opcion: "buena" });
+  assert.equal(siguientePasoGuia(1, { tipo: "activar", opcion: "buena" }), 1);
+  assert.equal(siguientePasoGuia(1, { tipo: "activar", opcion: "mala" }), 2);
+  paso = 3;
+  for (let i = 0; i < 4; i++) paso = siguientePasoGuia(paso, { tipo: "ok" });
   assert.equal(paso, 3);
-  paso = siguientePasoGuia(paso, { tipo: "activar", opcion: "mala" });
-  assert.equal(paso, 3);
-  paso = siguientePasoGuia(paso, { tipo: "activar", opcion: "buena" });
+  assert.equal(siguientePasoGuia(3, { tipo: "activar", opcion: "mala" }), 3);
+  paso = siguientePasoGuia(3, { tipo: "activar", opcion: "buena" });
   assert.equal(paso, 4);
   assert.equal(guiaTerminada(paso), true);
+  assert.equal(textoContador("tv"), "Pulsa ▲");
+  assert.equal(textoContador("tactil"), "Pulsa +");
+  assert.equal(vozContador("tv"), "Pulsa arriba");
+  assert.equal(/[▲▼+]/.test(vozContador("tv")), false);
+  assert.equal(pistaVisible("¿Son del mismo tamaño?", { resuelto: true }), "");
+  assert.equal(pistaVisible("¿Son del mismo tamaño?", { revelado: true }), "");
+  assert.equal(pistaVisible("¿Son del mismo tamaño?", {}), "¿Son del mismo tamaño?");
 });
 
 test("sube con 8 de los últimos 10 y la propina es fija", () => {
@@ -267,7 +293,7 @@ test("el reto del día es determinista y la pizza gigante pide 8 y 5", () => {
   assert.equal(c.tiempo, undefined);
 });
 
-test("la racha no regaña y atrás abre salir, menos en la guía", () => {
+test("la racha no regaña y atrás abre salir, también en la guía", () => {
   const pr = cumplirReto(nuevo(), HOY, "gigante", 5, false);
   assert.equal(racha(pr, HOY), 0);
   assert.match(textoRacha(0, textos), /empezar una racha/);
@@ -275,10 +301,12 @@ test("la racha no regaña y atrás abre salir, menos en la guía", () => {
   assert.equal(textoRacha(2, textos), "Racha: 2 días");
   assert.equal(resolverAtras(false), "abrir");
   assert.equal(resolverAtras(true), "cerrar");
-  assert.equal(accionAtras("pedido", false), "preguntar");
-  assert.equal(accionAtras("inicio", false), "preguntar");
-  assert.equal(accionAtras("pedido", true), "saltar-guia");
-  assert.equal(accionAtras("papas", false), "progreso");
+  assert.notEqual(resolverAtras(true), "salir");
+  assert.equal(accionAtras("pedido"), "preguntar");
+  assert.equal(accionAtras("inicio"), "preguntar");
+  assert.equal(accionAtras("guia"), "preguntar");
+  assert.notEqual(accionAtras("guia"), "saltar-guia");
+  assert.equal(accionAtras("papas"), "progreso");
   assert.equal(marcarGuia(nuevo()).guiaHecha, true);
 });
 
@@ -293,6 +321,14 @@ test("las pistas crecen y contar no usa símbolos", () => {
   assert.equal(cuentaParaDominio({ nivel: 3, tipo: "corta", vioCompleta: true }), false);
   assert.equal(cuentaParaDominio({ nivel: 1, tipo: "forma", vioCompleta: true }), true);
   assert.equal(cuentaParaDominio({ nivel: 6, tipo: "decora", vioCompleta: true }), true);
+  assert.equal(IDLE_COMPLETA_MS, 40000);
+  const fase40 = fasePista({ nivel: 4, tipo: "corta", ms: IDLE_COMPLETA_MS, fallo: false });
+  assert.equal(fase40, "completa");
+  assert.equal(cuentaParaDominio({ nivel: 4, tipo: "corta", vioCompleta: fase40 === "completa" }), false);
+  assert.equal(cuentaParaDominio({ nivel: 2, tipo: "corta", vioCompleta: true }), false);
+  assert.equal(cuentaParaDominio({ nivel: 5, tipo: "corta", vioCompleta: true }), false);
+  assert.equal(cuentaParaDominio({ nivel: 4, tipo: "corta", vioCompleta: false }), true);
+  assert.equal(cuentaParaDominio({ nivel: 7, tipo: "bandeja", vioCompleta: true }), true);
 });
 
 test("responder bien y mal", () => {
@@ -329,7 +365,12 @@ test("opciones de corte: una sola correcta", () => {
 
 test("el juego no arrastra la bandeja ni espera un reloj", () => {
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../estilo.css", import.meta.url), "utf8");
   assert.equal(/pointermove|ondrag|draggable/.test(juego), false);
   assert.equal(/contrarreloj|setInterval\(/.test(juego), false);
   assert.equal(/½|¼|v[ée]rtice/i.test(juego), false);
+  assert.equal(/esGuia\(\) && !saliendo\)[\s\S]{0,40}terminarGuia/.test(juego), false);
+  assert.match(juego, /class="cab"[\s\S]{0,220}class="saltar"/);
+  assert.match(css, /\.saltar\{[^}]*min-height:64px/);
+  assert.match(css, /button:disabled\{[^}]*opacity:\.38/);
 });

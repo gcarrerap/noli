@@ -51,6 +51,19 @@ export function opcionesCuantos(filas, columnas, rnd) {
   return lista;
 }
 
+// Cuando un contador llega a su meta, el foco pasa al siguiente control.
+// Nunca a Saltar. Listo solo cuando filas y columnas ya coinciden.
+export function focoTrasContador(cual, hecho, pedido) {
+  const filas = hecho && hecho.filas | 0;
+  const columnas = hecho && hecho.columnas | 0;
+  const filasOk = filas === (pedido && pedido.filas | 0);
+  const colOk = columnas === (pedido && pedido.columnas | 0);
+  if (filasOk && colOk) return "listo";
+  if (cual === "filas" && filasOk) return "columnas";
+  if (cual === "columnas" && colOk) return "filas";
+  return cual === "columnas" ? "columnas" : "filas";
+}
+
 export function bandejaLista(filas, columnas, pedido) {
   return filas === pedido.filas && columnas === pedido.columnas;
 }
