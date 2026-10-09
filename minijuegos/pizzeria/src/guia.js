@@ -59,11 +59,16 @@ export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}
 
 // «¿Salir?» pausa el paso. Al pulsar Seguir, el reloj y la espera de la voz
 // empiezan de cero: el tiempo con el diálogo abierto no adelanta el paso.
-export function reanudarPasoGuia({ ahora = 0, vozSigue = false } = {}) {
+// El cierre de 1 s solo vuelve a empezar si todavía no había pasado al abrir.
+// Si ya había pasado, no se suma a los 400 ms de después del diálogo.
+export function reanudarPasoGuia({ ahora = 0, vozSigue = false, bloqueoListo = false } = {}) {
+  const desdeBloqueo = bloqueoListo ? ahora - GUIA_CIERRE_MS : ahora;
   return {
     desde: ahora,
+    desdeBloqueo,
+    bloqueoAbierto: !!bloqueoListo,
     auto: siguienteAutoGuia({ transcurrido: 0, vozSigue }),
-    bloqueada: guiaBloqueada({ ahora, aparecio: ahora, vozSigue }),
+    bloqueada: bloqueoListo ? false : guiaBloqueada({ ahora, aparecio: ahora, vozSigue }),
   };
 }
 

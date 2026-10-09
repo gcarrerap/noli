@@ -5,7 +5,7 @@ import { clic, listo as sonidoListo, feliz as sonidoFeliz, desbloquear } from ".
 import { patron, lineasSvg, rebanadasDe, svgPila } from "./cortes.js";
 import { svgFigura, nombreFigura } from "./figuras.js";
 import { esCorrecto } from "./pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia, reanudarPasoGuia, vozDelPaso } from "./guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia, reanudarPasoGuia, vozDelPaso, guiaBloqueada } from "./guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, textoPista, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import { abiertos, recienAbierto } from "./deco.js";
 import { ajustar, opcionesCuantos, bandejaLista, focoTrasContador, BANDEJA_MAX } from "./bandeja.js";
@@ -37,6 +37,8 @@ let relojGuia = 0;
 let focoAntes = null;
 let focosGuardados = null;
 let pasoAparecio = 0;
+let bloqueoDesde = 0;
+let bloqueoAlAbrir = false;
 let vozSigue = false;
 let cerroSalir = 0;
 let vozGen = 0;
@@ -321,7 +323,11 @@ function pintarGuia() {
 }
 
 function estadoGuia() {
-  return { ahora: Date.now(), aparecio: pasoAparecio, vozSigue };
+  return {
+    ahora: Date.now(),
+    aparecio: bloqueoDesde || pasoAparecio,
+    vozSigue: bloqueoAlAbrir ? false : vozSigue,
+  };
 }
 
 function ordenCallada() {
@@ -330,6 +336,8 @@ function ordenCallada() {
 
 function hablarGuia(paso) {
   pasoAparecio = Date.now();
+  bloqueoDesde = pasoAparecio;
+  bloqueoAlAbrir = false;
   const mio = ++vozGen;
   vozSigue = false;
   if (!pr.voz) return;
@@ -861,6 +869,11 @@ function programarPista() {
 
 function abrirSalir() {
   if (saliendo) return;
+  bloqueoAlAbrir = esGuia() && !guiaBloqueada({
+    ahora: Date.now(),
+    aparecio: bloqueoDesde || pasoAparecio,
+    vozSigue,
+  });
   token++;
   clearTimeout(relojPista);
   limpiarRelojGuia();
@@ -889,7 +902,12 @@ function cerrarSalir(ySalir) {
     guia: esGuia(),
   });
   cerroSalir = Date.now();
-  if (esGuia() && que !== "salir") pasoAparecio = reanudarPasoGuia({ ahora: cerroSalir, vozSigue }).desde;
+  if (esGuia() && que !== "salir") {
+    const re = reanudarPasoGuia({ ahora: cerroSalir, vozSigue, bloqueoListo: bloqueoAlAbrir });
+    pasoAparecio = re.desde;
+    bloqueoDesde = re.desdeBloqueo;
+    bloqueoAlAbrir = re.bloqueoAbierto;
+  }
   saliendo = false;
   if (que === "salir") { Noli.salir(); return; }
   if (que === "avanzar") { avanzar(); return; }

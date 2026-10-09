@@ -16,7 +16,7 @@ import {
 } from "../src/progreso.js";
 import { retoDelDia, META_GIGANTE } from "../src/reto.js";
 import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo, ignoraTrasCierre, TRAS_DIALOGO_MS } from "../src/salida.js";
-import { decir } from "../src/voz.js";
+import { decir, elegirVoz, prepararVoces } from "../src/voz.js";
 
 const banco = JSON.parse(fs.readFileSync(new URL("../datos/cortes.json", import.meta.url), "utf8"));
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
@@ -518,7 +518,7 @@ function estadoTrasDecir(speak, voces = [{ lang: "es-MX" }]) {
 }
 
 test("si la voz falla con onerror, el paso usa los 2 s y no se va antes", () => {
-  const r = estadoTrasDecir((u) => { if (u.onerror) u.onerror({ error: "not-allowed" }); });
+  const r = estadoTrasDecir((u) => { if (u.onerror) u.onerror({ error: "not-allowed" }); }, []);
   assert.equal(r.empezo, true);
   assert.equal(r.aviso, false);
   assert.equal(r.vozSigue, false);
@@ -536,21 +536,75 @@ test("si la voz falla con onerror, el paso usa los 2 s y no se va antes", () => 
   assert.match(juego, /vozDelPaso/);
 });
 
-test("sin voces, o si hablar no empieza, el paso espera 2 s", () => {
-  const sin = estadoTrasDecir(() => { throw new Error("no debía hablar"); }, []);
-  assert.equal(sin.hablo, 0);
-  assert.equal(sin.empezo, false);
-  assert.equal(sin.vozSigue, false);
-  assert.equal(siguienteAutoGuia({ transcurrido: 1999, vozSigue: sin.vozSigue }).avanzar, false);
-  assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOQUE_MS, vozSigue: sin.vozSigue }).avanzar, true);
-  const re = reanudarPasoGuia({ ahora: 2500, vozSigue: sin.vozSigue });
-  assert.equal(re.auto.avanzar, false);
-  assert.equal(re.auto.espera, GUIA_TOQUE_MS);
+test("getVoices vacío no calla: speak dispara onend y la frase se dijo", () => {
+  let dicha = "";
+  let lang = "";
+  let voice;
+  const r = estadoTrasDecir((u) => {
+    dicha = u.text;
+    lang = u.lang;
+    voice = u.voice;
+    if (u.onend) u.onend();
+  }, []);
+  assert.equal(r.hablo, 1);
+  assert.equal(dicha, "Corta en 2 partes iguales.");
+  assert.equal(r.empezo, true);
+  assert.equal(r.aviso, true);
+  assert.equal(r.vozSigue, false);
+  assert.match(String(lang), /^es(-[A-Za-z]+)?$/i);
+  assert.equal(voice, undefined);
+  assert.equal(siguienteAutoGuia({ transcurrido: 1999, vozSigue: false }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOQUE_MS, vozSigue: false }).avanzar, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOPE_MS, vozSigue: true }).avanzar, true);
+});
+
+test("si hablar no empieza, el paso espera 2 s", () => {
   const roto = estadoTrasDecir(() => { throw new Error("no hay audio"); });
   assert.equal(roto.empezo, false);
   assert.equal(roto.vozSigue, false);
   assert.equal(siguienteAutoGuia({ transcurrido: 100, vozSigue: roto.vozSigue }).avanzar, false);
   assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOQUE_MS, vozSigue: roto.vozSigue }).avanzar, true);
+  const re = reanudarPasoGuia({ ahora: 2500, vozSigue: roto.vozSigue });
+  assert.equal(re.auto.avanzar, false);
+  assert.equal(re.auto.espera, GUIA_TOQUE_MS);
+});
+
+test("voiceschanged elige la voz en español", () => {
+  assert.equal(elegirVoz([]), null);
+  assert.equal(elegirVoz([{ lang: "en-US", name: "ingles" }]), null);
+  assert.equal(elegirVoz([{ lang: "es-ES", name: "es" }, { lang: "es-MX", name: "mx" }]).name, "mx");
+  const anterior = globalThis.window;
+  const voces = [];
+  let handler = null;
+  let ultima = null;
+  const sintesis = {
+    speaking: false,
+    pending: false,
+    getVoices: () => voces.slice(),
+    cancel() {},
+    speak(u) { ultima = u; if (u.onend) u.onend(); },
+    addEventListener(tipo, fn) { if (tipo === "voiceschanged") handler = fn; },
+  };
+  globalThis.window = {
+    speechSynthesis: sintesis,
+    SpeechSynthesisUtterance: function (texto) { this.text = texto; },
+  };
+  try {
+    prepararVoces(sintesis);
+    assert.equal(typeof handler, "function");
+    voces.push({ lang: "en-US", name: "ingles" }, { lang: "es-ES", name: "españa" }, { lang: "es-MX", name: "mexico" });
+    handler();
+    let aviso;
+    const empezo = decir("Hola", "es-MX", (ok) => { aviso = ok === true; }) === true;
+    assert.equal(empezo, true);
+    assert.equal(aviso, true);
+    assert.equal(ultima && ultima.text, "Hola");
+    assert.equal(ultima.voice && ultima.voice.name, "mexico");
+    assert.match(String(ultima.lang), /^es-MX/i);
+  } finally {
+    if (anterior === undefined) delete globalThis.window;
+    else globalThis.window = anterior;
+  }
 });
 
 test("si la voz no avisa onend, el paso no se va antes de 2 s y corta a los 3", () => {
@@ -566,6 +620,34 @@ test("si la voz no avisa onend, el paso no se va antes de 2 s y corta a los 3", 
   assert.equal(re.auto.espera, GUIA_TOPE_MS);
   assert.equal(entradaGuia(0, { tipo: "ok" }, { ahora: 3000, aparecio: 0, vozSigue: true }).accion, "avanzo");
   assert.equal(entradaGuia(2, { tipo: "toque" }, { ahora: 3000, aparecio: 0, vozSigue: true }).accion, "avanzo");
+});
+
+test("tras Seguir, el cierre de 1 s no se suma a los 400 ms si ya había pasado", () => {
+  const cerro = 5000;
+  assert.equal(guiaBloqueada({ ahora: cerro, aparecio: 0, vozSigue: false }), false);
+  for (const paso of [0, 1, 2, 3]) {
+    const re = reanudarPasoGuia({ ahora: cerro, vozSigue: false, bloqueoListo: true });
+    assert.equal(re.bloqueoAbierto, true);
+    assert.equal(re.bloqueada, false);
+    assert.equal(re.auto.avanzar, false);
+    assert.equal(re.auto.espera, GUIA_TOQUE_MS);
+    assert.equal(re.desde, cerro);
+    const toque = cerro + 500;
+    assert.equal(ignoraTrasCierre({ ahora: toque, cerro }), false);
+    assert.equal(ignoraTrasCierre({ ahora: cerro + 200, cerro }), true);
+    assert.equal(guiaBloqueada({ ahora: toque, aparecio: re.desdeBloqueo, vozSigue: false }), false);
+    if (paso < 3) {
+      assert.equal(entradaGuia(paso, { tipo: "toque" }, { ahora: toque, aparecio: re.desdeBloqueo, vozSigue: false }).accion, "avanzo");
+      assert.equal(entradaGuia(paso, { tipo: "ok" }, { ahora: toque, aparecio: re.desdeBloqueo, vozSigue: false }).accion, "avanzo");
+    } else {
+      assert.equal(entradaGuia(3, { tipo: "activar", opcion: "buena" }, { ahora: toque, aparecio: re.desdeBloqueo, vozSigue: false }).accion, "avanzo");
+    }
+  }
+  const pronto = reanudarPasoGuia({ ahora: 200, vozSigue: false, bloqueoListo: false });
+  assert.equal(guiaBloqueada({ ahora: 200 + 500, aparecio: pronto.desdeBloqueo, vozSigue: false }), true);
+  assert.equal(pronto.auto.espera, GUIA_TOQUE_MS);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /bloqueoListo/);
 });
 
 test("en el teléfono el fondo de ¿Salir? es Seguir y en la tele no", () => {
