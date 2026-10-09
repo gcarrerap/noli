@@ -1,0 +1,240 @@
+/* El Reloj del Dragón. Estilos propios: el juego no usa los del catálogo. */
+:root{
+  --bg:#fff7ec; --fg:#2b2236; --muted:#76698a; --card:#fff; --line:#ecdcc6;
+  --azul:#4cb3ff; --coral:#ff6b4a; --sol:#ffc43d; --verde:#3ccf8e; --morado:#c86bfa;
+  --star:#ffb400; --off:#e7dccb; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12), 0 10px 20px rgba(43,34,54,.08);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#1c1726; --fg:#f6f0ff; --muted:#b5a9c9; --card:#2a2338; --line:#342b45; --off:#4a4060; --foco:#fff;
+  --sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.3);
+}}
+*{box-sizing:border-box}
+html,body{height:100%; overflow:hidden}
+html{font-size:clamp(15px, 2.1vmin, 20px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.4vmin, 28px)}
+body{margin:0; background:var(--bg); color:var(--fg); font-family:"Nunito",system-ui,sans-serif; -webkit-tap-highlight-color:transparent}
+button{font:inherit; color:inherit; cursor:pointer; border:0; background:none; touch-action:manipulation}
+img{max-width:100%; display:block}
+:focus{outline:none}
+html.teclado [data-foco]:focus,
+html[data-modo="tv"] [data-foco]:focus{
+  outline:5px solid var(--foco); outline-offset:4px; box-shadow:0 0 0 10px var(--halo);
+}
+main{
+  height:100dvh; max-height:100dvh; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  text-align:center;
+}
+main.p-inicio{justify-content:center}
+.titulo{font-family:"Fredoka",system-ui,sans-serif; font-weight:700; font-size:1.7rem; margin:0; line-height:1.05}
+.sub{font-size:1rem; color:var(--muted); margin:0}
+.cargando{color:var(--muted); margin:auto}
+.boton{
+  background:var(--card); border:2px solid var(--line); border-radius:999px;
+  padding:.4em .9em; font-weight:800; font-size:1rem; box-shadow:var(--sombra);
+  min-height:64px; min-width:64px;
+}
+.boton.grande{
+  font-family:"Fredoka",system-ui,sans-serif; font-size:1.25rem; font-weight:600;
+  border-radius:18px; width:100%; max-width:420px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1;
+}
+.boton.grande small{font-family:"Nunito",sans-serif; font-size:.75rem; font-weight:700; opacity:.85}
+.boton.primario{background:var(--verde); color:#143024; border-color:transparent}
+.boton.reto{background:var(--sol); color:#2b2236; border-color:transparent}
+.boton.hecho{background:var(--azul); color:#fff; border-color:transparent}
+.boton:disabled,.bloqueado{opacity:.45; filter:grayscale(.3)}
+.boton:disabled{box-shadow:none}
+.menu{display:flex; flex-direction:column; gap:.45rem; align-items:stretch; width:min(420px, 100%)}
+.menu.fila,.fila-chica{flex-direction:row; flex-wrap:wrap; justify-content:center; gap:.4rem}
+.fila-chica{display:flex; width:100%}
+.fila-chica .boton{flex:1}
+
+.hero{display:flex; gap:8px; align-items:center; justify-content:center; width:min(420px, 100%)}
+.dragon-home{width:96px; height:auto; flex:none}
+.album{display:flex; gap:6px; flex:1; min-width:0}
+.estampa{flex:1; min-width:0; background:var(--card); border-radius:12px; overflow:hidden}
+.estampa img{width:100%; height:72px; object-fit:cover}
+.estampa-grande{width:min(220px, 70%); height:auto; margin:0 auto}
+.dominio{color:var(--muted); font-size:.9rem}
+.dominio.ok{color:#1e8f5a; font-weight:800}
+.barra{height:12px; background:var(--off); border-radius:999px; overflow:hidden}
+.barra i{display:block; height:100%; background:var(--verde)}
+.racha{display:flex; align-items:center; justify-content:center; gap:.4rem; margin:0}
+.ico{width:1.3em; height:1.3em; flex:none}
+.estrellas{display:inline-flex; gap:.15em}
+.estrellas svg{width:2.4rem; height:2.4rem}
+.estrellas .on{fill:var(--star)}
+.estrellas .off{fill:var(--off)}
+.subio{background:var(--sol); color:#2b2236; border-radius:16px; padding:.6rem .8rem}
+.subio b{font-family:"Fredoka",sans-serif; font-size:1.2rem; display:block}
+.tarjeta-reto{background:var(--card); border-radius:18px; padding:.8rem 1rem; box-shadow:var(--sombra); width:min(420px, 100%)}
+.tarjeta-reto b{font-family:"Fredoka",sans-serif; font-size:1.4rem}
+.semana{display:flex; gap:.35rem; justify-content:center}
+.dia{display:flex; flex-direction:column; align-items:center; gap:.1rem; font-weight:800; color:var(--muted); font-size:.8rem}
+.dia .punto{width:1.7rem; height:1.7rem; border-radius:50%; background:var(--off); display:grid; place-items:center}
+.dia.jugo .punto{background:var(--azul)}
+.dia.reto .punto{background:var(--verde)}
+.dia .punto svg{width:1rem; height:1rem}
+.mapa{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.35rem; width:min(560px, 100%); overflow:auto; flex:1; min-height:0}
+.nivel{width:100%; display:flex; align-items:center; gap:.6rem; text-align:left; background:var(--card); border:3px solid var(--line); border-radius:16px; padding:.35rem .7rem; min-height:64px}
+.nivel b.num{font-family:"Fredoka",sans-serif; width:2rem; height:2rem; border-radius:50%; display:grid; place-items:center; background:var(--off); flex:none}
+.nivel .nom{flex:1; display:flex; flex-direction:column; font-weight:800}
+.nivel .nom small{font-weight:600; color:var(--muted)}
+.nivel.dominado b.num{background:var(--verde); color:#143024}
+.nivel.abierto b.num{background:var(--azul); color:#fff}
+.nivel.actual{border-color:var(--verde)}
+.nivel.cerrado{opacity:.55}
+.nota{color:var(--muted); max-width:40rem; margin:0; text-align:left; overflow:auto; flex:1; min-height:0}
+.tabla{border-collapse:collapse; width:min(720px, 100%); font-size:.9rem; text-align:left}
+.tabla th,.tabla td{padding:.3rem .4rem; border-bottom:1px solid var(--line)}
+.tabla th{color:var(--muted)}
+
+/* Juego */
+.cielo-manana{background:#bfe6ff url("img/cielo-manana.svg") center/cover}
+.cielo-dia{background:#8fd4ff url("img/cielo-dia.svg") center/cover}
+.cielo-tarde{background:#ffb087 url("img/cielo-tarde.svg") center/cover}
+.cielo-noche{background:#3a3270 url("img/cielo-noche.svg") center/cover}
+.cielo-noche .frase{color:#fff}
+.tira{display:flex; gap:3px; width:100%; flex:none; min-width:0}
+.tira .mini{position:relative; flex:1; min-width:0; height:40px; border-radius:8px; overflow:hidden; border:3px solid transparent; background:var(--card)}
+.tira .mini img{width:100%; height:40px; object-fit:cover}
+.tira .mini.ahora{border-color:var(--sol)}
+.tira .mini.hecha{opacity:.75}
+.tira .palo{position:absolute; right:1px; bottom:1px; width:16px; height:16px; background:var(--verde); border-radius:50%; display:grid; place-items:center}
+.tira .palo svg{width:12px; height:12px}
+.guia-top{align-items:center; gap:8px}
+.guia-top .saltar,.guia-top .oir{flex:none}
+.escena-guia{flex:1; min-width:0; min-height:64px; max-height:72px; border-radius:14px; overflow:hidden; padding:0; border:3px solid transparent; background:var(--card)}
+.escena-guia img{width:100%; height:64px; object-fit:cover}
+.coach,.lado{display:flex; align-items:center; gap:8px; width:100%; flex:none; min-width:0}
+.dragon{width:56px; height:auto; flex:none}
+.frase-caja{flex:1; min-width:0; text-align:left}
+.frase{font-family:"Fredoka",system-ui,sans-serif; font-size:1.2rem; line-height:1.15; margin:0; text-align:left}
+.coach .frase{flex:1}
+.frase.chiste{color:var(--coral)}
+.ingles{margin:0; font-size:.85rem; font-weight:800; color:var(--muted)}
+.escena-mini{width:64px; height:48px; object-fit:cover; border-radius:10px; flex:none; background:var(--card)}
+.oir{flex:none; padding:.2em .6em}
+.relojes{
+  flex:1 1 auto; min-height:0; min-width:0; width:100%;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.reloj-cara{
+  width:100%; height:auto; max-height:100%; aspect-ratio:1;
+  min-width:0; min-height:0; touch-action:none;
+}
+.reloj-cara svg{width:100%; height:100%; display:block}
+.digital-lado{width:124px; max-width:36%; flex:none}
+.digital-lado svg{width:100%; height:auto}
+.relojes:has(.digital-lado) .reloj-cara{width:auto; max-width:calc(100% - 132px)}
+@supports (width:1cqw){
+  .relojes{container-type:size}
+  .reloj-cara{width:min(100cqw, 100cqh); height:min(100cqw, 100cqh); max-width:100%; max-height:100%}
+  .relojes:has(.digital-lado) .reloj-cara{
+    width:min(100cqh, calc(100cqw - 136px));
+    height:min(100cqh, calc(100cqw - 136px));
+    max-width:calc(100% - 136px);
+  }
+}
+.pista{
+  margin:0; min-height:1.2em; font-weight:800; font-size:1.05rem; flex:none;
+  max-width:100%; color:var(--fg); background:var(--card);
+  padding:.25em .75em; border-radius:999px; box-shadow:var(--sombra);
+}
+.pista:empty{display:none}
+.controles{display:flex; gap:6px; align-items:center; justify-content:center; width:100%; flex:none; min-width:0}
+.par{display:flex; flex-direction:column; align-items:center; gap:2px; border-radius:18px; padding:2px; flex:none}
+.etiq{
+  font-weight:800; font-size:max(16px, 1rem); line-height:1; color:var(--fg); white-space:nowrap;
+  background:var(--card); padding:.2em .5em; border-radius:999px;
+}
+.flecha{
+  width:64px; height:64px; min-width:64px; min-height:64px; border-radius:16px;
+  background:var(--card); font-family:"Fredoka",sans-serif; font-size:2rem; font-weight:700;
+  box-shadow:var(--sombra); line-height:1;
+}
+.controles > .boton{align-self:center}
+.listo{font-family:"Fredoka",sans-serif; font-size:1.25rem; min-width:84px}
+.listo.brilla{animation:brillo .9s ease-in-out infinite; box-shadow:0 0 0 4px #fff, 0 0 0 9px var(--sol)}
+@keyframes brillo{50%{transform:translateY(-3px)}}
+.controles.bloqueado{pointer-events:none}
+.opciones{display:flex; gap:6px; width:100%; min-width:0}
+.opcion{
+  flex:1; min-width:0; min-height:64px; background:var(--card); border-radius:16px; padding:4px;
+  box-shadow:var(--sombra); display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.opcion svg,.opcion img{width:100%; height:auto; max-height:96px; object-fit:contain}
+.opcion-palabra{flex:1; min-width:0; font-family:"Fredoka",sans-serif; font-size:1.15rem; background:var(--card)}
+.opcion.asi,.opcion-palabra.asi{outline:4px solid var(--sol); outline-offset:2px}
+.manos-bien #horario,.manos-bien #minutero{filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px var(--sol))}
+.luz-horario #horario{filter:drop-shadow(0 0 4px var(--coral))}
+.luz-minutero #minutero{filter:drop-shadow(0 0 4px var(--azul))}
+
+main.guia [data-luz]:not(.luz){opacity:.42}
+main.guia [data-luz].luz{opacity:1; outline:4px solid var(--sol); outline-offset:3px; border-radius:16px}
+
+.velo{position:fixed; inset:0; background:rgba(43,34,54,.45); display:grid; place-items:center; z-index:5; padding:16px}
+.dialogo{background:var(--card); border-radius:24px; padding:1.1rem; box-shadow:var(--sombra); display:flex; flex-direction:column; gap:.6rem; width:min(360px, 92vw)}
+.dialogo p{font-family:"Fredoka",sans-serif; font-size:2rem; margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important}
+  .listo.brilla{animation:none}
+}
+
+html[data-modo="tv"] main{
+  padding:36px 56px 36px;
+}
+html[data-modo="tv"] main.p-inicio{
+  display:grid;
+  align-content:center;
+  grid-template-columns:minmax(0, .9fr) minmax(0, 1fr);
+  grid-template-areas:"titulo titulo" "hero menu";
+  column-gap:28px;
+}
+html[data-modo="tv"] main.p-inicio .titulo{grid-area:titulo}
+html[data-modo="tv"] main.p-inicio .hero{grid-area:hero}
+html[data-modo="tv"] main.p-inicio .menu{grid-area:menu}
+html[data-modo="tv"] .dragon-home{width:180px}
+html[data-modo="tv"] .estampa img{height:110px}
+html[data-modo="tv"] main.p-jugar,
+html[data-modo="tv"] main.p-guia{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(300px, 440px);
+  grid-template-rows:auto auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "tira tira"
+    "lado lado"
+    "pista pista"
+    "reloj controles";
+  align-items:center;
+  justify-items:stretch;
+  column-gap:18px;
+  row-gap:8px;
+}
+html[data-modo="tv"] .tira{grid-area:tira}
+html[data-modo="tv"] .lado{grid-area:lado}
+html[data-modo="tv"] main.p-guia .coach{grid-area:coach}
+html[data-modo="tv"] .pista{grid-area:pista; justify-self:start}
+html[data-modo="tv"] .relojes{grid-area:reloj; height:100%}
+html[data-modo="tv"] .controles{grid-area:controles; align-self:center; max-height:100%; min-height:0}
+html[data-modo="tv"] .controles .opciones{flex-direction:column; max-height:100%}
+html[data-modo="tv"] .opcion{max-height:148px}
+html[data-modo="tv"] .opcion svg,html[data-modo="tv"] .opcion img{width:auto; max-width:100%; max-height:120px}
+html[data-modo="tv"] main.p-guia{
+  grid-template-rows:auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "tira tira"
+    "coach coach"
+    "reloj controles";
+}
+html[data-modo="tv"] .flecha{width:72px; height:72px; min-width:72px; min-height:72px}
+html[data-modo="tv"] .tira .mini{height:56px}
+html[data-modo="tv"] .tira .mini img{height:56px}
+html[data-modo="tv"] .dragon{width:72px}
+html[data-modo="tv"] .frase{font-size:1.45rem}
+html[data-modo="tv"] .escena-guia{max-width:220px; max-height:84px}
+html[data-modo="tv"] .escena-guia img{height:76px}
