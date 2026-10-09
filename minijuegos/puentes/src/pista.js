@@ -49,23 +49,28 @@ function rellenar(texto, mapa) {
   return Object.entries(mapa).reduce((s, [k, v]) => s.split(k).join(String(v)), String(texto || ""));
 }
 
+function colocaElCero(nivel, faseJuego) {
+  return (nivel === 2 || nivel === 3) && !(faseJuego && faseJuego !== "poner");
+}
+
 export function textoPista(cruce, fase, textos, faseJuego = "") {
   const t = textos || {};
   if (!cruce) return "";
   const n = cruce.nivel | 0;
-  const ceroYaPuesto = n === 2 && faseJuego && faseJuego !== "poner";
+  const colocaCero = colocaElCero(n, faseJuego);
   if (n <= 1) return t.pistaBloques || "";
   if (fase === "frase") {
-    if (n === 2) return ceroYaPuesto ? "" : (t.pistaCero || "");
+    if (n === 2) return colocaCero ? (t.pistaCero || "") : "";
+    if (n === 3) return colocaCero ? (t.pistaCero || "") : (t.pistaMira || "");
     if (n === 7 || cruce.tipo === "desfase") return t.pistaEspacios || "";
     if (n === 5 || n === 6 || cruce.tipo === "juntar" || cruce.tipo === "comparar") return t.pistaBarras || "";
     if (cruce.tipo === "estima" || cruce.tipo === "arbol") return t.pistaEstima || "";
     return t.pistaMira || "";
   }
   if (fase === "encima") return t.pistaMiraAqui || "";
-  if (n === 2) {
-    if (ceroYaPuesto) return rellenar(t.pistaMedida, { "{medida}": decirUnidad(cruce.longitud, cruce.unidad) });
-    return t.pistaCeroLarga || "";
+  if (n === 2 || n === 3) {
+    if (colocaCero) return t.pistaCeroLarga || "";
+    return rellenar(t.pistaMedida, { "{medida}": decirUnidad(cruce.longitud, cruce.unidad) });
   }
   if (n === 7 || cruce.tipo === "desfase") {
     const a = cruce.desplazaInicial | 0;
@@ -87,10 +92,11 @@ export function vozPista(texto) {
 }
 
 // A quién señala la flecha cuando la pista ya está encima.
-export function blancoFlecha(cruce, fase) {
+export function blancoFlecha(cruce, fase, faseJuego = "") {
   if (!cruce || fase === "frase") return "";
   const n = cruce.nivel | 0;
-  if (n === 2) return "cero";
+  if (colocaElCero(n, faseJuego)) return "cero";
+  if (n === 2) return "marca";
   if (cruce.tipo === "desfase" || n === 7) return "marca";
   if (cruce.tipo === "juntar" || n === 5) return "tablas";
   if (cruce.tipo === "comparar" || n === 6) return "diferencia";

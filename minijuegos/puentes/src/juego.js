@@ -10,8 +10,9 @@ import {
 } from "./guia.js";
 import { fasePista, textoPista, pistaVisible, blancoFlecha, glifoMas, glifoMenos, cuentaPrimera, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import {
-  moverRegla, confirmarCero, reglaArchivo, uDe, marcaAlFinal, decirUnidad, valorInicial,
+  moverRegla, confirmarCero, marcaAlFinal, decirUnidad, valorInicial,
   ajustarValor, listoBrilla, cruzarBrilla, seMidioBien, brilloCeroVisible, cubosDe, resultadoListo,
+  escalaFija, cajaReferencia, escalaBloques, altoComunTablas, cajaTabla,
 } from "./medida.js";
 import { maxRegla } from "./niveles.js";
 import { promptDe, vozDeFase, notaReferencia, nombreZona, explicaBloques } from "./frases.js";
@@ -205,10 +206,17 @@ function archivoReferencia(id) {
   return "cubito-1cm";
 }
 
+function px(n) {
+  return Math.round(n * 100) / 100;
+}
+
 function htmlReferencia(c, blanco) {
   if (!c || !c.referencia) return "";
+  const unidad = c.unidad === "in" ? "in" : "cm";
+  const escala = escalaFija({ unidad, tv: modoJuego() === "tv", ancho: anchoLienzo() });
+  const caja = cajaReferencia(c.referencia);
   const flecha = blanco === "referencia" ? spanFlecha() : "";
-  return `<div class="referencia${blanco === "referencia" ? " apunta" : ""}">${flecha}<span class="dibujo">${svgInline(arte(archivoReferencia(c.referencia)))}</span><p>${esc(notaReferencia(c, textos, false))}</p></div>`;
+  return `<div class="referencia${blanco === "referencia" ? " apunta" : ""}"><span class="dibujo" data-unidades="${caja.unidades}" style="width:${px(caja.w * escala.u)}px;height:${px(caja.h * escala.u)}px">${flecha}${svgInline(arte(archivoReferencia(c.referencia)))}</span><p>${esc(notaReferencia(c, textos, false))}</p></div>`;
 }
 
 function spanFlecha() {
@@ -230,56 +238,69 @@ function numeroConUnidad(n, unidad) {
   return abr ? `${n}<small class="uni"> ${abr}</small>` : String(n);
 }
 
-function htmlReglaEscena({ unidad, longitud, desplaza = 0, brillo = false, marca = null, zona, hueco, animal, tv, sinRegla = false, encima = "", blanco = "", punta = false, llenar = false }) {
-  const reg = reglaArchivo(unidad === "in" ? "in" : "cm", tv && unidad !== "in");
+function htmlReglaEscena({ unidad, longitud, desplaza = 0, brillo = false, marca = null, zona, hueco, animal, tv, sinRegla = false, encima = "", blanco = "", punta = false, llenar = false, bloques = false, corta = false }) {
   const ancho = anchoLienzo();
-  const tope = tv ? 168 : 128;
-  const unit = uDe(unidad === "in" ? "in" : "cm");
+  const [izq, der] = orillasDe(zona);
+  if (bloques) {
+    const lay = escalaBloques({ longitud, ancho });
+    const altoB = Math.max(110, lay.cubo + 56);
+    const w = lay.banco * 2 + lay.hueco;
+    return `<div class="medidor" style="width:${px(w)}px">
+      <div class="escena" style="width:${px(w)}px;height:${px(altoB)}px">
+        <div class="banco" style="width:${px(lay.banco)}px">${svgCaja(arte(izq))}</div>
+        <div class="hueco" data-longitud="${longitud | 0}" style="width:${px(lay.hueco)}px">${svgCaja(arte("hueco-" + (hueco || "rio")))}${encima}</div>
+        <div class="banco" style="width:${px(lay.banco)}px">${svgCaja(arte(der))}</div>
+        <div class="bicho" style="left:${px(Math.max(0, lay.banco - 28))}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
+      </div>
+    </div>`;
+  }
+  const uNombre = unidad === "in" ? "in" : "cm";
+  const escala = escalaFija({ unidad: uNombre, tv, ancho, corta });
+  const { unit, reg } = escala;
   const gapU = Math.max(unit, (longitud || 1) * unit);
-  let u;
-  let wEscena;
-  let wMed;
+  let uDibujo = escala.u;
   let bancoI;
   let gapPx;
   let bancoD;
+  let wEscena;
   let pos;
   if (llenar) {
     const bancoU = 90;
     const total = bancoU * 2 + gapU;
-    u = Math.min(ancho / total, tope / 160);
-    bancoI = bancoU * u;
-    gapPx = gapU * u;
-    bancoD = bancoU * u;
+    const tope = tv ? 168 : 128;
+    uDibujo = Math.min(ancho / total, tope / 160);
+    bancoI = bancoU * uDibujo;
+    gapPx = gapU * uDibujo;
+    bancoD = bancoU * uDibujo;
     wEscena = bancoI + gapPx + bancoD;
-    wMed = wEscena;
     pos = { left: bancoU, x: 0 };
   } else {
     pos = posicionRegla({ anchoVb: reg.ancho, cero: reg.cero, gapU, desplaza, unidadU: unit });
-    const extremo = Math.max(reg.ancho, pos.x + reg.ancho);
-    u = Math.min(ancho / extremo, tope / 160);
-    wEscena = reg.ancho * u;
-    wMed = Math.min(ancho, extremo * u);
-    bancoI = Math.max(0, pos.left * u);
-    gapPx = gapU * u;
+    wEscena = reg.ancho * escala.u;
+    bancoI = Math.max(0, pos.left * escala.u);
+    gapPx = gapU * escala.u;
     bancoD = Math.max(0, wEscena - bancoI - gapPx);
   }
-  const alto = Math.max(64, 160 * u);
+  const xPx = pos.x * uDibujo;
+  const padIzq = xPx < 0 ? -xPx : 0;
+  const wCaja = wEscena + padIzq;
+  const alto = Math.max(64, 160 * uDibujo);
   const regla = conBrillo(arte(reg.archivo), { brillo, marca });
-  const [izq, der] = orillasDe(zona);
-  const xFlecha = blanco === "marca" ? (desplaza < 0 ? bancoI : bancoI + gapPx) : (pos.left + desplaza * unit) * u;
+  const xFlecha = (blanco === "marca" ? (desplaza < 0 ? bancoI : bancoI + gapPx) : (pos.left + desplaza * unit) * uDibujo) + padIzq;
   const flecha = blanco === "cero" || blanco === "marca"
-    ? `<span class="flecha-pista" style="left:${xFlecha}px">${svgInline(arte("flecha-pista"))}</span>`
+    ? `<span class="flecha-pista" style="left:${px(xFlecha)}px">${svgInline(arte("flecha-pista"))}</span>`
     : "";
-  return `<div class="medidor" style="width:${wMed}px">
-    <div class="escena" style="width:${wEscena}px;height:${alto}px">
-      <div class="banco" style="width:${bancoI}px">${svgCaja(arte(izq))}</div>
-      <div class="hueco" style="width:${gapPx}px">${svgCaja(arte("hueco-" + (hueco || "rio")))}${encima}</div>
-      <div class="banco" style="width:${bancoD}px">${svgCaja(arte(der))}</div>
-      <div class="bicho" style="left:${Math.max(0, bancoI - 28)}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
-      ${punta || marca != null ? `<div class="marca-fin" style="left:${bancoI + gapPx}px">${svgInline(arte("marca-resaltada"))}</div>` : ""}
+  const bancoVis = bancoI + padIzq;
+  return `<div class="medidor" style="width:${px(wCaja)}px">
+    <div class="escena" style="width:${px(wCaja)}px;height:${px(alto)}px">
+      <div class="banco" style="width:${px(bancoVis)}px">${svgCaja(arte(izq))}</div>
+      <div class="hueco" data-longitud="${longitud | 0}" style="width:${px(gapPx)}px">${svgCaja(arte("hueco-" + (hueco || "rio")))}${encima}</div>
+      <div class="banco" style="width:${px(bancoD)}px">${svgCaja(arte(der))}</div>
+      <div class="bicho" style="left:${px(Math.max(0, bancoVis - 28))}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
+      ${punta || marca != null ? `<div class="marca-fin" style="left:${px(bancoVis + gapPx)}px">${svgInline(arte("marca-resaltada"))}</div>` : ""}
       ${flecha}
     </div>
-    ${sinRegla ? "" : `<div class="riel" style="width:${wMed}px;height:${Math.max(48, 78 * u)}px"><div class="regla-mov" style="width:${wEscena}px;transform:translateX(${pos.x * u}px)">${regla}</div></div>`}
+    ${sinRegla ? "" : `<div class="riel" style="width:${px(wCaja)}px;height:${px(Math.max(48, 78 * uDibujo))}px"><div class="regla-mov" style="width:${px(wEscena)}px;transform:translateX(${px(xPx + padIzq)}px)">${regla}</div></div>`}
   </div>`;
 }
 
@@ -417,7 +438,7 @@ function pintarGuia() {
   const escena = htmlReglaEscena({
     unidad: "cm", longitud: HUECO_GUIA, desplaza: muestraRegla ? partida.desplaza : 0,
     brillo: paso === 2 && partida.brillo, marca, zona: "bosque", hueco: "rio", animal: "conejo",
-    tv: modo === "tv", sinRegla: !muestraRegla,
+    tv: modo === "tv", sinRegla: !muestraRegla, corta: true,
   });
   const flecha = `<span class="flecha-pista">${svgInline(arte("flecha-pista"))}</span>`;
   let controles = "";
@@ -430,7 +451,8 @@ function pintarGuia() {
   } else if (paso === 4) {
     controles = `<div class="opciones">${opcionesGuia().map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="guia-op" data-valor="${n}"><span class="num-grande">${n}</span></button>`).join("")}</div>`;
   } else if (paso === 5) {
-    controles = `<div class="opciones">${tablasGuia().map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="tabla-${i}" data-act="guia-tabla" data-valor="${n}"><span class="recorte">${svgInline(arte(archivoTabla(n, "cm")))}</span><span class="num-grande">${n}</span></button>`).join("")}</div>`;
+    const altoGuia = altoComunTablas(tablasGuia(), "cm", anchoLienzo());
+    controles = `<div class="opciones">${tablasGuia().map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="tabla-${i}" data-act="guia-tabla" data-valor="${n}">${htmlRecorte(n, "cm", altoGuia)}<span class="num-grande">${n}</span></button>`).join("")}</div>`;
   }
   mostrar(`
     <header class="cab"><span>${esc(textos.guiaTitulo)}</span>
@@ -529,7 +551,7 @@ function pintarCruce(focoId) {
   const modo = modoJuego();
   const puntos = `<span class="puntos">${partida.lista.map((_, k) => `<i class="${k < partida.i ? "lleno" : ""}"></i>`).join("")}</span>`;
   const linea = pistaVisible(textoPista(c, pistaFase, textos, fase), partida);
-  const blanco = blancoFlecha(c, pistaFase);
+  const blanco = blancoFlecha(c, pistaFase, fase);
   mostrar(`
     <header class="cab"><span>${esc(nombreZona(c.zona, textos))} · ${esc(nivelMeta(c.nivel).nombre)}</span>${puntos}</header>
     <p class="pedido">${esc(promptDe(c, fase, textos, modo))}</p>
@@ -569,11 +591,17 @@ function cuerpoCruce(c, fase, blanco) {
   return "";
 }
 
+function htmlRecorte(n, unidad, alto) {
+  const caja = cajaTabla(n, unidad, alto);
+  return `<span class="recorte proporcion" style="width:${px(caja.w)}px;height:${px(caja.h)}px">${svgInline(arte(archivoTabla(n, unidad)))}</span>`;
+}
+
 function htmlBloquesFase(c, fase) {
+  const lay = escalaBloques({ longitud: c.longitud, ancho: anchoLienzo() });
   const cubos = fase === "cuantos" ? cubosDe(c.longitud, "bien") : c.cubos;
-  const bloques = htmlBloques(cubos, arte("cubito-1cm"), arte("cubito-1cm-coral"));
+  const bloques = htmlBloques(cubos, arte("cubito-1cm"), arte("cubito-1cm-coral"), lay.cubo);
   const escena = htmlReglaEscena({
-    unidad: "cm", longitud: c.longitud, desplaza: 0, sinRegla: true, punta: true,
+    unidad: "cm", longitud: c.longitud, desplaza: 0, sinRegla: true, punta: true, bloques: true,
     zona: c.zona, hueco: c.hueco, animal: c.animal, tv: modoJuego() === "tv",
     encima: bloques,
   });
@@ -652,7 +680,8 @@ function htmlMedir(c, fase, blanco) {
     </div>`;
   }
   if (fase === "tabla") {
-    return `${escena}<div class="opciones">${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}"><span class="recorte">${svgInline(arte(archivoTabla(n, unidad)))}</span><span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>`;
+    const alto = altoComunTablas(c.ofrecidas || [], unidad, anchoLienzo());
+    return `${escena}<div class="opciones">${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}">${htmlRecorte(n, unidad, alto)}<span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>`;
   }
   if (fase === "leer") return `${escena}${htmlContador(c, true)}`;
   if (fase === "juntar") return `${escena}${htmlJuntar(c, unidad, blanco)}`;
@@ -674,8 +703,9 @@ function htmlContador(c, brillaAlCoincidir, siempreActivo = false) {
 
 function htmlJuntar(c, unidad, blanco) {
   const brilla = cruzarBrilla(partida.elegidas, c.longitud, c.piezas);
+  const alto = altoComunTablas(c.ofrecidas || [], unidad, anchoLienzo());
   const puestos = partida.elegidas.length ? `<div class="opciones">${partida.elegidas.map((n) => `<span class="opcion elegida"><span class="num-grande">${n}</span></span>`).join("")}</div>` : "";
-  return `${puestos}<div class="opciones ${blanco === "tablas" ? "apunta" : ""}">${blanco === "tablas" ? spanFlecha() : ""}${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="suma-${i}" data-act="sumar" data-valor="${n}"><span class="recorte">${svgInline(arte(archivoTabla(n, unidad)))}</span><span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>
+  return `${puestos}<div class="opciones ${blanco === "tablas" ? "apunta" : ""}">${blanco === "tablas" ? spanFlecha() : ""}${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="suma-${i}" data-act="sumar" data-valor="${n}">${htmlRecorte(n, unidad, alto)}<span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>
     <div class="controles">
       <button type="button" class="ico-btn" data-foco data-foco-id="quitar" data-act="quitar" ${partida.elegidas.length ? "" : "disabled"}>${svgInline(arte("boton-quitar"))}<span>${esc(textos.quitar)}</span></button>
       <button type="button" class="enviar${brilla ? " listo" : ""}" data-foco${brilla ? '="inicial"' : ""} data-foco-id="cruzar" data-act="cruzar" ${brilla ? "" : "disabled"}>${svgInline(arte("boton-cruzar"))}<span>${esc(textos.cruzar)}</span></button>
@@ -1086,14 +1116,22 @@ function moverReglaJuego(delta) {
   pintarCruce("poner");
 }
 
+$main.addEventListener("pointerdown", (ev) => {
+  if (!saliendo || modoJuego() !== "tv") return;
+  if (ev.target.closest(".dialogo") || !ev.target.closest(".salir-velo")) return;
+  ev.preventDefault();
+  const seguir = $main.querySelector('[data-foco-id="seguir-juego"]');
+  if (seguir) seguir.focus({ preventScroll: true });
+}, true);
+
 $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   const via = entradaLibre("toque");
   if (via === "ignorar") return;
   if (via === "dialogo") {
     const enDialogo = ev.target.closest(".dialogo");
-    if (!enDialogo && ev.target.closest(".salir-velo") && modoJuego() !== "tv") {
-      cerrarSalir(false);
+    if (!enDialogo && ev.target.closest(".salir-velo")) {
+      if (modoJuego() !== "tv") cerrarSalir(false);
       return;
     }
     const ir = t && t.dataset.ir;

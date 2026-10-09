@@ -3,8 +3,10 @@
 // en ese hueco, también se avanza. Un error de voz, cero voces o una
 // frase que no empieza NO cuentan como el final: se usa el reloj.
 // El primer segundo no entra: ni un toque ni OK, tampoco en los de mirar.
+// Si la voz sigue en un paso de mirar, el toque y OK esperan a que acabe,
+// con tope de 3 s desde el inicio (igual que la guía de Pizzería).
 // Tras «¿Salir?», los 400 ms y el candado del paso empiezan juntos y no se suman.
-// Los de acción solo avanzan con la acción.
+// Los de acción solo avanzan con la acción: la voz no alarga su candado.
 // Con «¿Salir?» abierto el reloj y la espera de la voz se pausan.
 // Seguir los reinicia para el paso en curso.
 // Saltar se puede tocar, pero las flechas no llegan a él en ningún paso.
@@ -105,10 +107,16 @@ export function enteroReloj(x) {
   return n || 0;
 }
 
+// En un paso de mirar, mientras la voz sigue, el plazo es el final de
+// la frase y nunca pasa de inicio + 3 s. Si ya calló, el candado es 1 s.
+// `tipo` distingue el toque del paso de acción; la espera solo mira el paso.
 export function limiteEntrada(reloj, tipo) {
   if (!reloj) return 0;
+  void tipo;
   const dialogo = enteroReloj(reloj.ignorarHasta);
-  const paso = enteroReloj(reloj.inicio) + GUIA_CIERRE_MS;
+  const inicio = enteroReloj(reloj.inicio);
+  const esperaVoz = esMirar(reloj.paso) && !!reloj.vozSigue;
+  const paso = inicio + (esperaVoz ? GUIA_TOPE_MS : GUIA_CIERRE_MS);
   return Math.max(dialogo, paso);
 }
 

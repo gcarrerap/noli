@@ -6,7 +6,7 @@ export function svgInline(texto) {
   if (!texto) return "";
   return String(texto)
     .replace(/<\?xml[^>]*>/g, "")
-    .replace(/(<tspan class="unidad"[^>]*>)\s*in(\s*<\/tspan>)/g, "$1 pulg.$2")
+    .replace(/(<(?:tspan|text)\b[^>]*\bclass="unidad"[^>]*>)\s*in(\s*<\/(?:tspan|text)>)/g, "$1 pulg.$2")
     .trim();
 }
 
@@ -27,16 +27,20 @@ export function htmlComparar({ corto, largo, svgCorto, svgLargo, svgDif, svgLine
   const mayor = Math.max(largo, 1);
   const cortoPct = Math.max(0, Math.min(100, (corto / mayor) * 100));
   const difPct = Math.max(0, 100 - cortoPct);
-  const leyenda = etLargo || etCorto ? `<p class="comp-leyenda"><span>${etLargo}</span><span>${etCorto}</span></p>` : "";
+  const eti = (texto) => `<span class="comp-eti">${texto || ""}</span>`;
+  const columna = etLargo || etCorto ? `<div class="comp-etis">${eti(etLargo)}${eti(etCorto)}</div>` : "";
   return `<div class="comparar" data-estilo="cuantos-mas">
-    ${flecha}
-    <div class="comp-fila"><div class="comp-barra larga" style="width:100%">${svgInline(svgLargo)}</div></div>
-    <div class="comp-fila">
-      <div class="comp-barra corta" style="width:${cortoPct}%">${svgInline(svgCorto)}</div>
-      <div class="comp-dif" style="width:${difPct}%">${svgInline(svgDif)}</div>
+    <div class="comp-cols">
+      ${columna}
+      <div class="comp-lienzo">
+        <div class="comp-fila"><div class="comp-barra larga" style="width:100%">${svgInline(svgLargo)}</div></div>
+        <div class="comp-fila">
+          <div class="comp-barra corta" style="width:${cortoPct}%">${svgInline(svgCorto)}</div>
+          <div class="comp-dif" style="width:${difPct}%">${svgInline(svgDif)}${flecha}</div>
+        </div>
+        <div class="comp-punteo" style="left:${cortoPct}%">${svgInline(svgLinea)}</div>
+      </div>
     </div>
-    <div class="comp-punteo" style="left:${cortoPct}%">${svgInline(svgLinea)}</div>
-    ${leyenda}
   </div>`;
 }
 
@@ -47,14 +51,15 @@ export function htmlFalta({ puesto, hueco, svgPuesto, svgDif }) {
   return `<div class="falta"><div class="falta-puesta" style="width:${a}%">${svgInline(svgPuesto)}</div><div class="falta-dif" style="width:${b}%">${svgInline(svgDif)}</div></div>`;
 }
 
-export function htmlBloques(cubos, svgNormal, svgCoral) {
+export function htmlBloques(cubos, svgNormal, svgCoral, alto) {
   const span = cubos.length ? Math.max(...cubos.map((c) => c.x)) + 1 : 1;
   const piezas = cubos.map((c) => {
     const izq = (c.x / span) * 100;
     const ancho = (1 / span) * 100;
     return `<span class="cubo${c.coral ? " coral" : ""}" style="left:${izq}%;width:${ancho}%">${svgInline(c.coral ? svgCoral : svgNormal)}</span>`;
   }).join("");
-  return `<div class="bloques" style="--span:${span}">${piezas}</div>`;
+  const altoCss = alto ? `height:${alto}px;` : "";
+  return `<div class="bloques" style="${altoCss}--span:${span}">${piezas}</div>`;
 }
 
 export function posicionRegla({ anchoVb, cero = 26, gapU, desplaza = 0, unidadU }) {

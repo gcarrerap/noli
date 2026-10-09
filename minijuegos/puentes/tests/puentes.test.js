@@ -5,6 +5,7 @@ import { rngConSemilla } from "../src/rng.js";
 import {
   longitudReal, marcaAlFinal, confirmarCero, decirUnidad, hablaSegura, cerca, opcionesCerca,
   combinacion, cruzarBrilla, cubosDe, seMidioBien, moverRegla, U_CM, U_IN, resultadoListo,
+  escalaFija, cajaReferencia, escalaBloques, altoComunTablas, cajaTabla, huecoEnPx,
 } from "../src/medida.js";
 import {
   crearCruce, sumaValida, unidadDeCruce, planSuma, POR_TURNO, ZONAS, NIVELES_MAX,
@@ -13,7 +14,7 @@ import {
   crearReloj, abrirDialogoGuia, seguirDialogoGuia, debeAvanzarSolo, msHastaAvance,
   alAvisoVoz, marcarVozEmpezada, responderGuia, guiaTerminada, textoDeGuia, vozDeGuia,
   saltarAlcanzable, focoDeGuia, HUECO_GUIA, GUIA_TOQUE_MS, GUIA_TOPE_MS, GUIA_CIERRE_MS,
-  limiteEntrada,
+  limiteEntrada, guiaBloqueada,
 } from "../src/guia.js";
 import { anulaPrimera, cuentaPrimera, fasePista, glifoMas, textoPista } from "../src/pista.js";
 import {
@@ -119,12 +120,19 @@ test("nivel 6 resta hasta 20 con los troncos alineados a la izquierda", () => {
   const html = htmlComparar({
     corto: 4, largo: 10, svgCorto: "<svg></svg>", svgLargo: "<svg></svg>",
     svgDif: "<svg data-dif></svg>", svgLinea: "<svg data-linea></svg>",
+    etCorto: "Corto: 4 cm", etLargo: "Largo: 10 cm",
+    flecha: '<span class="flecha-pista"></span>',
   });
   assert.match(html, /data-estilo="cuantos-mas"/);
   assert.match(html, /data-dif/);
   assert.match(html, /data-linea/);
   assert.match(html, /width:40%/);
   assert.match(html, /comp-dif/);
+  const dif = html.slice(html.indexOf('class="comp-dif"'), html.indexOf('class="comp-punteo"'));
+  assert.match(dif, /flecha-pista/);
+  assert.equal(dif.includes("Corto"), false);
+  assert.match(html, /comp-eti/);
+  assert.equal(html.includes("comp-leyenda"), false);
 });
 
 test("los bloques mal medidos no cuentan como bien", () => {
@@ -186,11 +194,18 @@ test("la referencia sigue a la unidad y el desfase deja el 0 fuera del río", ()
   assert.equal(textoPista({ nivel: 2, tipo: "medir", longitud: 6, unidad: "cm" }, "frase", textos, "poner"), textos.pistaCero);
   assert.equal(textoPista({ nivel: 2, tipo: "medir", longitud: 6, unidad: "cm" }, "frase", textos, "tabla"), "");
   assert.equal(textoPista({ nivel: 2, tipo: "medir", longitud: 6, unidad: "cm" }, "completa", textos, "tabla").includes("orilla"), false);
+  assert.equal(textoPista({ nivel: 3, tipo: "medir", longitud: 4, unidad: "in" }, "frase", textos, "poner"), textos.pistaCero);
+  assert.equal(textoPista({ nivel: 3, tipo: "medir", longitud: 4, unidad: "in" }, "completa", textos, "poner"), textos.pistaCeroLarga);
+  assert.equal(textoPista({ nivel: 3, tipo: "medir", longitud: 4, unidad: "in" }, "frase", textos, "tabla"), textos.pistaMira);
   assert.equal(resultadoListo(3, 6, "comparar"), "fallo");
   assert.equal(resultadoListo(6, 6, "comparar"), "bien");
   assert.equal(resultadoListo(3, 6, "leer"), "ignorar");
   assert.match(svgInline('<text><tspan class="unidad"> in</tspan></text>'), /pulg\./);
   assert.equal(/[^.]in\b/.test(svgInline('<text><tspan class="unidad"> in</tspan></text>')), false);
+  const regla = fs.readFileSync(new URL("../img/regla-in-6.svg", import.meta.url), "utf8");
+  const reglaLista = svgInline(regla);
+  assert.match(reglaLista, /class="unidad"[^>]*>\s*pulg\./);
+  assert.equal(/class="unidad"[^>]*>\s*in\s*</.test(reglaLista), false);
 });
 
 test("la guía del 6 y el diálogo de salir", () => {
@@ -428,6 +443,72 @@ test("los candados aguantan un Date.now de verdad", () => {
   assert.equal(resolverEntrada({ ignorarHasta: marcarIgnorar(epoca), ahora: epoca + 90, tipo: "toque" }), "ignorar");
   assert.equal(resolverEntrada({ ignorarHasta: marcarIgnorar(epoca), ahora: epoca + 400, tipo: "ok" }), "seguir");
   assert.equal(entradaIgnorada(epoca | 0, epoca + 90, "toque"), false);
+});
+
+test("un paso de mirar espera a la voz, con tope de 3 s", () => {
+  const epoca = 1_759_000_000_000;
+  const hablando = marcarVozEmpezada(crearReloj(epoca, 0));
+  assert.equal(hablando.vozSigue, true);
+  assert.equal(limiteEntrada(hablando, "ok"), epoca + GUIA_TOPE_MS);
+  assert.equal(guiaBloqueada(hablando, epoca + 1050, "ok"), true);
+  assert.equal(guiaBloqueada(hablando, epoca + 2000, "toque"), true);
+  assert.equal(responderGuia(hablando, epoca + 1050, { tipo: "ok" }).accion, "nada");
+  assert.equal(responderGuia(hablando, epoca + 2000, { tipo: "toque" }).accion, "nada");
+  assert.equal(guiaBloqueada(hablando, epoca + GUIA_TOPE_MS - 1, "ok"), true);
+  assert.equal(guiaBloqueada(hablando, epoca + GUIA_TOPE_MS, "ok"), false);
+  assert.equal(responderGuia(hablando, epoca + GUIA_TOPE_MS, { tipo: "ok" }).accion, "avanzo");
+
+  const paso1 = marcarVozEmpezada(crearReloj(epoca, 1));
+  assert.equal(responderGuia(paso1, epoca + 80, { tipo: "toque" }).accion, "nada");
+  assert.equal(responderGuia(paso1, epoca + 1050, { tipo: "toque" }).accion, "nada");
+  assert.equal(responderGuia(paso1, epoca + GUIA_TOPE_MS, { tipo: "ok" }).accion, "avanzo");
+
+  const callo = alAvisoVoz(hablando, epoca + 1500, "fin").reloj;
+  assert.equal(callo.vozSigue, false);
+  assert.equal(limiteEntrada(callo, "ok"), epoca + GUIA_CIERRE_MS);
+  assert.equal(responderGuia(callo, epoca + 1500, { tipo: "ok" }).accion, "avanzo");
+  assert.equal(responderGuia(crearReloj(epoca, 0), epoca + 1050, { tipo: "ok" }).accion, "avanzo");
+
+  const accion = marcarVozEmpezada(crearReloj(epoca, 2));
+  assert.equal(limiteEntrada(accion, "poner"), epoca + GUIA_CIERRE_MS);
+  assert.equal(responderGuia(accion, epoca + 1050, { tipo: "poner", desplaza: 0 }).accion, "avanzo");
+});
+
+test("la referencia y el hueco comparten los px por unidad", () => {
+  const ancho = 332;
+  const largo = huecoEnPx({ unidad: "cm", longitud: 10, ancho });
+  const corto = huecoEnPx({ unidad: "cm", longitud: 4, ancho, desplaza: 2 });
+  assert.equal(largo.px, corto.px);
+  assert.equal(largo.u, corto.u);
+  assert.ok(Math.abs(largo.gapPx / 10 - corto.gapPx / 4) < 1e-9);
+  const tabla = cajaReferencia("tabla10");
+  const cubo = cajaReferencia("cubito");
+  const clip = cajaReferencia("clip");
+  assert.ok(Math.abs((tabla.w * largo.u) / tabla.unidades - largo.gapPx / 10) < 1e-9);
+  assert.ok(Math.abs((cubo.w * largo.u) / cubo.unidades - largo.px) < 1e-9);
+  assert.ok(Math.abs((clip.w * largo.u) / clip.unidades - largo.px) < 1e-9);
+  assert.equal(escalaFija({ unidad: "cm", ancho, tv: false }).px, largo.px);
+
+  const pulgadas = huecoEnPx({ unidad: "in", longitud: 4, ancho });
+  const otras = huecoEnPx({ unidad: "in", longitud: 1, ancho });
+  assert.equal(pulgadas.px, otras.px);
+  const tablaIn = cajaReferencia("tabla1in");
+  const clipIn = cajaReferencia("clipin");
+  assert.ok(Math.abs((tablaIn.w * pulgadas.u) / tablaIn.unidades - pulgadas.gapPx / 4) < 1e-9);
+  assert.ok(Math.abs(clipIn.w * pulgadas.u - pulgadas.px) < 1e-9);
+
+  const bloques = escalaBloques({ longitud: 8, ancho });
+  assert.ok(bloques.cubo > 28);
+  assert.ok(Math.abs(bloques.hueco - bloques.cubo * 8) < 1e-9);
+  const pocos = escalaBloques({ longitud: 4, ancho });
+  assert.ok(pocos.cubo >= bloques.cubo);
+
+  const alto = altoComunTablas([12, 2, 1], "cm", ancho);
+  const chica = cajaTabla(1, "cm", alto);
+  const grande = cajaTabla(12, "cm", alto);
+  assert.equal(chica.h, grande.h);
+  assert.ok(chica.w * 12 - grande.w < 1e-6 && grande.w - chica.w * 12 < 1e-6);
+  assert.ok(chica.w < grande.w);
 });
 
 test("8 de 10 sube, la pista completa no es a la primera y la racha no baja el nivel", () => {

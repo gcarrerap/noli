@@ -2,6 +2,7 @@
 // La voz dice «centímetros» y «pulgadas», nunca la abreviatura.
 
 import { revolver } from "./rng.js";
+import { posicionRegla } from "./escena.js";
 
 export const U_CM = 30;
 export const U_IN = 76.2;
@@ -181,6 +182,72 @@ export function seMidioBien(modo) {
 export function spanBloques(cubos) {
   if (!cubos.length) return 1;
   return Math.max(...cubos.map((c) => c.x)) + 1;
+}
+
+// Una escala por unidad y viewport. No depende del hueco de este cruce,
+// así la referencia y el río usan los mismos px por centímetro o pulgada.
+export function escalaFija({ unidad = "cm", tv = false, ancho = 320, corta = false } = {}) {
+  const uNombre = unidad === "in" ? "in" : "cm";
+  const reg = reglaArchivo(uNombre, !!(tv && uNombre !== "in" && !corta));
+  const unit = uDe(uNombre);
+  const tope = tv ? 168 : 128;
+  const u = Math.min(Math.max(1, ancho) / reg.ancho, tope / 160);
+  return { u, unit, px: unit * u, reg };
+}
+
+// Ancho en las mismas unidades que la escena. El clip de 1 pulgada
+// se dibuja a 1 pulgada, no con el viewBox de 3 cm.
+export function cajaReferencia(id) {
+  if (id === "tabla10") return { w: 10 * U_CM, h: 36, unidades: 10 };
+  if (id === "clip") return { w: 3 * U_CM, h: 30, unidades: 3 };
+  if (id === "tabla1in") return { w: U_IN, h: 36, unidades: 1 };
+  if (id === "clipin") return { w: U_IN, h: 30 * (U_IN / (3 * U_CM)), unidades: 1 };
+  return { w: U_CM, h: U_CM, unidades: 1 };
+}
+
+// Los bloques del nivel 1 no caben en la regla de 12: cada uno apunta a ~40 px.
+export function escalaBloques({ longitud = 1, ancho = 332 } = {}) {
+  const n = Math.max(1, longitud | 0);
+  const banco = 36;
+  const ideal = 40;
+  let hueco = n * ideal;
+  let orilla = banco;
+  if (orilla * 2 + hueco > ancho) {
+    hueco = Math.max(n * 28, ancho - orilla * 2);
+    if (orilla * 2 + hueco > ancho) {
+      orilla = 18;
+      hueco = Math.max(n, ancho - orilla * 2);
+    }
+  }
+  return { banco: orilla, hueco, cubo: hueco / n };
+}
+
+// Todas las tablas de una fila comparten el alto. El ancho es proporcional
+// al largo, y la más larga cabe en su botón.
+export function altoComunTablas(largos, unidad, ancho) {
+  const lista = Array.isArray(largos) && largos.length ? largos : [1];
+  const maxN = Math.max(...lista.map((n) => Math.abs(n | 0)), 1);
+  const cols = Math.max(1, lista.length);
+  const slot = Math.max(48, (Math.max(1, ancho) - 8 * (cols + 1)) / cols);
+  const unit = uDe(unidad === "in" ? "in" : "cm");
+  return Math.max(8, Math.min(32, (slot * 36) / (maxN * unit)));
+}
+
+export function cajaTabla(n, unidad, alto) {
+  const unit = uDe(unidad === "in" ? "in" : "cm");
+  const h = alto || 32;
+  return { w: (Math.max(1, n | 0) * unit / 36) * h, h };
+}
+
+// El hueco, en px, con la escala fija. Sirve para comprobar que no cambia
+// de un cruce a otro.
+export function huecoEnPx({ unidad = "cm", longitud = 1, tv = false, ancho = 320, desplaza = 0, corta = false } = {}) {
+  const escala = escalaFija({ unidad, tv, ancho, corta });
+  const gapU = Math.max(escala.unit, (longitud || 1) * escala.unit);
+  const pos = posicionRegla({
+    anchoVb: escala.reg.ancho, cero: escala.reg.cero, gapU, desplaza, unidadU: escala.unit,
+  });
+  return { ...escala, gapU, gapPx: gapU * escala.u, pos };
 }
 
 export function brilloCeroVisible({ desplaza = 0, fasePista = "frase", forzar = false, nivel = 1 } = {}) {
