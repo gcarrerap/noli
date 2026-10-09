@@ -6,14 +6,19 @@ export function callar() {
   try { if (s?.speaking) s.cancel(); } catch { /* sin voz */ }
 }
 
-export function decir(texto, lang) {
+// Devuelve true si la frase empezó a decirse. alTerminar corre al acabar (no si no hay voz).
+export function decir(texto, lang, alTerminar) {
   const s = typeof window !== "undefined" ? window.speechSynthesis : null;
   const U = typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null;
-  if (!s || !U || !texto) return;
+  if (!s || !U || !texto) return false;
   try {
     const u = new U(texto);
     u.lang = lang || "es-MX";
     u.rate = 0.92;
+    if (typeof alTerminar === "function") u.onend = () => alTerminar();
     s.speak(u);
-  } catch { /* la tele a veces no tiene voces */ }
+    return true;
+  } catch { /* la tele a veces no tiene voces */
+    return false;
+  }
 }
