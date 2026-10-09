@@ -1,0 +1,8 @@
+{
+  "_ayuda": "Cuadrícula de cada cuarto. cols y filas en cuadros. El piso es un SVG que se repite.",
+  "cuartos": [
+    { "id": "recamara", "es": "Recámara", "en": "bedroom", "cols": 6, "filas": 6, "piso": "piso-madera.svg", "tarjeta": "cuarto-recamara.svg" },
+    { "id": "cocina", "es": "Cocina", "en": "kitchen", "cols": 6, "filas": 5, "piso": "piso-cocina.svg", "tarjeta": "cuarto-cocina.svg" },
+    { "id": "jardin", "es": "Jardín", "en": "garden", "cols": 6, "filas": 6, "piso": "piso-pasto.svg", "tarjeta": "cuarto-jardin.svg" }
+  ]
+}

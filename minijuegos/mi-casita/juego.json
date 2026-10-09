@@ -1,0 +1,14 @@
+{
+  "id": "mi-casita",
+  "titulo": "Mi Casita",
+  "descripcion": "Paga con monedas y acomoda los muebles de tu casa.",
+  "icono": "icono.svg",
+  "color": "#9b8cff",
+  "materia": "matemáticas",
+  "edades": [6, 11],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gasta",
+  "costo": 3
+}

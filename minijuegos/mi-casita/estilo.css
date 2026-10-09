@@ -1,0 +1,299 @@
+/* Mi Casita. Estilos propios: el juego no usa los del catálogo. */
+:root {
+  --bg: #f4f0ff;
+  --fg: #2b2236;
+  --muted: #6d6284;
+  --card: #fff;
+  --line: #e0d6f5;
+  --lavanda: #9b8cff;
+  --sol: #ffc43d;
+  --verde: #3ccf8e;
+  --coral: #ff6b4a;
+  --foco: #2b2236;
+  --halo: #ffc43d;
+  --cuadro: 44px;
+  --sombra: 0 6px 0 rgba(43, 34, 54, .12), 0 10px 20px rgba(43, 34, 54, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1730;
+    --fg: #f6f0ff;
+    --muted: #b7aed0;
+    --card: #2a2444;
+    --line: #3d3560;
+    --foco: #fff;
+    --sombra: 0 6px 0 rgba(0, 0, 0, .35);
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+html[data-modo="tv"] { font-size: 18px; }
+html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 15% 0%, #fff 0, transparent 42%),
+    linear-gradient(#e4dcff, var(--bg) 32%);
+  color: var(--fg);
+  font-family: "Nunito", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+:focus { outline: none; }
+html.teclado [data-foco]:focus {
+  outline: 5px solid var(--foco);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 9px var(--halo);
+  position: relative;
+  z-index: 2;
+}
+main {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: max(8px, env(safe-area-inset-top)) 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.cargando { color: var(--muted); margin: auto; }
+.titulo { font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; font-size: 2rem; margin: 0; line-height: 1.05; }
+.sub, .pista, .aviso, .medida { margin: 0; font-weight: 800; }
+.pista, .aviso { font-size: 1.15rem; min-height: 1.3em; }
+.aviso.mal { color: var(--coral); }
+.pista { color: #3a2d78; }
+.medida { color: var(--muted); font-size: .95rem; }
+.casa-icono { width: 96px; height: 96px; }
+.casa-icono svg, .casa-icono img { width: 100%; height: 100%; }
+
+.boton {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: .45em 1em;
+  font-weight: 800;
+  min-height: 64px;
+  box-shadow: var(--sombra);
+}
+.boton.grande {
+  font-family: "Fredoka", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  border-radius: 22px;
+  min-width: 8.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  gap: .1em;
+}
+.boton.grande small { font-family: "Nunito", sans-serif; font-size: .78rem; font-weight: 800; display: flex; align-items: center; gap: .25em; }
+.boton.primario { background: var(--lavanda); color: #241c4a; border-color: transparent; }
+.boton.apagado, button:disabled, .boton:disabled {
+  opacity: .45;
+  filter: grayscale(.35);
+  box-shadow: none;
+  cursor: default;
+}
+.boton.brilla {
+  background: var(--verde);
+  color: #143024;
+  box-shadow: 0 0 0 4px var(--sol), 0 0 16px var(--sol);
+  animation: pulso 1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .boton.brilla { animation: none; }
+}
+@keyframes pulso { 50% { transform: translateY(-2px); } }
+.menu { display: flex; flex-direction: column; gap: .55rem; width: min(420px, 100%); }
+.fila { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+.cab { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cab .boton { min-height: 48px; padding: .3em .9em; }
+
+.saldo, .costo-linea { display: flex; align-items: center; justify-content: center; gap: .35em; font-weight: 800; margin: 0; }
+.estrella-credito { width: 1.5em; height: 1.5em; flex: none; }
+.faltan-ico .estrella-credito { width: 72px; height: 72px; }
+.bolsa { width: 72px; height: 78px; flex: none; }
+.bolsa svg { width: 100%; height: 100%; display: block; }
+.precio-tag { width: 132px; height: 60px; display: block; }
+.precio-tag svg { width: 100%; height: auto; display: block; }
+
+.catalogo { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mueble-btn {
+  background: var(--card);
+  border: 3px solid transparent;
+  border-radius: 18px;
+  min-height: 64px;
+  padding: 6px;
+  box-shadow: var(--sombra);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.mueble-btn.sel { border-color: var(--lavanda); }
+.mueble-btn img { width: 64px; height: 48px; object-fit: contain; }
+.mueble-btn b { font-family: "Fredoka", sans-serif; font-size: 1rem; line-height: 1; }
+.mueble-btn small { color: var(--muted); font-weight: 800; font-size: .75rem; }
+.en { font-style: italic; font-weight: 700; }
+
+.fichas { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+.ficha {
+  min-width: 64px;
+  min-height: 64px;
+  width: 76px;
+  background: transparent;
+  border-radius: 16px;
+  border: 3px solid transparent;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ficha svg { width: 64px; height: 64px; }
+.ficha.billete { width: 108px; }
+.ficha.billete svg { width: 104px; height: 48px; }
+.ficha.sirve { border-color: var(--sol); box-shadow: 0 0 0 4px var(--sol); border-radius: 50%; }
+.ficha.flecha { position: relative; }
+.ficha.flecha::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 0; height: 0;
+  border: 8px solid transparent;
+  border-bottom-color: var(--coral);
+  transform: translateX(-50%);
+}
+.puestos-mano { min-height: 36px; display: flex; gap: 4px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.puestos-mano .mini { width: 36px; height: 36px; }
+.puestos-mano .mini.billete { width: 64px; height: 30px; }
+.llevas { font-family: "Fredoka", sans-serif; font-size: 1.6rem; margin: 0; }
+.abajo { display: flex; gap: 8px; width: 100%; justify-content: center; }
+.abajo .boton { flex: 1; max-width: 240px; }
+
+.rejilla {
+  --cuadro: 44px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cuadro));
+  grid-template-rows: repeat(var(--filas), var(--cuadro));
+  width: calc(var(--cols) * var(--cuadro) + 6px);
+  height: calc(var(--filas) * var(--cuadro) + 6px);
+  flex: none;
+  position: relative;
+  background: var(--piso) 0 0 / var(--cuadro) var(--cuadro);
+  border-radius: 16px;
+  border: 3px solid #2b2236;
+  overflow: hidden;
+}
+.celda { position: relative; padding: 0; min-width: 0; min-height: 0; }
+.celda img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.puesto {
+  position: absolute;
+  left: calc(var(--x) * var(--cuadro));
+  top: calc(var(--y) * var(--cuadro));
+  width: calc(var(--w) * var(--cuadro));
+  height: calc(var(--h) * var(--cuadro));
+  pointer-events: none;
+  z-index: 1;
+}
+.puesto img { width: 100%; height: 100%; object-fit: contain; }
+.puesto.gira img {
+  position: absolute;
+  width: calc(var(--h) * var(--cuadro));
+  height: calc(var(--w) * var(--cuadro));
+  max-width: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(var(--giro));
+}
+.puesto.fantasma { z-index: 2; filter: drop-shadow(0 2px 0 rgba(43, 34, 54, .35)); }
+
+.flechas {
+  display: grid;
+  grid-template-areas: ". up ." "left down right";
+  gap: 4px;
+  justify-content: center;
+}
+.flechas button {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  padding: 0;
+}
+.flechas img { width: 64px; height: 64px; display: block; }
+.flechas .up { grid-area: up; }
+.flechas .left { grid-area: left; }
+.flechas .down { grid-area: down; }
+.flechas .right { grid-area: right; }
+
+.barra { display: flex; gap: 6px; width: 100%; justify-content: center; }
+.barra button {
+  flex: 1;
+  max-width: 140px;
+  min-height: 64px;
+  min-width: 64px;
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--sombra);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-weight: 800;
+  font-size: .85rem;
+  padding: 4px;
+}
+.barra img { width: 36px; height: 36px; }
+.barra button:disabled { opacity: .4; }
+
+.mascota { display: flex; gap: 8px; align-items: center; text-align: left; width: 100%; }
+.mascota img { width: 72px; height: 64px; flex: none; }
+.mascota p { margin: 0; background: var(--card); border-radius: 16px; padding: .45em .7em; font-weight: 800; box-shadow: var(--sombra); }
+
+.cuartos { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; width: 100%; }
+.cuartos button { min-height: 48px; border-radius: 16px; padding: 4px 8px; background: var(--card); box-shadow: var(--sombra); font-weight: 800; }
+.cuartos button.sel { outline: 3px solid var(--lavanda); }
+.cuartos img { width: 64px; height: 48px; display: block; }
+
+.saltar { min-height: 64px; min-width: 5.5em; }
+
+.velo { position: fixed; inset: 0; background: rgba(43, 34, 54, .45); display: grid; place-items: center; z-index: 5; padding: 16px; }
+.dialogo { background: var(--card); border-radius: 24px; padding: 1.1rem; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: .6rem; width: min(360px, 92vw); }
+.dialogo p { font-family: "Fredoka", sans-serif; font-size: 2rem; margin: 0; }
+
+.lado { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.compra { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+html[data-modo="tv"] .barra.oculta { display: none; }
+html[data-modo="tv"] .compra .dibujo { width: 64px; height: 48px; }
+html[data-modo="tv"] .precio-tag { width: 110px; }
+html[data-modo="tv"] .ficha { width: 64px; min-height: 56px; }
+html[data-modo="tv"] .ficha svg { width: 52px; height: 52px; }
+html[data-modo="tv"] .llevas { font-size: 1.3rem; }
+.compra .dibujo { width: 88px; height: 72px; object-fit: contain; }
+
+html[data-modo="tv"] body { padding: 28px 56px 24px; height: 100dvh; overflow: hidden; }
+html[data-modo="tv"] main {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 0;
+  gap: 6px;
+  justify-content: center;
+}
+html[data-modo="tv"] .titulo { font-size: 1.7rem; }
+html[data-modo="tv"] .rejilla { --cuadro: 48px; }
+html[data-modo="tv"] .flechas { display: none; }
+html[data-modo="tv"] .casa-icono { width: 72px; height: 72px; }
+html[data-modo="tv"] .catalogo { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+html[data-modo="tv"] .lado { flex-direction: row; align-items: center; justify-content: center; gap: 16px; width: 100%; }
+html[data-modo="tv"] .menu { width: min(360px, 40vw); }
+html[data-modo="tv"] .boton.grande { min-height: 56px; font-size: 1.2rem; }

@@ -1,0 +1,34 @@
+{
+  "_ayuda": "Muebles vistos desde arriba. w y h son cuadros. formas: orientaciones de la alfombra (al girar se pasa a la siguiente). nombre: con artículo, para «Ahí hay…».",
+  "muebles": [
+    { "id": "lampara", "es": "Lámpara", "en": "lamp", "nombre": "una lámpara", "precio": 6, "w": 1, "h": 1, "archivo": "mueble-lampara.svg", "cuarto": "recamara" },
+    { "id": "silla", "es": "Silla", "en": "chair", "nombre": "una silla", "precio": 5, "w": 1, "h": 1, "archivo": "mueble-silla.svg", "cuarto": "recamara" },
+    { "id": "planta", "es": "Planta", "en": "plant", "nombre": "una planta", "precio": 10, "w": 1, "h": 1, "archivo": "mueble-planta.svg", "cuarto": "recamara" },
+    { "id": "alfombra6", "es": "Alfombra", "en": "rug", "nombre": "una alfombra", "precio": 15, "w": 2, "h": 3, "archivo": "alfombra-2-3.svg", "cuarto": "recamara", "alfombra": 6,
+      "formas": [
+        { "w": 2, "h": 3, "archivo": "alfombra-2-3.svg" },
+        { "w": 3, "h": 2, "archivo": "alfombra-3-2.svg" },
+        { "w": 6, "h": 1, "archivo": "alfombra-6-1.svg" },
+        { "w": 1, "h": 6, "archivo": "alfombra-6-1.svg", "giro": 90 }
+      ] },
+    { "id": "cama", "es": "Cama", "en": "bed", "nombre": "una cama", "precio": 20, "w": 2, "h": 3, "archivo": "mueble-cama.svg", "cuarto": "recamara" },
+    { "id": "mesa", "es": "Mesa", "en": "table", "nombre": "una mesa", "precio": 16, "w": 2, "h": 2, "archivo": "mueble-mesa.svg", "cuarto": "recamara" },
+    { "id": "librero", "es": "Librero", "en": "bookshelf", "nombre": "un librero", "precio": 25, "w": 2, "h": 1, "archivo": "mueble-librero.svg", "cuarto": "recamara" },
+    { "id": "ropero", "es": "Ropero", "en": "wardrobe", "nombre": "un ropero", "precio": 30, "w": 2, "h": 1, "archivo": "mueble-ropero.svg", "cuarto": "recamara" },
+    { "id": "alfombra4", "es": "Alfombra", "en": "rug", "nombre": "una alfombra", "precio": 35, "w": 4, "h": 2, "archivo": "alfombra-4-2.svg", "cuarto": "recamara", "alfombra": 8,
+      "formas": [
+        { "w": 4, "h": 2, "archivo": "alfombra-4-2.svg" },
+        { "w": 2, "h": 4, "archivo": "alfombra-4-2.svg", "giro": 90 }
+      ] },
+    { "id": "estufa", "es": "Estufa", "en": "stove", "nombre": "una estufa", "precio": 30, "w": 1, "h": 1, "archivo": "mueble-estufa.svg", "cuarto": "cocina" },
+    { "id": "refri", "es": "Refri", "en": "fridge", "nombre": "un refri", "precio": 40, "w": 1, "h": 1, "archivo": "mueble-refri.svg", "cuarto": "cocina" },
+    { "id": "fregadero", "es": "Fregadero", "en": "sink", "nombre": "un fregadero", "precio": 45, "w": 2, "h": 1, "archivo": "mueble-fregadero.svg", "cuarto": "cocina" },
+    { "id": "flores", "es": "Flores", "en": "flowers", "nombre": "unas flores", "precio": 8, "w": 1, "h": 1, "archivo": "mueble-flores.svg", "cuarto": "jardin" },
+    { "id": "banca", "es": "Banca", "en": "bench", "nombre": "una banca", "precio": 25, "w": 2, "h": 1, "archivo": "mueble-banca.svg", "cuarto": "jardin" },
+    { "id": "arbol", "es": "Árbol", "en": "tree", "nombre": "un árbol", "precio": 60, "w": 2, "h": 2, "archivo": "mueble-arbol.svg", "cuarto": "jardin" },
+    { "id": "fuente", "es": "Fuente", "en": "fountain", "nombre": "una fuente", "precio": 80, "w": 2, "h": 2, "archivo": "mueble-fuente.svg", "cuarto": "jardin" },
+    { "id": "sofa", "es": "Sofá", "en": "sofa", "nombre": "un sofá", "precio": 50, "w": 3, "h": 1, "archivo": "mueble-sofa.svg", "cuarto": "recamara" },
+    { "id": "tele", "es": "Tele", "en": "TV", "nombre": "una tele", "precio": 45, "w": 2, "h": 1, "archivo": "mueble-tele.svg", "cuarto": "recamara" },
+    { "id": "escritorio", "es": "Escritorio", "en": "desk", "nombre": "un escritorio", "precio": 55, "w": 2, "h": 1, "archivo": "mueble-escritorio.svg", "cuarto": "recamara" }
+  ]
+}
