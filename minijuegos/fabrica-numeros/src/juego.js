@@ -2,7 +2,7 @@
 // aquí se dibuja y se responde al dedo o a las flechas.
 import { Noli, moverFoco, focoInicial } from "../../../kit/noli.js";
 import { entre, rngConSemilla } from "./rng.js";
-import { decir } from "./voz.js";
+import { decir, callar } from "./voz.js";
 import { clic, maquina as sonidoMaquina, listo, desbloquear } from "./sonido.js";
 import {
   vacio, desdeNumero, valor, subir, bajar, pegar, triturar, puedeEnviar, puedeTriturar,
@@ -24,6 +24,7 @@ import {
 import { resolverAtras, accionAtras } from "./salida.js";
 import {
   guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, esperaVozGuia,
+  relojDeGuia, toqueTrasSalir, resolverToqueGuia,
 } from "./guia.js";
 
 const $main = document.getElementById("juego");
@@ -55,6 +56,7 @@ let relojPista = 0;
 let relojDiez = 0;
 let relojGuia = 0;
 let guiaVozToken = 0;
+let cerroSalir = 0;
 
 function luego(fn, ms) {
   const t = ++token;
@@ -292,8 +294,13 @@ function limpiarRelojGuia() {
 }
 
 function programarGuia() {
-  if (!esGuia() || saliendo || !guiaAvanzaConToque(partida.paso)) {
-    if (!esGuia() || !guiaAvanzaConToque(partida.paso)) limpiarRelojGuia();
+  if (relojDeGuia(saliendo) === "pausa") {
+    limpiarRelojGuia();
+    if (esGuia() && guiaAvanzaConToque(partida.paso)) callar();
+    return;
+  }
+  if (!esGuia() || !guiaAvanzaConToque(partida.paso)) {
+    limpiarRelojGuia();
     return;
   }
   if (partida.relojPaso === partida.paso && relojGuia) return;
@@ -852,7 +859,10 @@ function abrirSalir() {
   token++;
   clearTimeout(relojPista);
   limpiarDiez();
-  limpiarRelojGuia();
+  if (relojDeGuia(true) === "pausa") {
+    limpiarRelojGuia();
+    if (esGuia() && guiaAvanzaConToque(partida.paso)) callar();
+  }
   if (partida && partida.espera) {
     esperaPendiente = true;
     partida.espera = false;
@@ -883,6 +893,7 @@ function cerrarSalir(ySalir) {
     Noli.salir();
     return;
   }
+  cerroSalir = Date.now();
   if (esperaPendiente && partida) {
     esperaPendiente = false;
     partida.espera = true;
@@ -891,7 +902,7 @@ function cerrarSalir(ySalir) {
   }
   if (focoAntes && focoAntes.isConnected && $main.contains(focoAntes)) focoAntes.focus({ preventScroll: true });
   else focoInicial($main);
-  programarGuia();
+  if (relojDeGuia(false) === "reiniciar") programarGuia();
   programarPista();
 }
 
@@ -1041,11 +1052,19 @@ const IR = {
 
 $main.addEventListener("click", (ev) => {
   if (anim) { anim.saltar = true; anim.terminar(); return; }
-  if (esGuia() && guiaAvanzaConToque(partida.paso) && !ev.target.closest('[data-ir="saltar-guia"]')) {
+  const t = ev.target.closest("[data-act]");
+  const ir = (t && t.dataset.ir) || "";
+  if (saliendo) {
+    const efecto = resolverToqueGuia({ dialogo: true, ir });
+    if (efecto === "seguir") cerrarSalir(false);
+    else if (efecto === "salir") cerrarSalir(true);
+    return;
+  }
+  if (toqueTrasSalir(Date.now() - cerroSalir)) return;
+  if (esGuia() && resolverToqueGuia({ paso: partida.paso, ir }) === "mostrar") {
     avanzarGuia();
     return;
   }
-  const t = ev.target.closest("[data-act]");
   if (!t || !$main.contains(t)) return;
   const act = t.dataset.act;
   if (act === "subir") cambiar(t.dataset.banda, 1);
@@ -1076,6 +1095,7 @@ Noli.alEntrar((accion) => {
     }
     return true;
   }
+  if (accion === "ok" && toqueTrasSalir(Date.now() - cerroSalir)) return true;
   if (pantalla === "problema" && partida) {
     const banda = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.banda;
     if (banda && (accion === "arriba" || accion === "abajo")) {

@@ -5,6 +5,8 @@
 
 /** Tope de un paso que solo se muestra: espera a la voz, y a los 3 s avanza igual. */
 export const GUIA_VOZ_TOPE_MS = 3000;
+/** Tras cerrar «¿Salir?», toques y OK no llegan al juego. Así un segundo toque no cae debajo. */
+export const GUIA_TRAS_SALIR_MS = 400;
 
 const VOZ = ["Arma el 23", "Pon 2 barras", "Pon 3 cubitos", "¡Igual!", "Toca Enviar"];
 
@@ -17,6 +19,37 @@ export function esperaVozGuia(msVoz) {
   const v = Number(msVoz);
   if (!Number.isFinite(v) || v <= 0) return GUIA_VOZ_TOPE_MS;
   return Math.min(v, GUIA_VOZ_TOPE_MS);
+}
+
+/**
+ * Con «¿Salir?» abierto el paso no avanza solo: el tiempo del diálogo no cuenta.
+ * Al pulsar Seguir la espera de la voz empieza de nuevo, entera.
+ */
+export function relojDeGuia(dialogoAbierto) {
+  return dialogoAbierto ? "pausa" : "reiniciar";
+}
+
+/** true mientras no hayan pasado unos 400 ms desde que se cerró el diálogo. */
+export function toqueTrasSalir(ms) {
+  const t = Number(ms);
+  if (!Number.isFinite(t)) return false;
+  return t >= 0 && t < GUIA_TRAS_SALIR_MS;
+}
+
+/**
+ * Toque u OK. Con el diálogo abierto solo valen Seguir y Salir.
+ * Justo después de cerrarlo, no llega nada al paso de debajo.
+ */
+export function resolverToqueGuia({ paso = 0, dialogo = false, callado = false, ir = "" } = {}) {
+  if (dialogo) {
+    if (ir === "seguir-juego") return "seguir";
+    if (ir === "salir-juego") return "salir";
+    return "nada";
+  }
+  if (callado) return "nada";
+  if (ir === "saltar-guia") return "saltar";
+  if (guiaAvanzaConToque(paso)) return "mostrar";
+  return "juego";
 }
 
 export function guiaEnviarActivo(paso) {

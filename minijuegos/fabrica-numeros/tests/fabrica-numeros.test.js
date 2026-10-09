@@ -25,7 +25,8 @@ import {
 import { resolverAtras, accionAtras } from "../src/salida.js";
 import {
   guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia,
-  esperaVozGuia, GUIA_VOZ_TOPE_MS,
+  esperaVozGuia, relojDeGuia, toqueTrasSalir, resolverToqueGuia,
+  GUIA_VOZ_TOPE_MS, GUIA_TRAS_SALIR_MS,
 } from "../src/guia.js";
 
 const muchos = (n, sub, rnd, k = 200, extra = {}) => Array.from({ length: k }, () => crearPedido(n, rnd, { sub, ...extra }));
@@ -578,6 +579,33 @@ test("la guía no avanza sin las piezas y Enviar no responde antes del final", (
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.match(juego, /esperaVozGuia/);
   assert.doesNotMatch(juego, /GUIA_TOQUE_MS/);
+});
+
+test("¿Salir? pausa la guía y el toque de después no la salta", () => {
+  assert.equal(GUIA_TRAS_SALIR_MS, 400);
+  assert.equal(relojDeGuia(true), "pausa");
+  assert.equal(relojDeGuia(false), "reiniciar");
+  assert.equal(esperaVozGuia(0), GUIA_VOZ_TOPE_MS);
+  assert.equal(resolverToqueGuia({ dialogo: true, ir: "seguir-juego", paso: 0 }), "seguir");
+  assert.equal(resolverToqueGuia({ dialogo: true, ir: "salir-juego", paso: 3 }), "salir");
+  assert.equal(resolverToqueGuia({ dialogo: true, paso: 0 }), "nada");
+  assert.equal(resolverToqueGuia({ dialogo: true, ir: "saltar-guia", paso: 0 }), "nada");
+  assert.equal(resolverToqueGuia({ callado: true, paso: 0 }), "nada");
+  assert.equal(resolverToqueGuia({ callado: true, paso: 3, ir: "saltar-guia" }), "nada");
+  assert.equal(resolverToqueGuia({ paso: 0 }), "mostrar");
+  assert.equal(resolverToqueGuia({ paso: 3, ir: "saltar-guia" }), "saltar");
+  assert.equal(resolverToqueGuia({ paso: 1 }), "juego");
+  assert.equal(resolverToqueGuia({ paso: 4, ir: "" }), "juego");
+  assert.equal(toqueTrasSalir(0), true);
+  assert.equal(toqueTrasSalir(399), true);
+  assert.equal(toqueTrasSalir(400), false);
+  assert.equal(toqueTrasSalir(2500), false);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /relojDeGuia\(true\)/);
+  assert.match(juego, /relojDeGuia\(false\)/);
+  assert.match(juego, /toqueTrasSalir/);
+  assert.match(juego, /resolverToqueGuia/);
+  assert.match(juego, /callar\(\)/);
 });
 
 test("el dominio de 8 de 10 cruza turnos: cerrar el turno no vacía la ventana", () => {
