@@ -31,6 +31,12 @@ export const ICONOS = {
   musica: s(`<path d="M18 36V12l20-5v24" fill="none" ${L}/><ellipse cx="13" cy="36" rx="6" ry="5" fill="#8f5cf0" ${L}/><ellipse cx="33" cy="31" rx="6" ry="5" fill="#8f5cf0" ${L}/>`),
   joyas: s(`<path d="M10 18l6-8h16l6 8-14 22z" fill="#8fd3ff" ${L}/><path d="M10 18h28M20 10l-4 8 8 22 8-22-4-8" fill="none" ${L}/>`),
   maquillaje: s(`<rect x="10" y="22" width="12" height="20" rx="2" fill="#ff7eb6" ${L}/><path d="M12 22v-8l8-6v14" fill="#ef4343" ${L}/><circle cx="33" cy="30" r="9" fill="#ffd9c0" ${L}/><circle cx="33" cy="30" r="4" fill="#ff8fa3"/>`),
+  // Taller de diseño (#80): máquina de coser; Mis diseños: gancho con estrella
+  taller: s(`<path d="M6 40h36" ${L}/><path d="M10 40V14h26v8H18v18" fill="#ff7eb6" ${L}/><path d="M36 22v8" ${L}/><circle cx="36" cy="33" r="3" fill="#ffd23f" ${L}/><circle cx="30" cy="10" r="5" fill="#8fd3ff" ${L}/>`),
+  disenos: s(`<path d="M24 12a4 4 0 1 1 4 4c-2 0-4 1-4 3v2L6 34h36L24 21" fill="none" ${L}/><path d="M24 25l2.4 4.8 5.3.7-3.9 3.7 1 5.2L24 37l-4.8 2.4 1-5.2-3.9-3.7 5.3-.7z" fill="#ffd23f" ${L}/>`),
+  tijeras: s(`<circle cx="13" cy="35" r="6" fill="#fff" ${L}/><circle cx="13" cy="15" r="6" fill="#fff" ${L}/><path d="M18 18l22 16M18 32l22-16" fill="none" ${L}/>`),
+  hilo: s(`<rect x="14" y="8" width="20" height="32" rx="3" fill="#ff7eb6" ${L}/><path d="M12 8h24M12 40h24" ${L}/><path d="M14 16h20M14 24h20M14 32h20" stroke="#fff" stroke-width="2"/>`),
+  lapiz: s(`<path d="M10 38l4-12L32 8l8 8-18 18z" fill="#ffd23f" ${L}/><path d="M14 26l8 8M28 12l8 8" ${L}/><path d="M10 38l2-6 4 4z" fill="#2b2236"/>`),
   // Temas
   "t-playa": s(`<circle cx="33" cy="15" r="8" fill="#ffd23f" ${L}/><path d="M4 32c5-4 9-4 14 0s9 4 14 0 9-4 14 0v12H4z" fill="#4cb3ff" ${L}/>`),
   "t-cumple": s(`<rect x="9" y="24" width="30" height="16" rx="3" fill="#ff7eb6" ${L}/><path d="M9 31c5 3 10-3 15 0s10 3 15 0" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24v-9" ${L}/><path d="M24 7c3 3 3 6 0 7-3-1-3-4 0-7z" fill="#ff9a3c" ${L}/>`),

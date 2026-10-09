@@ -1,6 +1,16 @@
 # Diseña ropa para la Pasarela
 
-¡Hola, Noelia! Tú puedes inventar ropa nueva para el juego. Así se hace:
+¡Hola, Noelia! Ahora puedes **diseñar tu ropa dentro del juego**, en el **Taller de diseño** (la mesa con la máquina de coser, adelante a la izquierda del estudio):
+
+1. Escoge qué vas a coser: playera, vestido, falda, pantalón, zapatos o gorra.
+2. Cambia su forma: ¿corta o larga? ¿con mangas? ¿pegada o de princesa?
+3. Decórala: colores, un patrón (rayas, cebra, corazones…) y calcomanías en el pecho, la espalda o la falda.
+4. Ponle nombre y escoge para qué temas es (uno o dos). ¡Los jueces se fijan!
+5. Cósela: cuesta **5 créditos**, que ganas en los otros juegos. Si no te alcanzan, tu diseño te espera guardado.
+
+Tus diseños quedan en el perchero **Mis diseños** (adelante a la derecha). Tienes 4 espacios y vas ganando más al subir de nivel.
+
+¿Quieres algo que el taller todavía no tiene, como una capa, un moño gigante o un molde nuevo? Dibújalo en papel y lo hacemos con papá:
 
 ## 1. Dibújala
 

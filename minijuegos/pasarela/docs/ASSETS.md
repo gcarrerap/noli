@@ -229,3 +229,28 @@ blender --background --python minijuegos/pasarela/herramientas/blender/tiara.py
 
 **Licencias:** cada patrón y estampado va en LICENCIAS.md. Los que hay son originales para Noli; no copiar personajes ni logos (ningún oso famoso: el osito es nuestro).
 
+## G. Moldes del Taller de diseño (#80)
+
+Un molde es una prenda del Taller con **opciones** en lugar de medidas fijas (`datos/moldes.json`). Para hacer uno nuevo:
+
+1. **Parte de una prenda que ya se vea bien** en el probador (sus `piezas` de `prendas.json`).
+2. **Controles** (de 1 a 3), cada uno con **2 a 4 opciones** (`id`, `es`, `en`). Una opción puede traer:
+   - `valores`: variables que usan las piezas. En una pieza, `"$abajo"` se cambia por el valor de la opción escogida (`"y": [0.04, "$abajo"]`). `null` quita el campo (`"tapa": null`).
+   - `dibujo2d`: la figura del modo sencillo con esa opción (una de `FIGURAS` en `dibujo2d.js`).
+   - `prenda`: otro nombre para la prenda con esa opción (`{"es": "falda larga", "en": "long skirt"}`), también `genero` o `plural`.
+3. **Tablas** (`variables` con `por`): cuando una medida depende de dos controles (el radio de abajo de una falda depende del largo **y** del vuelo):
+
+```json
+"variables": { "rAbajo": { "por": ["largo", "vuelo"], "valores": { "corta": { "pegada": 0.21, "amplia": 0.28 }, "larga": { "pegada": 0.27, "amplia": 0.37 } } } }
+```
+
+4. **`solo`**: una pieza que solo va con ciertas opciones (`"solo": {"mangas": ["largas"]}`).
+5. **`sobre`**: listones y bordes que van encima de otra pieza. Dale `"nombre"` a la pieza de abajo (un `tubo`) y en la de encima pon `"sobre": {"pieza": "falda", "desde": 0.86, "hasta": 0.93}` (fracción del alto de la de abajo, 0 = arriba). El taller calcula su altura y su radio (3 mm más que la tela), sea cual sea el largo o el vuelo. **No escribas a mano el radio de un listón sobre una pieza que cambia**: se hundiría con alguna opción.
+6. **`lugares`** para calcomanías: `{"id": "pecho", "es": "pecho", "en": "chest", "pieza": "cuerpo", "desde": 0.12, "hasta": 0.62, "ancho": 0.17}` (`"lado": "espalda"` para ponerla atrás; `"espejo": true` para que salga en las dos piernas). `en2d`: centro y tamaño del estampado en el dibujo 2D (`[{"x": 100, "y": 160, "tam": 32}]`, uno por cada lado).
+7. **`inicial`**: la opción con la que empieza cada control.
+8. **Revisar:**
+   - `npm test` arma **todas las combinaciones** y revisa que ningún tubo de color principal quede más delgado que lo más delgado que ya usa la ropa del catálogo en esa ancla (si falla, sube ese radio), que los listones y calcomanías queden por fuera, que cada combinación tenga figura 2D y que pese menos de 6 000 triángulos.
+   - En el juego: abre el Taller, prueba cada opción, gira al personaje y camina con el diseño puesto (las mangas largas y las faldas de princesa con los brazos).
+
+Si cambias un molde que Noelia ya usó, sus diseños cambian también (se guardan como receta). Si quitas una opción, sus diseños con esa opción vuelven a la inicial; si quitas un molde, esos diseños desaparecen. Mejor agregar que quitar.
+

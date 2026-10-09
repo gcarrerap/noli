@@ -13,6 +13,7 @@ Regla: **nada entra al repo sin su renglón aquí.** El repo es público, así q
 | Tiara de estrellas | `modelos/tiara.glb` | Hecha para Noli con `herramientas/blender/tiara.py` (Blender 5.2.2) | Este repo | La del repo. Lo que se modela con Blender es de quien lo hace (la licencia GPL de Blender no aplica a los archivos que exporta) | 2026-10-08 |
 | Patrones (rayas, puntos, corazones, cuadros, flores, estrellas, cebra, leopardo) | `patrones/*.svg` | Hechos para Noli (SVG) | Este repo | La del repo | 2026-10-09 |
 | Estampados (osito, corazón, estrella, arcoíris) | `estampados/*.svg` | Hechos para Noli (SVG; el osito es original, no es ningún personaje) | Este repo | La del repo | 2026-10-09 |
+| Moldes del Taller de diseño (playera, vestido, falda, pantalón, zapatos, gorra) y la mesa de costura | `datos/moldes.json`, `src/escena/estudio.js` | Hechos para Noli (formas de Three.js descritas en JSON) | Este repo | La del repo | 2026-10-09 |
 | Íconos (temas, categorías, moneda, estrellas…) | `src/ui/iconos.js`, `icono.svg` | Hechos para Noli (SVG) | Este repo | La del repo | 2026-10-08 |
 | Muñeca 2D y miniaturas | `src/ui/dibujo2d.js` | Hechos para Noli (SVG) | Este repo | La del repo | 2026-10-08 |
 | Fuentes Fredoka y Nunito | (se cargan de Google Fonts, no están en el repo) | Milena Brandão / Hafontia (Fredoka), Vernon Adams y otros (Nunito) | fonts.google.com | SIL Open Font License 1.1 | 2026-10-08 |

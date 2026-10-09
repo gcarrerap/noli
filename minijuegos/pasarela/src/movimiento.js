@@ -83,6 +83,8 @@ export function rutaHacia(pos, zona, mapa, radio = 0.35) {
   const destino = { x: zona.punto[0], z: zona.punto[1] };
   if (libre(pos, destino, mapa, radio)) return [destino];
   const centro = { x: 0, z: 0.8 };
+  // Muebles que no están en las orillas (#80): "via" es un punto libre por donde rodearlos
+  if (zona.via) return [centro, { x: zona.via[0], z: zona.via[1] }, destino];
   return [centro, destino];
 }
 

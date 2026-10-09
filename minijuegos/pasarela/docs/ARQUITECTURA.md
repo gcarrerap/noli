@@ -37,7 +37,8 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `src/atuendo.js` | El atuendo puesto: `poner` (vestido ↔ arriba/abajo, un accesorio por lugar, tocar dos veces quita), `ponerPatron`/`patronPuesto` (#79), `quitar`, `puestas`, `fraseIngles` (*a pink zebra print T-shirt*), `limpiar` (lo guardado de versiones viejas). |
 | `src/puntuacion.js` | `encaje`, `componentes`, `comentar`, `calificar`. Fórmulas en [JUEGO.md](JUEGO.md). |
 | `src/espanol.js` | Concordancia: el/la/los/las, un/una, perfecto/perfecta/perfectos. |
-| `src/progreso.js` | Puntos de estilo, `nivelDe`, `abiertos`, `registrarPasarela`, lo "nuevo", `escogerTema`, `leerProgreso`. |
+| `src/progreso.js` | Puntos de estilo, `nivelDe`, `abiertos`, `registrarPasarela`, lo "nuevo", `escogerTema`, `leerProgreso` (v1 → v2; registra los diseños). |
+| `src/taller.js` | Taller de diseño (#80): de un diseño (molde + opciones + decoración) a una prenda. `piezasDe` (variables, `solo`, `sobre`, calcomanías), `prendaDeDiseno`, `limpiarDiseno`, `registrarDisenos` (en `idx.prendas`), `espacios`, `nombresSugeridos`. |
 | `src/movimiento.js` | `paso` (caminar con deslizamiento en paredes), `choca`, `zonaCercana`, `rutaHacia`/`seguirRuta`, `direccionDeTeclas`. |
 | `src/partida.js` | La máquina de estados (`TRANSICIONES`, `siguiente`) y el reloj. |
 | `kit/3d/escena.js` | Renderer, cámara, luces, el ciclo de cuadros, medir FPS y bajar la calidad, pausar, liberar memoria. **Compartido** con el mundo del menú principal (#25). |
@@ -84,6 +85,16 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `calificacion` | jueces, consejo, frase en inglés, puntos | | |
 | `desbloqueo` | lo que se abrió | | Solo si subió de nivel. |
 | `closet` | los últimos atuendos | | "Ponérmelo" → `libre` con ese atuendo. |
+
+**Taller de diseño (#80)** no es un estado: es un panel (como el de un perchero) que se abre desde `estudio` o `libre` con la zona `accion: "taller"`. Mientras está abierto (`S.taller`):
+
+```
+ estudio / libre ──zona taller──▶ [taller: molde ⇄ forma ⇄ decorar ⇄ nombre ⇄ coser] ──coser (Noli.gastar) / cerrar / Atrás──▶ estudio / libre
+```
+
+- El borrador se guarda en cada cambio (`progreso.borrador`); el personaje lo trae puesto como prenda de prueba (`d-borrador`, registrada junto con los diseños) encima de lo que traía (`S.taller.antes`). Al cerrar vuelve a lo de antes; al coser, sale con el diseño puesto.
+- El reloj de la pasarela no corre: `cadaCuadro` no lo revisa con el taller abierto y, al cerrar, `inicioEstudio` se recorre lo que duró.
+- "Mis diseños" es una zona con `"disenos": true`: `prendasDeZona` regresa las prendas con `diseno: true`. Lo cosido se agrega a lo abierto (`actualizarAbiertos`). "Descoser" pregunta, quita el diseño del progreso y del atuendo.
 
 **Cobro:** se cobra al empezar (antes del tema). Si sale a la mitad de una pasarela, **no se devuelve** (la pantalla lo pregunta: "Los créditos que usaste no se regresan"). Es lo más sencillo de explicar y evita cobrar y devolver en cada salida accidental.
 
@@ -132,7 +143,7 @@ Todo pasa por `juego.js → manejar(accion)` (lo que manda el kit) y por clics e
 
 ## Guardar
 
-- **Progreso** (puntos, pasarelas, vistos, clóset, piel, último atuendo, último tema): con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y lo sincroniza). Esquema y versión en [JUEGO.md](JUEGO.md#qué-se-guarda).
+- **Progreso** (puntos, pasarelas, vistos, clóset, piel, último atuendo, último tema, diseños y borrador del taller): con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y lo sincroniza). Esquema y versión en [JUEGO.md](JUEGO.md#qué-se-guarda).
 - **Créditos:** nunca los guarda el juego. Lee el saldo con `Noli.creditos` al abrir y cobra con `Noli.gastar`; usa el saldo que regresa.
 - **Preferencia del aparato** (3D o modo sencillo): `localStorage["noli.pasarela.vista"]`. Es lo único que el juego escribe directo, porque es de ese aparato (la TV puede ir lenta y el teléfono no) y no debe sincronizarse. Ver [DECISIONES.md](DECISIONES.md) (ADR 7).
 

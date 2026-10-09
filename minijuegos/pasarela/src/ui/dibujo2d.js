@@ -127,22 +127,46 @@ const T2D = 14; // tamaño de la baldosa en el dibujo 2D (unidades del viewBox) 
 
 function relleno(prenda, color, patron, idx) {
   const [p, s] = colores(prenda, color, idx);
-  const pa = patron && idx.patrones ? idx.patrones.get(patron) : null;
+  const id0 = patron || prenda.patronFijo; // patronFijo: diseños del Taller (#80)
+  const pa = id0 && idx.patrones ? idx.patrones.get(id0) : null;
   if (!pa || !pa.svg) return { p, s, defs: "" };
-  const id = ("pt-" + patron + p + s).replace(/[^a-z0-9-]/gi, "");
+  const id = ("pt-" + id0 + p + s).replace(/[^a-z0-9-]/gi, "");
   const t = T2D * (pa.escala || 1);
   const defs = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${t}" height="${t}" viewBox="0 0 64 64">${interiorSVG(pintarSVG(pa.svg, { p, s }))}</pattern>`;
   return { p: `url(#${id})`, s, defs };
 }
 
-/** El estampado de una prenda (estampado2d en prendas.json: centro x, y y tamaño) */
+/** Los estampados de una prenda (estampado2d en prendas.json: centro x, y y tamaño; los diseños pueden traer varios) */
 function estampado2d(prenda, hexP, idx) {
-  const q = prenda.estampado2d, e = q && idx.estampados ? idx.estampados.get(q.estampado) : null;
+  const lista = Array.isArray(prenda.estampado2d) ? prenda.estampado2d : prenda.estampado2d ? [prenda.estampado2d] : [];
+  return lista.map((q) => uno2d(q, hexP, idx)).join("");
+}
+
+function uno2d(q, hexP, idx) {
+  const e = idx.estampados ? idx.estampados.get(q.estampado) : null;
   if (!e) return "";
   const x = q.x - q.tam / 2, y = q.y - q.tam / 2;
   if (e.svg) return `<svg x="${x}" y="${y}" width="${q.tam}" height="${q.tam}" viewBox="0 0 64 64">${interiorSVG(pintarSVG(e.svg, { p: hexP }))}</svg>`;
   if (e.url) return `<image href="${e.url}" x="${x}" y="${y}" width="${q.tam}" height="${q.tam}"/>`;
+  if (e.pixeles) return pixeles2d(e.pixeles, x, y, q.tam);
   return "";
+}
+
+/** Un dibujo en pixeles (#81) como rectángulos (un renglón de pixeles iguales seguidos = un solo rectángulo) */
+function pixeles2d(px, x, y, tam) {
+  const n = px.lado, k = tam / n;
+  let r = "";
+  for (let f = 0; f < n; f++) {
+    let i = 0;
+    while (i < n) {
+      const c = px.colores[f * n + i];
+      let j = i + 1;
+      while (j < n && px.colores[f * n + j] === c) j++;
+      if (c) r += `<rect x="${(x + i * k).toFixed(2)}" y="${(y + f * k).toFixed(2)}" width="${((j - i) * k + 0.05).toFixed(2)}" height="${(k + 0.05).toFixed(2)}" fill="${c}"/>`;
+      i = j;
+    }
+  }
+  return `<g shape-rendering="crispEdges">${r}</g>`;
 }
 
 /** El cuerpo: piel, malla de base y cara. fantasma = silueta clarita para las miniaturas. */

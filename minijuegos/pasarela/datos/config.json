@@ -13,6 +13,7 @@
     { "id": "accesorio", "es": "Accesorios",        "en": "Accessories" },
     { "id": "maquillaje", "es": "Maquillaje",       "en": "Makeup" }
   ],
+  "taller": { "_ayuda": "Taller de diseño (#80): costo en créditos por coser una prenda; espacios para diseños al empezar, uno más cada espacioCadaNiveles niveles, hasta maxEspacios; largo máximo del nombre; temas por diseño; calcomanías: una por lugar del molde.", "costo": 5, "espacios": 4, "espacioCadaNiveles": 6, "maxEspacios": 9, "maxNombre": 18, "maxTemas": 2 },
   "categoriasConPatron": ["arriba", "abajo", "vestido", "zapatos"],
   "lugares": ["cabeza", "cara", "cuello", "abrigo", "orejas", "muneca", "mano", "espalda", "mejillas", "ojos", "labios", "pintura"],
   "etiquetas": ["playa", "verano", "fiesta", "elegante", "frio", "princesa", "deportivo", "escuela", "casual", "pijama",

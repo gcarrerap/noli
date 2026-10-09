@@ -10,7 +10,8 @@ import { crearVista2d } from "./vista2d.js";
 import { crearJoystick } from "../../../../kit/3d/joystick.js";
 import { hayVoz, decir } from "./voz.js";
 import * as P from "./pantallas.js";
-import { atuendoVacio, atuendoInicial, poner, ponerPatron, colorPuesto, patronPuesto, fraseIngles } from "../atuendo.js";
+import { atuendoVacio, atuendoInicial, poner, ponerPatron, colorPuesto, patronPuesto, fraseIngles, quitar } from "../atuendo.js";
+import { nuevoDiseno, limpiarDiseno, prendaDeDiseno, registrarDisenos, espacios, ajustesDe, limpiarNombre, prendasDeDisenos } from "../taller.js";
 import { calificar } from "../puntuacion.js";
 import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, nivelDePrenda, esNuevo } from "../progreso.js";
 import { siguiente, quedan, EN_ESTUDIO } from "../partida.js";
@@ -86,6 +87,8 @@ function crearVista(tipo) {
 function actualizarAbiertos() {
   S.nivel = nivelDe(S.progreso.puntos, S.idx.niveles);
   S.ab = abiertos(S.progreso.puntos, S.idx.niveles);
+  // Lo que cosió en el Taller (#80) siempre está abierto
+  for (const p of prendasDeDisenos(S.idx)) S.ab.prendas.add(p.id);
 }
 
 let guardarTimer = null;
@@ -256,6 +259,7 @@ function abrirZona(z) {
     return;
   }
   if (z.accion === "pasarela") { if (S.estado === "libre") return salirDelEstudio(); return aPasarela(); }
+  if (z.accion === "taller") return abrirTaller(z);
   S.zona = z;
   // La prenda escogida al abrir: la que trae puesta de esta zona (si hay)
   const deZona = new Set(prendasDeZona(z, S.idx).map((p) => p.id));
@@ -273,11 +277,12 @@ function abrirZona(z) {
 
 function dibujarPanel(enfocar) {
   const el = $("panel");
-  if (!S.zona) { el.hidden = true; el.innerHTML = ""; return; }
+  if (!S.zona) { el.hidden = true; el.innerHTML = ""; el.classList.remove("taller"); return; }
+  if (S.taller) return dibujarTaller(enfocar);
   const enfocado = el.contains(document.activeElement) ? document.activeElement : null;
   const clave = enfocado && (enfocado.dataset.prenda || enfocado.dataset.color || (enfocado.dataset.patron !== undefined ? "pt:" + enfocado.dataset.patron : "") || enfocado.dataset.accion);
   el.innerHTML = P.panel({ zona: S.zona, idx: S.idx, atuendo: S.atuendo, ab: S.ab, progreso: S.progreso, sel: S.sel, voz: hayVoz(), girar: S.vista.tipo === "3d",
-    colorElegido: S._colorSel, patronElegido: S._patronSel });
+    colorElegido: S._colorSel, patronElegido: S._patronSel, espaciosTotal: espacios(S.nivel.i, S.idx.config) });
   el.hidden = false;
   if (clave) {
     const otro = clave.startsWith("pt:") ? el.querySelector(`[data-patron="${clave.slice(3)}"]`)
@@ -288,6 +293,7 @@ function dibujarPanel(enfocar) {
 
 function cerrarPanel(volver = true) {
   if (!S.zona) return;
+  if (S.taller) salirDelTaller();
   const z = S.zona;
   // Lo que ya vio en este perchero deja de brillar como nuevo
   const claves = [];
@@ -349,6 +355,151 @@ function tocarPatron(id) {
   dibujarPanel();
 }
 
+// ---------- Taller de diseño (#80; src/taller.js) ----------
+// El diseño que se está haciendo es el "borrador" del progreso: se guarda en cada cambio (salir no lo pierde).
+// Mientras está abierto, el personaje lo trae puesto (encima de lo que traía), y el reloj de la pasarela se para.
+
+const ENFOQUE_MOLDE = { arriba: "torso", abajo: "piernas", vestido: "cuerpo", zapatos: "pies", accesorio: "cabeza" };
+const BORRADOR = "d-borrador";
+
+function abrirTaller(z) {
+  const d = S.progreso.borrador || nuevoDiseno([...S.idx.moldes.keys()][0], S.idx, Date.now());
+  S.zona = z;
+  S.taller = { diseno: d, paso: "molde", lugar: null, antes: S.atuendo, desde: performance.now(), faltan: null };
+  $("aviso").innerHTML = ""; $("letreros").hidden = true; $("zonas2d").hidden = true;
+  if (S.joy) S.joy.mostrar(false);
+  S.vista.modo("probador");
+  probarDiseno();
+  dibujarPanel(true);
+  if (!S.progreso.vistos.includes("g:taller")) {
+    S.progreso = marcarVistos(S.progreso, ["g:taller"]); guardar();
+    abrirModal(P.guiaTaller({ costo: S.idx.config.taller.costo }));
+  }
+}
+
+/** Viste al personaje con el diseño (como prenda de prueba) y enfoca su parte del cuerpo */
+function probarDiseno() {
+  const t = S.taller, idx = S.idx;
+  registrarDisenos(idx, [...S.progreso.disenos, { ...t.diseno, id: BORRADOR }]);
+  const p = idx.prendas.get(BORRADOR);
+  S.atuendo = poner(t.antes, p, t.diseno.color);
+  // poner() quita la prenda si ya estaba igual; aquí siempre debe quedar puesta
+  if (!puestaEn(S.atuendo, p)) S.atuendo = poner(S.atuendo, p, t.diseno.color);
+  S.vista.vestir(S.atuendo);
+  S.vista.enfocar(ENFOQUE_MOLDE[p.categoria] || "cuerpo");
+}
+
+const puestaEn = (a, p) => { const x = p.lugar ? a.accesorios[p.lugar] : a[p.categoria]; return x && x.id === p.id; };
+
+function cambiarDiseno(cambio) {
+  const t = S.taller;
+  t.diseno = limpiarDiseno({ ...t.diseno, ...cambio }, S.idx) || t.diseno;
+  if (cambio.molde) t.lugar = null;
+  S.progreso = { ...S.progreso, borrador: t.diseno };
+  guardar();
+  probarDiseno();
+  dibujarTaller();
+}
+
+function ponerCalca(estampado) {
+  const t = S.taller, molde = S.idx.moldes.get(t.diseno.molde);
+  const lugar = t.lugar || ((molde.lugares || [])[0] || {}).id;
+  if (!lugar) return;
+  const calcas = t.diseno.calcas.filter((c) => c.lugar !== lugar);
+  if (estampado) calcas.push({ estampado, lugar });
+  t.lugar = lugar;
+  cambiarDiseno({ calcas });
+}
+
+function tocarTemaTaller(id) {
+  const t = S.taller, max = S.idx.config.taller.maxTemas;
+  let temas = t.diseno.temas.includes(id) ? t.diseno.temas.filter((x) => x !== id) : [...t.diseno.temas, id];
+  if (temas.length > max) { temas = temas.slice(-max); toast(`Como mucho ${max} temas`); }
+  cambiarDiseno({ temas });
+}
+
+function leerNombreTaller() {
+  const i = document.getElementById("t-nombre");
+  if (!i || !S.taller) return;
+  const n = limpiarNombre(i.value, S.idx.config.taller.maxNombre);
+  if (n !== S.taller.diseno.nombre) { S.taller.diseno = { ...S.taller.diseno, nombre: n }; S.progreso = { ...S.progreso, borrador: S.taller.diseno }; guardar(); }
+}
+
+function irPasoTaller(paso) {
+  leerNombreTaller();
+  S.taller.paso = paso;
+  dibujarTaller(true);
+}
+
+function dibujarTaller(enfocar) {
+  const el = $("panel"), t = S.taller;
+  const enfocado = el.contains(document.activeElement) ? document.activeElement : null;
+  const clave = enfocado && ["accion", "paso", "molde", "control", "opcion", "color", "patron", "lugar", "estampado", "tema"].map((k) => enfocado.dataset[k] || "").join("|");
+  const total = espacios(S.nivel.i, S.idx.config);
+  el.classList.add("taller");
+  el.innerHTML = P.taller({ idx: S.idx, diseno: t.diseno, paso: t.paso, ab: S.ab, saldo: S.saldo, costo: S.idx.config.taller.costo,
+    libres: total - S.progreso.disenos.length, total, lugar: t.lugar, girar: S.vista.tipo === "3d", faltan: t.faltan });
+  el.hidden = false;
+  const nombre = document.getElementById("t-nombre");
+  if (nombre) nombre.addEventListener("input", () => { clearTimeout(S._nombreTimer); S._nombreTimer = setTimeout(leerNombreTaller, 400); });
+  if (clave) {
+    const otro = [...el.querySelectorAll("[data-accion]")].find((b) => ["accion", "paso", "molde", "control", "opcion", "color", "patron", "lugar", "estampado", "tema"].map((k) => b.dataset[k] || "").join("|") === clave);
+    if (otro) return otro.focus({ preventScroll: false });
+  }
+  if (enfocar && (S.tv || document.documentElement.classList.contains("teclado"))) focoInicial(el);
+}
+
+function salirDelTaller() {
+  const t = S.taller;
+  leerNombreTaller();
+  S.taller = null;
+  // Se quita la prenda de prueba; vuelve a lo que traía
+  registrarDisenos(S.idx, S.progreso.disenos);
+  S.atuendo = t.antes;
+  S.vista.vestir(S.atuendo);
+  // El reloj no corrió mientras diseñaba
+  if (S.estado === "estudio") S.inicioEstudio += performance.now() - t.desde;
+  guardar();
+}
+
+async function coser() {
+  const t = S.taller, idx = S.idx, costo = idx.config.taller.costo;
+  leerNombreTaller();
+  if (S.progreso.disenos.length >= espacios(S.nivel.i, idx.config)) return toast("Ya no hay espacio en Mis diseños");
+  if (S.saldo !== null && S.saldo < costo) { t.faltan = costo - S.saldo; return dibujarTaller(); }
+  const r = await Noli.gastar(costo, "taller");
+  if (r.saldo !== null && r.saldo !== undefined) S.saldo = r.saldo;
+  if (!r.ok) { t.faltan = S.saldo !== null ? Math.max(1, costo - S.saldo) : null; if (t.faltan === null) toast("No se pudieron cobrar los créditos. Intenta otra vez."); return dibujarTaller(); }
+  const ahora = Date.now();
+  const d = limpiarDiseno({ ...t.diseno, id: "d-" + ahora.toString(36) + Math.random().toString(36).slice(2, 5), fecha: ahora, nombre: t.diseno.nombre || prendaDeDiseno(t.diseno, idx).es }, idx);
+  S.progreso = { ...S.progreso, disenos: [...S.progreso.disenos, d], borrador: null };
+  registrarDisenos(idx, S.progreso.disenos);
+  const p = idx.prendas.get(d.id);
+  S.ab.prendas.add(d.id);
+  S.progreso = marcarVistos(S.progreso, [d.id]);
+  // Sale del taller con su diseño puesto
+  t.antes = poner(t.antes, p, d.color);
+  if (!puestaEn(t.antes, p)) t.antes = poner(t.antes, p, d.color);
+  guardar(true);
+  cerrarPanel();
+  toast(`¡Cosiste «${d.nombre}»! Está en Mis diseños`);
+}
+
+function descoser(id) {
+  cerrarModal();
+  const p = S.idx.prendas.get(id);
+  if (!p || !p.diseno) return;
+  S.progreso = { ...S.progreso, disenos: S.progreso.disenos.filter((d) => d.id !== id) };
+  if (puestaEn(S.atuendo, p)) S.atuendo = quitar(S.atuendo, p.lugar || p.categoria);
+  registrarDisenos(S.idx, S.progreso.disenos);
+  S.ab.prendas.delete(id);
+  S.sel = null;
+  S.vista.vestir(S.atuendo);
+  guardar(true);
+  dibujarPanel();
+  toast(`Descosiste «${p.nombre || p.es}»`);
+}
+
 function salirDelEstudio() {
   S.progreso = { ...S.progreso, ultimo: S.atuendo };
   guardar();
@@ -407,7 +558,7 @@ function cadaCuadro() {
     }
   }
   // Reloj
-  if (S.estado === "estudio") {
+  if (S.estado === "estudio" && !S.taller) {
     const q = quedan(S.inicioEstudio, performance.now(), S.idx.config.tiempoEstudio);
     const s = Math.ceil(q);
     if (s !== S.ultimoSegundo) { S.ultimoSegundo = s; const r = $("hud").querySelector(".chip-reloj b"); if (r) { dibujarHud(); } }
@@ -528,6 +679,23 @@ function accion(nombre, el) {
     case "ir-a-jugar": return Noli.salir();
     case "modo-2d": cerrarModal(); ponerPref("2d"); crearVista("2d"); return ir(S.estado);
     case "seguir-3d": return cerrarModal();
+    // Taller de diseño (#80)
+    case "t-paso": return irPasoTaller(el.dataset.paso);
+    case "t-molde": return cambiarDiseno({ molde: el.dataset.molde, ajustes: {}, calcas: [] });
+    case "t-opcion": return cambiarDiseno({ ajustes: { ...S.taller.diseno.ajustes, [el.dataset.control]: el.dataset.opcion } });
+    case "t-color": return cambiarDiseno({ color: el.dataset.color });
+    case "t-secundario": return cambiarDiseno({ secundario: el.dataset.color });
+    case "t-patron": return cambiarDiseno({ patron: el.dataset.patron || null });
+    case "t-lugar": S.taller.lugar = el.dataset.lugar; return dibujarTaller();
+    case "t-estampado": return ponerCalca(el.dataset.estampado);
+    case "t-nombre-sug": return cambiarDiseno({ nombre: el.dataset.nombre });
+    case "t-tema": return tocarTemaTaller(el.dataset.tema);
+    case "t-coser": return coser();
+    case "t-cerrar": return cerrarPanel();
+    case "t-guia-ok": cerrarModal(); return focoInicial($("panel"));
+    case "t-descoser": { const p = S.idx.prendas.get(el.dataset.prenda); if (p && p.diseno) abrirModal(P.confirmarDescoser(p)); return; }
+    case "t-descoser-no": return cerrarModal();
+    case "t-descoser-si": return descoser(el.dataset.prenda);
   }
 }
 

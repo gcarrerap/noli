@@ -1,6 +1,8 @@
 // Datos de la Pasarela (los JSON de datos/): revisarlos e indexarlos. Lógica pura: no lee archivos ni la red
 // (eso lo hace src/ui/cargar.js en el navegador y las pruebas con fs). Ver docs/ARQUITECTURA.md.
 
+import { piezasDe } from "./taller.js";
+
 /** Formas con las que se arma una prenda (kit/3d/formas.js las dibuja). */
 export const FORMAS = ["tubo", "esfera", "caja", "capsula", "toro", "cono", "disco", "plano", "octaedro", "anillo", "calca"];
 
@@ -22,6 +24,8 @@ export const ENFOQUES = ["cara", "cabeza", "alto", "torso", "cuerpo", "piernas",
  * @param {{porCategoria: Map}} idx
  */
 export function prendasDeZona(zona, idx) {
+  // "Mis diseños" (#80): las prendas que cosió en el Taller (taller.js → registrarDisenos)
+  if (zona.disenos) return [...idx.prendas.values()].filter((p) => p.diseno).reverse();
   return (zona.categorias || []).flatMap((c) => idx.porCategoria.get(c) || []).filter((p) => !zona.lugares || zona.lugares.includes(p.lugar));
 }
 
@@ -173,7 +177,7 @@ export function revisarDatos(d) {
     }
     for (const l of z.lugares || []) if (!lugares.has(l)) e.push(`zona ${z.id}: lugar "${l}" desconocido`);
     if (z.enfoque !== undefined && !ENFOQUES.includes(z.enfoque)) e.push(`zona ${z.id}: enfoque "${z.enfoque}" (${ENFOQUES.join(", ")})`);
-    if (!z.categorias && !["espejo", "pasarela"].includes(z.accion)) e.push(`zona ${z.id}: pide categorias o accion (espejo, pasarela)`);
+    if (!z.categorias && !z.disenos && !["espejo", "pasarela", "taller"].includes(z.accion)) e.push(`zona ${z.id}: pide categorias, "disenos": true o accion (espejo, pasarela, taller)`);
     if (!esVec(z.punto, 2) || !esVec(z.mueble && z.mueble.caja, 5)) e.push(`zona ${z.id}: punto [x, z] y mueble.caja [x, z, ancho, fondo, alto]`);
   }
   for (const c of categorias) if (!CON_LUGAR.includes(c) && !catsConZona.has(c)) e.push(`categoría ${c}: ninguna zona del estudio la abre`);
@@ -183,6 +187,41 @@ export function revisarDatos(d) {
     const s = Object.values(j.pesos).reduce((a, b) => a + b, 0);
     if (Math.abs(s - 1) > 1e-9) e.push(`juez ${j.id}: los pesos deben sumar 1 (suman ${s})`);
   }
+
+  // Moldes del Taller de diseño (#80): cada combinación de opciones tiene que armar piezas válidas
+  const vistosMoldes = new Set();
+  for (const m of d.moldes ? d.moldes.moldes : []) {
+    const donde = `molde ${m.id}`;
+    if (!/^[a-z0-9-]+$/.test(m.id || "") || vistosMoldes.has(m.id)) e.push(`${donde}: id en minúsculas y sin repetir`);
+    vistosMoldes.add(m.id);
+    if (!categorias.has(m.categoria) || m.categoria === "peinado" || m.categoria === "maquillaje") e.push(`${donde}: categoría de ropa o accesorio`);
+    if (CON_LUGAR.includes(m.categoria) && !lugares.has(m.lugar)) e.push(`${donde}: un accesorio pide "lugar"`);
+    if (!m.es || !m.en || !["f", "m"].includes(m.genero)) e.push(`${donde}: falta es, en o genero (f/m)`);
+    if (!Array.isArray(m.controles) || m.controles.length < 1 || m.controles.length > 3) { e.push(`${donde}: de 1 a 3 controles`); continue; }
+    for (const c of m.controles) {
+      const ids = (c.opciones || []).map((o) => o.id);
+      if (ids.length < 2 || ids.length > 4 || new Set(ids).size !== ids.length) e.push(`${donde} control ${c.id}: de 2 a 4 opciones sin repetir`);
+      for (const o of c.opciones || []) if (!o.es || !o.en) e.push(`${donde} ${c.id}.${o.id}: falta es o en`);
+      if (m.inicial && m.inicial[c.id] && !ids.includes(m.inicial[c.id])) e.push(`${donde}: inicial.${c.id} no es una opción`);
+    }
+    const nombres = new Set((m.piezas || []).filter((p) => p.nombre).map((p) => p.nombre));
+    for (const l of m.lugares || []) {
+      if (!nombres.has(l.pieza)) e.push(`${donde} lugar ${l.id}: "pieza" debe ser el nombre de un tubo del molde`);
+      if (!(esNum(l.desde) && esNum(l.hasta) && l.desde >= 0 && l.desde < l.hasta && l.hasta <= 1)) e.push(`${donde} lugar ${l.id}: desde < hasta, entre 0 y 1`);
+    }
+    // Todas las combinaciones (son pocas: 3 controles × 4 opciones = 64 como mucho)
+    let combos = [{}];
+    for (const c of m.controles) combos = combos.flatMap((a) => (c.opciones || []).map((o) => ({ ...a, [c.id]: o.id })));
+    const una = [...estampados][0];
+    for (const aj of combos) {
+      const calcas = una ? (m.lugares || []).map((l) => ({ estampado: una, lugar: l.id })) : [];
+      let piezas;
+      try { piezas = piezasDe(m, aj, calcas); } catch (err) { e.push(`${donde} ${JSON.stringify(aj)}: ${err.message}`); continue; }
+      piezas.forEach((pz, i) => e.push(...revisarPieza(pz, `${donde} ${Object.values(aj).join("/")} pieza ${i + 1}`, colores, false, estampados)));
+      if (piezas.length < (m.piezas || []).filter((p) => !p.solo).length) e.push(`${donde} ${Object.values(aj).join("/")}: falta alguna pieza ("sobre" a una pieza que no es tubo)`);
+    }
+  }
+
   return e;
 }
 
@@ -205,6 +244,8 @@ export function indexar(d) {
     // Patrones y estampados: cada uno con su .svg (texto) o .url (PNG), que pone cargar.js (o las pruebas)
     patrones: new Map((d.patrones ? d.patrones.patrones : []).map((x) => [x.id, x])),
     estampados: new Map((d.estampados ? d.estampados.estampados : []).map((x) => [x.id, x])),
+    // Moldes del Taller de diseño (#80; src/taller.js)
+    moldes: new Map((d.moldes ? d.moldes.moldes : []).map((x) => [x.id, x])),
     zonas: d.zonas,
     jueces: d.jueces.jueces,
   };
@@ -213,7 +254,7 @@ export function indexar(d) {
 /** Archivos de datos/ que hay que leer, con la clave que usa revisarDatos/indexar. */
 export const ARCHIVOS = { config: "config.json", colores: "colores.json", temas: "temas.json", prendas: "prendas.json",
   desbloqueos: "desbloqueos.json", zonas: "zonas.json", jueces: "jueces.json", poses: "poses.json",
-  patrones: "patrones.json", estampados: "estampados.json" };
+  patrones: "patrones.json", estampados: "estampados.json", moldes: "moldes.json" };
 
 /**
  * ¿Esta prenda acepta un patrón? La ropa de config.categoriasConPatron sí (salvo "patrones": false); los accesorios

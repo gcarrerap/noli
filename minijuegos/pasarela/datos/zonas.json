@@ -1,5 +1,5 @@
 {
-  "_ayuda": "El estudio (vista de arriba). El piso va de x -6 a 6 y de z -5 (fondo, donde está la puerta del escenario) a 5 (frente). Cada zona: categorias que abre (o accion), punto donde se para el personaje (x, z), mira (ángulo en grados hacia el mueble: 0 = hacia el fondo, 90 = hacia la izquierda de la pantalla), radio para 'acercarse' y mueble (caja que choca: centro x, z, ancho, fondo, alto, y tipo de dibujo). lugares: solo accesorios de esos lugares (si no, todos los de la categoría). enfoque: qué parte del cuerpo enseña la cámara al abrir el panel (cara, cabeza, alto, torso, cuerpo, piernas, pies; docs/ESCENA-3D.md § Cámara). icono: ícono del letrero (si no, el de la categoría). obstaculos: muebles que solo estorban. Ver docs/ESCENA-3D.md.",
+  "_ayuda": "El estudio (vista de arriba). El piso va de x -6 a 6 y de z -5 (fondo, donde está la puerta del escenario) a 5 (frente). Cada zona: categorias que abre (o accion), punto donde se para el personaje (x, z), mira (ángulo en grados hacia el mueble: 0 = hacia el fondo, 90 = hacia la izquierda de la pantalla), radio para 'acercarse' y mueble (caja que choca: centro x, z, ancho, fondo, alto, y tipo de dibujo). lugares: solo accesorios de esos lugares (si no, todos los de la categoría). enfoque: qué parte del cuerpo enseña la cámara al abrir el panel (cara, cabeza, alto, torso, cuerpo, piernas, pies; docs/ESCENA-3D.md § Cámara). icono: ícono del letrero (si no, el de la categoría). obstaculos: muebles que solo estorban. disenos: true = el perchero de Mis diseños (lo que cosió en el Taller); accion taller = el Taller de diseño (#80). via: punto por donde pasa 'Ir a…' después del centro (para muebles que no están en las orillas). Ver docs/ESCENA-3D.md.",
   "inicio": { "x": 0, "z": 1.6, "mira": 0 },
   "zonas": [
     { "id": "peinados", "nombre": "Peinados", "categorias": ["peinado"], "enfoque": "cabeza", "punto": [-4.0, -3.4], "mira": 90, "radio": 1.4,
@@ -22,6 +22,10 @@
       "mueble": { "tipo": "maquillaje", "caja": [5.35, -1.75, 0.6, 1.0, 1.1], "color": "#ff7eb6" } },
     { "id": "espejo", "nombre": "Espejo", "accion": "espejo", "enfoque": "cuerpo", "punto": [-1.9, -3.6], "mira": 0, "radio": 1.2,
       "mueble": { "tipo": "espejo", "caja": [-1.9, -4.85, 1.6, 0.3, 2.4], "color": "#c3c7d3" } },
+    { "id": "taller", "nombre": "Taller de diseño", "accion": "taller", "icono": "taller", "enfoque": "cuerpo", "punto": [-1.7, 4.45], "mira": 0, "radio": 1.1, "via": [0, 4.45],
+      "mueble": { "tipo": "costura", "caja": [-1.7, 3.55, 1.5, 0.6, 0.95], "color": "#ffb3d1" } },
+    { "id": "disenos", "nombre": "Mis diseños", "disenos": true, "icono": "disenos", "enfoque": "cuerpo", "punto": [1.7, 4.45], "mira": 0, "radio": 1.1, "via": [0, 4.45],
+      "mueble": { "tipo": "perchero", "caja": [1.7, 3.55, 1.9, 0.5, 1.5], "color": "#ffd23f" } },
     { "id": "puerta", "nombre": "Escenario", "accion": "pasarela", "punto": [1.9, -3.6], "mira": 0, "radio": 1.2,
       "mueble": { "tipo": "puerta", "caja": [1.9, -4.9, 1.8, 0.2, 2.6], "color": "#ef4343" } }
   ],
