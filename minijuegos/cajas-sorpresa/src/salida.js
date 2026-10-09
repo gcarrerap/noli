@@ -10,9 +10,15 @@ export function resolverAtras(dialogoAbierto) {
 
 export function teclaConDialogo(accion, focoId) {
   if (accion === "atras") return "cerrar";
-  if (accion === "ok") return focoId === "seguir" || focoId === "salir" ? focoId : "nada";
+  if (accion === "ok") return focoId === "salir" ? "salir" : "seguir";
   if (accion === "arriba" || accion === "abajo" || accion === "izquierda" || accion === "derecha") return "foco";
   return "nada";
+}
+
+/** En el teléfono, lo oscuro de «¿Salir?» es Seguir. En la tele, no. */
+export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
+  if (tv || enDialogo) return "nada";
+  return "seguir";
 }
 
 export function toqueConDialogo(act) {
@@ -21,13 +27,25 @@ export function toqueConDialogo(act) {
   return "nada";
 }
 
+/** Atrás abre «¿Salir?» en todas las pantallas, también la carta y la vitrina. */
+export function atrasEnPantalla(pantalla, dialogoAbierto) {
+  void pantalla;
+  return dialogoAbierto ? "cerrar" : "preguntar";
+}
+
 /**
  * Une dos relojes que corren a la vez.
  * Si el paso bloquea hasta T+1000 y el diálogo hasta T+400, el bloqueo acaba en T+1000.
  */
+function instante(n) {
+  if (n == null || n === "") return null;
+  const x = Number(n);
+  return Number.isFinite(x) ? x : null;
+}
+
 export function unirBloqueos(hastaPaso, hastaDialogo) {
-  const a = Number.isFinite(hastaPaso) ? hastaPaso : null;
-  const b = Number.isFinite(hastaDialogo) ? hastaDialogo : null;
+  const a = instante(hastaPaso);
+  const b = instante(hastaDialogo);
   if (a == null && b == null) return 0;
   if (a == null) return b;
   if (b == null) return a;
@@ -40,7 +58,10 @@ export function unirBloqueos(hastaPaso, hastaDialogo) {
  * El resto espera a que terminen los dos relojes (el más largo, no la suma).
  */
 export function tapBloqueado({ act = "", ahora = 0, hastaPaso = 0, hastaDialogo = 0 } = {}) {
-  if (Number.isFinite(hastaDialogo) && ahora < hastaDialogo) return true;
+  const t = Number(ahora) || 0;
+  const dialogo = Number(hastaDialogo) || 0;
+  const paso = Number(hastaPaso) || 0;
+  if (dialogo && t < dialogo) return true;
   if (act === "saltar") return false;
-  return Number.isFinite(hastaPaso) && ahora < hastaPaso;
+  return paso > 0 && t < paso;
 }

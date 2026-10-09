@@ -1,7 +1,7 @@
 {
   "id": "cajas-sorpresa",
   "titulo": "Cajas sorpresa",
-  "descripcion": "Abre cajas y junta la colección de Brumitos.",
+  "descripcion": "Abre un frasco de bruma y junta las familias de Brumitos.",
   "icono": "icono.svg",
   "color": "#c4a6e8",
   "materia": "premio",

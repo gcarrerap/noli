@@ -8,15 +8,16 @@ import {
   marcarGuia, cuentaRara, cuentaUltra, fechaLocal,
 } from "./coleccion.js";
 import {
-  guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso, muestraPuedeAvanzar,
+  guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso, bloqueoAlSeguir, muestraPuedeAvanzar,
   aplicarGuia, GUIA_MAX_MS, TRAS_GUIA_MS,
 } from "./guia.js";
-import { unirBloqueos, tapBloqueado, toqueConDialogo, teclaConDialogo, TRAS_DIALOGO_MS } from "./salida.js";
+import { unirBloqueos, tapBloqueado, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "./salida.js";
 import { decir, calentarVoces } from "./voz.js";
-import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseRepetida, frasePrecio } from "./textos.js";
+import { FAMILIAS, ordenarFamilia, familiaCompleta, familiaQueSeCompleto } from "./familias.js";
+import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseRepetida, frasePrecio, fraseNueva, fraseTuya, etiquetaRol, fraseFamilia } from "./textos.js";
 import {
-  MARCA, esc, estrellasSvg, claseMarco, cajaSvg, iconoPolvo, iconoCredito, fichasProbabilidad, htmlFoto,
-  rutaPieza,
+  MARCA, esc, estrellasSvg, claseMarco, frascoSvg, iconoPolvo, iconoCredito, iconoVoz,
+  fichasProbabilidad, htmlFoto, rutaPieza, rutaFamilia,
 } from "./dibujo.js";
 
 const $main = document.getElementById("juego");
@@ -31,6 +32,13 @@ let guia = null;
 let salir = false;
 let carta = null;
 let detalleId = null;
+let fotoId = null;
+let fotoDesde = "vitrina";
+let familiaVista = "calabaza";
+let fotoPendiente = null;
+let aperturaHasta = 0;
+let pausaEn = 0;
+const APERTURA_MS = 1600;
 let recien = false;
 let cobrando = false;
 let esperandoCarta = false;
@@ -105,7 +113,7 @@ function focoAttr(id, inicial) {
 
 function cabecera() {
   const saltar = guia && !salir
-    ? `<button type="button" class="boton saltar" data-act="saltar" ${focoAttr("saltar", false)}>${esc(TEXTOS.saltar)}</button>`
+    ? `<button type="button" class="boton saltar" tabindex="-1" data-act="saltar">${esc(TEXTOS.saltar)}</button>`
     : "";
   const cred = saldo == null ? "–" : String(saldo);
   return `<header class="cab">${saltar}
@@ -144,7 +152,7 @@ function htmlTienda() {
   return `${cabecera()}${bannerGuia()}
     <div class="layout-tienda">
       <div class="col-caja">
-        <div class="escena" aria-hidden="true">${cajaSvg()}</div>
+        <div class="escena" aria-hidden="true">${frascoSvg()}</div>
         <button type="button" class="boton grande primario" data-act="abrir" ${focoAttr("abrir", inicial)} ${on ? "" : "disabled"}>${esc(TEXTOS.abrir)}<small>${iconoCredito()} ${esc(TEXTOS.costo)}</small></button>
         ${aviso}
       </div>
@@ -168,44 +176,97 @@ function htmlTienda() {
     ${dialogo()}`;
 }
 
+function htmlHueco(p, inicial) {
+  const tiene = pr.tenidas.includes(p.id);
+  const nombre = MARCA[p.rareza].nombre;
+  const rol = etiquetaRol(p.rol);
+  return `<button type="button" class="hueco ${claseMarco(p.rareza, tiene)}" data-act="hueco" data-id="${esc(p.id)}" ${focoAttr("hueco-" + p.id, inicial)} ${guia ? "disabled" : ""} aria-label="${esc(p.nombre)}, ${esc(rol)}, ${esc(nombre)}">
+    ${htmlFoto(p, { tiene })}
+    <b>${esc(p.nombre)}</b>
+    <small>${esc(rol)}</small>
+    ${estrellasSvg(MARCA[p.rareza].estrellas)}
+  </button>`;
+}
+
+function htmlFotoMini(f) {
+  if (!familiaCompleta(pr.tenidas, piezas, f.id)) return "";
+  return `<button type="button" class="foto-familiar" data-act="ver-foto" data-familia="${esc(f.id)}" ${focoAttr("foto-" + f.id, false)} aria-label="${esc(TEXTOS.fotoFamiliar)} ${esc(f.nombre)}">
+    <img class="foto" src="${esc(rutaFamilia(f.id))}" alt="" width="512" height="512" loading="lazy" decoding="async">
+    <b>${esc(TEXTOS.fotoFamiliar)}</b>
+  </button>`;
+}
+
+function familiasVisibles() {
+  if (!esTv()) return FAMILIAS;
+  const id = guia ? FAMILIAS[0].id : familiaVista;
+  return FAMILIAS.filter((f) => f.id === id);
+}
+
 function htmlVitrina() {
-  const slots = piezas.map((p) => {
-    const tiene = pr.tenidas.includes(p.id);
-    const nombre = MARCA[p.rareza].nombre;
-    return `<button type="button" class="hueco ${claseMarco(p.rareza, tiene)}" data-act="hueco" data-id="${esc(p.id)}" ${focoAttr("hueco-" + p.id, false)} ${guia ? "disabled" : ""} aria-label="${esc(p.nombre)}, ${esc(nombre)}">
-      ${htmlFoto(p, { tiene })}
-      <b>${esc(p.nombre)}</b>
-      ${estrellasSvg(MARCA[p.rareza].estrellas)}
-      <small>${esc(nombre)}</small>
-    </button>`;
+  const bloques = familiasVisibles().map((f) => {
+    const miembros = ordenarFamilia(piezas, f.id);
+    const primero = esTv() && !guia && miembros[0] ? miembros[0].id : "";
+    return `<section class="bloque-familia">
+      <h2>${esc(f.nombre)}</h2>
+      <div class="vitrina">${miembros.map((p) => htmlHueco(p, p.id === primero)).join("")}</div>
+      ${htmlFotoMini(f)}
+    </section>`;
   }).join("");
+  const nav = esTv() && !guia ? `<div class="fila">
+      <button type="button" class="boton" data-act="familia" data-delta="-1" ${focoAttr("familia-menos", false)}>${esc(TEXTOS.anterior)}</button>
+      <button type="button" class="boton" data-act="familia" data-delta="1" ${focoAttr("familia-mas", false)}>${esc(TEXTOS.siguiente)}</button>
+    </div>` : "";
   return `${cabecera()}${bannerGuia()}
-    <button type="button" class="boton" data-act="volver" ${focoAttr("volver", !guia)} ${guia ? "disabled" : ""}>${esc(TEXTOS.volver)}</button>
-    <div class="vitrina">${slots}</div>
+    <button type="button" class="boton" data-act="volver" ${focoAttr("volver", !guia && !esTv())} ${guia ? "disabled" : ""}>${esc(TEXTOS.volver)}</button>
+    ${bloques}
+    ${nav}
     ${dialogo()}`;
 }
 
 function htmlAbriendo() {
   return `${cabecera()}${bannerGuia()}
-    <div class="escena abriendo" aria-hidden="true">${cajaSvg()}</div>
+    <div class="escena abriendo" aria-hidden="true">${frascoSvg()}</div>
     <p class="aviso">${esc(TEXTOS.abriendo)}</p>
     ${dialogo()}`;
 }
 
+function htmlOir(p) {
+  if (!p || !p.ingles) return "";
+  return `<p class="linea-ingles">${esc(p.ingles)}</p>
+    <button type="button" class="boton boton-oir" data-act="oir" data-id="${esc(p.id)}" ${focoAttr("oir", false)} aria-label="${esc(TEXTOS.oir)}">
+      ${iconoVoz()}<span>${esc(TEXTOS.oir)}</span>
+    </button>`;
+}
+
 function htmlCarta() {
   const p = carta.pieza;
-  const linea = carta.ejemplo ? TEXTOS.ejemplo : carta.duplicado ? fraseRepetida(carta.polvoGanado) : TEXTOS.nueva;
+  const linea = carta.ejemplo ? TEXTOS.ejemplo : carta.duplicado ? fraseRepetida(carta.polvoGanado, p.genero) : fraseNueva(p.genero);
   const disfraz = p.disfraz ? ` · ${esc(p.disfraz)}` : "";
-  const seguir = guia ? "" : `<button type="button" class="boton grande primario" data-act="guardar-carta" ${focoAttr("guardar-carta", true)}>${esc(TEXTOS.aVitrina)}</button>`;
+  const rol = etiquetaRol(p.rol);
+  const verFoto = carta.familiaNueva && !guia;
+  const seguir = guia ? "" : `<button type="button" class="boton grande primario" data-act="guardar-carta" ${focoAttr("guardar-carta", !verFoto)}>${esc(TEXTOS.aVitrina)}</button>`;
+  const foto = verFoto ? `<button type="button" class="boton grande" data-act="ver-foto" data-familia="${esc(carta.familiaNueva)}" ${focoAttr("ver-foto", true)}>${esc(TEXTOS.verFoto)}</button>` : "";
   return `${cabecera()}${bannerGuia()}
-    <article class="carta-grande ${claseMarco(p.rareza, true)}">
+    <article class="carta-grande festejo ${claseMarco(p.rareza, true)}">
       ${htmlFoto(p, { grande: true, tiene: true })}
       ${estrellasSvg(MARCA[p.rareza].estrellas)}
       <h2>${esc(p.nombre)}</h2>
-      <p>${esc(MARCA[p.rareza].nombre)}${disfraz}</p>
+      <p>${esc(rol)} · ${esc(MARCA[p.rareza].nombre)}${disfraz}</p>
+      ${htmlOir(p)}
       <p class="aviso">${esc(linea)}</p>
     </article>
+    ${foto}
     ${seguir}
+    ${dialogo()}`;
+}
+
+function htmlFotoFamiliar() {
+  const f = FAMILIAS.find((x) => x.id === fotoId) || FAMILIAS[0];
+  return `${cabecera()}
+    <h2>${esc(TEXTOS.fotoFamiliar)}</h2>
+    <p class="aviso">${esc(fraseFamilia(f.nombre))}</p>
+    <img class="retrato" src="${esc(rutaFamilia(f.id))}" alt="" width="512" height="512">
+    <button type="button" class="boton grande primario" data-act="cerrar-foto" ${focoAttr("cerrar-foto", true)}>${esc(TEXTOS.queBonita)}</button>
     ${dialogo()}`;
 }
 
@@ -215,8 +276,13 @@ function htmlDetalle() {
   const precio = CONFIG.polvoPrecio[p.rareza];
   const puede = !tiene && pr.polvo >= precio;
   const disfraz = tiene && p.disfraz ? ` · ${esc(p.disfraz)}` : "";
+  const rol = tiene ? `${esc(etiquetaRol(p.rol))} · ` : "";
+  const oir = tiene ? htmlOir(p) : "";
+  const foto = tiene && fotoPendiente && fotoPendiente === p.familia
+    ? `<button type="button" class="boton grande" data-act="ver-foto" data-familia="${esc(p.familia)}" ${focoAttr("ver-foto", false)}>${esc(TEXTOS.verFoto)}</button>`
+    : "";
   const accion = tiene
-    ? `<p class="aviso amable">${esc(recien ? TEXTOS.ahoraEsTuya : MARCA[p.rareza].nombre)}</p>`
+    ? `<p class="aviso amable">${esc(recien ? fraseTuya(p.genero) : MARCA[p.rareza].nombre)}</p>`
     : `<p>${esc(frasePrecio(p.nombre, precio))}</p>
        <button type="button" class="boton grande primario" data-act="conseguir" ${focoAttr("conseguir", true)} ${puede ? "" : "disabled"}>${esc(puede ? TEXTOS.conseguir : TEXTOS.noAlcanza)}</button>`;
   return `${cabecera()}
@@ -224,8 +290,10 @@ function htmlDetalle() {
       ${htmlFoto(p, { grande: tiene, tiene })}
       ${estrellasSvg(MARCA[p.rareza].estrellas)}
       <h2>${esc(p.nombre)}</h2>
-      <p>${esc(MARCA[p.rareza].nombre)}${disfraz}</p>
+      <p>${rol}${esc(MARCA[p.rareza].nombre)}${disfraz}</p>
+      ${oir}
     </article>
+    ${foto}
     ${accion}
     <button type="button" class="boton" data-act="volver" ${focoAttr("volver", tiene)}>${esc(TEXTOS.volver)}</button>
     ${dialogo()}`;
@@ -234,7 +302,7 @@ function htmlDetalle() {
 function htmlPapas() {
   const items = [...pr.historial].reverse().slice(0, 12).map((m) => {
     const p = piezas.find((x) => x.id === m.id);
-    const extra = m.nueva ? TEXTOS.nueva : `${m.polvo} de polvo`;
+    const extra = m.nueva ? fraseNueva(p && p.genero) : (m.polvo === 1 ? "1 de polvo" : `${m.polvo} de polvo`);
     return `<li><span>${esc(m.dia)}</span> ${esc(p ? p.nombre : m.id)} · ${esc(MARCA[m.rareza].nombre)} · ${esc(extra)}</li>`;
   }).join("");
   return `${cabecera()}
@@ -257,6 +325,7 @@ function html() {
   if (pantalla === "vitrina") return htmlVitrina();
   if (pantalla === "abriendo") return htmlAbriendo();
   if (pantalla === "carta" && carta) return htmlCarta();
+  if (pantalla === "foto") return htmlFotoFamiliar();
   if (pantalla === "detalle" && detalleId) return htmlDetalle();
   if (pantalla === "papas") return htmlPapas();
   return htmlTienda();
@@ -367,7 +436,9 @@ function mostrarCarta(token) {
     pintar(focoDeGuia(sig.paso));
     return;
   }
-  pintar("guardar-carta");
+  const foco = carta && carta.familiaNueva ? "ver-foto" : "guardar-carta";
+  pintar(foco);
+  if (pr.voz && carta && carta.pieza && carta.pieza.ingles) decir(carta.pieza.ingles, { lang: "en-US" });
 }
 
 function empezarApertura(info) {
@@ -381,13 +452,15 @@ function empezarApertura(info) {
   pintar();
   const token = ++cartaToken;
   clearTimeout(relojCarta);
-  if (pocaAnimacion()) mostrarCarta(token);
-  else relojCarta = setTimeout(() => mostrarCarta(token), 1000);
+  const espera = pocaAnimacion() ? 0 : APERTURA_MS;
+  aperturaHasta = Date.now() + espera;
+  if (espera === 0) mostrarCarta(token);
+  else relojCarta = setTimeout(() => mostrarCarta(token), espera);
 }
 
 function abrirDemo() {
-  const pieza = piezas.find((p) => p.id === "pipo") || piezas[0];
-  empezarApertura({ pieza, duplicado: false, polvoGanado: 0, ejemplo: true });
+  const pieza = piezas.find((p) => p.rareza === "comun") || piezas[0];
+  empezarApertura({ pieza, duplicado: false, polvoGanado: 0, ejemplo: true, familiaNueva: null });
 }
 
 async function abrirDeVerdad() {
@@ -410,10 +483,12 @@ async function abrirDeVerdad() {
     pintar("abrir");
     return;
   }
+  const antes = pr.tenidas.slice();
   saldo = r.creditos;
   pr = r.estado;
   guardar();
-  empezarApertura({ pieza: r.pieza, duplicado: r.duplicado, polvoGanado: r.polvoGanado, ejemplo: false });
+  const familiaNueva = r.duplicado ? null : familiaQueSeCompleto(antes, pr.tenidas, piezas);
+  empezarApertura({ pieza: r.pieza, duplicado: r.duplicado, polvoGanado: r.polvoGanado, ejemplo: false, familiaNueva });
 }
 
 function pulsarAbrir() {
@@ -422,27 +497,38 @@ function pulsarAbrir() {
   abrirDeVerdad();
 }
 
+function hablarIngles(pieza) {
+  if (!pieza || !pieza.ingles) return;
+  decir(pieza.ingles, { lang: "en-US" });
+}
+
 function abrirDetalle(id) {
   if (guia) return;
   detalleId = id;
   recien = false;
+  fotoPendiente = null;
   pantalla = "detalle";
   const p = piezas.find((x) => x.id === id);
-  if (p && pr.tenidas.includes(id)) {
+  const tiene = pr.tenidas.includes(id);
+  if (p && tiene) {
     try { const img = new Image(); img.src = rutaPieza(p.archivo, 512); } catch { /* sigue la miniatura */ }
+    if (pr.voz) hablarIngles(p);
   }
-  pintar(pr.tenidas.includes(id) ? "volver" : "conseguir");
+  pintar(tiene ? "volver" : "conseguir");
 }
 
 function comprarPieza() {
+  const antes = pr.tenidas.slice();
   const r = comprar(pr, detalleId, piezas);
   if (!r.ok) return;
   pr = r.estado;
   recien = true;
+  fotoPendiente = familiaQueSeCompleto(antes, pr.tenidas, piezas);
   guardar();
   const p = piezas.find((x) => x.id === detalleId);
   if (p) { try { const img = new Image(); img.src = rutaPieza(p.archivo, 512); } catch { /* ya es tuya */ } }
-  pintar("volver");
+  pintar(fotoPendiente ? "ver-foto" : "volver");
+  if (pr.voz) hablarIngles(p);
 }
 
 function actuar(act, data) {
@@ -460,7 +546,32 @@ function actuar(act, data) {
     detalleId = null;
     recien = false;
     carta = null;
+    fotoPendiente = null;
     pintar("abrir");
+    return;
+  }
+  if (act === "familia") {
+    const i = FAMILIAS.findIndex((f) => f.id === familiaVista);
+    const d = Number(data.delta) || 1;
+    familiaVista = FAMILIAS[(i + d + FAMILIAS.length) % FAMILIAS.length].id;
+    pintar(d > 0 ? "familia-mas" : "familia-menos");
+    return;
+  }
+  if (act === "oir") {
+    const p = piezas.find((x) => x.id === data.id) || (carta && carta.pieza);
+    hablarIngles(p);
+    return;
+  }
+  if (act === "ver-foto") {
+    fotoId = data.familia || (carta && carta.familiaNueva) || familiaVista;
+    fotoDesde = pantalla;
+    pantalla = "foto";
+    pintar("cerrar-foto");
+    return;
+  }
+  if (act === "cerrar-foto") {
+    pantalla = fotoDesde === "carta" ? "carta" : fotoDesde === "detalle" ? "detalle" : "vitrina";
+    pintar(pantalla === "carta" ? "guardar-carta" : pantalla === "detalle" ? "volver" : "volver");
     return;
   }
   if (act === "hueco") return abrirDetalle(data.id);
@@ -494,6 +605,7 @@ function actuar(act, data) {
 function abrirSalir() {
   if (salir) return;
   salir = true;
+  pausaEn = Number(Date.now()) || 0;
   clearTimeout(relojMuestra);
   clearTimeout(relojCarta);
   pasoToken += 1;
@@ -502,14 +614,27 @@ function abrirSalir() {
 }
 
 function cerrarDialogo() {
+  const ahora = Number(Date.now()) || 0;
+  const pausa = pausaEn ? Math.max(0, ahora - (Number(pausaEn) || 0)) : 0;
+  pausaEn = 0;
   salir = false;
-  const ahora = Date.now();
-  bloqueoDialogoHasta = ahora + TRAS_DIALOGO_MS;
-  if (guia) programarPaso();
+  if (guia) {
+    aparecio = (Number(aparecio) || 0) + pausa;
+    if (vozTerminoEn != null) vozTerminoEn = (Number(vozTerminoEn) || 0) + pausa;
+    const previo = (Number(bloqueoPasoHasta) || 0) + pausa;
+    const b = bloqueoAlSeguir({ ahora, hastaPaso: previo });
+    bloqueoPasoHasta = b.hastaPaso;
+    bloqueoDialogoHasta = b.hastaDialogo;
+    const token = ++pasoToken;
+    programarAvance(token, vozTerminoEn != null ? "voz" : "tiempo");
+  } else {
+    bloqueoDialogoHasta = ahora + TRAS_DIALOGO_MS;
+  }
   if (esperandoCarta && pantalla === "abriendo") {
+    aperturaHasta = (Number(aperturaHasta) || 0) + pausa;
     const token = cartaToken;
     clearTimeout(relojCarta);
-    relojCarta = setTimeout(() => mostrarCarta(token), 1000);
+    relojCarta = setTimeout(() => mostrarCarta(token), Math.max(0, aperturaHasta - ahora));
   }
   pintar(guia ? focoDeGuia(guia.paso) : undefined);
 }
@@ -518,14 +643,18 @@ $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   const act = t && $main.contains(t) ? t.dataset.act : "";
   if (salir) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    const enVelo = !!ev.target.closest(".velo");
+    if (enVelo && toqueEnVelo({ tv: esTv(), enDialogo }) === "seguir") {
+      cerrarDialogo();
+      return;
+    }
     const boton = ev.target.closest(".dialogo [data-act]");
     if (boton) {
       const que = toqueConDialogo(boton.dataset.act);
       if (que === "seguir") cerrarDialogo();
       else if (que === "salir") Noli.salir();
-      return;
     }
-    if (ev.target.closest(".velo") && !ev.target.closest(".dialogo")) cerrarDialogo();
     return;
   }
   if (bloqueado(act)) return;
@@ -536,21 +665,23 @@ $main.addEventListener("click", (ev) => {
 Noli.alEntrar((accion) => {
   document.documentElement.classList.add("teclado");
   if (accion === "atras") {
-    if (salir) cerrarDialogo();
+    if (atrasEnPantalla(pantalla, salir) === "cerrar") cerrarDialogo();
     else abrirSalir();
     return true;
   }
   if (salir) {
     const que = teclaConDialogo(accion, idFoco());
-    if (que === "foco") moverFoco(accion, $main);
-    else if ((que === "seguir" || que === "salir") && document.activeElement && $main.contains(document.activeElement)) document.activeElement.click();
+    if (que === "cerrar") { cerrarDialogo(); return true; }
+    if (que === "foco") { moverFoco(accion, $main.querySelector(".dialogo") || $main); return true; }
+    const el = $main.querySelector(`.dialogo [data-act="${que}"]`);
+    if (el && !el.disabled) el.click();
     return true;
   }
   if (accion === "ok" && bloqueado(idFoco() === "saltar" ? "saltar" : "ok")) return true;
   if (guia && accion === "ok") {
-    if (idFoco() === "saltar") {
-      const e = document.activeElement;
-      if (e && !e.disabled) e.click();
+    const enfocado = document.activeElement;
+    if (enfocado && $main.contains(enfocado) && enfocado.dataset.act === "oir") {
+      enfocado.click();
       return true;
     }
     if (guiaAvanzaConToque(guia.paso) && muestraPuedeAvanzar({ aparecio, ahora: Date.now(), evento: "ok", vozTerminoEn, hasta: hastaAhora() })) {

@@ -5,7 +5,7 @@ import { CONFIG } from "./reglas.js";
 export const TEXTOS = {
   titulo: "Cajas sorpresa",
   subtitulo: "Colección de Brumitos",
-  abrir: "Abrir caja",
+  abrir: "Abrir frasco",
   costo: "5 créditos",
   vitrina: "Vitrina",
   como: "¿Cómo se juega?",
@@ -18,7 +18,13 @@ export const TEXTOS = {
   descansando: "La tienda está descansando hoy, vuelve mañana",
   sinCreditos: "Todavía no te alcanzan los créditos",
   completa: "Ya tienes todos los Brumitos",
-  abriendo: "Abriendo la caja…",
+  abriendo: "Abriendo el frasco…",
+  oir: "Oír",
+  fotoFamiliar: "Foto familiar",
+  verFoto: "Ver la foto familiar",
+  queBonita: "Qué bonita",
+  anterior: "Anterior",
+  siguiente: "Siguiente",
   nueva: "Nueva",
   ejemplo: "Así se ve una carta",
   aVitrina: "A la vitrina",
@@ -26,15 +32,15 @@ export const TEXTOS = {
   ahoraNo: "Ahora no",
   noAlcanza: "Todavía no alcanza el polvo",
   ahoraEsTuya: "Ahora es tuya",
-  historial: "Cajas abiertas",
-  sinHistorial: "Todavía no abre ninguna caja",
-  limite: "Cajas al día",
+  historial: "Frascos abiertos",
+  sinHistorial: "Todavía no abre ningún frasco",
+  limite: "Frascos al día",
   menos: "Menos",
   mas: "Más",
   cerrarTienda: "Cerrar la tienda",
   abrirTienda: "Abrir la tienda",
   cerradaNota: "Cerrada. Ella ve que la tienda descansa.",
-  abiertaNota: "Abierta. Puede comprar sus cajas del día.",
+  abiertaNota: "Abierta. Puede comprar sus frascos del día.",
   voz: "Voz",
   vozSi: "La voz está encendida",
   vozNo: "La voz está apagada",
@@ -58,24 +64,52 @@ export function fraseGarantia(n, ultra = false) {
   return `Tu ${quien} llega en ${cajas} o menos`;
 }
 
-export function fraseRepetida(n) {
+export function fraseNueva(genero) {
+  return genero === "f" ? "Nueva" : "Nuevo";
+}
+
+export function fraseTuya(genero) {
+  return genero === "f" ? "Ahora es tuya" : "Ahora es tuyo";
+}
+
+export function fraseRepetida(n, genero = "m") {
   const cuanto = n === 1 ? "1 de polvo de estrellas" : `${n} de polvo de estrellas`;
-  return `Ya la tenías. Se volvió en ${cuanto}`;
+  const la = genero === "f" ? "la" : "lo";
+  return `Ya ${la} tenías. Se volvió en ${cuanto}`;
 }
 
 export function frasePrecio(nombre, precio) {
   return `${nombre} cuesta ${precio} de polvo de estrellas`;
 }
 
+const ROLES = {
+  bebe: "Bebé",
+  nino: "Niño",
+  nina: "Niña",
+  adolescente: "Adolescente",
+  mama: "Mamá",
+  papa: "Papá",
+  abuelo: "Abuelo",
+  abuela: "Abuela",
+};
+
+export function etiquetaRol(rol) {
+  return ROLES[rol] || "";
+}
+
+export function fraseFamilia(nombre) {
+  return `La familia ${nombre} está completa`;
+}
+
 export function textoGuia(paso, modo) {
   const tv = modo === "tv";
-  if (paso === "tienda") return "Cada caja trae un Brumito.";
+  if (paso === "tienda") return "Cada frasco trae un Brumito.";
   if (paso === "probabilidades") return TEXTOS.probComun + ".";
   if (paso === "garantia") return `Tu rara llega en ${CONFIG.garantiaRara} cajas o menos.`;
-  if (paso === "abrir") return tv ? "Pulsa OK." : "Toca Abrir caja.";
+  if (paso === "abrir") return tv ? "Pulsa OK." : "Toca Abrir frasco.";
   if (paso === "carta") return "Las estrellas dicen si es rara.";
   if (paso === "vitrina") return "Con polvo escoges la que te falta.";
-  return "Cuando quieras, abre una caja.";
+  return "Cuando quieras, abre un frasco.";
 }
 
 export function vozGuia(paso, modo) {

@@ -7,16 +7,17 @@ import { rngConSemilla } from "../src/rng.js";
 import {
   estadoNuevo, cargar, puedeAbrir, sortearRareza, abrirCaja, comprar, simularColeccion,
   resumirCajas, cambiarLimite, ponerCerrada, cuentaRara, cuentaUltra, abrirConCreditos,
-  abiertasHoy, marcarGuia,
+  abiertasHoy, marcarGuia, fechaLocal,
 } from "../src/coleccion.js";
 import {
   PASOS, guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso,
   bloqueoAlSeguir, muestraPuedeAvanzar, aplicarGuia, GUIA_MIN_MS, GUIA_MAX_MS, GUIA_BLOQUEO_MS,
 } from "../src/guia.js";
-import { unirBloqueos, tapBloqueado, resolverAtras, toqueConDialogo, teclaConDialogo, TRAS_DIALOGO_MS } from "../src/salida.js";
-import { decir, calentarVoces, escogerVoz, olvidarVoz, vozActual, paraVoz } from "../src/voz.js";
-import { TEXTOS, textoGuia, vozGuia, fraseGarantia } from "../src/textos.js";
-import { htmlFoto, rutaPieza, MARCA, fichasProbabilidad } from "../src/dibujo.js";
+import { unirBloqueos, tapBloqueado, resolverAtras, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "../src/salida.js";
+import { decir, calentarVoces, escogerVoz, escogerVozIngles, olvidarVoz, vozActual, paraVoz } from "../src/voz.js";
+import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseRepetida, fraseNueva, fraseTuya } from "../src/textos.js";
+import { htmlFoto, rutaPieza, rutaFamilia, frascoSvg, MARCA, fichasProbabilidad } from "../src/dibujo.js";
+import { FAMILIAS, familiaCompleta, familiaQueSeCompleto, ordenarFamilia } from "../src/familias.js";
 
 const piezas = JSON.parse(fs.readFileSync(new URL("../datos/piezas.json", import.meta.url), "utf8"));
 const cero = () => 0;
@@ -133,14 +134,14 @@ test("un repetido se vuelve polvo y no créditos", () => {
 });
 
 test("el polvo compra una pieza que falta", () => {
-  const pipo = piezas.find((p) => p.id === "pipo");
-  const lula = piezas.find((p) => p.id === "lula");
-  const toto = piezas.find((p) => p.id === "toto");
+  const pipo = piezas.find((p) => p.rareza === "comun");
+  const lula = piezas.find((p) => p.rareza === "rara");
+  const toto = piezas.find((p) => p.rareza === "ultra");
   let e = { ...estadoNuevo(), polvo: 5 };
   const bien = comprar(e, pipo.id, piezas);
   assert.equal(bien.ok, true);
   assert.equal(bien.estado.polvo, 0);
-  assert.ok(bien.estado.tenidas.includes("pipo"));
+  assert.ok(bien.estado.tenidas.includes(pipo.id));
   assert.equal(comprar(bien.estado, pipo.id, piezas).razon, "ya-la-tiene");
 
   e = { ...estadoNuevo(), polvo: 4 };
@@ -361,17 +362,144 @@ test("al cargar se calientan las voces y voiceschanged elige español", () => {
   assert.equal(synth.u.lang, "es-MX");
 });
 
-test("los 400 ms y el bloqueo del paso se pisan y no se suman", () => {
-  const ahora = 5000;
-  const corto = bloqueoAlSeguir({ ahora, sono: false });
-  assert.equal(corto.hastaPaso, ahora + GUIA_BLOQUEO_MS);
-  assert.equal(corto.hastaDialogo, ahora + TRAS_DIALOGO_MS);
-  assert.equal(corto.hasta, ahora + GUIA_BLOQUEO_MS);
-  assert.notEqual(corto.hasta, ahora + GUIA_BLOQUEO_MS + TRAS_DIALOGO_MS);
+test("la frase en inglés se dice en en-US y no con la voz de español", () => {
+  olvidarVoz();
+  const mx = { lang: "es-MX", name: "Paulina" };
+  const en = { lang: "en-US", name: "Samantha" };
+  const U = function (t) { this.text = t; };
+  const vacio = {
+    getVoices() { return []; },
+    speak(u) { this.u = u; },
+    cancel() {},
+    speaking: false,
+  };
+  decir("Pipo is the baby. He is afraid of the dark.", {
+    lang: "en-US",
+    speechSynthesis: vacio,
+    SpeechSynthesisUtterance: U,
+  });
+  assert.equal(vacio.u.lang, "en-US");
+  assert.ok(vacio.u.voice == null);
 
-  const largo = bloqueoAlSeguir({ ahora, sono: true });
-  assert.equal(largo.hasta, ahora + GUIA_MAX_MS);
-  assert.notEqual(largo.hasta, ahora + GUIA_MAX_MS + TRAS_DIALOGO_MS);
+  let voces = [];
+  let aviso = null;
+  const synth = {
+    getVoices() { return voces; },
+    addEventListener(ev, fn) { if (ev === "voiceschanged") aviso = fn; },
+    speak(u) { this.u = u; },
+    cancel() {},
+    speaking: false,
+  };
+  calentarVoces(synth);
+  voces = [mx, en];
+  aviso();
+  decir("Pipo is the baby.", { lang: "en-US", speechSynthesis: synth, SpeechSynthesisUtterance: U });
+  assert.equal(synth.u.lang, "en-US");
+  assert.equal(synth.u.voice, en);
+  assert.equal(escogerVozIngles([mx, en]), en);
+  assert.equal(escogerVozIngles([]), null);
+
+  const solo = {
+    getVoices() { return [mx]; },
+    addEventListener(ev, fn) { if (ev === "voiceschanged") this.aviso = fn; },
+    speak(u) { this.u = u; },
+    cancel() {},
+    speaking: false,
+  };
+  calentarVoces(solo);
+  solo.aviso();
+  decir("Pipo is the baby.", { lang: "en-US", speechSynthesis: solo, SpeechSynthesisUtterance: U });
+  assert.equal(solo.u.lang, "en-US");
+  assert.ok(solo.u.voice == null);
+  decir("Hola", { speechSynthesis: solo, SpeechSynthesisUtterance: U });
+  assert.equal(solo.u.lang, "es-MX");
+  assert.equal(solo.u.voice, mx);
+});
+
+test("cuatro familias de seis y la foto no es un premio del frasco", () => {
+  const plan = {
+    calabaza: { comun: 4, rara: 1, ultra: 1 },
+    bruma: { comun: 4, rara: 2, ultra: 0 },
+    sabana: { comun: 4, rara: 1, ultra: 1 },
+    dulce: { comun: 4, rara: 2, ultra: 0 },
+  };
+  const generaciones = {
+    bebe: "bebe", nino: "hijo", nina: "hijo", adolescente: "adolescente",
+    mama: "mama", papa: "papa", abuelo: "mayor", abuela: "mayor",
+  };
+  assert.deepEqual(FAMILIAS.map((f) => f.id), ["calabaza", "bruma", "sabana", "dulce"]);
+  for (const f of FAMILIAS) {
+    const miembros = ordenarFamilia(piezas, f.id);
+    assert.equal(miembros.length, 6, f.id);
+    const c = { comun: 0, rara: 0, ultra: 0 };
+    const gens = new Set();
+    for (const p of miembros) {
+      c[p.rareza] += 1;
+      assert.ok(generaciones[p.rol], p.id);
+      gens.add(generaciones[p.rol]);
+      assert.match(p.ingles, /\w/);
+      assert.equal(p.ingles.includes("%"), false, p.id);
+    }
+    assert.deepEqual(c, plan[f.id], f.id);
+    assert.equal(gens.size, 6, f.id);
+    const ruta = new URL(`../${rutaFamilia(f.id)}`, import.meta.url);
+    const peso = fs.statSync(ruta).size;
+    assert.ok(peso > 0 && peso < 30000, `${f.id} ${peso}`);
+  }
+  const toto = piezas.find((p) => p.id === "toto");
+  const pipo = piezas.find((p) => p.id === "pipo");
+  assert.equal(toto.familia, "calabaza");
+  assert.equal(toto.rol, "abuelo");
+  assert.equal(toto.rareza, "ultra");
+  assert.equal(pipo.familia, "sabana");
+  assert.equal(pipo.rol, "bebe");
+  assert.equal(pipo.rareza, "ultra");
+  assert.equal(pipo.ingles, "Pipo is the baby. He is afraid of the dark.");
+
+  const dulce = piezas.filter((p) => p.familia === "dulce").map((p) => p.id);
+  const falta = dulce[dulce.length - 1];
+  const antes = dulce.filter((id) => id !== falta);
+  assert.equal(familiaCompleta(antes, piezas, "dulce"), false);
+  assert.equal(familiaQueSeCompleto(antes, dulce, piezas), "dulce");
+  assert.equal(familiaQueSeCompleto(dulce, dulce, piezas), null);
+  assert.equal(familiaCompleta([], piezas, "calabaza"), false);
+});
+
+test("el frasco es el mismo dibujo para todas las rarezas", () => {
+  const svg = frascoSvg();
+  assert.equal(frascoSvg(), svg);
+  assert.match(svg, /tapa-frasco/);
+  assert.match(svg, /bruma-derrame/);
+  assert.match(svg, /brumito-sube/);
+  assert.doesNotMatch(svg, /rara|ultra|comun|brillo/i);
+  assert.equal(frascoSvg.length, 0);
+  assert.equal(svg.includes("512"), false);
+});
+
+test("los plazos usan la hora entera y Seguir no reinicia un bloqueo ya cumplido", () => {
+  const ahora = 1.7e12;
+  assert.notEqual(ahora | 0, ahora);
+  const paso = finBloqueoPaso({ aparecio: ahora, sono: false });
+  assert.equal(paso, ahora + GUIA_BLOQUEO_MS);
+  assert.ok(paso > 1e12);
+  assert.equal(tapBloqueado({ act: "abrir", ahora, hastaPaso: paso, hastaDialogo: 0 }), true);
+  assert.equal(tapBloqueado({ act: "abrir", ahora: paso, hastaPaso: paso, hastaDialogo: 0 }), false);
+
+  const conVoz = finBloqueoPaso({ aparecio: ahora, sono: true, vozTerminoEn: ahora + 2500 });
+  assert.equal(conVoz, ahora + 2500);
+  assert.equal(finBloqueoPaso({ aparecio: ahora, sono: true, vozTerminoEn: null }), ahora + GUIA_MAX_MS);
+
+  const acabado = bloqueoAlSeguir({ ahora, hastaPaso: ahora - 10 });
+  assert.equal(acabado.hastaPaso, 0);
+  assert.equal(acabado.hastaDialogo, ahora + TRAS_DIALOGO_MS);
+  assert.equal(acabado.hasta, ahora + TRAS_DIALOGO_MS);
+  assert.notEqual(acabado.hasta, ahora + GUIA_BLOQUEO_MS);
+
+  const vivo = bloqueoAlSeguir({ ahora, hastaPaso: ahora + 800 });
+  assert.equal(vivo.hastaPaso, ahora + 800);
+  assert.equal(vivo.hasta, ahora + 800);
+  assert.notEqual(vivo.hasta, ahora + 800 + TRAS_DIALOGO_MS);
+  assert.notEqual(vivo.hasta, ahora + GUIA_BLOQUEO_MS);
 
   const casi = unirBloqueos(ahora + 1000, ahora + 900 + TRAS_DIALOGO_MS);
   assert.equal(casi, ahora + 1300);
@@ -382,18 +510,59 @@ test("los 400 ms y el bloqueo del paso se pisan y no se suman", () => {
   assert.equal(tapBloqueado({ act: "abrir", ahora: ahora + 500, hastaPaso: ahora + 1000, hastaDialogo: ahora + 400 }), true);
   assert.equal(tapBloqueado({ act: "abrir", ahora: ahora + 1000, hastaPaso: ahora + 1000, hastaDialogo: ahora + 400 }), false);
   assert.equal(tapBloqueado({ act: "ok", ahora: ahora + 100, hastaPaso: 0, hastaDialogo: ahora + 400 }), true);
+
+  const dia = fechaLocal(ahora);
+  const manana = fechaLocal(ahora + 86400000);
+  assert.match(dia, /^20\d\d-\d\d-\d\d$/);
+  assert.notEqual(dia, manana);
+  assert.notEqual(dia, fechaLocal(ahora | 0));
+  const limitado = { ...estadoNuevo(), dia, hoy: 2 };
+  assert.equal(puedeAbrir(limitado, { creditos: 20, fecha: dia, piezas }).razon, "limite");
+  assert.equal(puedeAbrir(limitado, { creditos: 20, fecha: manana, piezas }).ok, true);
 });
 
-test("¿Salir? se abre con Atrás y un segundo Atrás lo cierra", () => {
+test("¿Salir? se abre con Atrás en todas las pantallas y OK confirma", () => {
   assert.equal(resolverAtras(false), "abrir");
   assert.equal(resolverAtras(true), "cerrar");
+  for (const pantalla of ["tienda", "vitrina", "carta", "foto", "detalle", "papas", "abriendo"]) {
+    assert.equal(atrasEnPantalla(pantalla, false), "preguntar", pantalla);
+    assert.equal(atrasEnPantalla(pantalla, true), "cerrar", pantalla);
+  }
   assert.equal(toqueConDialogo("abrir"), "nada");
   assert.equal(toqueConDialogo("seguir"), "seguir");
   assert.equal(toqueConDialogo("velo"), "seguir");
   assert.equal(toqueConDialogo("salir"), "salir");
+  assert.equal(toqueEnVelo({ tv: false, enDialogo: false }), "seguir");
+  assert.equal(toqueEnVelo({ tv: false, enDialogo: true }), "nada");
+  assert.equal(toqueEnVelo({ tv: true, enDialogo: false }), "nada");
   assert.equal(teclaConDialogo("ok", "seguir"), "seguir");
-  assert.equal(teclaConDialogo("ok", "saltar"), "nada");
+  assert.equal(teclaConDialogo("ok", "salir"), "salir");
+  assert.equal(teclaConDialogo("ok", ""), "seguir");
   assert.equal(teclaConDialogo("atras", "salir"), "cerrar");
+});
+
+test("Saltar no entra en las flechas y las frases concuerdan", () => {
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../estilo.css", import.meta.url), "utf8");
+  assert.match(juego, /class="boton saltar" tabindex="-1" data-act="saltar"/);
+  assert.equal(juego.includes('data-foco-id="saltar"'), false);
+  assert.match(css, /\.saltar\s*\{[^}]*min-height:\s*64px/);
+  assert.match(css, /\.boton\s*\{[^}]*min-height:\s*64px/);
+  assert.match(css, /\.boton\s*\{[^}]*min-width:\s*64px/);
+  assert.match(css, /\.hueco\s*\{[^}]*min-height:\s*64px/);
+  assert.equal(fraseNueva("f"), "Nueva");
+  assert.equal(fraseNueva("m"), "Nuevo");
+  assert.equal(fraseTuya("f"), "Ahora es tuya");
+  assert.equal(fraseTuya("m"), "Ahora es tuyo");
+  assert.equal(fraseRepetida(1, "f"), "Ya la tenías. Se volvió en 1 de polvo de estrellas");
+  assert.equal(fraseRepetida(3, "m"), "Ya lo tenías. Se volvió en 3 de polvo de estrellas");
+  assert.equal(fraseGarantia(1, false), "Tu rara llega en 1 caja o menos");
+  assert.equal(fraseGarantia(2, true), "Tu ultra rara llega en 2 cajas o menos");
+  for (const p of piezas) {
+    assert.ok(p.genero === "m" || p.genero === "f", p.id);
+    if (p.genero === "f") assert.match(p.ingles, /\b(She|Her)\b/, p.id);
+    else assert.match(p.ingles, /\b(He|His)\b/, p.id);
+  }
 });
 
 test("en pantalla no hay porcentajes y en la tele no se dice Toca", () => {

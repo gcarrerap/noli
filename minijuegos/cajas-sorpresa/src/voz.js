@@ -5,6 +5,7 @@
 const SIMBOLOS = /[\u25B2\u25BC\u25C0\u25B6\u2191\u2193\u2190\u2192+\u00D7\u2715\u2716]/g;
 const calentados = new WeakSet();
 let vozElegida = null;
+let vozIngles = null;
 
 export function paraVoz(texto) {
   return String(texto ?? "").replace(SIMBOLOS, " ").replace(/\s+/g, " ").trim();
@@ -18,8 +19,18 @@ export function escogerVoz(voces) {
     || null;
 }
 
+/** Voz en inglés para la frase de la carta. Si no hay, se habla igual con lang en-US. */
+export function escogerVozIngles(voces) {
+  if (!Array.isArray(voces) || voces.length === 0) return null;
+  const lang = (v) => String((v && v.lang) || "");
+  return voces.find((v) => /^en[-_]US\b/i.test(lang(v)))
+    || voces.find((v) => /^en([-_]|$)/i.test(lang(v)))
+    || null;
+}
+
 export function olvidarVoz() {
   vozElegida = null;
+  vozIngles = null;
 }
 
 export function vozActual() {
@@ -33,8 +44,11 @@ export function calentarVoces(synth) {
   if (calentados.has(s)) return;
   try { calentados.add(s); } catch { return; }
   const tomar = () => {
-    try { vozElegida = escogerVoz(s.getVoices()); }
-    catch { vozElegida = null; }
+    let lista = [];
+    try { lista = s.getVoices() || []; } catch { lista = []; }
+    if (!Array.isArray(lista)) lista = [];
+    vozElegida = escogerVoz(lista);
+    vozIngles = escogerVozIngles(lista);
   };
   try { s.getVoices(); } catch { /* todavía no hay lista */ }
   tomar();
@@ -58,9 +72,12 @@ export function decir(texto, opciones = {}) {
   try {
     if (s.speaking || s.pending) s.cancel();
     const u = new Utter(limpio);
-    u.lang = opt.lang || "es-MX";
+    const lang = opt.lang || "es-MX";
+    const ingles = /^en\b/i.test(lang);
+    u.lang = lang;
     u.rate = 0.92;
-    if (vozElegida) u.voice = vozElegida;
+    const voz = ingles ? vozIngles : vozElegida;
+    if (voz) u.voice = voz;
     let fallo = false;
     u.onerror = () => { fallo = true; };
     u.onend = () => { if (!fallo && typeof onend === "function") onend(); };

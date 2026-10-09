@@ -28,18 +28,41 @@ export function claseMarco(rareza, brillo) {
   return `marco marco-${rareza}${extra}`;
 }
 
-export function cajaSvg() {
-  return `<svg class="caja-svg" viewBox="0 0 160 150" aria-hidden="true">
-    <ellipse cx="80" cy="136" rx="52" ry="8" fill="rgba(0,0,0,.18)"/>
-    <g class="tapa">
-      <path d="M28 58h104l-8-22H36z" fill="#f2b79a"/>
-      <path d="M28 58h104l-8-22H36z" fill="none" stroke="#2b2236" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M70 36h20v22H70z" fill="#b8a2d6" stroke="#2b2236" stroke-width="3"/>
+export function rutaFamilia(id) {
+  return `assets/brumitos/familia-${id}-512.webp`;
+}
+
+/**
+ * Frasco de bruma. Es el único dibujo del recipiente: cuando se confirme
+ * el diseño, se cambia esta función y la animación de estilo.css.
+ * No recibe la pieza ni la rareza. Siempre es el mismo frasco.
+ */
+export function frascoSvg() {
+  return `<svg class="frasco-svg" viewBox="0 0 160 188" aria-hidden="true">
+    <ellipse cx="80" cy="176" rx="46" ry="7" fill="rgba(0,0,0,.18)"/>
+    <g class="brumito-sube">
+      <ellipse cx="80" cy="40" rx="16" ry="20" fill="#d9d3e4" stroke="#2b2236" stroke-width="3"/>
+      <circle cx="74" cy="36" r="2.2" fill="#2b2236"/>
+      <circle cx="86" cy="36" r="2.2" fill="#2b2236"/>
     </g>
-    <path d="M32 58h96v62a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8z" fill="#efe3cc" stroke="#2b2236" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M70 58h20v70H70z" fill="#b8a2d6" stroke="#2b2236" stroke-width="3"/>
-    <circle cx="80" cy="96" r="6" fill="#f1dd9a" stroke="#2b2236" stroke-width="2"/>
+    <g class="bruma-derrame">
+      <ellipse cx="80" cy="70" rx="30" ry="10" fill="#d7e4f2"/>
+      <ellipse cx="54" cy="80" rx="16" ry="8" fill="#e7eef6"/>
+      <ellipse cx="108" cy="82" rx="18" ry="8" fill="#efe3cc"/>
+    </g>
+    <path d="M50 86h60l10 64a18 18 0 0 1-18 16H58a18 18 0 0 1-18-16z" fill="#f7f1e8" stroke="#2b2236" stroke-width="3"/>
+    <path d="M56 100h48l7 40a12 12 0 0 1-12 12H62a12 12 0 0 1-12-12z" fill="#c5d4e8"/>
+    <path d="M64 112h16l2 18H66z" fill="#fff" opacity=".5"/>
+    <path d="M60 70h40v18H60z" fill="#f7f1e8" stroke="#2b2236" stroke-width="3"/>
+    <g class="tapa-frasco">
+      <rect x="54" y="54" width="52" height="18" rx="4" fill="#efe3cc" stroke="#2b2236" stroke-width="3"/>
+      <rect x="68" y="44" width="24" height="12" rx="3" fill="#c5d4e8" stroke="#2b2236" stroke-width="3"/>
+    </g>
   </svg>`;
+}
+
+export function iconoVoz() {
+  return `<svg class="icono-voz" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.2 9.2a3.6 3.6 0 0 1 0 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.6 6.6a7 7 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 }
 
 export function iconoPolvo() {

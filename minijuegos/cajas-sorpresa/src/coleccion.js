@@ -253,8 +253,10 @@ export async function abrirConCreditos(estado, opts) {
   return { ok: true, ...r, creditos, costo: p.costo };
 }
 
+/** Día local AAAA-MM-DD. El reloj entra entero: nunca se recorta a 32 bits. */
 export function fechaLocal(d = new Date()) {
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dia = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${dia}`;
+  const t = d instanceof Date ? d : new Date(Number(d) || 0);
+  const m = String(t.getMonth() + 1).padStart(2, "0");
+  const dia = String(t.getDate()).padStart(2, "0");
+  return `${t.getFullYear()}-${m}-${dia}`;
 }

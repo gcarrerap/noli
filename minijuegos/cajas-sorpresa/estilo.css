@@ -55,7 +55,7 @@ html[data-modo="tv"] main {
 }
 .cargando { color: var(--muted); margin: auto; }
 h1, h2, h3 { font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; margin: 0; line-height: 1.05; }
-h1 { font-size: 1.7rem; }
+h1 { font-size: clamp(1.15rem, 5.4vw, 1.7rem); }
 h2 { font-size: 1.35rem; }
 .sub, .nota, .garantia, .cuenta, .prob-intro { margin: 0; }
 .sub { color: var(--muted); font-weight: 800; }
@@ -79,6 +79,9 @@ h2 { font-size: 1.35rem; }
   font-weight: 800;
   min-height: 64px;
   min-width: 64px;
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.15;
   box-shadow: 0 6px 0 rgba(0, 0, 0, .18);
 }
 .boton.grande {
@@ -101,7 +104,7 @@ h2 { font-size: 1.35rem; }
   box-shadow: none;
   cursor: default;
 }
-.saltar { min-width: 64px; }
+.saltar { min-width: 64px; min-height: 64px; }
 .fila { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
 .fila .boton { flex: 1 1 140px; }
 
@@ -115,10 +118,36 @@ html[data-modo="tv"] .layout-tienda {
 }
 html[data-modo="tv"] .cab { grid-column: 1 / -1; }
 
-.caja-svg { width: min(42vw, 150px); height: auto; }
-html[data-modo="tv"] .caja-svg { width: 180px; }
-.abriendo .tapa { transform-origin: 80px 58px; animation: levantar .9s ease forwards; }
-@keyframes levantar { to { transform: translateY(-26px) rotate(-8deg); } }
+.frasco-svg { width: min(46vw, 168px); height: auto; overflow: visible; }
+html[data-modo="tv"] .frasco-svg { width: 140px; }
+html[data-modo="tv"] .prob { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+html[data-modo="tv"] .prob li { flex: 1 1 30%; font-size: .85rem; }
+html[data-modo="tv"] .garantia, html[data-modo="tv"] .cuenta, html[data-modo="tv"] .prob-intro { font-size: .9rem; }
+html[data-modo="tv"] h1 { font-size: 1.35rem; }
+.tapa-frasco { transform-box: fill-box; transform-origin: center bottom; }
+.bruma-derrame, .brumito-sube { opacity: 0; }
+.abriendo .tapa-frasco { animation: tapa-pop .45s ease forwards; }
+.abriendo .bruma-derrame { animation: derramar .7s ease .28s forwards; }
+.abriendo .brumito-sube { animation: subir .85s ease .55s forwards; }
+@keyframes tapa-pop {
+  70% { transform: translateY(-34px) rotate(-14deg); }
+  100% { transform: translateY(-28px) rotate(-8deg); }
+}
+@keyframes derramar {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(12px); }
+}
+@keyframes subir {
+  0% { opacity: 0; transform: translateY(30px); }
+  40% { opacity: 1; }
+  100% { opacity: 1; transform: translateY(-6px); }
+}
+.festejo { animation: festejo .55s ease; }
+@keyframes festejo {
+  0% { transform: scale(.9); }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
 
 .frase-guia {
   width: min(100%, 34rem);
@@ -128,7 +157,9 @@ html[data-modo="tv"] .caja-svg { width: 180px; }
   border-radius: 18px;
   padding: .5em .8em;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  white-space: normal;
+  overflow-wrap: break-word;
   box-shadow: 0 6px 0 rgba(0, 0, 0, .18);
 }
 
@@ -147,10 +178,35 @@ html[data-modo="tv"] .caja-svg { width: 180px; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
-html[data-modo="tv"] .vitrina { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-.hueco {
-  min-width: 0;
+html[data-modo="tv"] .vitrina { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+html[data-modo="tv"] .hueco { padding: 3px 2px 4px; }
+html[data-modo="tv"] .hueco .foto { max-height: 64px; }
+.bloque-familia { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.foto-familiar {
+  min-width: 64px;
   min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .15);
+}
+.foto-familiar .foto { width: 112px; height: 112px; }
+html[data-modo="tv"] .foto-familiar .foto { width: 72px; height: 72px; }
+.retrato { width: min(72vw, 280px); height: auto; border-radius: 18px; background: #fff; }
+html[data-modo="tv"] .retrato { width: 200px; }
+.boton-oir { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.icono-voz { width: 28px; height: 28px; }
+.linea-ingles { margin: 0; font-weight: 800; }
+.hueco {
+  min-width: 64px;
+  min-height: 64px;
+  white-space: normal;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -245,5 +301,10 @@ html[data-modo="tv"] .velo { padding: 36px; }
 .dialogo p { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-size: 2rem; font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {
-  .abriendo .tapa, .brillo-rara::after, .brillo-ultra::after { animation: none; }
+  .abriendo .tapa-frasco,
+  .abriendo .bruma-derrame,
+  .abriendo .brumito-sube,
+  .festejo,
+  .brillo-rara::after,
+  .brillo-ultra::after { animation: none; }
 }
