@@ -1,21 +1,28 @@
 // Cuadrícula: caber, girar y no encimar. Puro.
 
+function paridad(rot) {
+  const n = Math.trunc(Number(rot) || 0);
+  return ((n % 2) + 2) % 2;
+}
+
+/** Girar cambia largo y ancho. Dos giros vuelven al mismo tamaño. */
 export function formaDe(mueble, rot = 0) {
+  const i = paridad(rot);
+  const swap = i === 1;
+  const w = swap ? mueble.h : mueble.w;
+  const h = swap ? mueble.w : mueble.h;
   const formas = mueble?.formas;
   if (formas?.length) {
-    const i = ((rot % formas.length) + formas.length) % formas.length;
-    const f = formas[i];
-    return { w: f.w, h: f.h, archivo: f.archivo || mueble.archivo, giro: f.giro || 0, i };
+    const exacta = formas.find((f) => f.w === w && f.h === h);
+    return {
+      w,
+      h,
+      archivo: (exacta && exacta.archivo) || mueble.archivo,
+      giro: exacta ? (exacta.giro || 0) : (swap ? 90 : 0),
+      i,
+    };
   }
-  const g = ((rot % 4) + 4) % 4;
-  const swap = g % 2 === 1;
-  return {
-    w: swap ? mueble.h : mueble.w,
-    h: swap ? mueble.w : mueble.h,
-    archivo: mueble.archivo,
-    giro: g * 90,
-    i: g,
-  };
+  return { w, h, archivo: mueble.archivo, giro: swap ? 90 : 0, i };
 }
 
 export function dentro(cuarto, x, y, w, h) {
@@ -77,14 +84,17 @@ export function celdas(x, y, w, h) {
   return out;
 }
 
-/** La alfombra de 6 acepta 2 por 3 y 1 por 6 (y al girar, 3 por 2 y 6 por 1). */
+/** La alfombra de 6 acepta 2 por 3 y 1 por 6. Girar solo intercambia largo y ancho. */
 export function formasAlfombra(mueble) {
-  const n = mueble?.formas?.length || 0;
   const vistos = [];
-  for (let r = 0; r < Math.max(n, 1); r++) {
-    const f = formaDe(mueble, r);
-    const clave = `${f.w}x${f.h}`;
+  const agregar = (w, h) => {
+    const clave = `${w}x${h}`;
     if (!vistos.includes(clave)) vistos.push(clave);
+  };
+  for (const f of mueble?.formas || []) agregar(f.w, f.h);
+  for (let r = 0; r < 2; r++) {
+    const f = formaDe(mueble, r);
+    agregar(f.w, f.h);
   }
   return vistos;
 }

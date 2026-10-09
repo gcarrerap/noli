@@ -103,12 +103,17 @@ export function tocarCuadro(visita, cuarto, cx, cy, mueble) {
   return { ...visita, x: p.x, y: p.y, movio: true };
 }
 
+/** Girar da vuelta el mueble y vuelve al modo de moverlo. */
 export function girarPieza(visita) {
-  return { ...visita, rot: (visita.rot | 0) + 1 };
+  return { ...visita, rot: (visita.rot | 0) + 1, barra: false };
 }
 
 export function abrirBarra(visita) {
   return { ...visita, barra: true };
+}
+
+export function cerrarBarra(visita) {
+  return { ...visita, barra: false };
 }
 
 export function dejarPieza(pr, cuarto, mueble) {

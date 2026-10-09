@@ -5,6 +5,11 @@
 
 export const PASOS = ["escoger", "precio", "monedas", "pagar", "cuadro", "fin"];
 export const GUIA_TOQUE_MS = 2000;
+/** Tras cada paso no entran OK ni toques: 1 s, o hasta que acabe la voz, y nunca más de 3 s. */
+export const GUIA_PAUSA_MS = 1000;
+export const GUIA_PAUSA_MAX_MS = 3000;
+/** Al terminar la guía, la primera compra espera 1 s. */
+export const GUIA_COMPRA_MS = 1000;
 
 export function guiaNueva() {
   return { paso: "escoger", orden: [], movio: false, lista: false };
@@ -23,6 +28,31 @@ export function guiaAvanzaConToque(paso) {
 /** El botón Pagar sigue apagado hasta el paso de pagar. */
 export function guiaPagarActivo(paso) {
   return paso === "pagar";
+}
+
+/**
+ * Cuánto ignorar OK y toques al aparecer un paso.
+ * Sin voz (0): 1 s. Con voz: hasta que termine, como mínimo 1 s y como máximo 3 s.
+ */
+export function pausaDePaso(msVoz) {
+  const v = Number(msVoz);
+  if (!Number.isFinite(v) || v <= 0) return GUIA_PAUSA_MS;
+  return Math.min(GUIA_PAUSA_MAX_MS, Math.max(GUIA_PAUSA_MS, v));
+}
+
+/**
+ * OK en la guía. Los pasos de mostrar aceptan cualquier OK.
+ * Los de acción solo si el foco está en el control de ese paso.
+ * Durante la pausa no avanza nada.
+ */
+export function okDeGuia({ paso, focoId, pausa = false } = {}) {
+  if (pausa) return "nada";
+  if (guiaAvanzaConToque(paso)) return "mostrar";
+  if (paso === "escoger") return focoId === "mueble-lampara" ? "escoger" : "nada";
+  if (paso === "monedas") return focoId === "moneda-cinco" || focoId === "moneda-uno" ? "moneda" : "nada";
+  if (paso === "pagar") return focoId === "pagar" ? "pagar" : "nada";
+  if (paso === "cuadro") return focoId === "cuadro" ? "cuadro" : "nada";
+  return "nada";
 }
 
 export function textoGuia(paso, modo, textos) {

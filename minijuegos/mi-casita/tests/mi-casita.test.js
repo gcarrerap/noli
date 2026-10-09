@@ -24,17 +24,19 @@ const { abiertos, recienAbiertos, bolsaDe } = await import("../src/desbloqueo.js
 const { pistaPagar, monedasQueSirven, pistaLugar, FLECHA_MS, COMPLETA_MS } = await import("../src/pista.js");
 const {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, monedasDeGuia,
-  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, GUIA_TOQUE_MS, PASOS,
+  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, okDeGuia, pausaDePaso,
+  GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS, PASOS,
 } = await import("../src/guia.js");
 const {
   visitaNueva, debeCobrar, alAgregar, alPagar, alQuitar, dejarPieza, devolverPieza,
   algunoAlcanza, cerrarVisita, elegirMueble, moverPieza, tocarCuadro, avisoDePago,
+  girarPieza, abrirBarra, cerrarBarra,
 } = await import("../src/visita.js");
 const { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } = await import("../src/progreso.js");
-const { fraseMedida, fraseGiro, fraseFaltan, fraseToca, fraseBrilla } = await import("../src/frases.js");
+const { fraseMedida, fraseGiro, fraseFaltan, fraseToca, fraseBrilla, textoMover } = await import("../src/frases.js");
 const { paraVoz } = await import("../src/voz.js");
 const {
-  resolverAtras, dosAtras, resolverToque, teclaConDialogo, atrasEnPantalla, FASES_CON_GUARDIA,
+  resolverAtras, dosAtras, resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla, FASES_CON_GUARDIA,
 } = await import("../src/salida.js");
 const { piezaSvg } = await import("../src/monedas.js");
 
@@ -192,7 +194,7 @@ test("la alfombra de 6 acepta 2 por 3 y 1 por 6, sin signo de por", () => {
   assert.equal(cabe(rec, [], 0, 0, 6, 1), true);
   assert.equal(cabe(cuarto("cocina"), [], 0, 0, 1, 6), false);
   assert.equal(fraseMedida(2, 3, textos), "3 cuadros de largo, 2 de ancho");
-  assert.equal(fraseGiro(2, 3, 3, 2, textos), "2 por 3 es lo mismo que 3 por 2.");
+  assert.equal(fraseGiro(2, 3, 3, 2, textos), "2 de largo y 3 de ancho es igual que 3 de largo y 2 de ancho.");
   assert.equal(fraseGiro(6, 1, 1, 6, textos), "");
   const texto = JSON.stringify(textos) + fraseMedida(3, 2, textos) + textos.pedido;
   assert.equal(texto.includes("×"), false);
@@ -370,7 +372,74 @@ test("la guía: mostrar, acción, Pagar, foco, Atrás y el modo", () => {
 
   const css = fs.readFileSync(path.join(raiz, "estilo.css"), "utf8");
   assert.match(css, /\.cab \.saltar\s*\{[^}]*min-height:\s*64px/);
+  assert.match(css, /\.cab \.boton\s*\{[^}]*min-height:\s*64px/);
+  assert.match(css, /html\[data-modo="tv"\] \.boton\.grande\s*\{[^}]*min-height:\s*64px/);
   assert.match(css, /button:disabled/);
+
+  assert.equal(GUIA_PAUSA_MS, 1000);
+  assert.equal(GUIA_PAUSA_MAX_MS, 3000);
+  assert.equal(GUIA_COMPRA_MS, 1000);
+  assert.equal(pausaDePaso(0), 1000);
+  assert.equal(pausaDePaso(400), 1000);
+  assert.equal(pausaDePaso(2000), 2000);
+  assert.equal(pausaDePaso(9000), 3000);
+  for (const paso of ["escoger", "monedas", "pagar", "cuadro", "precio", "fin"]) {
+    assert.equal(okDeGuia({ paso, focoId: focoDeGuia(paso, [], piezas), pausa: true }), "nada", paso);
+  }
+  assert.equal(okDeGuia({ paso: "escoger", focoId: "mueble-lampara" }), "escoger");
+  assert.equal(okDeGuia({ paso: "escoger", focoId: "saltar" }), "nada");
+  assert.equal(okDeGuia({ paso: "monedas", focoId: "moneda-cinco" }), "moneda");
+  assert.equal(okDeGuia({ paso: "monedas", focoId: focoDeGuia("monedas", ["nickel"], piezas) }), "moneda");
+  assert.equal(okDeGuia({ paso: "monedas", focoId: "moneda-dime" }), "nada");
+  assert.equal(okDeGuia({ paso: "pagar", focoId: "pagar" }), "pagar");
+  assert.equal(okDeGuia({ paso: "pagar", focoId: "quitar" }), "nada");
+  assert.equal(okDeGuia({ paso: "precio", focoId: "saltar" }), "mostrar");
+  assert.equal(okDeGuia({ paso: "cuadro", focoId: "cuadro" }), "cuadro");
+  assert.equal(okDeGuia({ paso: "cuadro", focoId: "saltar" }), "nada");
+  let spam = guiaNueva();
+  for (let i = 0; i < 8; i++) {
+    assert.equal(okDeGuia({ paso: spam.paso, focoId: "saltar" }), "nada");
+    spam = aplicarGuia(spam, { tipo: "ok", modo: "tv" }, piezas);
+  }
+  assert.equal(spam.paso, "escoger");
+});
+
+test("girar solo cambia largo y ancho, y el área no cambia", () => {
+  for (const m of muebles) {
+    const a0 = formaDe(m, 0);
+    const a1 = formaDe(m, 1);
+    const a2 = formaDe(m, 2);
+    assert.deepEqual([a1.w, a1.h], [a0.h, a0.w], m.id);
+    assert.deepEqual([a2.w, a2.h], [a0.w, a0.h], m.id);
+    assert.equal(a1.w * a1.h, a0.w * a0.h, m.id);
+    assert.equal(a2.w * a2.h, a0.w * a0.h, m.id);
+  }
+  const alf = porId.alfombra6;
+  assert.deepEqual([formaDe(alf, 0).w, formaDe(alf, 0).h], [2, 3]);
+  assert.deepEqual([formaDe(alf, 1).w, formaDe(alf, 1).h], [3, 2]);
+  assert.equal(formaDe(alf, 1).archivo, "alfombra-3-2.svg");
+  assert.notDeepEqual([formaDe(alf, 1).w, formaDe(alf, 1).h], [6, 1]);
+});
+
+test("la barra de la TV vuelve a mover el mueble", () => {
+  let v = abrirBarra({ ...visitaNueva(HOY, { penny: 1 }, "recamara"), x: 0, y: 0, rot: 0, mueble: "alfombra6" });
+  assert.equal(v.barra, true);
+  assert.equal(teclaConBarra("arriba", true), "foco");
+  assert.equal(teclaConBarra("abajo", false), "mover");
+  assert.equal(teclaConBarra("atras", false), "cerrar");
+  assert.equal(teclaConBarra("girar", false), "girar");
+  assert.equal(teclaConBarra("ok", false), "juego");
+  v = girarPieza(v);
+  assert.equal(v.barra, false);
+  assert.equal(v.rot, 1);
+  assert.deepEqual([formaDe(porId.alfombra6, v.rot).w, formaDe(porId.alfombra6, v.rot).h], [3, 2]);
+  const cerrada = cerrarBarra(abrirBarra(v));
+  assert.equal(cerrada.barra, false);
+  const movida = moverPieza({ ...cerrada, x: 0, y: 0 }, cuarto("recamara"), "derecha", porId.alfombra6);
+  assert.equal(movida.x, 1);
+  assert.equal(textoMover("tactil", false, textos), "Toca un cuadro o usa las flechas");
+  assert.equal(textoMover("tv", false, textos), textos.moverTv);
+  assert.equal(textoMover("tv", true, textos), "");
 });
 
 test("los desbloqueos siguen la curva y abren cuarto a cuarto", () => {

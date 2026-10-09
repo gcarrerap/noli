@@ -42,6 +42,20 @@ export function teclaConDialogo(accion, actFoco) {
   return "nada";
 }
 
+/**
+ * Con la barra de la TV abierta, las flechas que no cambian de botón
+ * cierran la barra y vuelven a mover el mueble. Atrás y Girar también.
+ * Devuelve "foco", "mover", "cerrar", "girar" o "juego".
+ */
+export function teclaConBarra(accion, focoSeMovio) {
+  if (accion === "atras") return "cerrar";
+  if (accion === "girar") return "girar";
+  if (accion === "arriba" || accion === "abajo" || accion === "izquierda" || accion === "derecha") {
+    return focoSeMovio ? "foco" : "mover";
+  }
+  return "juego";
+}
+
 /** Atrás abre «¿Salir?» también en el resultado y al cerrar la visita. */
 export function atrasEnPantalla(pantalla, dialogoAbierto) {
   if (pantalla === "fin" || pantalla === "resultado" || pantalla === "guia-fin") {

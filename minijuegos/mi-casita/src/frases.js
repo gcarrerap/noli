@@ -40,11 +40,17 @@ export function fraseMedida(w, h, textos) {
   return `${largo}, ${rellenar(textos.deAncho, { n: w })}`;
 }
 
-/** Al girar 2 por 3, se dice que es lo mismo que 3 por 2. */
+/** Al girar 2 por 3, se dice que el largo y el ancho se intercambian. */
 export function fraseGiro(w0, h0, w1, h1, textos) {
   const par = (w, h) => [w, h].slice().sort((a, b) => a - b).join(",");
   if (par(w0, h0) === "2,3" && par(w1, h1) === "2,3" && (w0 !== w1 || h0 !== h1)) return textos.mismo;
   return "";
+}
+
+/** En la TV, la pista de mover se esconde mientras la barra está abierta. */
+export function textoMover(modo, barraAbierta, textos) {
+  if (modo === "tv" && barraAbierta) return "";
+  return modo === "tv" ? textos.moverTv : textos.moverTactil;
 }
 
 export function fraseFaltan(n, textos, voz = false) {

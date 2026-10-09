@@ -8,16 +8,23 @@ export function paraVoz(texto) {
   return String(texto ?? "").replace(SIMBOLOS, " ").replace(/\s+/g, " ").trim();
 }
 
-export function decir(texto, lang) {
+export function decir(texto, lang, onend) {
   const limpio = paraVoz(texto);
+  const fin = () => { if (typeof onend === "function") onend(); };
   const s = typeof window !== "undefined" ? window.speechSynthesis : null;
   const U = typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null;
-  if (!s || !U || !limpio) return;
+  if (!s || !U || !limpio) { fin(); return false; }
   try {
     if (s.speaking) s.cancel();
     const u = new U(limpio);
     u.lang = lang || "es-MX";
     u.rate = 0.92;
+    u.onend = fin;
+    u.onerror = fin;
     s.speak(u);
-  } catch { /* la tele a veces no tiene voces */ }
+    return true;
+  } catch {
+    fin();
+    return false;
+  }
 }

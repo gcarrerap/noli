@@ -1,5 +1,5 @@
 {
-  "_ayuda": "Muebles vistos desde arriba. w y h son cuadros. formas: orientaciones de la alfombra (al girar se pasa a la siguiente). nombre: con artículo, para «Ahí hay…».",
+  "_ayuda": "Muebles vistos desde arriba. w y h son cuadros. formas: tamaños que la alfombra acepta. Girar solo cambia largo y ancho. nombre: con artículo, para «Ahí hay…».",
   "muebles": [
     { "id": "lampara", "es": "Lámpara", "en": "lamp", "nombre": "una lámpara", "precio": 6, "w": 1, "h": 1, "archivo": "mueble-lampara.svg", "cuarto": "recamara" },
     { "id": "silla", "es": "Silla", "en": "chair", "nombre": "una silla", "precio": 5, "w": 1, "h": 1, "archivo": "mueble-silla.svg", "cuarto": "recamara" },
