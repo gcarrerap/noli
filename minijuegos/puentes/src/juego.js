@@ -17,8 +17,8 @@ import {
   trasFallo, cruzarListo, resultadoCruzar, puedeUsar, escalaArbol,
 } from "./medida.js";
 import { maxRegla } from "./niveles.js";
-import { promptDe, vozDeFase, notaReferencia, nombreZona, explicaBloques } from "./frases.js";
-import { htmlComparar, htmlFalta, htmlBloques, conBrillo, svgInline } from "./escena.js";
+import { promptDe, vozDeFase, notaReferencia, nombreZona, avisoBloques } from "./frases.js";
+import { htmlComparar, htmlFalta, htmlBloques, conBrillo, svgInline, svgMiniBloques } from "./escena.js";
 import {
   cargar, registrar, dominio, cerrarTurno, crucePara, planTurno, cumplirReto, racha,
   fechaLocal, semana, resumen, marcarGuia, textoRacha, cicloUnidad, textoUnidad,
@@ -52,6 +52,8 @@ let ordenTrasGuia = false;
 
 try {
   if (new URLSearchParams(location.search).get("modo") === "tv") document.documentElement.dataset.modo = "tv";
+  // Dentro del catálogo, la casita flota arriba a la izquierda: se le deja lugar (#76).
+  if (window.parent && window.parent !== window) document.documentElement.classList.add("en-catalogo");
 } catch { /* abierto fuera del navegador */ }
 
 function modoJuego() {
@@ -92,7 +94,7 @@ function nombresArte() {
     "mapa-zona-bosque", "mapa-zona-pantano", "mapa-zona-nieve",
     "mapa-cruce-hecho", "mapa-cruce-siguiente", "mapa-cruce-pendiente",
     "boton-izquierda", "boton-derecha", "boton-poner-aqui", "boton-listo", "boton-cruzar", "boton-quitar",
-    "flecha-pista",
+    "flecha-pista", "bloque",
   ];
   for (let n = 1; n <= 20; n++) {
     base.push(`tablas/tabla-${n}cm`, `troncos/tronco-${n}cm`);
@@ -252,7 +254,7 @@ function htmlReglaEscena({ unidad, longitud, desplaza = 0, brillo = false, marca
         <div class="banco" style="width:${px(lay.banco)}px">${svgCaja(arte(izq))}</div>
         <div class="hueco" data-longitud="${longitud | 0}" style="width:${px(lay.hueco)}px">${svgCaja(arte("hueco-" + (hueco || "rio")))}${encima}</div>
         <div class="banco" style="width:${px(lay.banco)}px">${svgCaja(arte(der))}</div>
-        <div class="bicho" style="left:${px(Math.max(0, lay.banco - 28))}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
+        <div class="bicho atras" style="left:${px(Math.max(0, lay.banco - 28))}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
       </div>
     </div>`;
   }
@@ -577,14 +579,16 @@ function htmlRecorte(n, unidad, alto) {
 function htmlBloquesFase(c, fase) {
   const lay = escalaBloques({ longitud: c.longitud, ancho: anchoLienzo() });
   const cubos = fase === "cuantos" ? cubosDe(c.longitud, "bien") : c.cubos;
-  const bloques = htmlBloques(cubos, arte("cubito-1cm"), arte("cubito-1cm-coral"), lay.cubo);
+  const bloques = htmlBloques(cubos, arte("bloque"), arte("bloque"), lay.cubo);
   const escena = htmlReglaEscena({
     unidad: "cm", longitud: c.longitud, desplaza: 0, sinRegla: true, punta: true, bloques: true,
     zona: c.zona, hueco: c.hueco, animal: c.animal, tv: modoJuego() === "tv",
     encima: bloques,
   });
   if (fase === "bien") {
-    return `${escena}<div class="opciones">${[["si", textos.si], ["no", textos.no]].map(([id, nom], i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="sino" data-valor="${id}"><span class="num-grande">${esc(nom)}</span></button>`).join("")}</div>`;
+    const regla = [["bien", textos.reglaSi, true], ["hueco", textos.reglaHueco, false], ["encimado", textos.reglaEncima, false]]
+      .map(([m, nom, ok]) => `<span class="mini">${svgMiniBloques(cubosDe(4, m), ok)}<b>${esc(nom)}</b></span>`).join("");
+    return `<div class="regla-bloques">${regla}</div>${escena}<div class="opciones">${[["si", textos.si], ["no", textos.no]].map(([id, nom], i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="sino" data-valor="${id}"><span class="num-grande">${esc(nom)}</span></button>`).join("")}</div>`;
   }
   return `${escena}<div class="opciones">${(c.opciones || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}"><span class="num-grande">${n}</span></button>`).join("")}</div>`;
 }
@@ -750,21 +754,16 @@ function elegirOpcion(valor) {
     return mostrarResultado(corto ? "splash" : largo ? "sobra" : "asi", n);
   }
   if (fase === "bien") {
-    const bien = seMidioBien(c.modoBloques);
-    const dijoSi = valor === "si";
-    if (dijoSi === bien) {
-      if (c.fases.length > 1 && partida.faseI === 0) {
-        partida.faseI = 1;
-        partida.aviso = "";
-        partida.idleDesde = Date.now();
-        pintarCruce();
-        hablar(vozDeFase(c, faseActual(), textos, modoJuego()));
-        return;
-      }
-      return cerrarCruce(true);
-    }
-    partida.fallo = true;
-    return mostrarResultado("asi");
+    // Bien o mal, se explica y se sigue a contar con los bloques ya pegados (#76).
+    const acerto = (valor === "si") === seMidioBien(c.modoBloques);
+    if (!acerto) partida.fallo = true;
+    if (partida.faseI >= c.fases.length - 1) return acerto ? cerrarCruce(true) : mostrarResultado("asi");
+    partida.faseI++;
+    partida.aviso = acerto ? "" : avisoBloques(c.modoBloques, textos);
+    partida.idleDesde = Date.now();
+    pintarCruce();
+    hablar(`${partida.aviso} ${vozDeFase(c, faseActual(), textos, modoJuego())}`.trim());
+    return;
   }
 }
 
@@ -892,10 +891,6 @@ function pintarFeedback() {
     arteHtml = `<div class="bicho" style="position:relative;left:auto">${svgInline(arte("animal-" + (c.animal || "conejo")))}</div>`;
   } else {
     arteHtml = `<div class="desfile">${svgInline(arte("banderines"))}${["conejo", "ardilla", "zorro"].map((a) => `<span class="animal">${svgInline(arte("animal-" + a))}</span>`).join("")}</div>`;
-  }
-  if (c && c.tipo === "bloques") {
-    const extra = explicaBloques(c.modoBloques, textos);
-    if (extra) frase = `${frase} ${extra}`;
   }
   mostrar(`
     <p class="pedido">${esc(frase)}</p>

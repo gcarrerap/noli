@@ -56,10 +56,23 @@ export function htmlBloques(cubos, svgNormal, svgCoral, alto) {
   const piezas = cubos.map((c) => {
     const izq = (c.x / span) * 100;
     const ancho = (1 / span) * 100;
-    return `<span class="cubo${c.coral ? " coral" : ""}" style="left:${izq}%;width:${ancho}%">${svgInline(c.coral ? svgCoral : svgNormal)}</span>`;
+    return `<span class="cubo${c.arriba ? " arriba" : ""}" style="left:${izq}%;width:${ancho}%">${svgInline(svgNormal)}</span>`;
   }).join("");
   const altoCss = alto ? `height:${alto}px;` : "";
   return `<div class="bloques" style="${altoCss}--span:${span}">${piezas}</div>`;
+}
+
+// Tarjeta «Así sí / Hueco / Encimados»: la regla de medir con bloques, dibujada (#76).
+export function svgMiniBloques(cubos, bien) {
+  // Mismo ancho para las tres, así quedan alineadas; el dibujo va centrado.
+  const span = cubos.length ? Math.max(...cubos.map((c) => c.x)) + 1 : 1;
+  const w = 5 * 16 + 4;
+  const x0 = 2 + ((5 - span) * 16) / 2;
+  const bloques = cubos.map((c) => `<rect x="${x0 + c.x * 16}" y="${c.arriba ? 4 : 11}" width="15" height="15" rx="2.5" fill="#ffc43d" stroke="#2b2236" stroke-width="2"/>`).join("");
+  const marca = bien
+    ? `<circle cx="${w / 2}" cy="44" r="8" fill="#2fbf7f"/><path d="M${w / 2 - 4} 44l3 3 5-6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`
+    : `<circle cx="${w / 2}" cy="44" r="8" fill="#ff6b4a"/><path d="M${w / 2 - 3.5} 40.5l7 7M${w / 2 + 3.5} 40.5l-7 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 ${w} 54" aria-hidden="true"><rect x="0" y="18" width="${w}" height="12" rx="3" fill="#4cb3ff"/>${bloques}${marca}</svg>`;
 }
 
 export function posicionRegla({ anchoVb, cero = 26, gapU, desplaza = 0, unidadU }) {

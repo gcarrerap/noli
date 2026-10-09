@@ -58,7 +58,7 @@ export function textoPista(cruce, fase, textos, faseJuego = "") {
   if (!cruce) return "";
   const n = cruce.nivel | 0;
   const colocaCero = colocaElCero(n, faseJuego);
-  if (n <= 1) return t.pistaBloques || "";
+  if (n <= 1) return faseJuego === "bien" ? (t.pistaBloquesBien || "") : (t.pistaBloques || "");
   if (fase === "frase") {
     if (n === 2) return colocaCero ? (t.pistaCero || "") : "";
     if (n === 3) return colocaCero ? (t.pistaCero || "") : (t.pistaMira || "");

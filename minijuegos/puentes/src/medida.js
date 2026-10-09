@@ -206,15 +206,18 @@ export function escalaArbol({ pxPorCm = 20, altoVista = 640 } = {}) {
   return Math.min(Number(pxPorCm) || 20, tope / ARBOL_MAX);
 }
 
+// Todos los bloques son iguales: ningún color delata el mal puesto (#76).
+// Hueco: se ve el agua entre dos bloques. Encimado: un bloque montado a la mitad sobre su vecino.
 export function cubosDe(longitud, modo) {
   const n = longitud | 0;
+  const k = Math.max(1, Math.ceil(n / 2));
   if (modo === "hueco") {
-    return Array.from({ length: n }, (_, i) => ({ x: i < n - 1 ? i : i + 1, coral: i === n - 1 }));
+    return Array.from({ length: n }, (_, i) => ({ x: i < k ? i : i + 1, arriba: false }));
   }
   if (modo === "encimado") {
-    return Array.from({ length: n }, (_, i) => ({ x: Math.round(i * 0.55 * 100) / 100, coral: i === n - 1 }));
+    return Array.from({ length: n }, (_, i) => ({ x: i < k ? i : i - 0.5, arriba: i === k }));
   }
-  return Array.from({ length: n }, (_, i) => ({ x: i, coral: false }));
+  return Array.from({ length: n }, (_, i) => ({ x: i, arriba: false }));
 }
 
 export function seMidioBien(modo) {

@@ -42,6 +42,14 @@ export function explicaBloques(modo, textos) {
   return t.explicaBien || "";
 }
 
+// Qué pasó con los bloques, dicho justo después de contestar mal (#76).
+export function avisoBloques(modo, textos) {
+  const t = textos || {};
+  if (modo === "hueco") return t.avisoHueco || "";
+  if (modo === "encimado") return t.avisoEncima || "";
+  return t.avisoBienEra || "";
+}
+
 export function nombreZona(zona, textos) {
   const t = textos || {};
   if (zona === "pantano") return t.zonaPantano;
