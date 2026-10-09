@@ -43,16 +43,14 @@ export function teclaConDialogo(accion, actFoco) {
 }
 
 /**
- * Con la barra de la TV abierta, las flechas que no cambian de botón
- * cierran la barra y vuelven a mover el mueble. Atrás y Girar también.
- * Devuelve "foco", "mover", "cerrar", "girar" o "juego".
+ * Con la barra de la TV abierta, las flechas se quedan en Dejar, Girar y Devolver.
+ * Atrás cierra la barra. Girar gira y vuelve a mover el mueble.
+ * Devuelve "foco", "cerrar", "girar" o "juego".
  */
-export function teclaConBarra(accion, focoSeMovio) {
+export function teclaConBarra(accion) {
   if (accion === "atras") return "cerrar";
   if (accion === "girar") return "girar";
-  if (accion === "arriba" || accion === "abajo" || accion === "izquierda" || accion === "derecha") {
-    return focoSeMovio ? "foco" : "mover";
-  }
+  if (accion === "arriba" || accion === "abajo" || accion === "izquierda" || accion === "derecha") return "foco";
   return "juego";
 }
 

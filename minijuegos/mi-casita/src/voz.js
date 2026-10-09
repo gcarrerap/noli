@@ -8,6 +8,11 @@ export function paraVoz(texto) {
   return String(texto ?? "").replace(SIMBOLOS, " ").replace(/\s+/g, " ").trim();
 }
 
+export function callar() {
+  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
+  try { if (s && (s.speaking || s.pending)) s.cancel(); } catch { /* sin voz */ }
+}
+
 export function decir(texto, lang, onend) {
   const limpio = paraVoz(texto);
   const fin = () => { if (typeof onend === "function") onend(); };

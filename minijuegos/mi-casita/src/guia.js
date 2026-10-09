@@ -1,5 +1,6 @@
 // Guía con ejemplo fijo: una lámpara que cuesta 6.
-// Los pasos que solo muestran algo se van con un toque, con OK o solos a los 2 s.
+// Los pasos que solo muestran algo se van con un toque, con OK o solos
+// cuando acaba la voz (2 s si no hay voz, y nunca más de 3 s).
 // Los de acción solo avanzan cuando ella hace ese paso. OK repetido no los salta.
 // Pagar no responde hasta su paso. El foco nunca cae en Saltar solo.
 
@@ -38,6 +39,53 @@ export function pausaDePaso(msVoz) {
   const v = Number(msVoz);
   if (!Number.isFinite(v) || v <= 0) return GUIA_PAUSA_MS;
   return Math.min(GUIA_PAUSA_MAX_MS, Math.max(GUIA_PAUSA_MS, v));
+}
+
+/**
+ * Cuánto esperar antes de avanzar solo un paso que solo se mira.
+ * Sin voz (0): 2 s. Con voz: hasta que termine, como mínimo 2 s y como máximo 3 s.
+ */
+export function esperaMuestra(msVoz) {
+  const v = Number(msVoz);
+  if (!Number.isFinite(v) || v <= 0) return GUIA_TOQUE_MS;
+  return Math.min(GUIA_PAUSA_MAX_MS, Math.max(GUIA_TOQUE_MS, v));
+}
+
+/** Tras cerrar «¿Salir?», un segundo toque no llega a lo de abajo. */
+export const TRAS_DIALOGO_MS = 400;
+
+/**
+ * Con «¿Salir?» abierto el avance solo y la espera de la voz se paran.
+ * Seguir los vuelve a empezar para el paso que ya estaba.
+ * Devuelve "pausa", "reinicio" o "sigue".
+ */
+export function relojConSalir(dialogoAbierto, seguir = false) {
+  if (dialogoAbierto && !seguir) return "pausa";
+  if (seguir) return "reinicio";
+  return "sigue";
+}
+
+/**
+ * Duración al volver del diálogo. El tiempo dentro no se resta:
+ * el paso cuenta otra vez desde el principio. `muestra` y `pausa`
+ * en null quieren decir que el reloj está parado.
+ */
+export function esperasAlSalir({ abierto = false, seguir = false, msVoz = 0 } = {}) {
+  if (relojConSalir(abierto, seguir) === "pausa") return { muestra: null, pausa: null, ignoraMs: 0 };
+  return {
+    muestra: esperaMuestra(msVoz),
+    pausa: pausaDePaso(msVoz),
+    ignoraMs: seguir ? TRAS_DIALOGO_MS : 0,
+  };
+}
+
+/** Un toque o OK justo después de cerrar no cuenta. Atrás sí. */
+export function entradaTrasCierre(msDesdeCierre, tipo) {
+  const t = Number(msDesdeCierre);
+  const reciente = !Number.isFinite(t) || t < 0 || t < TRAS_DIALOGO_MS;
+  if (!reciente) return "sigue";
+  if (tipo === "atras") return "sigue";
+  return "ignora";
 }
 
 /**

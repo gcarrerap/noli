@@ -53,6 +53,8 @@ main {
   margin: 0 auto;
   min-height: 100dvh;
   padding: max(8px, env(safe-area-inset-top)) 12px 12px;
+  container-type: inline-size;
+  container-name: casita;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,6 +68,7 @@ main {
 .aviso.mal { color: var(--coral); }
 .pista { color: #3a2d78; }
 .medida { color: var(--muted); font-size: .95rem; }
+.medida.giro { width: 100%; max-width: 100%; }
 .casa-icono { width: 96px; height: 96px; }
 .casa-icono svg, .casa-icono img { width: 100%; height: 100%; }
 
@@ -192,6 +195,13 @@ main {
   border: 3px solid #2b2236;
   overflow: hidden;
 }
+/* Desde 400 px los cuadros crecen si caben. El tope de 62 evita el scroll a 412. En la TV siguen en 48. */
+@media (min-width: 400px) {
+  html:not([data-modo="tv"]) .rejilla {
+    --cuadro: min(62px, calc((100cqi - 6px) / 6));
+  }
+}
+.controles { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; min-width: 0; }
 .celda { position: relative; padding: 0; min-width: 0; min-height: 0; }
 .celda img { position: absolute; inset: 0; width: 100%; height: 100%; }
 .puesto {
@@ -296,5 +306,7 @@ html[data-modo="tv"] .flechas { display: none; }
 html[data-modo="tv"] .casa-icono { width: 72px; height: 72px; }
 html[data-modo="tv"] .catalogo { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 html[data-modo="tv"] .lado { flex-direction: row; align-items: center; justify-content: center; gap: 16px; width: 100%; }
+html[data-modo="tv"] .controles { width: auto; max-width: 420px; flex: none; }
+html[data-modo="tv"] .medida.giro { position: relative; z-index: 1; }
 html[data-modo="tv"] .menu { width: min(360px, 40vw); }
 html[data-modo="tv"] .boton.grande { min-height: 64px; font-size: 1.2rem; }
