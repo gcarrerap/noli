@@ -62,7 +62,7 @@ button.pedido{width:100%;text-align:left;min-height:64px;box-shadow:none;border-
 .mesa{width:100%;min-width:0;max-width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
 .zona-grafica{flex:1;min-height:0;min-width:0;width:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;overflow-x:hidden;overflow-y:auto}
 .zona-grafica:has(> .grafica-svg),.armando .zona-grafica{overflow:hidden}
-.armando .zona-grafica{min-height:200px}
+.armando .zona-grafica:has(.grafica-svg){min-height:200px}
 .controles{width:100%;min-width:0;display:flex;flex-direction:column;gap:4px;flex:none}
 .controles.dos{display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:stretch}
 .controles.dos .listo,.controles.dos .opciones,.controles.dos .palitos-vivo{grid-column:1 / -1}
@@ -186,7 +186,7 @@ html[data-modo="tv"] .tono-verde{box-shadow:inset 10px 0 0 #3ccf8e}
 html[data-modo="tv"] .tono-morado{box-shadow:inset 10px 0 0 #c86bfa}
 html[data-modo="tv"] .menu-inicio{display:grid;grid-template-columns:1fr 1fr;width:min(760px, 100%)}
 html[data-modo="tv"] .menu-inicio .principal{grid-column:1 / -1}
-html[data-modo="tv"] .p-juego .mesa,html[data-modo="tv"] .p-guia .mesa{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(240px,.85fr);gap:10px;align-items:stretch;min-height:0;max-height:100%;overflow:hidden}
+html[data-modo="tv"] .p-juego .mesa,html[data-modo="tv"] .p-guia .mesa{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(240px,.85fr);grid-template-rows:minmax(0,1fr);gap:10px;align-items:stretch;min-height:0;max-height:100%;overflow:hidden}
 html[data-modo="tv"] .zona-grafica{height:100%;min-height:0;overflow:hidden}
 html[data-modo="tv"] .controles{min-height:0;max-height:100%;overflow:hidden;justify-content:center}
 html[data-modo="tv"] .fila-barra .medio{flex-direction:row;align-items:center;justify-content:space-between;gap:6px}

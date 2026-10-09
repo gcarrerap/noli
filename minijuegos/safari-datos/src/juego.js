@@ -710,7 +710,7 @@ function pintarJuego(conservar) {
   pantalla = "juego";
   const armando = armaBarras(e);
   const nFilas = (e.tipo === "detective" ? e.realIds : e.categorias) || [];
-  const dos = armando && !esTv() && nFilas.length >= 2;
+  const dos = armando && !esTv() && e.modo !== "palitos" && nFilas.length >= 2;
   $main.className = "p-juego" + (armando ? " armando" : "");
   const p = pistaDe();
   const quiere = conservar || focoDeJuego(e);
