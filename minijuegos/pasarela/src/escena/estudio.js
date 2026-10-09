@@ -116,6 +116,27 @@ function mueble(grupo, tipo, x, z, w, d, h, color) {
       estrella.scale.z = 0.4;
       break;
     }
+    case "joyeria": {
+      // Pedestal con vitrina de vidrio: anillos, collar y una gema
+      add(new THREE.BoxGeometry(w, h * 0.75, d), color, 0, (h * 0.75) / 2, 0);
+      add(new THREE.BoxGeometry(w * 0.9, h * 0.25, d * 0.9), "#e8f6ff", 0, h * 0.875, 0, { opacidad: 0.35 });
+      add(new THREE.TorusGeometry(0.07, 0.018, 8, 16), "#e3b12a", 0, h * 0.82, -0.25, { brillo: true });
+      add(new THREE.TorusGeometry(0.09, 0.012, 8, 16), "#c3c7d3", 0, h * 0.8, 0.05, { brillo: true }).rotation.x = Math.PI / 2;
+      add(new THREE.OctahedronGeometry(0.06), "#ff7eb6", 0, h * 0.82, 0.3, { brillo: true });
+      break;
+    }
+    case "maquillaje": {
+      // Mesita con espejo redondo, labiales y una polvera
+      add(new THREE.BoxGeometry(w, h * 0.7, d), color, 0, (h * 0.7) / 2, 0);
+      const ej = x > 0 ? -1 : 1;
+      const espejo = add(new THREE.CircleGeometry(0.32, 28), "#e8f6ff", ej * w * 0.35, h * 1.15, 0, { emisivo: 0.3 });
+      espejo.rotation.y = ej * Math.PI / 2;
+      const marco = add(new THREE.TorusGeometry(0.32, 0.035, 8, 28), "#ffd23f", ej * w * 0.33, h * 1.15, 0);
+      marco.rotation.y = ej * Math.PI / 2;
+      for (let i = 0; i < 3; i++) add(new THREE.CylinderGeometry(0.03, 0.03, 0.12, 10), ["#ef4343", "#ff7eb6", "#8f5cf0"][i], 0, h * 0.76, -0.3 + i * 0.12);
+      add(new THREE.CylinderGeometry(0.08, 0.08, 0.03, 18), "#d3a6ff", 0, h * 0.72, 0.28);
+      break;
+    }
     case "planta": {
       add(new THREE.CylinderGeometry(w * 0.4, w * 0.32, h * 0.35, 14), "#ff9a3c", 0, h * 0.175, 0);
       add(new THREE.SphereGeometry(w * 0.55, 14, 10), color, 0, h * 0.65, 0);

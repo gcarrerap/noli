@@ -6,6 +6,10 @@ import { miniPrenda, dibujarMuneca } from "./dibujo2d.js";
 import { colorPuesto, fraseIngles } from "../atuendo.js";
 import { coloresDe, nivelDePrenda, esNuevo } from "../progreso.js";
 import { reloj } from "../partida.js";
+import { prendasDeZona } from "../datos.js";
+
+/** Ícono de una zona: el suyo (zonas.json → icono), el de su acción o el de su categoría */
+export const iconoZona = (z) => z.icono || (z.accion === "espejo" ? "espejo" : z.accion === "pasarela" ? "pasarela" : z.categorias[0]);
 
 /** Escapa texto para meterlo en HTML */
 export const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -75,7 +79,7 @@ export function hud({ tema, quedan, avisoTiempo, libre, tv, botones }) {
 
 /** Botones de las zonas (modo sencillo 2D, o el menú "Ir a…") */
 export function zonasBotones(zonas, { libre, comoMenu }) {
-  const ico = (z) => (z.accion === "espejo" ? "espejo" : z.accion === "pasarela" ? "pasarela" : z.categorias[0]);
+  const ico = iconoZona;
   const lista = zonas.filter((z) => !(libre && z.accion === "pasarela"));
   return `<div class="${comoMenu ? "menu-ira" : "zonas2d"}" role="${comoMenu ? "dialog" : "group"}" aria-label="Zonas del estudio">
     ${comoMenu ? `<h2>¿A dónde vamos?</h2>` : ""}
@@ -86,19 +90,19 @@ export function zonasBotones(zonas, { libre, comoMenu }) {
 
 /** Letrero que flota sobre cada mueble */
 export function letrero(z) {
-  const ico = z.accion === "espejo" ? "espejo" : z.accion === "pasarela" ? "pasarela" : z.categorias[0];
+  const ico = iconoZona(z);
   return `<button class="letrero" data-accion="zona" data-zona="${z.id}" tabindex="-1">${icono(ico)}<span>${esc(z.nombre)}</span></button>`;
 }
 
 /** Aviso abajo al acercarse a una zona */
 export function aviso(z, { libre, tv }) {
   const txt = z.accion === "espejo" ? "Mirarme en el espejo" : z.accion === "pasarela" ? (libre ? "Salir del probador" : "¡A la pasarela!") : `Ver ${z.nombre.toLowerCase()}`;
-  return `<button class="aviso-zona" data-accion="zona" data-zona="${z.id}">${icono(z.accion === "espejo" ? "espejo" : z.accion === "pasarela" ? "pasarela" : z.categorias[0])}<span>${esc(txt)}</span>${tv ? "<kbd>OK</kbd>" : ""}</button>`;
+  return `<button class="aviso-zona" data-accion="zona" data-zona="${z.id}">${icono(iconoZona(z))}<span>${esc(txt)}</span>${tv ? "<kbd>OK</kbd>" : ""}</button>`;
 }
 
 /** Panel con la ropa de una zona (un perchero) */
-export function panel({ zona, idx, atuendo, ab, progreso, sel, voz }) {
-  const prendas = zona.categorias.flatMap((c) => idx.porCategoria.get(c));
+export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar }) {
+  const prendas = prendasDeZona(zona, idx);
   const actual = sel && idx.prendas.get(sel);
   const colorSel = actual ? colorPuesto(atuendo, actual) || coloresDe(actual, ab)[0] : null;
   // Con las flechas, el foco empieza en la prenda escogida (o en la primera abierta)
@@ -127,14 +131,29 @@ export function panel({ zona, idx, atuendo, ab, progreso, sel, voz }) {
     <p class="ingles"><span lang="en"><b>${esc(c ? c.en : "")} ${esc(actual.en)}</b></span> = ${esc(actual.es)} ${esc(c ? c.es : "")}
       ${voz ? `<button class="redondo chico" data-accion="decir" data-foco aria-label="Escuchar en inglés">${icono("bocina")}</button>` : ""}</p>`;
   }
-  return `<div class="panel-cab"><h2>${icono(zona.categorias[0])}${esc(zona.nombre)}</h2>
-      <button class="redondo" data-accion="cerrar-panel" data-foco aria-label="Listo">${icono("palomita")}</button></div>
+  return `<div class="panel-cab"><h2>${icono(iconoZona(zona))}${esc(zona.nombre)}</h2>
+      <span class="panel-botones">${girar ? `<button class="redondo" data-accion="girar" data-grados="-45" data-foco aria-label="Girar a la izquierda" title="Girar">${icono("girarIzq")}</button>
+      <button class="redondo" data-accion="girar" data-grados="45" data-foco aria-label="Girar a la derecha" title="Girar">${icono("girarDer")}</button>` : ""}
+      <button class="redondo" data-accion="cerrar-panel" data-foco aria-label="Listo">${icono("palomita")}</button></span></div>
     <div class="prendas">${tarjetas}</div>
     ${colores}
-    <p class="nota">Toca una prenda para ponértela; tócala otra vez para quitártela.</p>`;
+    <p class="nota">Toca una prenda para ponértela; tócala otra vez para quitártela.${girar ? " Arrastra al personaje para girarlo." : ""}</p>`;
 }
 
 /** Desfile: texto encima mientras camina */
+/** Al final de la pasarela: escoger poses y bailes (las abiertas; se pueden hacer varias) */
+export function poses({ idx, ab, progreso, actual }) {
+  const lista = [...idx.poses.values()].filter((o) => ab.poses.has(o.id));
+  const faltan = idx.poses.size - lista.length;
+  return `<div class="poses" role="group" aria-label="Poses y bailes">
+    <h2>¡Escoge tu pose!</h2>
+    <div class="poses-grid">${lista.map((o, i) => `<button class="pose${o.id === actual ? " sel" : ""}" data-accion="pose" data-pose="${o.id}" data-foco${i === 0 ? '="inicial"' : ""}>
+      ${o.baile ? `<i class="ico">${icono("musica")}</i>` : `<i class="ico">${icono("estrella")}</i>`}<span>${esc(o.es)}<small lang="en">${esc(o.en)}</small></span>${esNuevo(progreso, "o:" + o.id) ? '<i class="badge">¡Nueva!</i>' : ""}</button>`).join("")}</div>
+    ${faltan ? `<p class="nota">${faltan} ${faltan === 1 ? "pose más se abre" : "poses más se abren"} subiendo de nivel.</p>` : ""}
+    ${boton("fin-poses", "¡Listo!", { clase: "grande primario" })}
+  </div>`;
+}
+
 export function desfile({ tema }) {
   return `<div class="desfile-txt"><span>${icono(tema.icono)}${esc(tema.nombre)}</span><b>¡Noelia en la pasarela!</b></div>`;
 }
@@ -167,6 +186,7 @@ export function desbloqueo({ nivel, nuevos, idx }) {
     <h1 id="tDes">${esc(nivel.nombre)}</h1>
     ${prendas.length ? `<h2>Ropa nueva</h2><div class="nuevas">${prendas.map((p) => `<figure>${miniPrenda(p, p.colores[0], idx)}<figcaption>${esc(p.es)}<small lang="en">${esc(p.en)}</small></figcaption></figure>`).join("")}</div>` : ""}
     ${nuevos.colores.length ? `<h2>Colores nuevos</h2><div class="nuevos-colores">${nuevos.colores.map((c) => { const cc = idx.colores.get(c); return `<span><i style="--c:${cc.hex}"></i>${esc(cc.es)} <small lang="en">${esc(cc.en)}</small></span>`; }).join("")}</div>` : ""}
+    ${(nuevos.poses || []).length ? `<h2>${nuevos.poses.length === 1 ? "Pose nueva" : "Poses nuevas"}</h2><div class="nuevos-temas">${nuevos.poses.map((o) => { const oo = idx.poses.get(o); return `<span>${icono(oo.baile ? "musica" : "estrella")}${esc(oo.es)} <small lang="en">${esc(oo.en)}</small></span>`; }).join("")}</div>` : ""}
     ${nuevos.temas.length ? `<h2>Tema nuevo</h2><div class="nuevos-temas">${nuevos.temas.map((t) => { const tt = idx.temas.get(t); return `<span>${icono(tt.icono)}${esc(tt.nombre)}</span>`; }).join("")}</div>` : ""}
     <div class="menu">${boton("continuar", "¡Genial!", { clase: "grande primario", inicial: true })}</div>
   </section>`;

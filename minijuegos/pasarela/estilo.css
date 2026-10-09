@@ -131,6 +131,7 @@ html[data-modo="tv"] .joy{display:none}
 .panel-cab{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
 .panel-cab h2{display:flex;align-items:center;gap:.4em;margin:0;font-size:1.5rem}
 .panel-cab h2 svg{width:2.4rem;height:2.4rem}
+.panel-botones{display:flex;gap:.45rem}
 .prendas{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill, minmax(7rem, 1fr));gap:.6rem;padding:.6rem .2rem;align-content:start}
 .prenda{position:relative;display:flex;flex-direction:column;align-items:center;gap:.1rem;background:var(--card);border:3px solid transparent;border-radius:20px;
   padding:.4rem .3rem .5rem;box-shadow:var(--sombra);min-height:8.5rem}
@@ -153,6 +154,20 @@ html[data-modo="tv"] .joy{display:none}
 .ingles{display:flex;align-items:center;justify-content:center;gap:.5em;flex-wrap:wrap;margin:.2rem 0;font-size:1.05rem}
 .ingles b{font-family:"Fredoka",sans-serif;font-size:1.25rem;color:var(--morado)}
 .panel .nota{text-align:center;font-size:.8rem}
+
+/* ---------- Poses y bailes al final de la pasarela ---------- */
+.poses{position:fixed;left:0;right:0;bottom:0;z-index:13;background:var(--vidrio);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border-radius:26px 26px 0 0;box-shadow:var(--sombra);padding:.7rem .9rem calc(.8rem + env(safe-area-inset-bottom));text-align:center;animation:sube .3s both}
+.poses h2{margin:0 0 .5rem;font-size:1.4rem}
+.poses-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(8.2rem, 1fr));gap:.5rem;max-height:30vh;overflow:auto;padding:.2rem;margin-bottom:.6rem}
+.pose{position:relative;display:flex;align-items:center;gap:.4rem;background:var(--card);border:3px solid transparent;border-radius:18px;padding:.45rem .6rem;
+  box-shadow:var(--sombra);font-weight:800;font-size:.9rem;text-align:left;min-height:3.4rem}
+.pose .ico{width:1.8rem;height:1.8rem;flex:none}
+.pose span{display:flex;flex-direction:column;line-height:1.1}
+.pose small{color:var(--muted);font-weight:700;font-size:.72rem}
+.pose.sel{border-color:var(--rosa);background:#fff0f7}
+.pose .badge{position:absolute;right:-.3rem;top:-.4rem}
+@media (min-aspect-ratio:23/20){.poses{left:auto;top:auto;width:min(46vw, 640px);right:2vw;bottom:2vh;border-radius:26px}}
 
 /* ---------- Desfile y calificación ---------- */
 .desfile-txt{position:fixed;top:max(14px, env(safe-area-inset-top));left:0;right:0;z-index:12;display:flex;flex-direction:column;align-items:center;gap:.3rem;
@@ -204,7 +219,7 @@ html[data-modo="tv"] .joy{display:none}
 .confirmar h2{margin:0 0 .4rem}
 .confirmar p{margin:0 0 .6rem}
 .menu-ira .zona-btn{background:var(--bg)}
-.toast{position:fixed;left:50%;top:22%;z-index:40;transform:translate(-50%, -10px);opacity:0;pointer-events:none;background:var(--card);border-radius:999px;
+.toast{position:fixed;left:50%;top:calc(4.4rem + env(safe-area-inset-top));z-index:40;transform:translate(-50%, -10px);opacity:0;pointer-events:none;background:var(--card);border-radius:999px;
   padding:.6em 1.4em;box-shadow:var(--sombra);font-family:"Fredoka",sans-serif;font-size:1.3rem;font-weight:600;transition:all .3s;max-width:90vw;text-align:center}
 .toast.ver{opacity:1;transform:translate(-50%, 0)}
 .fps{position:fixed;right:8px;bottom:8px;z-index:50;background:rgba(0,0,0,.6);color:#fff;font:12px monospace;padding:2px 6px;border-radius:6px}
@@ -219,8 +234,18 @@ html[data-modo="tv"] .joy{display:none}
 .vista2d[data-modo="probador"] .muneca2d{transform:translateY(-16vh) scale(.85)}
 @media (min-aspect-ratio:23/20){.vista2d[data-modo="probador"] .muneca2d{transform:translateX(-22vw)}}
 .vista2d[data-modo="pasarela"]{background:linear-gradient(#3b2d55, #5a3f86)}
-.vista2d.desfilando .muneca2d{animation:desfila 4.2s ease-in-out both}
-@keyframes desfila{0%{transform:translateY(-14vh) scale(.45)}70%{transform:translateY(0) scale(1)}80%{transform:translateY(0) scale(1) rotate(-4deg)}90%{transform:translateY(0) scale(1) rotate(4deg)}100%{transform:translateY(0) scale(1)}}
+.vista2d.desfilando .muneca2d{animation:desfila 3s ease-in-out both}
+@keyframes desfila{0%{transform:translateY(-14vh) scale(.45)}100%{transform:translateY(-8vh) scale(.9)}}
+/* Poses y bailes del modo sencillo (los mismos ids que datos/poses.json) */
+.vista2d.desfilando .muneca2d[class*="pose-"]{animation:none;transform:translateY(-8vh) scale(.9)}
+.muneca2d.pose-cintura svg,.muneca2d.pose-reverencia svg,.muneca2d.pose-pensar svg{animation:ladeo 1.2s ease-in-out both}
+.muneca2d.pose-saludo svg,.muneca2d.pose-beso svg,.muneca2d.pose-corazon svg,.muneca2d.pose-estrella svg{animation:salto .6s ease-out 2}
+.muneca2d.pose-vuelta svg{animation:vuelta 1s ease-in-out infinite}
+.muneca2d.pose-baile-brazos svg,.muneca2d.pose-baile-lado svg,.muneca2d.pose-robot svg{animation:meneo .5s ease-in-out infinite alternate}
+.muneca2d.pose-baile-salto svg{animation:salto .5s ease-in-out infinite}
+@keyframes ladeo{to{transform:rotate(-6deg)}}
+@keyframes salto{50%{transform:translateY(-6%)}}
+@keyframes meneo{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
 .muneca2d.vuelta{animation:vuelta 1s ease-in-out}
 @keyframes vuelta{50%{transform:scaleX(-1)}}
 

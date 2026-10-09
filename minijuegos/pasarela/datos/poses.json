@@ -1,0 +1,17 @@
+{
+  "_ayuda": "Poses y bailes que se escogen al final de la pasarela. id: el que dibuja src/escena/avatar.js (posturas) y src/ui/vista2d.js; es/en: el nombre en el botón; baile: true si se mueve con ritmo (si no, es una pose quieta). En qué nivel se abre cada una: desbloqueos.json.",
+  "poses": [
+    { "id": "cintura",     "es": "Manos en la cintura", "en": "Hands on hips" },
+    { "id": "saludo",      "es": "Saludar",             "en": "Wave" },
+    { "id": "estrella",    "es": "Estrella",            "en": "Star" },
+    { "id": "vuelta",      "es": "Dar una vuelta",      "en": "Spin",          "baile": true },
+    { "id": "corazon",     "es": "Corazón",             "en": "Heart" },
+    { "id": "baile-brazos","es": "Baile de brazos",     "en": "Arm dance",     "baile": true },
+    { "id": "baile-lado",  "es": "Baile de lado a lado","en": "Side to side",  "baile": true },
+    { "id": "reverencia",  "es": "Reverencia",          "en": "Curtsy" },
+    { "id": "baile-salto", "es": "Saltar",              "en": "Jump",          "baile": true },
+    { "id": "beso",        "es": "Lanzar un beso",      "en": "Blow a kiss" },
+    { "id": "robot",       "es": "Baile del robot",     "en": "Robot dance",   "baile": true },
+    { "id": "pensar",      "es": "Pensativa",           "en": "Thinking" }
+  ]
+}

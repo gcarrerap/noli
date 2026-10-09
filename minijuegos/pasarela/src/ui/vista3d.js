@@ -10,7 +10,20 @@ import { crearPasarela, ESCENARIO } from "../escena/pasarela.js";
 import { cargarModelo, modeloPara, modeloListo } from "../escena/modelos.js";
 import { mapaDeChoques, paso, zonaCercana, rutaHacia, seguirRuta, difAngulo } from "../movimiento.js";
 
-const POSES_FINALES = ["cintura", "saludo", "estrella"];
+/**
+ * Qué parte del cuerpo enseña la cámara al abrir el panel de una zona (zonas.json → enfoque): altura del centro (m) y
+ * cuánto alto hay que ver (m). La cámara se aleja lo justo para que eso quepa en la parte de la pantalla que el panel
+ * no tapa. Ver docs/ESCENA-3D.md § Cámara.
+ */
+export const ENFOQUES = {
+  cara:    { y: 1.42, alto: 0.75 },
+  cabeza:  { y: 1.47, alto: 0.8 },
+  alto:    { y: 1.2, alto: 1.15 },
+  torso:   { y: 1.05, alto: 1.15 },
+  cuerpo:  { y: 0.88, alto: 1.95 },
+  piernas: { y: 0.5, alto: 1.15 },
+  pies:    { y: 0.2, alto: 0.9 },
+};
 
 /**
  * @param {HTMLElement} cont
@@ -32,7 +45,9 @@ export function crearVista3d(cont, idx, op) {
 
   const pos = { x: zonas.inicio.x, z: zonas.inicio.z, ang: 180 };
   let modo = "inicio", quiere = { x: 0, z: 0 }, ruta = [], alLlegar = null, cerca = null, animacion = "quieto";
-  let desfile = null; // { t, fin, pose, resolver }
+  let desfile = null; // { t, pose, llego, giro } — la pose la escoge Noelia al llegar (posar)
+  let enfoque = "cuerpo", giro = 0, giroActual = 0; // en el probador: qué se ve y cuánto se ha girado el personaje
+  const corr = { x: 0, y: 0, ox: 0, oy: 0 };          // corrimiento de la imagen (actual y objetivo)
   let espejo = 0;     // segundos que quedan de la vuelta en el espejo
   let atuendoActual = null;
 
@@ -41,24 +56,43 @@ export function crearVista3d(cont, idx, op) {
   const objetivo = { p: new THREE.Vector3(), m: new THREE.Vector3() };
   let saltar = true; // la primera vez (o al cambiar de lugar) la cámara se pone directo, sin viajar
 
+  /** Lo que tapa la interfaz: { dx, dy } corrimiento y { hv, wv } fracción de la pantalla que se ve */
+  function tapado() {
+    const W = cont.clientWidth || innerWidth, H = cont.clientHeight || innerHeight, ancho = W > H * 1.15;
+    if (modo === "probador") {
+      if (ancho) { const f = Math.min(0.44, 620 / W); return { dx: f / 2, dy: 0, hv: 0.86, wv: 1 - f }; }
+      return { dx: 0, dy: 0.27, hv: 0.44, wv: 1 };
+    }
+    if (modo === "inicio") {
+      if (ancho) { const f = Math.min(0.46 * W, 640) / W + 0.05; return { dx: f / 2, dy: 0, hv: 0.9, wv: 1 - f }; }
+      return { dx: 0, dy: 0.3, hv: 0.38, wv: 1 };
+    }
+    if (modo === "pasarela" && desfile && !desfile.llego) {
+      // Escogiendo poses: el menú tapa abajo (teléfono) o la derecha (pantalla ancha)
+      if (ancho) { const f = Math.min(0.46 * W, 640) / W + 0.02; return { dx: f / 2, dy: 0, hv: 1, wv: 1 - f }; }
+      return { dx: 0, dy: 0.2, hv: 0.6, wv: 1 };
+    }
+    return { dx: 0, dy: 0, hv: 0.8, wv: 1 };
+  }
+
   function camaraObjetivo() {
-    const ancho = cont.clientWidth > cont.clientHeight * 1.15; // pantalla ancha: panel a la derecha; si no, abajo
+    const ancho = cont.clientWidth > cont.clientHeight * 1.15;
+    const t = tapado();
+    corr.ox = t.dx; corr.oy = t.dy;
     if (modo === "inicio" || modo === "probador" || espejo > 0) {
-      // De frente. La tarjeta o el panel tapan la derecha (pantalla ancha) o la mitad de abajo (teléfono):
-      // la cámara mira a un punto corrido para que el personaje quede en la parte que se ve.
-      const lejos = modo === "inicio" ? 3.2 : 2.6;
-      if (ancho) {
-        objetivo.m.set(pos.x + 0.62, 0.85, pos.z);
-        objetivo.p.set(pos.x + 0.62, 1.2, pos.z + lejos);
-      } else {
-        objetivo.m.set(pos.x, 0.05, pos.z);
-        objetivo.p.set(pos.x, 1.05, pos.z + lejos + 1.6);
-      }
+      // De frente, a la distancia justa para que la parte enfocada quepa en lo que se ve
+      const e = ENFOQUES[modo === "probador" ? enfoque : "cuerpo"];
+      const tanV = Math.tan((esc.camara.fov * Math.PI) / 360), aspecto = (cont.clientWidth || 1) / (cont.clientHeight || 1);
+      const dAlto = e.alto / (2 * t.hv * tanV);
+      const dAncho = Math.max(0.55, e.alto * 0.55) / (2 * t.wv * tanV * aspecto);
+      const d = Math.max(dAlto, dAncho, 0.9);
+      const arriba = e.y < 0.4 ? 0.3 * d : 0.12 * d; // a los pies se les ve un poco desde arriba
+      objetivo.m.set(pos.x, e.y, pos.z);
+      objetivo.p.set(pos.x, e.y + arriba, pos.z + d);
     } else if (modo === "pasarela") {
       // Al final de la pasarela, un poco a la derecha para que se vean también los jueces
-      const ancho2 = cont.clientWidth > cont.clientHeight * 1.15;
-      objetivo.m.set(ancho2 ? 0.9 : 0.3, 1.0, Math.max(av.raiz.position.z, ESCENARIO.inicio + 1.5));
-      objetivo.p.set(ancho2 ? 1.4 : 0.5, 1.7, ESCENARIO.z0 + (ancho2 ? 3.4 : 5.2));
+      objetivo.m.set(ancho ? 0.9 : 0.3, 1.0, Math.max(av.raiz.position.z, ESCENARIO.inicio + 1.5));
+      objetivo.p.set(ancho ? 1.4 : 0.5, 1.7, ESCENARIO.z0 + (ancho ? 3.4 : 5.2));
     } else { // estudio: atrás y arriba, siempre con la misma orientación (no marea). En el teléfono parado, más lejos.
       const alto = ancho ? 3.6 : 5.2, atras = ancho ? 5.4 : 6.6;
       objetivo.m.set(pos.x * (ancho ? 1 : 0.7), 0.9, pos.z - (ancho ? 0.6 : 1.4));
@@ -78,9 +112,11 @@ export function crearVista3d(cont, idx, op) {
       const z = zonaCercana(pos, zonas.zonas);
       if ((z && z.id) !== (cerca && cerca.id)) { cerca = z; op.alZona(z); }
     } else if (modo === "probador" || modo === "inicio" || espejo > 0) {
-      // Girar hacia la cámara (180°) poco a poco; en el espejo, dar una vuelta completa
-      const destino = espejo > 0 ? pos.ang + 200 * dt : 180;
+      // Girar hacia la cámara (180°, más lo que Noelia lo haya girado) poco a poco; en el espejo, dar una vuelta completa
+      giroActual += (giro - giroActual) * (1 - Math.pow(0.001, dt));
+      const destino = espejo > 0 ? pos.ang + 200 * dt : 180 + giroActual;
       if (espejo > 0) { espejo -= dt; pos.ang = destino; }
+      else if (Math.abs(giro - giroActual) > 0.5) pos.ang = destino; // girando a mano: sigue al dedo
       else pos.ang += Math.max(-300 * dt, Math.min(300 * dt, difAngulo(pos.ang, destino)));
     }
     if (modo !== "pasarela") {
@@ -92,9 +128,12 @@ export function crearVista3d(cont, idx, op) {
       const dur = op.reducirMovimiento ? 2.2 : 4.4;
       const k = Math.min(1, desfile.t / dur);
       av.raiz.position.set(0, ESCENARIO.alto, ESCENARIO.inicio + (ESCENARIO.fin - ESCENARIO.inicio) * k);
-      av.raiz.rotation.y = 0; // mira hacia la cámara (+z)
+      // Mira hacia la cámara (+z); la "vuelta" gira todo el personaje
+      if (desfile.pose === "vuelta" && k >= 1) desfile.giro += dt * (op.reducirMovimiento ? 2 : 5);
+      else desfile.giro += (Math.round(desfile.giro / (2 * Math.PI)) * 2 * Math.PI - desfile.giro) * Math.min(1, dt * 8);
+      av.raiz.rotation.y = desfile.giro;
       animacion = k < 1 ? "desfilar" : desfile.pose;
-      if (k >= 1 && desfile.t > dur + 2.2 && desfile.resolver) { const r = desfile.resolver; desfile.resolver = null; for (const j of pasarela.jueces) j.modo = "saludo"; r(); }
+      if (k >= 1 && desfile.llego) { const r = desfile.llego; desfile.llego = null; r(); }
     }
     av.animar(animacion, dt, vel);
     pasarela.animar(dt);
@@ -103,6 +142,8 @@ export function crearVista3d(cont, idx, op) {
     camaraObjetivo();
     const k = saltar ? 1 : 1 - Math.pow(0.02, dt);
     cam.p.lerp(objetivo.p, k); cam.m.lerp(objetivo.m, k);
+    const cx = corr.x + (corr.ox - corr.x) * k, cy = corr.y + (corr.oy - corr.y) * k;
+    if (Math.abs(cx - corr.x) > 1e-4 || Math.abs(cy - corr.y) > 1e-4 || saltar) { corr.x = cx; corr.y = cy; esc.correr(cx, cy); }
     saltar = false;
     esc.camara.position.copy(cam.p);
     esc.camara.lookAt(cam.m);
@@ -138,7 +179,12 @@ export function crearVista3d(cont, idx, op) {
       modo = m; quiere = { x: 0, z: 0 };
       if (m !== "estudio") { ruta = []; alLlegar = null; }
       if (m === "estudio" && pos.ang === 180) pos.ang = 0;
+      if (m !== "probador") { giro = 0; giroActual = 0; }
     },
+    /** Qué parte del cuerpo enfocar en el probador (ENFOQUES); se llama antes de modo("probador") */
+    enfocar(e) { enfoque = ENFOQUES[e] ? e : "cuerpo"; },
+    /** Gira al personaje en el probador (grados; positivo = hacia la derecha de la pantalla) */
+    girar(grados) { giro += grados; },
     /** Dirección del joystick o de las flechas (en pantalla: x derecha, z abajo) */
     mover(q) { quiere = q; if (Math.hypot(q.x, q.z) > 0.1) { ruta = []; alLlegar = null; } },
     /** Camina sola hasta una zona; la promesa se cumple al llegar */
@@ -154,13 +200,20 @@ export function crearVista3d(cont, idx, op) {
     alPiso: (px, py) => esc.alPiso(px, py),
     /** Da una vuelta frente al espejo */
     espejo() { espejo = op.reducirMovimiento ? 0.8 : 1.8; },
-    /** Desfila en la pasarela; la promesa se cumple al terminar la pose final */
+    /** Desfila en la pasarela; la promesa se cumple al llegar al final (ahí Noelia escoge sus poses con posar) */
     desfilar() {
       return new Promise((r) => {
         for (const j of pasarela.jueces) j.modo = "quieto";
-        desfile = { t: 0, pose: POSES_FINALES[Math.floor(Math.random() * POSES_FINALES.length)], resolver: r };
+        desfile = { t: 0, pose: "quieto", llego: r, giro: 0 };
         saltar = true;
       });
+    },
+    /** Hace una pose o baile de datos/poses.json al final de la pasarela */
+    posar(id) { if (desfile) desfile.pose = id; },
+    /** Termina el desfile: los jueces aplauden (saludan); la promesa se cumple después de un momento */
+    terminarDesfile() {
+      for (const j of pasarela.jueces) j.modo = "saludo";
+      return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 300 : 1200));
     },
     /** Regresa al estudio (al punto de inicio) después de la pasarela */
     regresar() { desfile = null; pos.x = zonas.inicio.x; pos.z = zonas.inicio.z; pos.ang = 180; saltar = true; cerca = null; },

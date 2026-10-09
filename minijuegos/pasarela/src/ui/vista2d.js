@@ -32,10 +32,16 @@ export function crearVista2d(cont, idx, op) {
     alPiso: () => null,
     espejo() { caja.classList.remove("vuelta"); void caja.offsetWidth; caja.classList.add("vuelta"); },
     desfilar() {
+      caja.className = "muneca2d";
       raiz.classList.remove("desfilando"); void raiz.offsetWidth; raiz.classList.add("desfilando");
-      return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 1500 : 4200));
+      return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 1200 : 3000));
     },
-    regresar() { raiz.classList.remove("desfilando"); },
+    /** Pose o baile: una animación CSS por id (estilo.css → .pose-<id>) */
+    posar(id) { caja.className = "muneca2d pose-" + id; },
+    terminarDesfile() { return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 300 : 900)); },
+    regresar() { raiz.classList.remove("desfilando"); caja.className = "muneca2d"; },
+    enfocar() {},
+    girar() {},
     letreros: () => new Map(),
     cadaCuadro(fn) { fns.add(fn); return () => fns.delete(fn); },
     get cercana() { return null; },

@@ -26,6 +26,11 @@ export const ICONOS = {
   vestido: s(`<path d="M19 5v8l-3 7 -8 20h32l-8-20-3-7V5" fill="#d3a6ff" ${L}/><path d="M16 20h16" ${L}/>`),
   zapatos: s(`<path d="M6 34V21c5 0 7-3 9-7l8 4c3 4 9 6 15 7 4 1 5 4 5 9z" fill="#3cbf7e" ${L}/><path d="M6 34h37v5H6z" fill="#fff" ${L}/>`),
   accesorio: s(`<path d="M8 36l-2-22 10 9 8-14 8 14 10-9-2 22z" fill="#ffc43d" ${L}/><circle cx="24" cy="29" r="3.5" fill="#ff6b4a"/>`),
+  girarIzq: s(`<path d="M14 18a13 13 0 1 1-1 13" fill="none" ${L}/><path d="M8 10l6 8 8-5" fill="none" ${L}/>`),
+  girarDer: s(`<path d="M34 18a13 13 0 1 0 1 13" fill="none" ${L}/><path d="M40 10l-6 8-8-5" fill="none" ${L}/>`),
+  musica: s(`<path d="M18 36V12l20-5v24" fill="none" ${L}/><ellipse cx="13" cy="36" rx="6" ry="5" fill="#8f5cf0" ${L}/><ellipse cx="33" cy="31" rx="6" ry="5" fill="#8f5cf0" ${L}/>`),
+  joyas: s(`<path d="M10 18l6-8h16l6 8-14 22z" fill="#8fd3ff" ${L}/><path d="M10 18h28M20 10l-4 8 8 22 8-22-4-8" fill="none" ${L}/>`),
+  maquillaje: s(`<rect x="10" y="22" width="12" height="20" rx="2" fill="#ff7eb6" ${L}/><path d="M12 22v-8l8-6v14" fill="#ef4343" ${L}/><circle cx="33" cy="30" r="9" fill="#ffd9c0" ${L}/><circle cx="33" cy="30" r="4" fill="#ff8fa3"/>`),
   // Temas
   "t-playa": s(`<circle cx="33" cy="15" r="8" fill="#ffd23f" ${L}/><path d="M4 32c5-4 9-4 14 0s9 4 14 0 9-4 14 0v12H4z" fill="#4cb3ff" ${L}/>`),
   "t-cumple": s(`<rect x="9" y="24" width="30" height="16" rx="3" fill="#ff7eb6" ${L}/><path d="M9 31c5 3 10-3 15 0s10 3 15 0" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24v-9" ${L}/><path d="M24 7c3 3 3 6 0 7-3-1-3-4 0-7z" fill="#ff9a3c" ${L}/>`),

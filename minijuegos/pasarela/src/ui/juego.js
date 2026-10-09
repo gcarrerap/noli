@@ -14,6 +14,7 @@ import { atuendoVacio, poner, colorPuesto, fraseIngles } from "../atuendo.js";
 import { calificar } from "../puntuacion.js";
 import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, nivelDePrenda, esNuevo } from "../progreso.js";
 import { siguiente, quedan, EN_ESTUDIO } from "../partida.js";
+import { prendasDeZona } from "../datos.js";
 import { direccionDeTeclas } from "../movimiento.js";
 
 const $ = (id) => document.getElementById(id);
@@ -33,6 +34,7 @@ const S = {
   inicioEstudio: 0, zona: null, sel: null, resultado: null, ganados: 0, nuevos: null,
   vista: null, joy: null, modal: null, tv: false, ultimoSegundo: -1,
   teclas: { hasta: {}, apretadas: {} }, joyDir: { x: 0, z: 0 },
+  pose: null, posesTimer: null,
 };
 
 const ATUENDO_INICIAL = [["p-cola", "cafe"], ["a-camiseta", "rosa"], ["b-shorts", "azul"], ["z-tenis", "blanco"]];
@@ -177,6 +179,14 @@ async function aPasarela(porTiempo = false) {
   S.vista.modo("pasarela");
   $("desfile").innerHTML = P.desfile({ tema: S.tema });
   await S.vista.desfilar();
+  // Al final de la pasarela escoge poses y bailes (varios si quiere); "¡Listo!" o 25 s sin escoger → calificación
+  S.estado = siguiente("pasarela", "llego");
+  S.pose = null;
+  $("desfile").innerHTML = P.desfile({ tema: S.tema }) + P.poses({ idx: S.idx, ab: S.ab, progreso: S.progreso, actual: null });
+  if (S.tv || document.documentElement.classList.contains("teclado")) focoInicial($("desfile"));
+  await new Promise((r) => { S.finPoses = r; reiniciarPosesTimer(); });
+  clearTimeout(S.posesTimer);
+  await S.vista.terminarDesfile();
   const idx = S.idx;
   S.resultado = calificar(S.atuendo, S.tema, idx, { prendas: S.ab.prendas, colores: S.ab.colores });
   const reg = registrarPasarela(S.progreso, { tema: S.tema.id, atuendo: S.atuendo, jueces: S.resultado.jueces, puntos: S.resultado.puntos }, Date.now(), idx);
@@ -189,6 +199,24 @@ async function aPasarela(porTiempo = false) {
   $("desfile").innerHTML = "";
   S.estado = "pasarela";
   ir("calificacion");
+}
+
+function reiniciarPosesTimer() {
+  clearTimeout(S.posesTimer);
+  S.posesTimer = setTimeout(() => terminarPoses(), 25000);
+}
+function terminarPoses() {
+  if (S.estado !== "posando" || !S.finPoses) return;
+  const f = S.finPoses; S.finPoses = null;
+  S.progreso = marcarVistos(S.progreso, [...S.ab.poses].map((o) => "o:" + o));
+  f();
+}
+function escogerPose(id) {
+  if (S.estado !== "posando" || !S.ab.poses.has(id)) return;
+  S.pose = id;
+  S.vista.posar(id);
+  for (const b of $("desfile").querySelectorAll(".pose")) b.classList.toggle("sel", b.dataset.pose === id);
+  reiniciarPosesTimer();
 }
 
 function despuesDeCalificar() {
@@ -217,15 +245,29 @@ async function tocarZona(id) {
 }
 
 function abrirZona(z) {
-  if (z.accion === "espejo") { S.vista.espejo(); toast("¡Te ves increíble!"); return; }
+  if (z.accion === "espejo") {
+    // Sin avisos ni letreros mientras se da la vuelta: taparían al personaje
+    S.vista.espejo();
+    $("aviso").innerHTML = ""; $("letreros").hidden = true;
+    clearTimeout(S.espejoTimer);
+    S.espejoTimer = setTimeout(() => {
+      if (!EN_ESTUDIO.includes(S.estado) || S.zona) return;
+      $("letreros").hidden = !!S.vista.botones; alCambiarZona(S.vista.cercana);
+    }, reducir ? 900 : 1900);
+    return;
+  }
   if (z.accion === "pasarela") { if (S.estado === "libre") return salirDelEstudio(); return aPasarela(); }
   S.zona = z;
-  const puesta = z.categorias.map((c) => (c === "accesorio" ? Object.values(S.atuendo.accesorios)[0] : S.atuendo[c])).find(Boolean);
+  // La prenda escogida al abrir: la que trae puesta de esta zona (si hay)
+  const deZona = new Set(prendasDeZona(z, S.idx).map((p) => p.id));
+  const puesta = [...Object.values(S.atuendo.accesorios), S.atuendo.peinado, S.atuendo.arriba, S.atuendo.abajo, S.atuendo.vestido, S.atuendo.zapatos]
+    .find((p) => p && deZona.has(p.id));
   S.sel = puesta ? puesta.id : null;
   $("aviso").innerHTML = "";
   $("letreros").hidden = true;
   $("zonas2d").hidden = true;
   if (S.joy) S.joy.mostrar(false);
+  S.vista.enfocar(z.enfoque || "cuerpo");
   S.vista.modo("probador");
   dibujarPanel(true);
 }
@@ -235,7 +277,7 @@ function dibujarPanel(enfocar) {
   if (!S.zona) { el.hidden = true; el.innerHTML = ""; return; }
   const enfocado = el.contains(document.activeElement) ? document.activeElement : null;
   const clave = enfocado && (enfocado.dataset.prenda || enfocado.dataset.color || enfocado.dataset.accion);
-  el.innerHTML = P.panel({ zona: S.zona, idx: S.idx, atuendo: S.atuendo, ab: S.ab, progreso: S.progreso, sel: S.sel, voz: hayVoz() });
+  el.innerHTML = P.panel({ zona: S.zona, idx: S.idx, atuendo: S.atuendo, ab: S.ab, progreso: S.progreso, sel: S.sel, voz: hayVoz(), girar: S.vista.tipo === "3d" });
   el.hidden = false;
   if (clave) {
     const otro = el.querySelector(`[data-prenda="${clave}"],[data-color="${clave}"],[data-accion="${clave}"]`);
@@ -248,7 +290,7 @@ function cerrarPanel(volver = true) {
   const z = S.zona;
   // Lo que ya vio en este perchero deja de brillar como nuevo
   const claves = [];
-  for (const c of z.categorias) for (const p of S.idx.porCategoria.get(c)) if (S.ab.prendas.has(p.id)) { claves.push(p.id); for (const col of coloresDe(p, S.ab)) claves.push("c:" + col); }
+  for (const p of prendasDeZona(z, S.idx)) if (S.ab.prendas.has(p.id)) { claves.push(p.id); for (const col of coloresDe(p, S.ab)) claves.push("c:" + col); }
   S.progreso = marcarVistos(S.progreso, claves);
   guardar();
   S.zona = null; S.sel = null;
@@ -355,6 +397,15 @@ function instalarEntrada() {
     const b = e.target.closest("[data-accion]");
     if (b) accion(b.dataset.accion, b);
   });
+  // En el probador: arrastrar el dedo (o el ratón) sobre la escena gira al personaje
+  let arrastre = null;
+  $("escena").addEventListener("pointerdown", (e) => { if (S.zona && S.vista.tipo === "3d") arrastre = { x: e.clientX, id: e.pointerId }; });
+  window.addEventListener("pointermove", (e) => {
+    if (!arrastre || e.pointerId !== arrastre.id) return;
+    S.vista.girar((e.clientX - arrastre.x) * 0.6); arrastre.x = e.clientX;
+  });
+  window.addEventListener("pointerup", () => { arrastre = null; });
+  window.addEventListener("pointercancel", () => { arrastre = null; });
   // Tocar el piso: caminar hasta ahí (3D)
   $("escena").addEventListener("pointerup", (e) => {
     if (!EN_ESTUDIO.includes(S.estado) || S.zona || S.vista.botones || e.target.closest("[data-accion]")) return;
@@ -387,6 +438,7 @@ function manejar(a) {
     }
     enfocar($("capa")); return true;
   }
+  if (S.estado === "posando") { if (a !== "atras") enfocar($("desfile")); return true; }
   if (S.estado === "pasarela" || S.estado === "cobrando") return true;
   if (EN_ESTUDIO.includes(S.estado)) {
     if (a === "atras") { if (S.estado === "libre") salirDelEstudio(); else abrirModal(P.confirmarSalir()); return true; }
@@ -428,6 +480,9 @@ function accion(nombre, el) {
     case "decir": { const p = S.idx.prendas.get(S.sel), c = S.idx.colores.get(colorPuesto(S.atuendo, p) || S._colorSel); return decir(((c && c.en) || "") + " " + p.en); }
     case "decir-frase": return decir(fraseIngles(S.atuendo, S.idx));
     case "cerrar-panel": return cerrarPanel();
+    case "girar": return S.vista.girar(+el.dataset.grados);
+    case "pose": return escogerPose(el.dataset.pose);
+    case "fin-poses": return terminarPoses();
     case "ir-a": return abrirModal(P.zonasBotones(S.idx.zonas.zonas, { libre: S.estado === "libre", comoMenu: true }));
     case "cerrar-ira": case "cerrar-modal": case "salir-no": cerrarModal(); return;
     case "a-pasarela": return aPasarela();

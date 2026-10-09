@@ -8,6 +8,23 @@ export const FORMAS = ["tubo", "esfera", "caja", "capsula", "toro", "cono", "dis
 export const ANCLAS = ["cadera", "torso", "cuello", "cabeza", "brazoI", "brazoD", "antebrazoI", "antebrazoD", "manoI", "manoD",
   "musloI", "musloD", "piernaI", "piernaD", "pieI", "pieD"];
 
+/** Categorías que van por lugar (un accesorio o maquillaje por lugar: orejas, labios…) en lugar de una sola ranura */
+export const CON_LUGAR = ["accesorio", "maquillaje"];
+/** ¿Esta prenda se pone en un lugar (accesorio o maquillaje)? */
+export const conLugar = (prenda) => CON_LUGAR.includes(prenda.categoria);
+
+/** Qué parte del cuerpo enfoca la cámara al abrir el panel de una zona (src/ui/vista3d.js → ENFOQUES) */
+export const ENFOQUES = ["cara", "cabeza", "alto", "torso", "cuerpo", "piernas", "pies"];
+
+/**
+ * Las prendas que se escogen en una zona: las de sus categorías y, si la zona dice "lugares", solo las de esos lugares.
+ * @param {{categorias: string[], lugares?: string[]}} zona
+ * @param {{porCategoria: Map}} idx
+ */
+export function prendasDeZona(zona, idx) {
+  return (zona.categorias || []).flatMap((c) => idx.porCategoria.get(c) || []).filter((p) => !zona.lugares || zona.lugares.includes(p.lugar));
+}
+
 /** Lugares de las partes del atuendo además de los accesorios */
 export const RANURAS = ["peinado", "arriba", "abajo", "vestido", "zapatos"];
 
@@ -79,8 +96,8 @@ export function revisarDatos(d) {
     if (!Array.isArray(p.colores) || !p.colores.length) e.push(`${donde}: sin colores`);
     else for (const c of p.colores) if (!colores.has(c)) e.push(`${donde}: color "${c}" no está en colores.json`);
     if (p.secundario !== undefined && !(colores.has(p.secundario) || esHex(p.secundario))) e.push(`${donde}: secundario debe ser un color o #hex`);
-    if (p.categoria === "accesorio" && !lugares.has(p.lugar)) e.push(`${donde}: accesorio sin lugar válido (${[...lugares].join(", ")})`);
-    if (p.categoria !== "accesorio" && p.lugar) e.push(`${donde}: solo los accesorios llevan lugar`);
+    if (conLugar(p) && !lugares.has(p.lugar)) e.push(`${donde}: ${p.categoria} sin lugar válido (${[...lugares].join(", ")})`);
+    if (!conLugar(p) && p.lugar) e.push(`${donde}: solo los accesorios y el maquillaje llevan lugar`);
     if (!p.dibujo2d) e.push(`${donde}: falta dibujo2d (modo sencillo)`);
     if (p.modelo !== undefined && !/^modelos\/[a-z0-9-]+\.glb$/.test(p.modelo)) e.push(`${donde}: modelo debe ser modelos/<nombre>.glb`);
     if (p.modelo && !ANCLAS.includes(p.ancla)) e.push(`${donde}: una prenda con modelo pide "ancla" (${ANCLAS.join(", ")})`);
@@ -100,13 +117,14 @@ export function revisarDatos(d) {
     for (const c of t.colores || []) if (!colores.has(c)) e.push(`tema ${t.id}: color "${c}" desconocido`);
   }
 
-  const abre = { prendas: new Map(), colores: new Map(), temas: new Map() };
+  const poses = new Set((d.poses ? d.poses.poses : []).map((x) => x.id));
+  const abre = { prendas: new Map(), colores: new Map(), temas: new Map(), poses: new Map() };
   let antes = -1;
   d.desbloqueos.niveles.forEach((n, i) => {
     if (!(Number.isInteger(n.puntos) && n.puntos > antes)) e.push(`nivel ${n.nombre}: los puntos deben subir de nivel en nivel`);
     antes = n.puntos;
     if (i === 0 && n.puntos !== 0) e.push("el primer nivel debe empezar en 0 puntos");
-    for (const [k, valid] of [["prendas", ids], ["colores", colores], ["temas", temas]]) {
+    for (const [k, valid] of [["prendas", ids], ["colores", colores], ["temas", temas], ["poses", poses]]) {
       for (const x of n[k] || []) {
         if (!valid.has(x)) e.push(`nivel ${n.nombre}: ${k} "${x}" no existe`);
         if (abre[k].has(x)) e.push(`nivel ${n.nombre}: "${x}" ya se abría en ${abre[k].get(x)}`);
@@ -117,14 +135,23 @@ export function revisarDatos(d) {
   for (const x of ids) if (!abre.prendas.has(x)) e.push(`${x}: no se abre en ningún nivel (desbloqueos.json)`);
   for (const x of colores) if (!abre.colores.has(x)) e.push(`color ${x}: no se abre en ningún nivel`);
   for (const x of temas) if (!abre.temas.has(x)) e.push(`tema ${x}: no se abre en ningún nivel`);
+  for (const x of poses) if (!abre.poses.has(x)) e.push(`pose ${x}: no se abre en ningún nivel`);
+  if (d.poses && !(d.desbloqueos.niveles[0].poses || []).length) e.push("el primer nivel debe abrir al menos una pose");
 
   const catsConZona = new Set();
   for (const z of d.zonas.zonas) {
-    for (const c of z.categorias || []) { if (!categorias.has(c)) e.push(`zona ${z.id}: categoría "${c}" desconocida`); catsConZona.add(c); }
+    for (const c of z.categorias || []) {
+      if (!categorias.has(c)) e.push(`zona ${z.id}: categoría "${c}" desconocida`);
+      if (CON_LUGAR.includes(c)) for (const l of z.lugares || [...lugares]) catsConZona.add(c + ":" + l);
+      else catsConZona.add(c);
+    }
+    for (const l of z.lugares || []) if (!lugares.has(l)) e.push(`zona ${z.id}: lugar "${l}" desconocido`);
+    if (z.enfoque !== undefined && !ENFOQUES.includes(z.enfoque)) e.push(`zona ${z.id}: enfoque "${z.enfoque}" (${ENFOQUES.join(", ")})`);
     if (!z.categorias && !["espejo", "pasarela"].includes(z.accion)) e.push(`zona ${z.id}: pide categorias o accion (espejo, pasarela)`);
     if (!esVec(z.punto, 2) || !esVec(z.mueble && z.mueble.caja, 5)) e.push(`zona ${z.id}: punto [x, z] y mueble.caja [x, z, ancho, fondo, alto]`);
   }
-  for (const c of categorias) if (!catsConZona.has(c)) e.push(`categoría ${c}: ninguna zona del estudio la abre`);
+  for (const c of categorias) if (!CON_LUGAR.includes(c) && !catsConZona.has(c)) e.push(`categoría ${c}: ninguna zona del estudio la abre`);
+  for (const p of d.prendas.prendas) if (conLugar(p) && !catsConZona.has(p.categoria + ":" + p.lugar)) e.push(`${p.id}: ninguna zona del estudio abre ${p.categoria} de ${p.lugar}`);
 
   for (const j of d.jueces.jueces) {
     const s = Object.values(j.pesos).reduce((a, b) => a + b, 0);
@@ -148,6 +175,7 @@ export function indexar(d) {
     colores: new Map(d.colores.colores.map((c) => [c.id, c])),
     temas: new Map(d.temas.temas.map((t) => [t.id, t])),
     niveles: d.desbloqueos.niveles,
+    poses: new Map((d.poses ? d.poses.poses : []).map((x) => [x.id, x])),
     zonas: d.zonas,
     jueces: d.jueces.jueces,
   };
@@ -155,4 +183,4 @@ export function indexar(d) {
 
 /** Archivos de datos/ que hay que leer, con la clave que usa revisarDatos/indexar. */
 export const ARCHIVOS = { config: "config.json", colores: "colores.json", temas: "temas.json", prendas: "prendas.json",
-  desbloqueos: "desbloqueos.json", zonas: "zonas.json", jueces: "jueces.json" };
+  desbloqueos: "desbloqueos.json", zonas: "zonas.json", jueces: "jueces.json", poses: "poses.json" };

@@ -46,6 +46,15 @@ export function crearEscena(cont, op) {
   sol.position.set(3, 8, 6);
   scene.add(sol);
 
+  // Corrimiento de la imagen (fracción del ancho y del alto): cuando un panel tapa una parte de la pantalla, el centro
+  // de la cámara se dibuja en el centro de lo que sí se ve (setViewOffset), así lo que la cámara mira no queda tapado.
+  const corrimiento = { x: 0, y: 0 };
+  function aplicarCorrimiento() {
+    const w = cont.clientWidth || window.innerWidth, h = cont.clientHeight || window.innerHeight;
+    if (Math.abs(corrimiento.x) < 1e-4 && Math.abs(corrimiento.y) < 1e-4) camara.clearViewOffset();
+    else camara.setViewOffset(w, h, corrimiento.x * w, corrimiento.y * h, w, h);
+  }
+
   let calidad = op.calidad && CALIDADES[op.calidad] ? op.calidad : op.tv ? "media" : "alta";
   function tamano() {
     const w = cont.clientWidth || window.innerWidth, h = cont.clientHeight || window.innerHeight;
@@ -54,6 +63,7 @@ export function crearEscena(cont, op) {
     camara.aspect = w / h;
     // En el teléfono parado (pantalla angosta) se abre el ángulo para que quepa el estudio a lo ancho
     camara.fov = w / h < 0.8 ? 62 : 48;
+    aplicarCorrimiento();
     camara.updateProjectionMatrix();
   }
   tamano();
@@ -113,6 +123,11 @@ export function crearEscena(cont, op) {
       const plano = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p = new THREE.Vector3();
       return ray.ray.intersectPlane(plano, p) ? { x: p.x, z: p.z } : null;
     },
+    /**
+     * Corre la imagen: dx > 0 mueve lo que mira la cámara a la izquierda, dy > 0 hacia arriba (fracciones de la pantalla).
+     * Ej.: panel a la derecha que tapa 44 % → dx = 0.22; panel abajo que tapa 54 % → dy = 0.27.
+     */
+    correr(dx, dy) { corrimiento.x = dx; corrimiento.y = dy; aplicarCorrimiento(); camara.updateProjectionMatrix(); },
     get fps() { return fps.valor; },
     get calidad() { return calidad; },
     ponerCalidad(c) { if (CALIDADES[c]) { calidad = c; tamano(); } },

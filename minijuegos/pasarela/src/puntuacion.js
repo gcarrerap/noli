@@ -27,7 +27,7 @@ const lim = (x) => Math.max(0, Math.min(1, x));
  *  - color: 70 % que los colores de la ropa (sin el pelo) sean del tema + 30 % que combinen (≤ 3 colores distintos = 1;
  *    4 = 0.6; 5 o más = 0.3);
  *  - completo: un tercio cada uno: cuerpo (arriba y abajo, o vestido; con solo uno de los dos, la mitad), zapatos, peinado;
- *  - detalles: accesorios que van con el tema (encaje ≥ 2): ninguno 0, uno 0.7, dos o más 1; −0.3 por cada uno que no va.
+ *  - detalles: accesorios y maquillaje que van con el tema (encaje ≥ 2): ninguno 0, uno 0.7, dos o más 1; −0.3 por cada uno que no va.
  * @param {object} atuendo
  * @param {object} tema
  * @param {{prendas: Map}} idx
@@ -37,7 +37,7 @@ export function componentes(atuendo, tema, idx) {
   const items = puestas(atuendo).map((p) => ({ ...p, prenda: idx.prendas.get(p.id) })).filter((p) => p.prenda);
   let suma = 0, pesos = 0;
   for (const it of items) {
-    const w = it.prenda.categoria === "vestido" ? 2 : it.prenda.categoria === "accesorio" ? 0.5 : 1;
+    const w = it.prenda.categoria === "vestido" ? 2 : it.prenda.lugar ? 0.5 : 1;
     suma += w * encaje(it.prenda, tema); pesos += w;
   }
   const vTema = pesos ? lim(suma / (3 * pesos)) : 0;
@@ -51,7 +51,7 @@ export function componentes(atuendo, tema, idx) {
   const cuerpo = atuendo.vestido || (atuendo.arriba && atuendo.abajo) ? 1 : atuendo.arriba || atuendo.abajo ? 0.5 : 0;
   const vCompleto = (cuerpo + (atuendo.zapatos ? 1 : 0) + (atuendo.peinado ? 1 : 0)) / 3;
 
-  const acc = items.filter((it) => it.prenda.categoria === "accesorio");
+  const acc = items.filter((it) => it.prenda.lugar); // accesorios y maquillaje
   const buenos = acc.filter((it) => encaje(it.prenda, tema) >= 2).length;
   const malos = acc.filter((it) => encaje(it.prenda, tema) < 0).length;
   const vDetalles = lim((buenos === 0 ? 0 : buenos === 1 ? 0.7 : 1) - 0.3 * malos);
@@ -116,7 +116,7 @@ export function comentar(juez, atuendo, tema, idx, abiertas, coloresAbiertos) {
   }
 
   if (juez === "detalle") {
-    const accBuenos = items.filter((it) => it.prenda.categoria === "accesorio" && encaje(it.prenda, tema) >= 2);
+    const accBuenos = items.filter((it) => it.prenda.lugar && encaje(it.prenda, tema) >= 2);
     const pos = accBuenos.length ? `¡${mayuscula(conEl(accBuenos[0].prenda))} ${es(accBuenos[0].prenda)} el toque perfecto!`
       : k.completo === 1 ? "¡No te faltó nada, de la cabeza a los pies!"
       : atuendo.peinado ? `¡Qué ${concuerda("bonito", idx.prendas.get(atuendo.peinado.id))} ${idx.prendas.get(atuendo.peinado.id).es}!` : "¡Me gusta cómo caminas en la pasarela!";
@@ -136,7 +136,7 @@ export function comentar(juez, atuendo, tema, idx, abiertas, coloresAbiertos) {
 
   // "estrella": el tema
   // La mejor y la peor prenda para el tema. En empate, primero la ropa y al final el peinado (es lo que menos se nota).
-  const PRIORIDAD = ["arriba", "vestido", "abajo", "zapatos", "accesorio", "peinado"];
+  const PRIORIDAD = ["arriba", "vestido", "abajo", "zapatos", "accesorio", "maquillaje", "peinado"];
   const orden = items.map((it) => ({ ...it, c: encaje(it.prenda, tema), pr: PRIORIDAD.indexOf(it.prenda.categoria) }));
   const mejor = [...orden].sort((a, b) => b.c - a.c || a.pr - b.pr)[0];
   const peor = [...orden].sort((a, b) => a.c - b.c || a.pr - b.pr)[0];

@@ -3,7 +3,8 @@
 //   atuendo = { peinado, arriba, abajo, vestido, zapatos: { id, color } | null,  accesorios: { [lugar]: { id, color } } }
 //
 // Reglas: un vestido ocupa arriba y abajo (ponerse un vestido quita lo de arriba y lo de abajo, y al revés); de
-// accesorios, uno por lugar (cabeza, cara, cuello, mano, espalda).
+// accesorios y maquillaje, uno por lugar (cabeza, cara, orejas, cuello, muñeca… labios, ojos, mejillas, pintura).
+// El maquillaje se guarda junto con los accesorios (en "accesorios", por lugar): sus lugares no se repiten.
 
 /** @returns {object} un atuendo vacío */
 export const atuendoVacio = () => ({ peinado: null, arriba: null, abajo: null, vestido: null, zapatos: null, accesorios: {} });
@@ -18,7 +19,7 @@ export const atuendoVacio = () => ({ peinado: null, arriba: null, abajo: null, v
 export function poner(atuendo, prenda, color) {
   const a = { ...atuendo, accesorios: { ...atuendo.accesorios } };
   const pieza = { id: prenda.id, color };
-  if (prenda.categoria === "accesorio") {
+  if (prenda.lugar) {
     const actual = a.accesorios[prenda.lugar];
     if (actual && actual.id === prenda.id && actual.color === color) delete a.accesorios[prenda.lugar];
     else a.accesorios[prenda.lugar] = pieza;
@@ -55,7 +56,7 @@ export function puestas(atuendo) {
 
 /** ¿Trae puesta esta prenda (con cualquier color)? Devuelve su color o null. */
 export function colorPuesto(atuendo, prenda) {
-  const p = prenda.categoria === "accesorio" ? atuendo.accesorios[prenda.lugar] : atuendo[prenda.categoria];
+  const p = prenda.lugar ? atuendo.accesorios[prenda.lugar] : atuendo[prenda.categoria];
   return p && p.id === prenda.id ? p.color : null;
 }
 

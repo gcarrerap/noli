@@ -10,9 +10,10 @@
     { "id": "abajo",     "es": "Ropa de abajo",     "en": "Bottoms" },
     { "id": "vestido",   "es": "Vestidos",          "en": "Dresses" },
     { "id": "zapatos",   "es": "Zapatos",           "en": "Shoes" },
-    { "id": "accesorio", "es": "Accesorios",        "en": "Accessories" }
+    { "id": "accesorio", "es": "Accesorios",        "en": "Accessories" },
+    { "id": "maquillaje", "es": "Maquillaje",       "en": "Makeup" }
   ],
-  "lugares": ["cabeza", "cara", "cuello", "mano", "espalda"],
+  "lugares": ["cabeza", "cara", "cuello", "abrigo", "orejas", "muneca", "mano", "espalda", "mejillas", "ojos", "labios", "pintura"],
   "etiquetas": ["playa", "verano", "fiesta", "elegante", "frio", "princesa", "deportivo", "escuela", "casual", "pijama",
     "aventura", "flores", "rock", "magia", "brillo"],
   "tonosPiel": ["#ffd9c0", "#f1c09b", "#d79b6e", "#a9714a", "#7a4b2e"],
