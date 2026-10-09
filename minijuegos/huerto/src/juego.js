@@ -9,8 +9,8 @@ import {
 } from "./niveles.js";
 import { pista, marcaPasoCompleto } from "./pista.js";
 import {
-  GUIA, GUIA_TOQUE_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
-  topeGuia, efectoAtrasGuia, lineaGuia,
+  GUIA, GUIA_VOZ_MAX_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
+  topeGuia, efectoAtrasGuia, lineaGuia, esperaAutoGuia, cadenaFocoGuia, focoAlCerrarSalir,
 } from "./guia.js";
 import {
   cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
@@ -42,8 +42,14 @@ let token = 0;
 let pistaToken = 0;
 let relojGuia = 0;
 
-function hablar(texto) {
-  if (vozOn()) decir(texto, { activo: true });
+function hablar(texto, alTerminar) {
+  if (!vozOn()) return false;
+  return decir(texto, { activo: true, alTerminar });
+}
+
+function vozSigue() {
+  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
+  return !!(s && (s.speaking || s.pending));
 }
 
 function cargarArte() {
@@ -366,22 +372,30 @@ function empezarGuia() {
   clearTimeout(relojGuia);
   relojGuia = 0;
   pintarJuego("aceptar");
-  hablar(partida.encargo.leer);
+  const hablo = hablar(partida.encargo.leer, avanzarPedidoSiSigue);
+  if (hablo) programarToqueGuia(GUIA_VOZ_MAX_MS);
 }
 
-function programarToqueGuia() {
-  if (!partida || partida.modo !== "guia" || partida.saliendo || !guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
+function avanzarPedidoSiSigue() {
+  if (!partida || partida.modo !== "guia" || partida.saliendo) return;
+  if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
+  aceptarPedido();
+}
+
+function programarToqueGuia(msVoz) {
+  const activo = partida && partida.modo === "guia" && !partida.saliendo && guiaAvanzaConToque(pasoGuia(estadoGuia()));
+  if (!activo) {
     clearTimeout(relojGuia);
     relojGuia = 0;
     return;
   }
-  if (relojGuia) return;
+  if (relojGuia && msVoz == null) return;
+  clearTimeout(relojGuia);
+  const ms = esperaAutoGuia(msVoz == null ? (vozSigue() ? GUIA_VOZ_MAX_MS : 0) : msVoz);
   relojGuia = setTimeout(() => {
     relojGuia = 0;
-    if (!partida || partida.modo !== "guia" || partida.saliendo) return;
-    if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
-    aceptarPedido();
-  }, GUIA_TOQUE_MS);
+    avanzarPedidoSiSigue();
+  }, ms);
 }
 
 function empezarTemporada() {
@@ -503,7 +517,7 @@ function pintarJuego(focoId) {
       <button type="button" class="boton listo${brilla ? " brilla" : ""}${partida._flecha === "listo" ? " con-flecha" : ""}" ${listoOff ? "disabled" : focoAttr("listo", !!brilla)} data-act="listo" data-flecha="listo">Listo</button>`;
   }
 
-  const saltar = guia ? `<button type="button" class="boton saltar" ${focoAttr("saltar", false)} data-act="saltar-guia">Saltar</button>` : "";
+  const saltar = guia ? `<button type="button" class="boton saltar" tabindex="-1" data-act="saltar-guia">Saltar</button>` : "";
   mostrar(`
     <div class="cab">${saltar}<span class="nivel-mini">${guia ? "Guía" : esc(NIVELES[(e.nivel || partida.n) - 1].nombre)}</span>${puntos}</div>
     <div class="encargo">
@@ -526,7 +540,7 @@ function htmlMuestra(controles) {
   const e = partida.encargo;
   if (controles) {
     const foco = partida.saliendo ? "" : 'data-foco="inicial" data-foco-id="seguir-muestra"';
-    return `<button type="button" class="boton listo brilla" ${foco} data-act="seguir-muestra">Seguir</button>`;
+    return `<button type="button" class="boton listo brilla seguir-muestra" ${foco} data-act="seguir-muestra">Seguir</button>`;
   }
   if (e.tipo === "par") return htmlPares(e.cantidad, e.semilla);
   if (e.tipo === "giro") {
@@ -750,15 +764,18 @@ function preguntarSalir() {
   clearTimeout(relojGuia);
   relojGuia = 0;
   partida.espera = false;
+  partida.focoAntes = idFoco();
   partida.saliendo = true;
   pintarJuego("seguir");
 }
 
 function seguirJugando() {
   if (!partida) return;
+  const guardado = partida.focoAntes || "";
+  partida.focoAntes = "";
   partida.saliendo = false;
-  const foco = partida.modo === "guia" ? focoGuia(estadoGuia()) : undefined;
-  pintarJuego(foco);
+  const foco = focoAlCerrarSalir(guardado, partida.modo === "guia", estadoGuia());
+  pintarJuego(foco || undefined);
 }
 
 function saltarGuia() {
@@ -798,8 +815,9 @@ function moverContador(accion) {
   }
   if (accion !== "izquierda" && accion !== "derecha") return false;
   const id = idFoco();
-  if (id !== "saltar" && id !== "contador-filas" && id !== "contador-cada" && id !== "listo") return false;
-  const ids = ["saltar", "contador-filas", "contador-cada", "listo"].filter((x) => {
+  const cadena = cadenaFocoGuia();
+  if (!cadena.includes(id)) return false;
+  const ids = cadena.filter((x) => {
     const el = $main.querySelector(`[data-foco-id="${x}"]`);
     return el && !el.disabled;
   });
@@ -848,10 +866,6 @@ Noli.alEntrar((accion) => {
   if (pantalla === "juego" && partida && accion === "atras") {
     if (efectoAtrasGuia(partida.saliendo) === "seguir") seguirJugando();
     else preguntarSalir();
-    return true;
-  }
-  if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && idFoco() === "saltar") {
-    document.activeElement.click();
     return true;
   }
   if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && guiaAvanzaConToque(pasoGuia(estadoGuia()))) {

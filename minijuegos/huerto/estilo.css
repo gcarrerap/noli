@@ -117,6 +117,7 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .resultado-par .par .planta.b{right:4px}
 .resultado-par .huerto{width:min(100%, calc(var(--cols) * 30px))}
 .resultado-par .ecuacion,.resultado-par .frase{margin:0}
+.seguir-muestra{margin-top:36px}
 .paquete{width:92px;height:auto}
 
 .velo{position:fixed;inset:0;background:rgba(43,34,54,.45);display:grid;place-items:center;z-index:5;padding:16px}

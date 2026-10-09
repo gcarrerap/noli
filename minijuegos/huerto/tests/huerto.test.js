@@ -11,7 +11,8 @@ import {
 import { pista, marcaPasoCompleto } from "../src/pista.js";
 import {
   GUIA, pasoGuia, saltosGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
-  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS,
+  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS, GUIA_VOZ_MAX_MS, esperaAutoGuia,
+  cadenaFocoGuia, focoAlCerrarSalir,
 } from "../src/guia.js";
 import {
   nuevo, cargar, registrar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, estrellasTemporada,
@@ -164,6 +165,11 @@ test("la guía no avanza sin el conteo, Listo espera el brillo y Atrás no sale 
   assert.equal(guiaAvanzaConToque("filas"), false);
   assert.equal(guiaAvanzaConToque("cada"), false);
   assert.equal(GUIA_TOQUE_MS, 2000);
+  assert.deepEqual(cadenaFocoGuia(), ["contador-filas", "contador-cada", "listo"]);
+  assert.equal(cadenaFocoGuia().includes("saltar"), false);
+  assert.equal(focoAlCerrarSalir("listo", false, base), "listo");
+  assert.equal(focoAlCerrarSalir("contador-cada", true, dos), "contador-cada");
+  assert.equal(focoAlCerrarSalir("", true, base), "contador-filas");
   assert.equal(efectoAtrasGuia(false), "preguntar");
   assert.equal(efectoAtrasGuia(true), "seguir");
   assert.notEqual(efectoAtrasGuia(true), "salir");
@@ -171,6 +177,17 @@ test("la guía no avanza sin el conteo, Listo espera el brillo y Atrás no sale 
   for (const estado of [base, dos, listo, { acepto: false, filas: 1, porFila: 1, fase: "plantar" }]) {
     assert.notEqual(focoGuia(estado), "saltar");
   }
+});
+
+test("el paso que solo se muestra espera a la voz, con tope de 3 s", () => {
+  assert.equal(guiaAvanzaConToque("pedido"), true);
+  assert.equal(guiaAvanzaConToque("filas"), false);
+  assert.equal(esperaAutoGuia(0), 2000);
+  assert.equal(esperaAutoGuia(undefined), 2000);
+  assert.equal(esperaAutoGuia(2600), 2600);
+  assert.equal(esperaAutoGuia(9000), 3000);
+  assert.equal(GUIA_VOZ_MAX_MS, 3000);
+  assert.equal(GUIA_TOQUE_MS, 2000);
 });
 
 test("ver el paso completo a los 40 s no cuenta como primer intento", () => {

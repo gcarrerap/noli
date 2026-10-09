@@ -8,6 +8,8 @@ export const GUIA = {
 };
 
 export const GUIA_TOQUE_MS = 2000;
+/** Tope de la espera cuando la voz del paso sigue sonando. */
+export const GUIA_VOZ_MAX_MS = 3000;
 
 export const PASOS = ["pedido", "filas", "cada", "listo", "abejas"];
 
@@ -44,10 +46,18 @@ export function textoGuia(paso, tv) {
   return { texto: modoTv ? c.tv : c.tactil, leer: modoTv ? c.leerTv : c.leerTactil };
 }
 
-// El paso 1 se va con un toque, con OK o solo a los 2 s.
+// El paso 1 se va con un toque, con OK, o solo cuando termina la voz.
+// Sin voz sigue a los 2 s. Con voz espera a que acabe, y nunca más de 3 s.
 // Los de contar solo cuando el número ya es el del ejemplo.
 export function guiaAvanzaConToque(paso) {
   return paso === "pedido";
+}
+
+/** Milisegundos del avance solo. 0 o un dato inválido: los 2 s de siempre. */
+export function esperaAutoGuia(msVoz) {
+  const v = Number(msVoz);
+  if (!Number.isFinite(v) || v <= 0) return GUIA_TOQUE_MS;
+  return Math.min(GUIA_VOZ_MAX_MS, v);
 }
 
 // El paso visible sale de lo que ya hizo, no de un temporizador.
@@ -64,7 +74,7 @@ export function listoGuiaActivo(estado) {
   return pasoGuia(estado) === "listo";
 }
 
-// A dónde va el foco solo. Nunca es Saltar: ese botón solo se enfoca si ella lo busca.
+// A dónde va el foco solo. Nunca es Saltar: no entra en el orden de las flechas.
 export function focoGuia(estado) {
   const paso = pasoGuia(estado);
   if (paso === "pedido") return "aceptar";
@@ -79,6 +89,17 @@ export function topeGuia(campo, max) {
   if (campo === "filas") return Math.min(max, GUIA.filas);
   if (campo === "cada") return Math.min(max, GUIA.porFila);
   return max;
+}
+
+// Izquierda y derecha entre los contadores y Listo. Saltar no está.
+export function cadenaFocoGuia() {
+  return ["contador-filas", "contador-cada", "listo"];
+}
+
+// Al cerrar «¿Salir?», el foco vuelve al control que lo tenía.
+export function focoAlCerrarSalir(guardado, esGuia, estado) {
+  if (guardado) return guardado;
+  return esGuia ? focoGuia(estado) : "";
 }
 
 // Atrás abre «¿Salir?» y el segundo lo cierra. No salta la guía ni sale del juego.

@@ -9,17 +9,24 @@ export function limpiarHabla(texto) {
     .trim();
 }
 
-export function decir(texto, { activo = true } = {}) {
+export function decir(texto, { activo = true, alTerminar } = {}) {
   const limpio = limpiarHabla(texto);
-  if (!activo || !limpio) return;
+  if (!activo || !limpio) return false;
   const s = typeof window !== "undefined" ? window.speechSynthesis : null;
   const U = typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null;
-  if (!s || !U) return;
+  if (!s || !U) return false;
   try {
     if (s.speaking || s.pending) s.cancel();
     const u = new U(limpio);
     u.lang = "es-ES";
     u.rate = 0.92;
+    if (typeof alTerminar === "function") {
+      u.onend = () => alTerminar();
+      u.onerror = () => alTerminar();
+    }
     s.speak(u);
-  } catch { /* la tele a veces no tiene voces */ }
+    return true;
+  } catch {
+    return false;
+  }
 }
