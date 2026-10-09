@@ -6,6 +6,7 @@ import { materias, jugableEn } from "../../engine/index.js";
 import { esc } from "../dom.js";
 import { nombreMateria, estrellasHtml } from "../labels.js";
 import { botonNube } from "../components/nube.js";
+import { botonCreditos, MONEDA } from "../components/creditos.js";
 import { chipRemoto, instalarChipRemoto } from "../components/remoto.js";
 
 const LETRAS = ["N", "o", "l", "i"];
@@ -16,6 +17,7 @@ export function renderCatalogo(app) {
   const tv = state.modo === "tv"; // en la TV, al final de los filtros va el botón del control remoto (issue #3)
   app.innerHTML = `
     <header class="cabeza">
+      ${botonCreditos()}
       ${botonNube()}
       <h1 class="marca" aria-label="Noli">${LETRAS.map((l, i) => `<span class="l${i}">${l}</span>`).join("")}</h1>
       <p class="saludo">¡Hola, Noelia! ¿A qué jugamos hoy?</p>
@@ -32,6 +34,7 @@ export function renderCatalogo(app) {
     </main>`;
 
   app.querySelector("#nubeBtn").onclick = actions.abrirNube;
+  app.querySelector("#creditosBtn").onclick = actions.abrirCreditos;
   for (const b of app.querySelectorAll(".chip[data-materia]")) b.onclick = () => actions.elegirMateria(b.dataset.materia || null);
   for (const t of app.querySelectorAll(".tarjeta")) {
     t.onclick = () => actions.abrir(t.dataset.id);
@@ -49,7 +52,7 @@ function tarjeta(j, i) {
     <span class="icono" aria-hidden="true">${j.iconoUrl ? `<img src="${esc(j.iconoUrl)}" alt="">` : esc(j.icono)}</span>
     <span class="titulo">${esc(j.titulo)}</span>
     ${j.descripcion ? `<span class="desc">${esc(j.descripcion)}</span>` : ""}
-    <span class="pie">${estrellasHtml(p ? p.estrellas : 0)}</span>
+    <span class="pie">${j.creditos === "gasta" && j.costo ? `<span class="costo">${MONEDA}${j.costo}</span>` : estrellasHtml(p ? p.estrellas : 0)}</span>
   </button>`;
 }
 

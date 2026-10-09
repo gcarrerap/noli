@@ -1,6 +1,6 @@
 // Reproductor: el juego abierto en un iframe a pantalla completa y el puente de mensajes con él
 // (protocolo en kit/protocolo.js). El iframe se crea una vez por juego abierto, no en cada redibujo.
-import { state, actions, conectarJuego } from "../../app/index.js";
+import { state, actions, conectarJuego, saldoActual } from "../../app/index.js";
 import { mensaje, esMensaje } from "../../../kit/protocolo.js";
 import { esc } from "../dom.js";
 
@@ -25,7 +25,11 @@ export function renderJugando(app) {
   actual = { id: j.id, frame, desconectar: conectarJuego((accion) => enviar(mensaje("entrada", { accion }))) };
 }
 
-const hola = (id) => mensaje("hola", { modo: state.modo, datos: actions.datosDe(id) });
+// El saldo de créditos solo se le da a los juegos que los gastan (#20)
+const hola = (id) => {
+  const j = state.juegos.find((x) => x.id === id);
+  return mensaje("hola", { modo: state.modo, datos: actions.datosDe(id), creditos: j && j.creditos === "gasta" ? saldoActual() : null });
+};
 
 export function cerrarReproductor() {
   if (!actual) return;
@@ -40,7 +44,11 @@ export function instalarPuente() {
     const m = e.data;
     if (m.tipo === "listo") actual.frame.contentWindow.postMessage(hola(actual.id), location.origin);
     else if (m.tipo === "guardar") actions.guardarDatos(actual.id, m.datos);
-    else if (m.tipo === "terminar") actions.terminar(actual.id, m.estrellas);
+    else if (m.tipo === "terminar") actions.terminar(actual.id, m.estrellas, m.reto === true);
+    else if (m.tipo === "gastar") {
+      const r = actions.gastar(actual.id, m.cantidad, m.motivo);
+      actual.frame.contentWindow.postMessage(mensaje("gasto", { id: m.id, ok: r.ok, saldo: r.saldo }), location.origin);
+    }
     else if (m.tipo === "salir") actions.cerrar();
   });
 }

@@ -76,6 +76,8 @@ noli/
 | `controles` | no | Con qué se puede jugar: `tactil`, `flechas` (teclado/control de la TV), `remoto` (teléfono como control). Por omisión `["tactil", "flechas"]`. En modo TV solo tienen sentido los que aceptan `flechas` o `remoto`. |
 | `entrada` | no | Página del juego, **relativa a su carpeta** (no se aceptan `..`, `/` ni URLs). Por omisión `index.html`. |
 | `version` | no | Versión propia del juego (útil cuando sea submódulo). |
+| `creditos` | no | Créditos (§12): `"gana"` (juego educativo: da créditos por sus estrellas y por el reto del día), `"gasta"` (los cobra, como la Pasarela) o nada (ni da ni gasta; por ejemplo `ejemplo`). |
+| `costo` | no | Solo con `"creditos": "gasta"`: entero de 1 a 100 que se muestra en la tarjeta del catálogo ("cuesta 3"). Es informativo: el juego cobra lo que pide con `Noli.gastar`. |
 
 Un manifiesto roto no tumba el catálogo: ese juego se omite y el error sale en la consola. La prueba `tests/catalogo.test.js` revisa que todos los juegos del registro tengan carpeta, manifiesto válido y página de entrada, así que un PR con un juego mal registrado no pasa.
 
@@ -87,10 +89,12 @@ El juego abierto corre en un `<iframe>` a pantalla completa (`ui/screens/jugando
 
 | Dirección | Mensaje | Cuándo |
 |---|---|---|
-| catálogo → juego | `{ tipo: "hola", modo, datos }` | Al cargar. `modo` es `"tactil"` o `"tv"` (el kit lo pone en `<html data-modo>` para que el juego ajuste tamaños). `datos`: lo que el juego guardó la última vez (o `null`). |
+| catálogo → juego | `{ tipo: "hola", modo, datos, creditos }` | Al cargar. `modo` es `"tactil"` o `"tv"` (el kit lo pone en `<html data-modo>` para que el juego ajuste tamaños). `datos`: lo que el juego guardó la última vez (o `null`). `creditos`: el saldo, solo si el juego tiene `"creditos": "gasta"` (si no, `null`). |
+| catálogo → juego | `{ tipo: "gasto", id, ok, saldo }` | Respuesta a `gastar` (§12): `ok` si se cobró, `saldo` después del cobro. |
 | catálogo → juego | `{ tipo: "entrada", accion }` | Una acción que llegó al catálogo (teclas con el foco fuera del iframe y el teléfono remoto). |
 | juego → catálogo | `{ tipo: "listo" }` | El kit ya escucha. |
-| juego → catálogo | `{ tipo: "terminar", estrellas }` | Terminó una partida (0 a 3 estrellas). El catálogo guarda la mejor y cuántas veces se ha jugado. |
+| juego → catálogo | `{ tipo: "terminar", estrellas, reto }` | Terminó una partida (0 a 3 estrellas). El catálogo guarda la mejor y cuántas veces se ha jugado, y si el juego da créditos los suma (§12). `reto: true` = fue el reto del día y se cumplió (bono una vez al día). |
+| juego → catálogo | `{ tipo: "gastar", id, cantidad, motivo }` | Pedir créditos (§12). `id` lo pone el kit para emparejar la respuesta `gasto`. |
 | juego → catálogo | `{ tipo: "guardar", datos }` | Guardar el progreso propio del juego (un objeto JSON). |
 | juego → catálogo | `{ tipo: "salir" }` | Regresar al catálogo. |
 
@@ -101,7 +105,9 @@ import { Noli } from "../../kit/noli.js";
 Noli.alEntrar((accion) => { /* "arriba" | "abajo" | "izquierda" | "derecha" | "ok" | "atras" */ });
 const datos = await Noli.datos;   // progreso guardado (o null)
 Noli.guardar(datos);
-Noli.terminar({ estrellas: 2 });
+Noli.terminar({ estrellas: 2 });          // reto: true si fue el reto del día cumplido
+const saldo = await Noli.creditos;          // solo juegos que gastan créditos (§12); si no, null
+const { ok, saldo: queda } = await Noli.gastar(3, "pasarela");
 Noli.salir();
 moverFoco(accion);                // flechas entre los botones [data-foco] según dónde están dibujados (kit/foco.js)
 ```
@@ -175,7 +181,7 @@ GitHub Pages publica submódulos si son públicos y usan URL `https://`. Un jueg
 ## 7. Estado, progreso y nube
 
 - `state.juegos`, `state.materia` (filtro), `state.foco`, `state.cols` (columnas reales de la cuadrícula, para que "abajo" baje una fila), `state.jugando`, `state.nube`.
-- **En el dispositivo**, en `localStorage`: `noli.progreso` (estrellas de cada juego en el catálogo), `noli.datos.<id>` (lo que cada juego guarda con `Noli.guardar`) y `noli.materia` (último filtro).
+- **En el dispositivo**, en `localStorage`: `noli.progreso` (estrellas de cada juego en el catálogo), `noli.datos.<id>` (lo que cada juego guarda con `Noli.guardar`), `noli.materia` (último filtro) y `noli.creditos` (el libro de créditos, §12).
 
 ### Nube (#7)
 
@@ -183,13 +189,13 @@ El progreso se sincroniza entre la TV y el teléfono con Firestore (proyecto `do
 
 ```
 noli_perfiles/{perfil}                  { creado }                            perfil: 24 caracteres aleatorios
-noli_perfiles/{perfil}/juegos/{juego}   { json, actualizado, dispositivo }    "_catalogo" = las estrellas
+noli_perfiles/{perfil}/juegos/{juego}   { json, actualizado, dispositivo }    "_catalogo" = las estrellas, "_creditos" = el libro de créditos (§12)
 noli_vinculos/{código}                  { creado, expira, perfil }            6 dígitos, 10 minutos
 ```
 
 - **Perfil sin cuentas.** El id del perfil es la llave: las reglas dejan leerlo con `get` (sabiendo el id) pero no listar perfiles. La entrada es anónima, como en el dominó. Con un id de 24 caracteres (unos 124 bits), adivinarlo no es práctico. Lo que hay ahí es el progreso de un juego de sumas, no datos personales.
 - **Vincular sin teclear en la TV.** El dispositivo nuevo (la TV) **enseña** un código de 6 dígitos; el que ya tiene el perfil (el teléfono) lo **escribe**. El teléfono pone el id del perfil en `noli_vinculos/{código}`, la TV lo recibe, lo guarda y borra el código. El primer dispositivo crea el perfil con "Es el primero: guardar en la nube".
-- **Quién gana.** Cada guardado marca `noli.nube.meta[id] = { actualizado, pendiente }`, haya nube o no. Al conectar y con cada cambio que llega (`onSnapshot`) gana, **por juego**, la versión con el `actualizado` más reciente. Lo pendiente se sube con una espera de 1.5 s y, si no hay internet, al regresar la conexión.
+- **Quién gana.** (Los créditos son la excepción: se juntan, no se pisan; ver §12.) Cada guardado marca `noli.nube.meta[id] = { actualizado, pendiente }`, haya nube o no. Al conectar y con cada cambio que llega (`onSnapshot`) gana, **por juego**, la versión con el `actualizado` más reciente. Lo pendiente se sube con una espera de 1.5 s y, si no hay internet, al regresar la conexión.
 - **Límite conocido:** si se juega el mismo juego en dos dispositivos sin conexión, al reconectar se queda el más reciente y lo del otro se pierde. Lo que ya había en un dispositivo antes de esta versión no tiene fecha, así que al vincularlo pierde contra la nube.
 - **El SDK de Firebase se carga solo si la nube está activada** y después de dibujar el catálogo: sin nube, Noli no descarga nada de Firebase.
 - **Reglas:** `firestore.rules` lleva las de las tres apps del proyecto (Noli, La Pata y el dominó), porque Firestore tiene un solo archivo de reglas y publicar uno reemplaza todo.
@@ -221,3 +227,75 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 - Cuentas o varios niños (un perfil por niño sería un selector antes del catálogo; el diseño de la nube ya lo permite).
 - Sonido y voz compartidos en el kit (cada juego trae los suyos; si se repiten, se suben al kit).
 - Un juego de varios jugadores en la misma TV (posible con dos teléfonos remotos, después de #3).
+
+## 12. Créditos (#20)
+
+Los créditos son el premio por practicar: se **ganan** en los juegos educativos y se **gastan** en juegos de premio como la Pasarela (#19). Viven en el catálogo, no en los juegos (los juegos son islas, §1, y el catálogo es el dueño del almacenamiento, §4). Ningún juego lleva la cuenta: el que gana solo manda `terminar`, y el que gasta pide con `Noli.gastar` y el catálogo valida y descuenta.
+
+### Reglas
+
+Están en **un solo lugar**, `src/engine/creditos.js → REGLAS`:
+
+| Regla | Valor | Qué hace |
+|---|---|---|
+| `porEstrella` | 1 | Créditos por cada estrella de una partida (0 a 3) de un juego con `"creditos": "gana"`. |
+| `porReto` | 2 | Extra al cumplir el reto del día (`terminar({ reto: true })`). Una vez por juego y por día. |
+| `topeDiario` | 15 | Lo más que un juego da en un día (estrellas + reto). Evita repetir lo más fácil solo por créditos: la partida sigue contando para el juego, solo deja de dar créditos, y la celebración lo dice ("Hoy ya ganaste todos los créditos de este juego"). |
+| `diasCompactar` | 60 | Los movimientos propios más viejos se suman en un cierre (ver abajo). |
+| `maxGasto`, `maxRegalo` | 100 | Límites de un solo gasto y de un regalo de papás. |
+
+El **costo** de lo que se compra lo decide el juego que gasta (la Pasarela: `minijuegos/pasarela/datos/config.json`) y lo anuncia en `juego.json → costo` para la tarjeta. Con los valores de hoy, una buena partida de sumas (3 estrellas) paga una pasarela (3 créditos).
+
+Al cumplir el reto del día, Sumas y restas y Spelling mandan `terminar({ estrellas: 3, reto: true })` una vez (la primera vez que se cumple ese día). El "día" es el del reloj del aparato (`dia()`, hora local).
+
+### El libro de movimientos
+
+El saldo no se guarda como un número sino como un libro (`noli.creditos` y en la nube `juegos/_creditos`):
+
+```js
+{ v: 1,
+  movs: [{ id, f, n, j, m, d }],      // id único · f fecha ms · n +gana/−gasta · j juego · m motivo · d dispositivo
+  cierres: { [d]: { hasta, suma } } } // lo viejo del dispositivo d, ya sumado
+// saldo = Σ cierres.suma + Σ movs.n      (Noelia ve max(0, saldo))
+```
+
+Motivos: `estrellas`, `reto`, `gasto`, `regalo`, `ajuste` (los dos últimos, de papás).
+
+**Por qué un libro y no un número:** con "gana el más reciente" (§7), si la TV gana 3 y el teléfono gasta 3 sin conexión, al reconectar uno pisa al otro y se pierde (o se regala) algo. Con el libro, cada lado aporta sus movimientos y la unión los tiene todos.
+
+### Sincronizar: juntar, no pisar
+
+`app/sync.js` trata `_creditos` aparte: en lugar de quedarse con lo más nuevo, llama a `unir(local, nube)`:
+
+- movimientos: unión por `id` (un id es `dispositivo-fecha-contador-azar`, así que dos aparatos nunca chocan);
+- cierres: por dispositivo, el de `hasta` mayor; los movimientos ya incluidos en un cierre (`f ≤ hasta` del mismo dispositivo) se descartan para no contarlos dos veces;
+- si lo juntado trae algo que la nube no tenía, se vuelve a subir. `unir` es conmutativa e idempotente, así que los dos aparatos terminan con lo mismo aunque suban al mismo tiempo (el que pisó recibe el `onSnapshot`, junta y vuelve a subir).
+
+**Ejemplo** (prueba `tests/creditos.test.js`): saldo 15 en los dos. Sin internet, la TV gana 3 y gasta 3 (queda en 15); el teléfono gana 2 y gasta 3 (queda en 14). Al regresar el internet el teléfono sube sus 2 movimientos; la TV recibe ese libro, lo junta con sus 2 y sube los 4; el teléfono recibe los 4. Los dos quedan en 15 + 3 − 3 + 2 − 3 = **14**, y no se perdió ningún movimiento.
+
+**Gastar sin conexión** se permite si el saldo local alcanza. Si al juntar resulta negativo (los dos aparatos gastaron lo mismo), Noelia ve 0 y lo negativo se cubre con lo siguiente que gane.
+
+**Compactar.** Un documento de Firestore tiene límite (las reglas piden `json` de menos de 200 000 caracteres). Cada vez que este aparato guarda, `compactar()` suma en `cierres[este dispositivo]` sus propios movimientos de hace más de 60 días. Solo compacta los suyos, así cada cierre tiene un solo dueño y `unir` sigue siendo correcto. Un aparato que se deja de usar conserva sus movimientos sin compactar (son pocos). No hace falta cambiar `firestore.rules`: `_creditos` es un documento más de `juegos/`.
+
+### En el catálogo
+
+- Pastilla con la moneda y el saldo, arriba a la izquierda (`ui/components/creditos.js`). En la TV: desde los filtros, arriba llega a la nube; izquierda/derecha cambia entre nube y créditos.
+- Ventana de créditos: saldo, cómo se ganan con lo ganado hoy por juego (`x de 15 hoy`), en qué se usan (juegos que gastan con su costo), historial de los últimos 20 movimientos.
+- **Para papás:** regalar (+1, +5, +10) o quitar (−1, −5). Antes pide una multiplicación de una cifra (6–9 × 6–9) con tres opciones, suficiente para que Noelia no lo haga por accidente. Queda en el historial como "Regalo de papás" o "Ajuste de papás".
+- Al regresar de un juego, la celebración dice "+3 créditos".
+- La tarjeta de un juego que gasta muestra su costo en lugar de las estrellas.
+
+### Para quien haga un juego
+
+- **Un juego educativo** solo agrega `"creditos": "gana"` a su `juego.json`. Si tiene reto del día, al cumplirlo por primera vez en el día manda `Noli.terminar({ estrellas: 3, reto: true })`.
+- **Un juego de premio** agrega `"creditos": "gasta"` y `"costo": N`, y cobra así:
+
+```js
+const r = await Noli.gastar(3, "pasarela");    // { ok, saldo }
+if (r.ok) empezar(); else mostrarCuantosFaltan(3 - (r.saldo || 0));
+```
+
+  `Noli.creditos` da el saldo al abrir (para enseñarlo); después usa el `saldo` que regresa `gastar`. Si el catálogo no contesta en 5 s, `ok` es `false`. Abierto solo (sin catálogo), el kit simula 10 créditos en `localStorage["noli.solo.creditos"]`.
+- Un juego no puede dar créditos (solo el catálogo, a partir de `terminar`) ni gastar si no declara `"gasta"`.
+
+Código: `src/engine/creditos.js` (lógica pura), `src/app/actions.js` (`terminar`, `gastar`, `regalarCreditos`), `src/app/sync.js` (`juntarCreditos`), `src/ui/components/creditos.js`, `kit/noli.js`. Pruebas: `tests/creditos.test.js`.

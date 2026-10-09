@@ -5,20 +5,35 @@
 //   noli.nube.meta = { [id]: { actualizado (ms), pendiente (falta subirlo) } }
 // Regla: gana la versión con el `actualizado` más reciente. Se guarda primero aquí (funciona sin internet) y se
 // sube después; lo pendiente se sube al reconectar.
+//
+// Excepción: los créditos ("_creditos", #20) no se pisan, se JUNTAN (engine/creditos.js → unir): son un libro de
+// movimientos y la unión de los dos lados nunca pierde lo que se ganó o gastó en otro dispositivo sin conexión.
+// Si lo juntado tiene algo que la nube no, se vuelve a subir.
 import { ls, leerJsonLs, leerDatosJuego, guardarDatosJuego, initFirebase,
   crearPerfil, existePerfil, nuevoIdPerfil, subirJuego, leerJuegos, escucharJuegos,
   crearVinculo, escucharVinculo, borrarVinculo, completarVinculo, VINCULO_DURA_MS } from "../services/index.js";
+import { leerLibro, unir, iguales } from "../engine/index.js";
 import { state, notify } from "./store.js";
 
 export const CATALOGO = "_catalogo";
+export const CREDITOS = "_creditos";
 const K = { perfil: "noli.nube.perfil", meta: "noli.nube.meta", dev: "noli.dev" };
 
-const dispositivo = ls.get(K.dev) || ("d" + Math.random().toString(36).slice(2, 10));
-ls.set(K.dev, dispositivo);
+// Id de este dispositivo (se guarda la primera vez). Marca los movimientos de créditos que crea este aparato.
+function idDispositivo() {
+  const d = ls.get(K.dev) || ("d" + Math.random().toString(36).slice(2, 10));
+  ls.set(K.dev, d);
+  return d;
+}
+let dispositivo = idDispositivo();
+export { dispositivo };
 
 let cfg = { obtenerFs: () => initFirebase(), espera: 1500, ahora: () => Date.now() };
 let fs = null, dejarDeEscuchar = null, dejarVinculo = null, timerSubir = null, timerVinculo = null;
 let meta = leerJsonLs(K.meta, {});
+
+/** Hora actual (la de las pruebas si se configuró otro reloj) */
+export const ahora = () => cfg.ahora();
 
 // Solo para pruebas: otro Firestore, sin espera, otro reloj; y volver a leer lo guardado
 export function _configurar(c) { cfg = { ...cfg, ...c }; }
@@ -28,6 +43,7 @@ export function _reiniciar() {
   clearTimeout(timerSubir); clearTimeout(timerVinculo);
   fs = dejarDeEscuchar = dejarVinculo = null;
   meta = leerJsonLs(K.meta, {});
+  dispositivo = idDispositivo();
   Object.assign(state.nube, inicial());
 }
 
@@ -42,9 +58,10 @@ const poner = (cambios, what) => { Object.assign(state.nube, cambios); notify(wh
 
 // ---------- Lo local: datos de cada juego y las estrellas del catálogo ----------
 
-function leerLocal(id) { return id === CATALOGO ? state.progreso : leerDatosJuego(id); }
+function leerLocal(id) { return id === CATALOGO ? state.progreso : id === CREDITOS ? state.creditos : leerDatosJuego(id); }
 function escribirLocal(id, datos) {
   if (id === CATALOGO) { state.progreso = datos || {}; ls.set("noli.progreso", JSON.stringify(state.progreso)); }
+  else if (id === CREDITOS) { state.creditos = leerLibro(datos); ls.set("noli.creditos", JSON.stringify(state.creditos)); }
   else guardarDatosJuego(id, datos);
 }
 // Ids con algo guardado aquí
@@ -52,6 +69,7 @@ function idsLocales() {
   const ids = new Set(Object.keys(meta));
   for (const j of state.juegos) if (leerDatosJuego(j.id) != null) ids.add(j.id);
   if (Object.keys(state.progreso || {}).length) ids.add(CATALOGO);
+  if (state.creditos.movs.length || Object.keys(state.creditos.cierres).length) ids.add(CREDITOS);
   return [...ids];
 }
 
@@ -89,6 +107,7 @@ export async function subirPendientes() {
 function aplicarRemotos(lista) {
   let cambio = false;
   for (const r of lista) {
+    if (r.juego === CREDITOS) { if (juntarCreditos(r)) cambio = true; continue; }
     const m = meta[r.juego];
     if (m && m.actualizado >= r.actualizado) continue; // lo de aquí es igual o más nuevo
     escribirLocal(r.juego, r.datos);
@@ -99,12 +118,30 @@ function aplicarRemotos(lista) {
   return cambio;
 }
 
+// Créditos: juntar el libro de la nube con el de aquí. Si lo de aquí trae algo que la nube no tiene, queda pendiente
+// de subir (así el otro dispositivo también lo recibe). Devuelve true si cambió lo local.
+function juntarCreditos(r) {
+  const remoto = leerLibro(r.datos);
+  const junto = unir(state.creditos, remoto);
+  const cambioLocal = !iguales(junto, state.creditos);
+  if (cambioLocal) escribirLocal(CREDITOS, junto);
+  if (!iguales(junto, remoto)) {
+    meta[CREDITOS] = { actualizado: Math.max(cfg.ahora(), r.actualizado + 1), pendiente: true };
+    if (fs && state.nube.perfil) { clearTimeout(timerSubir); timerSubir = setTimeout(subirPendientes, cfg.espera); }
+  } else if (!meta[CREDITOS] || !meta[CREDITOS].pendiente) meta[CREDITOS] = { actualizado: r.actualizado, pendiente: false };
+  return cambioLocal;
+}
+
 // Al conectar: tomar lo más nuevo de la nube y subir lo que aquí es más nuevo o no está allá
 async function reconciliar() {
   const remotos = await leerJuegos(fs, state.nube.perfil);
   aplicarRemotos(remotos);
   const enNube = new Map(remotos.map((r) => [r.juego, r.actualizado]));
   for (const id of idsLocales()) {
+    if (id === CREDITOS) { // si la nube ya los tenía, juntarCreditos decidió; si no, hay que subirlos
+      if (!enNube.has(id)) meta[id] = { actualizado: cfg.ahora(), pendiente: true };
+      continue;
+    }
     const m = meta[id] || (meta[id] = { actualizado: 0, pendiente: true });
     if (!enNube.has(id) || m.actualizado > enNube.get(id)) m.pendiente = true;
   }

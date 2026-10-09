@@ -214,6 +214,8 @@ function finReto() {
   const antes = !!pr.retos[hoy()]?.cumplido;
   pr = cumplirReto(pr, hoy(), r.tipo, puntos, cumplido);
   guardar();
+  // Reto cumplido por primera vez hoy: cuenta como partida de 3 estrellas y da el bono de créditos del reto (#20)
+  if (cumplido && !antes) Noli.terminar({ estrellas: 3, reto: true });
   const detalle = r.tipo === "contrarreloj" ? `${puntos} bien en 60 segundos (meta: ${r.objetivo})`
     : r.tipo === "palabras" ? `${puntos} de ${r.cuantos} bien` : `${puntos} seguidas sin fallar`;
   mostrar(`
