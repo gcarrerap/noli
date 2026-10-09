@@ -1,0 +1,14 @@
+{
+  "id": "cajas-sorpresa",
+  "titulo": "Cajas sorpresa",
+  "descripcion": "Abre cajas y junta la colección de Brumitos.",
+  "icono": "icono.svg",
+  "color": "#c4a6e8",
+  "materia": "premio",
+  "edades": [6, 11],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gasta",
+  "costo": 5
+}

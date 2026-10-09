@@ -1,0 +1,249 @@
+/* Cajas sorpresa. Estilos propios: el juego no usa los del catálogo. */
+:root {
+  --fg: #f6f0ff;
+  --ink: #2b2236;
+  --muted: #d9cfee;
+  --card: #fff8ef;
+  --line: #e4d3f5;
+  --uva: #c4a6e8;
+  --sol: #ffc43d;
+  --crema: #efe3cc;
+  --plata: #d5dbe3;
+  --foco: #fff8e8;
+  --halo: #ffc43d;
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+html[data-modo="tv"] { font-size: 18px; }
+html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 196, 120, .45), transparent 42%),
+    radial-gradient(circle at 90% 8%, rgba(184, 162, 214, .45), transparent 36%),
+    linear-gradient(#2a2144, #1b1430 46%, #3a2a22);
+  color: var(--fg);
+  font-family: "Nunito", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+:focus { outline: none; }
+html.teclado [data-foco]:focus {
+  outline: 5px solid var(--foco);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 9px var(--halo);
+  position: relative;
+  z-index: 3;
+}
+main {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: max(8px, env(safe-area-inset-top)) 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+html[data-modo="tv"] main {
+  padding: 36px;
+  max-height: 100dvh;
+  overflow: hidden;
+  justify-content: center;
+}
+.cargando { color: var(--muted); margin: auto; }
+h1, h2, h3 { font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; margin: 0; line-height: 1.05; }
+h1 { font-size: 1.7rem; }
+h2 { font-size: 1.35rem; }
+.sub, .nota, .garantia, .cuenta, .prob-intro { margin: 0; }
+.sub { color: var(--muted); font-weight: 800; }
+.aviso { margin: 0; font-weight: 800; font-size: 1.05rem; max-width: 28rem; }
+.aviso.amable, .aviso.descanso { color: #ffe7a3; }
+.garantia { font-weight: 800; font-size: 1rem; }
+.cuenta { color: var(--muted); font-weight: 800; }
+
+.cab { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.marca-juego { text-align: left; }
+.saldos { display: flex; gap: 8px; }
+.saldo, .boton small { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+.icono-credito, .icono-polvo { width: 28px; height: 28px; }
+
+.boton {
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: .4em .9em;
+  font-weight: 800;
+  min-height: 64px;
+  min-width: 64px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .18);
+}
+.boton.grande {
+  font-family: "Fredoka", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  border-radius: 22px;
+  width: min(100%, 280px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+.boton.grande small { font-family: "Nunito", sans-serif; font-size: .8rem; }
+.boton.primario { background: var(--uva); }
+.boton:disabled, .hueco:disabled {
+  opacity: .45;
+  filter: grayscale(.25);
+  box-shadow: none;
+  cursor: default;
+}
+.saltar { min-width: 64px; }
+.fila { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+.fila .boton { flex: 1 1 140px; }
+
+.layout-tienda { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.col-caja, .col-info { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+html[data-modo="tv"] .layout-tienda {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 28px;
+  align-items: center;
+}
+html[data-modo="tv"] .cab { grid-column: 1 / -1; }
+
+.caja-svg { width: min(42vw, 150px); height: auto; }
+html[data-modo="tv"] .caja-svg { width: 180px; }
+.abriendo .tapa { transform-origin: 80px 58px; animation: levantar .9s ease forwards; }
+@keyframes levantar { to { transform: translateY(-26px) rotate(-8deg); } }
+
+.frase-guia {
+  width: min(100%, 34rem);
+  min-height: 64px;
+  background: #fff8ef;
+  color: var(--ink);
+  border-radius: 18px;
+  padding: .5em .8em;
+  font-weight: 800;
+  font-size: 1.2rem;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .18);
+}
+
+.prob { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.prob li { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; font-weight: 800; }
+.fichas { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 100%; }
+.mini { width: 18px; height: 24px; border-radius: 4px; border: 2px solid var(--crema); background: #fff; display: inline-block; }
+.mini-comun { background: var(--crema); }
+.mini-rara { background: linear-gradient(#fff, var(--plata)); border-color: #b7c0cc; }
+.mini-ultra { border-color: transparent; background: linear-gradient(120deg, #ff8ad4, #8af0ff, #ffe38a); }
+.fichas-ultra .mini { width: 12px; height: 16px; }
+
+.vitrina {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+html[data-modo="tv"] .vitrina { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.hueco {
+  min-width: 0;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px 8px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--ink);
+  border-radius: 16px;
+}
+.hueco b { font-size: .85rem; line-height: 1.1; }
+.hueco small { font-size: .68rem; font-weight: 800; color: #6d6284; }
+.foto { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; background: rgba(255, 255, 255, .45); border-radius: 10px; }
+.estrellas { display: flex; justify-content: center; gap: 2px; }
+.estrella { width: 14px; height: 14px; }
+
+.marco { position: relative; }
+.marco-comun { box-shadow: inset 0 0 0 4px var(--crema); }
+.marco-rara { box-shadow: inset 0 0 0 4px #c5ced8; }
+.marco-ultra {
+  border: 4px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(120deg, #ff8ad4, #8af0ff, #ffe38a, #c79bff) border-box;
+  box-shadow: none;
+}
+.marco-comun .estrellas { color: #b89a55; }
+.marco-rara .estrellas { color: #7d8796; }
+.marco-ultra .estrellas { color: #a24ed8; }
+.brillo-rara::after, .brillo-ultra::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.brillo-rara::after {
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, .75) 50%, transparent 68%);
+  background-size: 220% 100%;
+  animation: brillo 2.6s linear infinite;
+}
+.brillo-ultra::after {
+  background: linear-gradient(120deg, rgba(255, 80, 160, .28), rgba(80, 230, 255, .28), rgba(255, 220, 80, .32), rgba(170, 110, 255, .28));
+  background-size: 220% 220%;
+  mix-blend-mode: screen;
+  animation: holo 3.2s linear infinite;
+}
+@keyframes brillo { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+@keyframes holo { from { background-position: 0 0; } to { background-position: 100% 100%; } }
+
+.carta-grande {
+  width: min(100%, 300px);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 22px;
+  padding: 10px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.carta-grande h2 { font-size: 1.8rem; }
+.carta-grande p { margin: 0; font-weight: 800; }
+.carta-grande .foto-grande { width: 100%; height: auto; border-radius: 14px; }
+.carta-grande .aviso { color: #6a4a12; }
+
+.historial { list-style: none; margin: 0; padding: 0; width: 100%; text-align: left; max-width: 36rem; }
+.historial li { padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .15); font-weight: 800; }
+.limite p { min-width: 8rem; font-weight: 800; font-size: 1.1rem; }
+
+.velo {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 12, 32, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 5;
+}
+html[data-modo="tv"] .velo { padding: 36px; }
+.dialogo {
+  width: min(100%, 360px);
+  background: #fff8ef;
+  color: var(--ink);
+  border-radius: 24px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.dialogo p { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-size: 2rem; font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .abriendo .tapa, .brillo-rara::after, .brillo-ultra::after { animation: none; }
+}
