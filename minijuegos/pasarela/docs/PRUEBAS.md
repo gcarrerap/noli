@@ -20,6 +20,7 @@ node --test minijuegos/pasarela/tests/pasarela.test.js     # solo las de la Pasa
 | 2D | Cada prenda tiene figura, miniatura y muñeca sin `undefined`/`NaN` |
 | Patrones y estampados (#79) | El arte (64×64, fondo `{p}`, nada de fuera); `pintarSVG`; qué prendas aceptan patrón; poner/cambiar/quitar; frase en inglés; jueces; validación de `calca` y `patrones.json`; panel, pantalla de nivel y 2D |
 | Taller (#80) | **Todas las combinaciones de todos los moldes**: ningún tubo más delgado que la ropa del catálogo en esa ancla, listones y calcomanías por fuera de la tela, una calcomanía por lugar, figura 2D, menos de 6 000 triángulos en 3D; diseño → prenda (nombre, temas → etiquetas, patrón fijo, frase en inglés, encaje 3); `limpiarDiseno` con basura; espacios; nombres sugeridos; progreso v1 → v2 y que el atuendo con un diseño sobreviva; **tamaño máximo guardado < 20 000 caracteres**; pantallas de cada paso; molde mal escrito; ruta hasta el Taller y Mis diseños; Don Detalle |
+| Dibujos (#81) | `pixeles.js`: pintar, espejo, borrar, deshacer con tope, línea sin huecos; cubeta (solo la mancha, con espejo); comprimir ↔ descomprimir con varios dibujos; lo peor < 600 caracteres; basura; dibujo → estampado propio → calcomanía de un diseño → 2D y 3D; colores 1/2 siguen a la prenda; leer dibujos antes que diseños; tope de dibujos; el editor (256 cuadros); todo lleno < 20 000 caracteres |
 | 3D | El personaje tiene todas las anclas; **cada prenda se arma con Three.js** (en Node) y anima en las 6 posturas; ninguna pasa de 6 000 triángulos; el `.glb` existe, es glTF y pesa menos de 200 KB |
 
 Además, las pruebas del repo revisan que `juego.json` sea válido (incluido `"creditos": "gasta"` y `"costo"`), que el juego esté en `catalogo.json`, y que cada módulo (también `kit/3d/vendor/`) se analice y sus imports existan (`tests/sintaxis.test.js`). `herramientas/simular-curva.mjs` es `.mjs` para que esa prueba no lo trate como parte del juego.
@@ -60,6 +61,8 @@ Abrir `https://gcarrerap.github.io/noli/` (en la TV, `?modo=tv`). Para tener cr�
 - [ ] Coser descuenta 5 (revisar en el catálogo); sin créditos: "Te faltan N" y el borrador sigue; con los espacios llenos no deja coser.
 - [ ] Mis diseños: el diseño aparece, se pone, va a la pasarela (Don Detalle lo comenta), sale en el clóset y en el modo sencillo; "Descoser" pregunta.
 - [ ] Recargar: los diseños siguen; en la TV aparecen los del teléfono (sincronización).
+- [ ] Dibujar (#81): pintar arrastrando el dedo sin que la página se mueva ni haga zoom; espejo, rellenar, borrador, deshacer; guardar con nombre; se ve en la prenda en 3D y en el modo sencillo; con los colores 1/2 cambia al cambiar el color de la prenda; "Cambiar mi dibujo" y "Borrar".
+- [ ] En la TV: con flechas el cursor se ve en la cuadrícula y OK pinta.
 
 ### LG webOS y Samsung Tizen (control de la tele)
 

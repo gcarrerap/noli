@@ -11,6 +11,7 @@ import { crearJoystick } from "../../../../kit/3d/joystick.js";
 import { hayVoz, decir } from "./voz.js";
 import * as P from "./pantallas.js";
 import { atuendoVacio, atuendoInicial, poner, ponerPatron, colorPuesto, patronPuesto, fraseIngles, quitar } from "../atuendo.js";
+import * as PX from "../pixeles.js";
 import { nuevoDiseno, limpiarDiseno, prendaDeDiseno, registrarDisenos, espacios, ajustesDe, limpiarNombre, prendasDeDisenos } from "../taller.js";
 import { calificar } from "../puntuacion.js";
 import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, nivelDePrenda, esNuevo } from "../progreso.js";
@@ -434,16 +435,21 @@ function irPasoTaller(paso) {
 function dibujarTaller(enfocar) {
   const el = $("panel"), t = S.taller;
   const enfocado = el.contains(document.activeElement) ? document.activeElement : null;
-  const clave = enfocado && ["accion", "paso", "molde", "control", "opcion", "color", "patron", "lugar", "estampado", "tema"].map((k) => enfocado.dataset[k] || "").join("|");
+  const CLAVES = ["accion", "paso", "molde", "control", "opcion", "color", "patron", "lugar", "estampado", "tema", "i", "ficha", "herramienta"];
+  const clave = enfocado && CLAVES.map((k) => enfocado.dataset[k] || "").join("|");
   const total = espacios(S.nivel.i, S.idx.config);
   el.classList.add("taller");
   el.innerHTML = P.taller({ idx: S.idx, diseno: t.diseno, paso: t.paso, ab: S.ab, saldo: S.saldo, costo: S.idx.config.taller.costo,
-    libres: total - S.progreso.disenos.length, total, lugar: t.lugar, girar: S.vista.tipo === "3d", faltan: t.faltan });
+    libres: total - S.progreso.disenos.length, total, lugar: t.lugar, girar: S.vista.tipo === "3d", faltan: t.faltan,
+    dibujo: S.dibujo, dibujos: S.progreso.dibujos.length });
+  el.classList.toggle("dibujando", t.paso === "dibujo");
+  const dn = document.getElementById("d-nombre");
+  if (dn) dn.addEventListener("input", () => { if (S.dibujo) S.dibujo.nombre = dn.value; });
   el.hidden = false;
   const nombre = document.getElementById("t-nombre");
   if (nombre) nombre.addEventListener("input", () => { clearTimeout(S._nombreTimer); S._nombreTimer = setTimeout(leerNombreTaller, 400); });
   if (clave) {
-    const otro = [...el.querySelectorAll("[data-accion]")].find((b) => ["accion", "paso", "molde", "control", "opcion", "color", "patron", "lugar", "estampado", "tema"].map((k) => b.dataset[k] || "").join("|") === clave);
+    const otro = [...el.querySelectorAll("[data-accion]")].find((b) => CLAVES.map((k) => b.dataset[k] || "").join("|") === clave);
     if (otro) return otro.focus({ preventScroll: false });
   }
   if (enfocar && (S.tv || document.documentElement.classList.contains("teclado"))) focoInicial(el);
@@ -451,6 +457,8 @@ function dibujarTaller(enfocar) {
 
 function salirDelTaller() {
   const t = S.taller;
+  S.dibujo = null;
+  $("panel").classList.remove("dibujando");
   leerNombreTaller();
   S.taller = null;
   // Se quita la prenda de prueba; vuelve a lo que traía
@@ -483,6 +491,107 @@ async function coser() {
   guardar(true);
   cerrarPanel();
   toast(`¡Cosiste «${d.nombre}»! Está en Mis diseños`);
+}
+
+// ---------- Dibujar estampados (#81; src/pixeles.js) ----------
+
+function abrirDibujo(id) {
+  const t = S.taller;
+  if (!id && S.progreso.dibujos.length >= S.idx.config.taller.maxDibujos) return toast(`Ya tienes ${S.idx.config.taller.maxDibujos} dibujos: borra uno para hacer otro`);
+  const g = id && S.progreso.dibujos.find((d) => d.id === id);
+  S.dibujo = { id: g ? g.id : null, nombre: g ? g.nombre : "", lado: g ? g.lado : PX.LADO, celdas: g ? PX.descomprimir(g, (c) => S.idx.colores.has(c)) : PX.vacio(),
+    historial: [], herramienta: "lapiz", ficha: "negro", espejo: false };
+  t.pasoAntes = t.paso; t.paso = "dibujo";
+  dibujarTaller(true);
+}
+
+function cerrarDibujo() {
+  S.dibujo = null;
+  S.taller.paso = "decorar";
+  dibujarTaller(true);
+}
+
+/** Pinta con la herramienta escogida (cubeta: rellena). nuevo = empieza un trazo (para deshacer). */
+function pintarCelda(i, nuevo) {
+  const d = S.dibujo;
+  if (!d) return;
+  const antes = d.celdas;
+  const ficha = d.herramienta === "borrador" ? "" : d.ficha;
+  const op = { lado: d.lado, espejo: d.espejo };
+  const despues = d.herramienta === "cubeta" ? PX.rellenar(antes, i, ficha, op) : PX.pintar(antes, i, ficha, op);
+  if (despues === antes) return;
+  if (nuevo) d.historial = PX.recordar(d.historial, antes);
+  d.celdas = despues;
+  // Solo se repintan los cuadros que cambiaron (rápido mientras se arrastra el dedo)
+  const lienzo = $("panel").querySelector(".cuadricula");
+  if (!lienzo) return;
+  const hexP = (S.idx.colores.get(S.taller.diseno.color) || {}).hex, hexS = (S.idx.colores.get(S.taller.diseno.secundario) || {}).hex;
+  const hex = (f) => (!f ? "" : f === "P" ? hexP : f === "S" ? hexS : (S.idx.colores.get(f) || {}).hex);
+  despues.forEach((f, k) => { if (f !== antes[k]) { const b = lienzo.children[k]; if (b) b.style.setProperty("--c", hex(f) || "transparent"); } });
+  const des = $("panel").querySelector('[data-accion="d-deshacer"]');
+  if (des) des.disabled = !d.historial.length;
+}
+
+/** Pintar con el dedo o el ratón: un trazo va de tocar a soltar; la página no se mueve (touch-action: none) */
+function instalarLienzo() {
+  let trazo = null;
+  const celda = (e) => {
+    const l = $("panel").querySelector(".cuadricula");
+    if (!l || !S.dibujo) return -1;
+    const r = l.getBoundingClientRect(), n = S.dibujo.lado;
+    const x = Math.floor(((e.clientX - r.left) / r.width) * n), y = Math.floor(((e.clientY - r.top) / r.height) * n);
+    return x >= 0 && x < n && y >= 0 && y < n ? y * n + x : -1;
+  };
+  document.addEventListener("pointerdown", (e) => {
+    if (!S.dibujo || !e.target.closest(".cuadricula")) return;
+    e.preventDefault();
+    const i = celda(e);
+    if (i < 0) return;
+    trazo = { id: e.pointerId, ultimo: i };
+    try { e.target.closest(".cuadricula").setPointerCapture(e.pointerId); } catch {}
+    pintarCelda(i, true);
+  });
+  document.addEventListener("pointermove", (e) => {
+    if (!trazo || e.pointerId !== trazo.id || !S.dibujo || S.dibujo.herramienta === "cubeta") return;
+    const i = celda(e);
+    if (i >= 0 && i !== trazo.ultimo) { for (const k of PX.linea(trazo.ultimo, i, S.dibujo.lado)) pintarCelda(k, false); trazo.ultimo = i; }
+  });
+  const fin = () => { trazo = null; };
+  document.addEventListener("pointerup", fin);
+  document.addEventListener("pointercancel", fin);
+}
+
+function guardarDibujo() {
+  const d = S.dibujo, idx = S.idx, cfg = idx.config.taller;
+  const i = document.getElementById("d-nombre");
+  if (i) d.nombre = i.value;
+  if (PX.estaVacio(d.celdas)) return toast("Dibuja algo primero");
+  const ahora = Date.now();
+  const g = PX.limpiarDibujo({ id: d.id || "px-" + ahora.toString(36) + Math.random().toString(36).slice(2, 5), nombre: d.nombre || `Mi dibujo ${S.progreso.dibujos.length + 1}`, ...PX.comprimir(d.celdas, d.lado), fecha: ahora }, idx, cfg.maxNombre);
+  const dibujos = d.id ? S.progreso.dibujos.map((x) => (x.id === d.id ? g : x)) : [...S.progreso.dibujos, g].slice(-cfg.maxDibujos);
+  S.progreso = { ...S.progreso, dibujos };
+  PX.registrarDibujos(idx, dibujos);
+  // Si cambió un dibujo, las texturas viejas se quedan en el caché con otra clave; las prendas se vuelven a vestir
+  registrarDisenos(idx, S.progreso.disenos);
+  guardar(true);
+  S.dibujo = null;
+  S.taller.paso = "decorar";
+  toast(`¡Guardaste «${g.nombre}»!`);
+  ponerCalca(g.id);
+}
+
+function borrarDibujo(id) {
+  cerrarModal();
+  const idx = S.idx;
+  const dibujos = S.progreso.dibujos.filter((d) => d.id !== id);
+  PX.registrarDibujos(idx, dibujos);
+  // Los diseños que lo traían se quedan sin esa calcomanía (limpiarDiseno quita lo que ya no existe)
+  const disenos = S.progreso.disenos.map((d) => limpiarDiseno(d, idx)).filter(Boolean);
+  S.progreso = { ...S.progreso, dibujos, disenos };
+  registrarDisenos(idx, disenos);
+  if (S.taller) cambiarDiseno({ calcas: S.taller.diseno.calcas.filter((c) => c.estampado !== id) });
+  guardar(true);
+  toast("Dibujo borrado");
 }
 
 function descoser(id) {
@@ -571,8 +680,11 @@ function cadaCuadro() {
 function instalarEntrada() {
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-accion]");
+    // Los cuadros del dibujo se pintan con el dedo (pointer, abajo); el click solo cuenta con OK o Enter (detail 0)
+    if (b && b.dataset.accion === "d-px" && e.detail !== 0) return;
     if (b) accion(b.dataset.accion, b);
   });
+  instalarLienzo();
   // En el probador: arrastrar el dedo (o el ratón) sobre la escena gira al personaje
   let arrastre = null;
   $("escena").addEventListener("pointerdown", (e) => { if (S.zona && S.vista.tipo === "3d") arrastre = { x: e.clientX, id: e.pointerId }; });
@@ -603,7 +715,7 @@ function manejar(a) {
     enfocar($("modal")); return true;
   }
   if (S.zona) {
-    if (a === "atras") { cerrarPanel(); return true; }
+    if (a === "atras") { if (S.dibujo) cerrarDibujo(); else cerrarPanel(); return true; }
     enfocar($("panel")); return true;
   }
   if (!$("capa").hidden) {
@@ -696,6 +808,19 @@ function accion(nombre, el) {
     case "t-descoser": { const p = S.idx.prendas.get(el.dataset.prenda); if (p && p.diseno) abrirModal(P.confirmarDescoser(p)); return; }
     case "t-descoser-no": return cerrarModal();
     case "t-descoser-si": return descoser(el.dataset.prenda);
+    // Dibujar estampados (#81)
+    case "t-dibujar": return abrirDibujo(null);
+    case "t-editar-dibujo": return abrirDibujo(el.dataset.estampado);
+    case "t-borrar-dibujo": { const e = S.idx.estampados.get(el.dataset.estampado); if (e && e.propio) abrirModal(P.confirmarBorrarDibujo(e, S.progreso.disenos.filter((d) => d.calcas.some((c) => c.estampado === e.id)).length)); return; }
+    case "d-borrar-no": return cerrarModal();
+    case "d-borrar-si": return borrarDibujo(el.dataset.estampado);
+    case "d-px": return pintarCelda(+el.dataset.i, true);
+    case "d-color": S.dibujo.ficha = el.dataset.ficha; if (S.dibujo.herramienta === "borrador") S.dibujo.herramienta = "lapiz"; return dibujarTaller();
+    case "d-herramienta": S.dibujo.herramienta = el.dataset.herramienta; return dibujarTaller();
+    case "d-espejo": S.dibujo.espejo = !S.dibujo.espejo; return dibujarTaller();
+    case "d-deshacer": { const r = PX.deshacer(S.dibujo.historial, S.dibujo.celdas); S.dibujo.celdas = r.celdas; S.dibujo.historial = r.historial; return dibujarTaller(); }
+    case "d-cancelar": return cerrarDibujo();
+    case "d-guardar": return guardarDibujo();
   }
 }
 

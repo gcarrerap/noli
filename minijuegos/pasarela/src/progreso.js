@@ -12,15 +12,17 @@
 //     ultimoTema: null | id,        // para no repetir el mismo tema dos veces seguidas
 //     disenos: [diseno],            // lo que cosió en el Taller de diseño (#80; src/taller.js), el más viejo primero
 //     borrador: null | diseno,      // lo que estaba diseñando y no cosió (se guarda solo)
+//     dibujos: [dibujo],            // estampados que dibujó (#81; src/pixeles.js), comprimidos
 //   }
 import { limpiar } from "./atuendo.js";
 import { limpiarDiseno, registrarDisenos } from "./taller.js";
+import { limpiarDibujo, registrarDibujos } from "./pixeles.js";
 
 /** Versión del formato que escribe este código */
 export const VERSION_PROGRESO = 2;
 
 /** @returns {object} el progreso de alguien que nunca ha jugado */
-export const progresoNuevo = () => ({ v: VERSION_PROGRESO, puntos: 0, pasarelas: 0, vistos: [], atuendos: [], piel: 0, ultimo: null, ultimoTema: null, disenos: [], borrador: null });
+export const progresoNuevo = () => ({ v: VERSION_PROGRESO, puntos: 0, pasarelas: 0, vistos: [], atuendos: [], piel: 0, ultimo: null, ultimoTema: null, disenos: [], borrador: null, dibujos: [] });
 
 /**
  * Lee lo guardado (puede ser null, de otra versión o venir roto) y regresa un progreso válido. v1 → v2: sin
@@ -31,7 +33,13 @@ export const progresoNuevo = () => ({ v: VERSION_PROGRESO, puntos: 0, pasarelas:
  */
 export function leerProgreso(x, idx) {
   const p = progresoNuevo();
-  if (!x || typeof x !== "object") { registrarDisenos(idx, []); return p; }
+  if (!x || typeof x !== "object") { registrarDibujos(idx, []); registrarDisenos(idx, []); return p; }
+  // Primero los dibujos (#81): los diseños pueden traerlos como calcomanías
+  if (Array.isArray(x.dibujos)) {
+    const ids = new Set(), max = (idx.config.taller || {}).maxDibujos || 6;
+    p.dibujos = x.dibujos.map((d) => limpiarDibujo(d, idx)).filter((d) => d && !ids.has(d.id) && ids.add(d.id)).slice(0, max);
+  }
+  registrarDibujos(idx, p.dibujos);
   if (Array.isArray(x.disenos)) {
     const ids = new Set();
     p.disenos = x.disenos.map((d) => limpiarDiseno(d, idx)).filter((d) => d && !ids.has(d.id) && ids.add(d.id));

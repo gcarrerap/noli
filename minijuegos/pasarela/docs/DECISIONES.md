@@ -146,3 +146,15 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 
 **Consecuencias.** Un molde nuevo es JSON (ASSETS.md § G) y la prueba dice si alguna combinación sale mal. Los diseños se agregan a `idx.prendas` al leer el progreso (también en el mundo del menú). Las prendas propias no salen en las sugerencias de los jueces (no están en `porCategoria`).
 
+## ADR 16 — Estampados propios en pixel art de 16×16, guardados como texto (#81)
+
+**Contexto.** Noelia quiere dibujar sus propios estampados. Opciones: (a) dibujo libre con trazos suaves guardado como PNG; (b) pixel art con la paleta del juego guardado comprimido; (c) solo fotos de dibujos en papel.
+
+**Decisión.** (b), en una cuadrícula de **16×16**.
+- **Por qué pixel art:** con el dedo de una niña de 7 años, cuadros grandes salen bonitos y "a propósito"; un trazo libre en un cuadro de 5 cm sale tembloroso. Además se puede **deshacer, rellenar y hacer en espejo** de forma exacta, y **se puede hacer en la TV** (cursor con flechas y OK), que con trazo libre no.
+- **Por qué 16 y no 32:** en un teléfono de 360 px cada cuadro de 16×16 mide ~20 px (se atina con el dedo); de 32×32 serían ~10 px. Y 256 cuadros se llenan en un rato; 1 024 cansan. El lado está en el formato (`lado`), así que se puede cambiar después sin perder lo guardado.
+- **Por qué texto y no PNG:** un PNG pesa kilobytes y la nube guarda JSON (límite de 200 000 caracteres por juego). Comprimido por corridas, un dibujo ocupa de 50 a 600 caracteres; 6 dibujos, 9 diseños y el clóset lleno caben en menos de 20 000 (hay prueba). También deja que los colores **1 y 2** sigan a la prenda.
+- **Guardar no cuesta;** coser la prenda sí (5). Así dibujar es libre y el límite (6 dibujos) cuida el tamaño guardado. Los PNG (fotos de dibujos en papel) siguen sirviendo como estampados de papá (ASSETS.md § F).
+
+**Consecuencias.** En 3D la textura usa `NearestFilter` y sin *mipmaps* (se ve pixelado y nítido); si usa 1/2, hay una textura por color de prenda (caché). En 2D cada renglón de cuadros iguales es un `<rect>`. En la TV dibujar es lento pero posible; lo hecho en el teléfono aparece en la TV.
+

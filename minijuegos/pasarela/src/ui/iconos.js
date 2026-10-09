@@ -36,6 +36,9 @@ export const ICONOS = {
   disenos: s(`<path d="M24 12a4 4 0 1 1 4 4c-2 0-4 1-4 3v2L6 34h36L24 21" fill="none" ${L}/><path d="M24 25l2.4 4.8 5.3.7-3.9 3.7 1 5.2L24 37l-4.8 2.4 1-5.2-3.9-3.7 5.3-.7z" fill="#ffd23f" ${L}/>`),
   tijeras: s(`<circle cx="13" cy="35" r="6" fill="#fff" ${L}/><circle cx="13" cy="15" r="6" fill="#fff" ${L}/><path d="M18 18l22 16M18 32l22-16" fill="none" ${L}/>`),
   hilo: s(`<rect x="14" y="8" width="20" height="32" rx="3" fill="#ff7eb6" ${L}/><path d="M12 8h24M12 40h24" ${L}/><path d="M14 16h20M14 24h20M14 32h20" stroke="#fff" stroke-width="2"/>`),
+  borrador: s(`<path d="M8 30l16-16 14 14-12 12H16z" fill="#ff8fa3" ${L}/><path d="M17 21l14 14" ${L}/><path d="M24 40h16" ${L}/>`),
+  cubeta: s(`<path d="M10 20l14-10 14 14-14 14z" fill="#8fd3ff" ${L}/><path d="M10 20l14 14" ${L}/><path d="M40 30c2 4 4 6 4 8a4 4 0 0 1-8 0c0-2 2-4 4-8z" fill="#ff7eb6" ${L}/>`),
+  simetria: s(`<path d="M24 6v36" stroke="#2b2236" stroke-width="2.4" stroke-dasharray="3 4"/><path d="M20 14L8 24l12 10z" fill="#ff7eb6" ${L}/><path d="M28 14l12 10-12 10z" fill="#ff7eb6" ${L}/>`),
   lapiz: s(`<path d="M10 38l4-12L32 8l8 8-18 18z" fill="#ffd23f" ${L}/><path d="M14 26l8 8M28 12l8 8" ${L}/><path d="M10 38l2-6 4 4z" fill="#2b2236"/>`),
   // Temas
   "t-playa": s(`<circle cx="33" cy="15" r="8" fill="#ffd23f" ${L}/><path d="M4 32c5-4 9-4 14 0s9 4 14 0 9-4 14 0v12H4z" fill="#4cb3ff" ${L}/>`),

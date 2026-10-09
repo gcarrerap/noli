@@ -258,6 +258,19 @@ Noelia **diseña su propia ropa** en el estudio: la mesa con la máquina de cose
 
 ![Taller de diseño](img/taller.jpg)
 
+### Dibujar estampados (#81)
+
+En el paso **Decorar**, el botón del lápiz (al final de las calcomanías) abre **"Dibujar mi estampado"**: una cuadrícula de **16×16** cuadros.
+
+- **Herramientas:** lápiz, borrador, rellenar (cubeta: llena la mancha del mismo color), **espejo** (lo que pinta de un lado sale igual del otro; una línea punteada marca la mitad) y deshacer (cada trazo, hasta 40).
+- **Colores:** los abiertos y dos especiales, **1** y **2**: el color principal y el de los detalles **de la prenda**. Lo pintado con 1 y 2 cambia cuando cambia el color de la prenda (un gatito con la cara "1" sale rosa en una playera rosa y morado en una morada).
+- **Con el dedo:** se pinta arrastrando; la página no se mueve ni hace zoom mientras pinta (`touch-action: none`), y un trazo rápido no deja huecos (se rellena la línea entre un punto y el siguiente).
+- **En la TV:** cada cuadro es un botón: con las flechas se mueve el cursor (se ve con borde y halo) y **OK pinta** un cuadro. Es más lento que con el dedo, pero se puede; para dibujos grandes conviene el teléfono, y lo dibujado se sincroniza a la TV.
+- **Guardar** (con nombre) no cuesta: lo que cuesta es coser la prenda que lo lleva. Se guardan hasta **`config.taller.maxDibujos` = 6** dibujos. Al guardar se pone en el lugar escogido de la prenda. Si la calcomanía puesta es un dibujo suyo, salen "Cambiar mi dibujo" y "Borrar" (con pregunta; los diseños que lo traían se quedan sin esa calcomanía).
+- Se ve igual en el taller, en 3D (textura pixelada, sin suavizar), en el modo sencillo, en las miniaturas y en el clóset.
+
+![Dibujar un estampado: 360 px, 412 px y TV](img/dibujar.jpg)
+
 ## Maquillaje y joyería
 
 Además de la ropa hay **maquillaje** (categoría `maquillaje`: rubor, labial, sombra de ojos, pestañas largas, pecas, brillitos, corazón y estrella pintados) y **joyería** (accesorios de orejas, cuello y muñeca: aretes de perla, arracadas, aretes de estrella, collar de perlas, collar de corazón, reloj, reloj deportivo, pulsera). Van **uno por lugar** (`config.json → lugares`): mejillas, ojos, labios y pintura en la cara; orejas, cuello, muñeca, y los de antes (cabeza, cara, abrigo, mano, espalda). Para los jueces cuentan como **detalles** (igual que los accesorios). En el estudio están en dos muebles nuevos: el **tocador de maquillaje** (derecha) y la **joyería** (izquierda).
@@ -287,9 +300,14 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
       color: "lila", secundario: "dorado", patron: "estrellas", calcas: [{ estampado: "estrella", lugar: "falda" }],
       nombre: "Estrellita", temas: ["princesa", "gala"], fecha: 1760000000000 }
   ],
-  borrador: null           // lo que estaba diseñando sin coser (mismo formato; el nombre puede ir vacío)
+  borrador: null,          // lo que estaba diseñando sin coser (mismo formato; el nombre puede ir vacío)
+  dibujos: [               // estampados que dibujó (#81), hasta config.taller.maxDibujos; 50 a 600 caracteres cada uno
+    { id: "px-mv1g8az", nombre: "Gatito", lado: 16, paleta: ["negro", "rosa"], datos: "51.a8.a6.2a6.2a…", fecha: 1791579590056 }
+  ]
 }
 ```
+
+Los **dibujos** se guardan comprimidos por corridas (*run-length*): `datos` es una cadena de `[cuántos]caracter`, renglón por renglón desde arriba; `.` = transparente, `P`/`S` = los colores de la prenda, y `a`–`z` = el color en esa posición de `paleta` (ids de `colores.json`, así un cambio de tono en colores.json se ve en los dibujos viejos). `"51.a8.a"` = 51 transparentes, 1 del primer color, 8 transparentes, 1 del primer color… Un color que ya no existe se vuelve negro; lo que no se entienda, transparente; siempre salen 16×16. `leerProgreso` lee los dibujos **antes** que los diseños (sus calcomanías los usan).
 
 Los diseños se guardan como **receta** (molde + opciones), no como piezas: así ocupan poco (lo más grande posible, 9 diseños con nombres largos y todas las calcomanías más el clóset lleno de diseños, son menos de 20 000 caracteres; la nube acepta 200 000; hay prueba) y si se mejora un molde, los diseños viejos se ven mejor solos. `leerProgreso` registra los diseños en `idx.prendas` (`taller.js → registrarDisenos`) **antes** de revisar los atuendos guardados, para que un atuendo con un diseño puesto no lo pierda. Un diseño cuyo molde ya no existe se descarta; una opción que ya no existe vuelve a la inicial.
 

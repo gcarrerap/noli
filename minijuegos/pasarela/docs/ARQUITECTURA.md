@@ -38,6 +38,7 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `src/puntuacion.js` | `encaje`, `componentes`, `comentar`, `calificar`. Fórmulas en [JUEGO.md](JUEGO.md). |
 | `src/espanol.js` | Concordancia: el/la/los/las, un/una, perfecto/perfecta/perfectos. |
 | `src/progreso.js` | Puntos de estilo, `nivelDe`, `abiertos`, `registrarPasarela`, lo "nuevo", `escogerTema`, `leerProgreso` (v1 → v2; registra los diseños). |
+| `src/pixeles.js` | Estampados dibujados (#81): `pintar` (con espejo), `rellenar`, `linea`, `recordar`/`deshacer`, `comprimir`/`descomprimir` (corridas), `limpiarDibujo`, `registrarDibujos` (en `idx.estampados`, con `propio: true`). Los colores salen con `kit/3d/pintar.js → pintarPixeles` (P/S = los de la prenda). |
 | `src/taller.js` | Taller de diseño (#80): de un diseño (molde + opciones + decoración) a una prenda. `piezasDe` (variables, `solo`, `sobre`, calcomanías), `prendaDeDiseno`, `limpiarDiseno`, `registrarDisenos` (en `idx.prendas`), `espacios`, `nombresSugeridos`. |
 | `src/movimiento.js` | `paso` (caminar con deslizamiento en paredes), `choca`, `zonaCercana`, `rutaHacia`/`seguirRuta`, `direccionDeTeclas`. |
 | `src/partida.js` | La máquina de estados (`TRANSICIONES`, `siguiente`) y el reloj. |
@@ -94,6 +95,7 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 
 - El borrador se guarda en cada cambio (`progreso.borrador`); el personaje lo trae puesto como prenda de prueba (`d-borrador`, registrada junto con los diseños) encima de lo que traía (`S.taller.antes`). Al cerrar vuelve a lo de antes; al coser, sale con el diseño puesto.
 - El reloj de la pasarela no corre: `cadaCuadro` no lo revisa con el taller abierto y, al cerrar, `inicioEstudio` se recorre lo que duró.
+- **Dibujar (#81)** es otro paso del taller (`paso: "dibujo"`, fuera de las pestañas) con su estado en `S.dibujo` (celdas, historial, herramienta, color, espejo). Con el dedo se pinta con `pointerdown`/`pointermove` sobre `.cuadricula` (no con `click`: un `click` de cuadro solo cuenta si viene del teclado o el control, `detail === 0`). Solo se repintan los cuadros que cambiaron. Guardar comprime, registra el estampado y lo pone en el lugar escogido.
 - "Mis diseños" es una zona con `"disenos": true`: `prendasDeZona` regresa las prendas con `diseno: true`. Lo cosido se agrega a lo abierto (`actualizarAbiertos`). "Descoser" pregunta, quita el diseño del progreso y del atuendo.
 
 **Cobro:** se cobra al empezar (antes del tema). Si sale a la mitad de una pasarela, **no se devuelve** (la pantalla lo pregunta: "Los créditos que usaste no se regresan"). Es lo más sencillo de explicar y evita cobrar y devolver en cada salida accidental.

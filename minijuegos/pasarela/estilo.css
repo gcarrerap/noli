@@ -329,3 +329,27 @@ html[data-modo="tv"] .joy{display:none}
 .centro{text-align:center;justify-content:center}
 @media (prefers-color-scheme:dark){.paso.sel,.tema-btn.sel{background:#3d2b45}.aviso-taller{background:#4a3f20}}
 @media (min-aspect-ratio:23/20){.panel.taller{height:auto}}
+
+/* ---------- Dibujar estampados (#81) ---------- */
+.panel.dibujando{height:92vh}
+@media (min-aspect-ratio:23/20){.panel.dibujando{width:min(64vw, 760px)}}
+.editor{display:flex;flex-direction:column;gap:.4rem}
+.herramientas{display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap}
+.herramienta{display:flex;flex-direction:column;align-items:center;gap:.05rem;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:.2rem .45rem;font-weight:800;font-size:.72rem;min-width:3.6rem}
+.herramienta .ico{width:1.7rem;height:1.7rem;display:block}
+.herramienta.sel{border-color:var(--rosa);background:#fff0f7}
+.herramienta[disabled]{opacity:.4}
+.cuadricula-caja{display:flex;justify-content:center}
+.cuadricula{--n:16;display:grid;grid-template-columns:repeat(var(--n), 1fr);width:min(100%, 46vh, 420px);aspect-ratio:1;border:3px solid var(--fg);border-radius:8px;overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  background:repeating-conic-gradient(#ece6f5 0 25%, #ffffff 0 50%) 0 0/calc(200% / var(--n)) calc(200% / var(--n));position:relative}
+.cuadricula.con-espejo::after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px dashed rgba(43,34,54,.45);pointer-events:none}
+.px{padding:0;border:0;margin:0;background:var(--c, transparent);border-radius:0;min-width:0;min-height:0;box-shadow:inset 0 0 0 .5px rgba(43,34,54,.08)}
+/* El cursor de la TV: los cuadros solo reciben el foco con flechas (con el dedo se pinta sin enfocar) */
+.px:focus,html.teclado .px:focus-visible,html[data-modo="tv"] .px:focus{outline:4px solid var(--foco);outline-offset:-4px;box-shadow:0 0 0 3px var(--halo);position:relative;z-index:1}
+.paleta .color{width:2.3rem;height:2.3rem}
+.color.de-prenda b{display:grid;place-items:center;height:100%;color:#fff;text-shadow:0 0 3px #2b2236;font-size:1rem}
+.fila-nombre{display:flex;gap:.5rem;align-items:center}
+.fila-nombre .campo{flex:1;font-size:1.05rem}
+.estampado.propio{background:#fff}
+@media (prefers-color-scheme:dark){.herramienta.sel{background:#3d2b45}}

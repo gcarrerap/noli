@@ -4,7 +4,7 @@
 //  3. las fotos del clóset (los atuendos guardados).
 // Cada prenda dice qué figura usa con "dibujo2d" en prendas.json; las figuras están en FIGURAS.
 // Coordenadas: viewBox 0 0 200 360, la muñeca mirando al frente, pies en y ≈ 335.
-import { pintarSVG, interiorSVG } from "../../../../kit/3d/pintar.js";
+import { pintarSVG, interiorSVG, pintarPixeles } from "../../../../kit/3d/pintar.js";
 
 const B = 'stroke="#2b2236" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"';
 
@@ -137,31 +137,31 @@ function relleno(prenda, color, patron, idx) {
 }
 
 /** Los estampados de una prenda (estampado2d en prendas.json: centro x, y y tamaño; los diseños pueden traer varios) */
-function estampado2d(prenda, hexP, idx) {
+function estampado2d(prenda, hexP, idx, hexS) {
   const lista = Array.isArray(prenda.estampado2d) ? prenda.estampado2d : prenda.estampado2d ? [prenda.estampado2d] : [];
-  return lista.map((q) => uno2d(q, hexP, idx)).join("");
+  return lista.map((q) => uno2d(q, hexP, idx, hexS)).join("");
 }
 
-function uno2d(q, hexP, idx) {
+function uno2d(q, hexP, idx, hexS) {
   const e = idx.estampados ? idx.estampados.get(q.estampado) : null;
   if (!e) return "";
   const x = q.x - q.tam / 2, y = q.y - q.tam / 2;
   if (e.svg) return `<svg x="${x}" y="${y}" width="${q.tam}" height="${q.tam}" viewBox="0 0 64 64">${interiorSVG(pintarSVG(e.svg, { p: hexP }))}</svg>`;
   if (e.url) return `<image href="${e.url}" x="${x}" y="${y}" width="${q.tam}" height="${q.tam}"/>`;
-  if (e.pixeles) return pixeles2d(e.pixeles, x, y, q.tam);
+  if (e.pixeles) return pixeles2d(pintarPixeles(e.pixeles, { p: hexP, s: hexS }), e.pixeles.lado, x, y, q.tam);
   return "";
 }
 
 /** Un dibujo en pixeles (#81) como rectángulos (un renglón de pixeles iguales seguidos = un solo rectángulo) */
-function pixeles2d(px, x, y, tam) {
-  const n = px.lado, k = tam / n;
+function pixeles2d(colores, n, x, y, tam) {
+  const k = tam / n;
   let r = "";
   for (let f = 0; f < n; f++) {
     let i = 0;
     while (i < n) {
-      const c = px.colores[f * n + i];
+      const c = colores[f * n + i];
       let j = i + 1;
-      while (j < n && px.colores[f * n + j] === c) j++;
+      while (j < n && colores[f * n + j] === c) j++;
       if (c) r += `<rect x="${(x + i * k).toFixed(2)}" y="${(y + f * k).toFixed(2)}" width="${((j - i) * k + 0.05).toFixed(2)}" height="${(k + 0.05).toFixed(2)}" fill="${c}"/>`;
       i = j;
     }
@@ -206,7 +206,8 @@ export function dibujarMuneca(atuendo, idx, op) {
     const { p, s, defs: d } = relleno(prenda, color, patron, idx);
     if (d) defs.push(d);
     for (const capa of ["atras", "ropa", "frente"]) if (f[capa]) capas[capa].push(f[capa](p, s));
-    const est = estampado2d(prenda, colores(prenda, color, idx)[0], idx);
+    const [hp, hs] = colores(prenda, color, idx);
+    const est = estampado2d(prenda, hp, idx, hs);
     if (est) capas[f.ropa ? "ropa" : "frente"].push(est);
   }
   if (atuendo.peinado) {
@@ -228,7 +229,8 @@ export function dibujarMuneca(atuendo, idx, op) {
 export function miniPrenda(prenda, color, idx, patron = null) {
   const f = FIGURAS[prenda.dibujo2d];
   const { p, s, defs } = relleno(prenda, color, patron, idx);
-  const est = estampado2d(prenda, colores(prenda, color, idx)[0], idx);
+  const [hp, hs] = colores(prenda, color, idx);
+  const est = estampado2d(prenda, hp, idx, hs);
   const c = cuerpo("#ece6f5", "#f4f0f8", true);
   const recorte = RECORTES[prenda.lugar || prenda.categoria] || "0 0 200 360";
   let dentro = "";

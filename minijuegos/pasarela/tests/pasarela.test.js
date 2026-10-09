@@ -666,3 +666,115 @@ test("taller: Don Detalle nota un diseño propio (sin cambiar la calificación)"
   assert.match(comentar("detalle", con, idx.temas.get("playa"), idx).positivo, /¿Tu falda corta «Girasol» la hiciste tú\? ¡Qué original!/);
   T.registrarDisenos(idx, []);
 });
+
+// ---------- Dibujar estampados (#81) ----------
+
+const PX = await import("../src/pixeles.js");
+
+test("pixeles: pintar, espejo, borrar y deshacer", () => {
+  let c = PX.vacio(), h = [];
+  assert.equal(c.length, 256); assert.ok(PX.estaVacio(c));
+  h = PX.recordar(h, c); c = PX.pintar(c, 0, "negro");
+  assert.equal(c[0], "negro");
+  h = PX.recordar(h, c); c = PX.pintar(c, 17, "P", { espejo: true });
+  assert.equal(c[17], "P"); assert.equal(c[30], "P", "la celda del otro lado (renglón 1: 16+1 ↔ 16+14)");
+  assert.equal(PX.espejoDe(0), 15); assert.equal(PX.espejoDe(255), 240);
+  assert.equal(PX.pintar(c, 0, "negro"), c, "pintar lo mismo no crea otro estado");
+  assert.equal(PX.pintar(c, 999, "negro"), c, "fuera de la cuadrícula no hace nada");
+  h = PX.recordar(h, c); c = PX.pintar(c, 0, "");
+  assert.equal(c[0], "");
+  let r = PX.deshacer(h, c); assert.equal(r.celdas[0], "negro"); assert.equal(r.historial.length, 2);
+  r = PX.deshacer(r.historial, r.celdas); r = PX.deshacer(r.historial, r.celdas);
+  assert.ok(PX.estaVacio(r.celdas)); assert.equal(PX.deshacer([], r.celdas).celdas, r.celdas);
+  // El historial tiene tope
+  let hh = []; for (let i = 0; i < 100; i++) hh = PX.recordar(hh, PX.pintar(PX.vacio(), i, "rosa"), 40);
+  assert.equal(hh.length, 40);
+  // Un trazo rápido no deja huecos
+  assert.deepEqual(PX.linea(0, 3), [1, 2, 3]);
+  assert.deepEqual(PX.linea(0, 48), [16, 32, 48]);
+  assert.equal(PX.linea(0, 255).length, 15);
+});
+
+test("pixeles: la cubeta rellena solo la mancha (y con espejo, los dos lados)", () => {
+  // Un cuadro cerrado de 4×4 en la esquina
+  let c = PX.vacio();
+  for (let k = 0; k < 4; k++) for (const i of [k, 48 + k, k * 16, k * 16 + 3]) c = PX.pintar(c, i, "negro");
+  const dentro = PX.rellenar(c, 17, "rosa");
+  assert.equal(dentro[17], "rosa"); assert.equal(dentro[34], "rosa"); assert.equal(dentro[0], "negro"); assert.equal(dentro[100], "");
+  assert.equal(dentro.filter((f) => f === "rosa").length, 4);
+  const fuera = PX.rellenar(c, 200, "P");
+  assert.equal(fuera.filter((f) => f === "P").length, 256 - 12 - 4);
+  assert.deepEqual(PX.rellenar(c, 0, "negro"), c, "rellenar con el mismo color no cambia nada");
+  const espejo = PX.rellenar(PX.vacio(), 0, "S", { espejo: true });
+  assert.ok(espejo.every((f) => f === "S"));
+});
+
+test("pixeles: comprimir y descomprimir van y vienen; lo guardado es chico y tolera basura", () => {
+  const casos = [PX.vacio(), PX.vacio().map((_, i) => (i % 2 ? "negro" : "P")), PX.vacio().map((_, i) => ["", "P", "S", "rosa", "azul", "negro"][(i * 7) % 6])];
+  for (const c of casos) {
+    const g = PX.comprimir(c);
+    assert.match(g.datos, /^(\d*[.PSa-z])+$/);
+    assert.deepEqual(PX.descomprimir(g), c);
+  }
+  assert.equal(PX.comprimir(PX.vacio()).datos, "256.");
+  // Lo peor (todo distinto al vecino) cabe en menos de 600 caracteres
+  assert.ok(JSON.stringify(PX.comprimir(casos[2])).length < 600);
+  // Basura: siempre 16×16, lo desconocido transparente, colores que no existen → negro
+  assert.equal(PX.descomprimir({ datos: "zz!!3a", paleta: ["fosforescente"] }, (c) => idx.colores.has(c)).length, 256);
+  assert.deepEqual(PX.descomprimir({ datos: "2a", paleta: ["fosforescente"] }, (c) => idx.colores.has(c)).slice(0, 3), ["negro", "negro", ""]);
+  assert.equal(PX.descomprimir({ datos: "9999P" }).length, 256);
+  assert.equal(PX.descomprimir(null).length, 256);
+  assert.equal(PX.limpiarDibujo({ id: "px-a", datos: "256." }, idx), null, "vacío no se guarda");
+  assert.equal(PX.limpiarDibujo({ id: "mal id", datos: "P" }, idx), null);
+  const g = PX.limpiarDibujo({ id: "px-a", nombre: " Mi\ngato <3 ", ...PX.comprimir(casos[1]) }, idx);
+  assert.equal(g.nombre, "Mi gato 3"); assert.equal(g.lado, 16);
+});
+
+test("pixeles: un dibujo se vuelve estampado, se pone en un diseño y cambia de color con la prenda", async () => {
+  const celdas = PX.vacio().map((_, i) => (i < 16 ? "negro" : i < 32 ? "P" : ""));
+  const g = PX.limpiarDibujo({ id: "px-gato", nombre: "Gato", ...PX.comprimir(celdas) }, idx);
+  PX.registrarDibujos(idx, [g]);
+  const e = idx.estampados.get("px-gato");
+  assert.ok(e.propio && e.pixeles.deLaPrenda);
+  const { pintarPixeles } = await import("../../../kit/3d/pintar.js");
+  const rosa = pintarPixeles(e.pixeles, { p: "#ff7eb6", s: "#fff" });
+  assert.equal(rosa[0], idx.colores.get("negro").hex); assert.equal(rosa[16], "#ff7eb6"); assert.equal(rosa[40], null);
+  assert.equal(pintarPixeles(e.pixeles, { p: "#123456" })[16], "#123456");
+  const d = T.limpiarDiseno({ id: "d-gato", molde: "playera", color: "morado", calcas: [{ estampado: "px-gato", lugar: "pecho" }] }, idx);
+  assert.equal(d.calcas.length, 1);
+  T.registrarDisenos(idx, [d]);
+  const p = idx.prendas.get("d-gato");
+  assert.ok(p.piezas.some((z) => z.f === "calca" && z.estampado === "px-gato"));
+  const svg = dibujarMuneca(A.poner(A.atuendoVacio(), p, "morado"), idx, { piel: "#ffd9c0", base: "#cbbfe6" });
+  assert.match(svg, new RegExp(`fill="${idx.colores.get("morado").hex}"`)); assert.doesNotMatch(svg, /undefined|NaN|null/);
+  const { crearAvatar } = await import("../../../kit/3d/avatar.js");
+  crearAvatar({ piel: "#ffd9c0", base: D.config.colorBase }).vestir(A.poner(A.atuendoVacio(), p, "morado"), idx);
+  // Guardado: los dibujos se leen antes que los diseños (si no, el diseño perdería la calcomanía)
+  const pr = PR.leerProgreso(JSON.parse(JSON.stringify({ ...PR.progresoNuevo(), dibujos: [g, g, { id: "px-roto" }], disenos: [d] })), idx);
+  assert.equal(pr.dibujos.length, 1); assert.equal(pr.disenos[0].calcas[0].estampado, "px-gato");
+  // Sin el dibujo, el diseño se queda sin esa calcomanía
+  const sin = PR.leerProgreso(JSON.parse(JSON.stringify({ ...PR.progresoNuevo(), disenos: [d] })), idx);
+  assert.equal(sin.disenos[0].calcas.length, 0);
+  assert.equal(idx.estampados.has("px-gato"), false);
+  // Tope de dibujos
+  const muchos = Array.from({ length: 10 }, (_, i) => ({ ...g, id: "px-" + i }));
+  assert.equal(PR.leerProgreso({ dibujos: muchos }, idx).dibujos.length, D.config.taller.maxDibujos);
+  PX.registrarDibujos(idx, []); T.registrarDisenos(idx, []);
+});
+
+test("pixeles: el editor se arma (cuadros, herramientas, colores 1 y 2) y lo guardado con todo lleno sigue cabiendo", async () => {
+  const P = await import("../src/ui/pantallas.js");
+  const ab = PR.abiertosHasta(3, idx.niveles);
+  const dib = { id: null, nombre: "", lado: 16, celdas: PX.vacio().map((_, i) => (i % 3 ? "" : "P")), historial: [], herramienta: "lapiz", ficha: "P", espejo: true };
+  const html = P.taller({ idx, diseno: T.limpiarDiseno({ molde: "playera", color: "rosa" }, idx), paso: "dibujo", ab, saldo: 5, costo: 5, libres: 1, total: 4, lugar: null, girar: false, dibujo: dib });
+  assert.equal((html.match(/data-accion="d-px"/g) || []).length, 256);
+  assert.match(html, /data-ficha="P"/); assert.match(html, /data-ficha="S"/); assert.match(html, /con-espejo/); assert.match(html, /d-deshacer" data-foco disabled/);
+  assert.doesNotMatch(html, /undefined|NaN/);
+  // Todo al máximo: diseños, dibujos que no se comprimen nada, clóset lleno
+  const peor = PX.comprimir(PX.vacio().map((_, i) => ["P", "S", "rosa", "azul", "negro", "blanco", "amarillo", "rojo"][(i * 5) % 8]));
+  const dibujos = Array.from({ length: D.config.taller.maxDibujos }, (_, i) => ({ id: "px-" + "y".repeat(20) + i, nombre: "W".repeat(18), ...peor, fecha: 1760000000000 }));
+  const disenos = Array.from({ length: D.config.taller.maxEspacios }, (_, i) => T.limpiarDiseno({ id: "d-" + "x".repeat(20) + i, molde: "vestido", color: "turquesa", patron: "leopardo",
+    calcas: idx.moldes.get("vestido").lugares.map((l) => ({ estampado: "arcoiris", lugar: l.id })), nombre: "W".repeat(40), temas: ["gala", "rock"] }, idx));
+  const txt = JSON.stringify({ ...PR.progresoNuevo(), dibujos, disenos, borrador: disenos[0], vistos: [...idx.prendas.keys()] });
+  assert.ok(txt.length < 20000, `${txt.length} caracteres`);
+});
