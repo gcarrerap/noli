@@ -68,7 +68,14 @@ main{
 .caja svg{width:100%; height:auto; display:block}
 .caja.luz{outline:4px solid var(--sol); outline-offset:2px}
 .caja:disabled{opacity:.4}
-.tecla{display:none; font-family:"Fredoka",sans-serif; font-size:1.1rem}
+.tecla{display:none; font-family:"Fredoka",sans-serif; font-size:1.4rem; font-weight:800; line-height:1}
+.caja-leyenda{display:block; font-size:.8rem; font-weight:800; line-height:1.05; margin-top:1px}
+.nota{margin:0; min-height:1.2rem; font-weight:800; color:var(--coral)}
+.pista-visual{display:flex; gap:8px; align-items:center; justify-content:center; width:100%; max-width:100%}
+.blanco{width:96px; height:96px; flex:none; background:var(--card); border-radius:16px; box-shadow:var(--sombra); overflow:hidden}
+.blanco svg{width:100%; height:100%; display:block}
+.ese{border-radius:6px; padding:0 2px}
+.ese.encendida{background:var(--sol); color:#2b2236}
 .flecha{position:absolute; top:-8px; left:50%; width:36px; height:44px; transform:translateX(-50%); pointer-events:none}
 .opciones,.fichas{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:100%; max-width:100%; overflow:hidden}
 .op-fila{display:flex; gap:6px; align-items:center; min-height:64px; max-width:100%}
@@ -91,9 +98,13 @@ main{
 .slot svg{width:88px; height:40px}
 .ficha{max-width:46%}
 .pie{display:flex; gap:8px; width:min(420px, 100%); max-width:100%; justify-content:center; align-items:center}
-.probar{position:relative; flex:1; gap:8px; background:var(--card)}
-.probar .ico{width:42px; height:42px; flex:none}
-.probar .ico svg{width:100%; height:100%}
+.probar{
+  position:relative; flex:1; gap:8px; background:var(--card);
+  display:flex; align-items:center; justify-content:center;
+  height:64px; max-height:64px; max-width:280px; overflow:hidden;
+}
+.probar .ico{width:40px; height:40px; flex:none; display:block}
+.probar .ico svg{width:40px; height:40px; max-width:40px; max-height:40px; display:block}
 .probar.brilla{background:var(--verde); animation:brillo 1s ease-in-out infinite}
 .pista-caja{margin:0; min-height:1.2rem; color:var(--muted); font-weight:800}
 .estrellas{display:inline-flex; gap:.15em}
@@ -124,7 +135,7 @@ main{
 @media (prefers-reduced-motion:reduce){
   .robot-lienzo .pila,.robot-lienzo .helice,.probar.brilla{animation:none !important}
 }
-html[data-modo="tv"] .tecla{display:block; position:absolute; left:6px; bottom:2px; z-index:1}
+html[data-modo="tv"] .tecla{display:block; position:absolute; left:8px; bottom:4px; z-index:1; font-size:2.2rem}
 html[data-modo="tv"] main{padding:36px 48px 36px; gap:8px}
 html[data-modo="tv"] .escenario{flex-direction:row; align-items:center; width:100%; max-width:100%}
 html[data-modo="tv"] .robot-lienzo{width:200px}

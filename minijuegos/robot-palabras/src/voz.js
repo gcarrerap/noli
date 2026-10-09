@@ -184,6 +184,18 @@ export function decirPalabra(palabra, opts) {
   return decirLista([palabra], opts);
 }
 
+export function decirTrozos(trozos, { activo = true } = {}) {
+  if (!activo) return Promise.resolve();
+  const lista = (trozos || []).filter((t) => t && t.texto);
+  if (!lista.length) return Promise.resolve();
+  const mio = ++turno;
+  return lista.reduce((p, t) => p.then(() => {
+    if (mio !== turno) return undefined;
+    if (t.lang === "en") return decirUna(t.texto, mio);
+    return sistema(t.texto, "es-MX", mio);
+  }), Promise.resolve());
+}
+
 export function decirLista(palabras, { activo = true } = {}) {
   if (!activo) return Promise.resolve();
   const lista = (palabras || []).filter(Boolean);

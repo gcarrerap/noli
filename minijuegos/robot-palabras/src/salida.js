@@ -13,6 +13,20 @@ export function rutaAtras(dialogoAbierto) {
   return dialogoAbierto ? "cerrar" : "abrir";
 }
 
+export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
+  if (tv || enDialogo) return "nada";
+  return "seguir";
+}
+
+// La voz del premio puede acabar con «¿Salir?» abierto.
+// En ese caso se guarda el paso para que Seguir lo corra; no se pierde el temporizador.
+export function alTerminarPremio({ dialogo = false, ms = 400 } = {}) {
+  const espera = Number(ms);
+  const cuanto = Number.isFinite(espera) && espera >= 0 ? espera : 400;
+  if (dialogo) return { accion: "guardar", ms: cuanto };
+  return { accion: "correr", ms: cuanto };
+}
+
 // Solo el botón Salir sale. Atrás nunca sale del catálogo.
 export function responder(ctx, entrada) {
   const ahora = entrada.ahora;

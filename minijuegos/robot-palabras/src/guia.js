@@ -52,17 +52,20 @@ export function seguirReloj(reloj, ahora) {
   };
 }
 
-// En un paso para mirar el toque solo espera el trago.
-// En un paso de acción espera el trago o lo que quede del bloqueo, el que sea mayor.
+// Cada paso espera su bloqueo. El trago de 400 ms corre al mismo tiempo:
+// cuenta el que dure más. Si el bloqueo ya había pasado, solo quedan los 400 ms.
 export function sueltaEn(reloj) {
   if (!reloj) return 0;
   const tragar = reloj.tragarHasta || 0;
-  if (esMirar(reloj.paso)) return tragar;
   return Math.max(tragar, finBloqueo(reloj));
 }
 
 export function vozCuenta(reloj, voz) {
   return !!(voz && voz.epoch === reloj.vozEpoch && voz.termino);
+}
+
+export function vozFallo(reloj, voz) {
+  return !!(voz && voz.epoch === reloj.vozEpoch && voz.falla && !voz.termino);
 }
 
 // Un paso para mirar dura entre 2 s y 3 s si nadie toca.
@@ -71,7 +74,7 @@ export function vozCuenta(reloj, voz) {
 export function avanzaSolo(reloj, ahora, voz) {
   if (!reloj || reloj.pausa || !esMirar(reloj.paso)) return false;
   if (ahora < reloj.inicio + MIN_MIRAR_MS) return false;
-  if (vozCuenta(reloj, voz)) return true;
+  if (vozCuenta(reloj, voz) || vozFallo(reloj, voz)) return true;
   return ahora >= reloj.inicio + TOPE_VOZ_MS;
 }
 
@@ -87,8 +90,8 @@ export function focoDePaso(paso) {
   return "oir";
 }
 
-export function saltarEnCiclo(paso) {
-  return esMirar(paso);
+export function saltarEnCiclo(_paso) {
+  return false;
 }
 
 function avanzar(reloj, ahora) {
@@ -111,12 +114,12 @@ export function aplicarGuia(reloj, entrada, ahora, voz) {
     if (avanzaSolo(reloj, ahora, voz)) return avanzar(reloj, ahora);
     return { reloj, hecho: "no" };
   }
-  // En un paso para mirar, un toque u OK avanza enseguida (sin esperar a la voz).
+  if (ahora < sueltaEn(reloj)) return { reloj, hecho: "bloqueo" };
   if (esMirar(reloj.paso) && (entrada.tipo === "ok" || entrada.tipo === "toque" || entrada.tipo === "caja")) {
     return avanzar(reloj, ahora);
   }
-  if (ahora < sueltaEn(reloj)) return { reloj, hecho: "bloqueo" };
   if (entrada.tipo === "caja" && accionCorrecta(reloj.paso, entrada.categoria)) return avanzar(reloj, ahora);
+  if (entrada.tipo === "caja") return { reloj, hecho: "mal" };
   return { reloj, hecho: "no" };
 }
 

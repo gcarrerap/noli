@@ -6,20 +6,20 @@ import {
   aplicarGuia, textoPaso, vozPaso,
 } from "./guia.js";
 import { aspecto } from "./piezas.js";
-import { anulaPrimera, pista } from "./pista.js";
+import { anulaPrimera, pasoPista, pista } from "./pista.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, anotarFallo,
   guardarGuia, ponerVoz, fechaLocal, cumplirReto, lineaRacha,
 } from "./progreso.js";
 import {
-  efectoOracion, probarBrilla, generarTurno,
+  efectoOracion, probarBrilla, generarTurno, fraseConPausa, fraseCompleta, focoSiguienteFicha,
 } from "./puertas.js";
 import { RETO, retoDelDia } from "./reto.js";
-import { responder, ignoraEntrada } from "./salida.js";
+import { responder, ignoraEntrada, toqueEnVelo, alTerminarPremio } from "./salida.js";
 import { clic, listo, abrir, desbloquear as desbloquearSonido } from "./sonido.js";
-import { SALIR, CAJAS, NIVELES, UI, FRASES, PIEZAS, pistaCompleta } from "./textos.js";
+import { SALIR, CAJAS, NIVELES, UI, FRASES, PIEZAS, hintDePuerta, vozDePista } from "./textos.js";
 import {
-  callar, decirEs, decirIngles, decirLista, decirPalabraLuego, desbloquear as desbloquearVoz,
+  callar, decirEs, decirIngles, decirPalabra, decirPalabraLuego, decirTrozos, desbloquear as desbloquearVoz,
 } from "./voz.js";
 
 const $main = document.getElementById("juego");
@@ -93,6 +93,20 @@ function dibujoDe(id, copias) {
     html += `<g transform="translate(${x} 0) scale(${n > 2 ? 0.7 : 0.82})">${inn}</g>`;
   }
   return html;
+}
+
+function miniSvg(id, copias) {
+  const inn = interior(dibujos[id] || "");
+  if (!inn) return "";
+  const n = Math.max(1, Math.min(3, copias || 1));
+  if (n === 1) return `<svg viewBox="0 0 100 100" aria-hidden="true">${inn}</svg>`;
+  const s = n > 2 ? 0.34 : 0.46;
+  let g = "";
+  for (let i = 0; i < n; i++) {
+    const x = 50 + (i - (n - 1) / 2) * (n > 2 ? 30 : 42);
+    g += `<g transform="translate(${x} 50) scale(${s}) translate(-50 -50)">${inn}</g>`;
+  }
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">${g}</svg>`;
 }
 
 function tarjeta(palabra, dibujo, copias) {
@@ -242,7 +256,8 @@ function pintarGuia() {
         ${paso >= 3 && paso <= 4 ? cartaGuia(paso) : ""}
         ${paso >= 2 ? cajasHtml(paso, mirar) : ""}
       </div>
-    </div>`, "guia", focoDePaso(paso));
+    </div>
+    <p class="nota"></p>`, "guia", focoDePaso(paso));
 }
 
 function cartaGuia(paso) {
@@ -262,6 +277,7 @@ function cajasHtml(paso, mirar) {
     const flecha = !mirar && cat === luz;
     return `<button type="button" class="caja${cat === luz && !mirar ? " luz" : ""}" data-foco data-foco-id="caja-${cat}" data-act="caja" data-cat="${cat}"${activa ? "" : " disabled"}>
       ${cache[CAJA_SVG[cat]] || ""}
+      <span class="caja-leyenda">${esc(info.pista)}</span>
       <span class="tecla">${esc(info.simbolo)}</span>
       ${flechaHtml(flecha)}
     </button>`;
@@ -283,19 +299,20 @@ function hablarPaso() {
   programarGuia();
   cadena.then((r) => {
     if (gen !== vozGen || ctx.dialogo || !ctx.reloj || ctx.reloj.vozEpoch !== epoch) return;
-    if (r && r.acabo === true) {
-      vozGuia = { epoch, termino: true };
-      programarGuia();
-    }
+    const bien = !!(r && r.acabo === true);
+    vozGuia = { epoch, termino: bien, falla: !bien };
+    programarGuia();
   });
 }
 
-// La voz solo adelanta el paso si de verdad terminó. Si falla, manda el tope de 3 s.
+// Si la voz acaba bien, el paso se va a los 2 s. Si falla, también a los 2 s.
+// Si sigue sonando, el tope es 3 s.
 function programarGuia() {
   clearTimeout(guiaTimer);
   if (!ctx.reloj || ctx.reloj.pausa || ctx.dialogo || !esMirar(ctx.reloj.paso)) return;
-  const termino = !!(vozGuia.termino && vozGuia.epoch === ctx.reloj.vozEpoch);
-  const meta = ctx.reloj.inicio + (termino ? MIN_MIRAR_MS : TOPE_VOZ_MS);
+  const misma = vozGuia.epoch === ctx.reloj.vozEpoch;
+  const lista = misma && (vozGuia.termino || vozGuia.falla);
+  const meta = ctx.reloj.inicio + (lista ? MIN_MIRAR_MS : TOPE_VOZ_MS);
   guiaTimer = setTimeout(revisarAuto, Math.max(0, meta - ahora()));
 }
 
@@ -335,6 +352,12 @@ function aplicarResultadoGuia(r) {
 function alTocarGuia(tipo, categoria) {
   if (!ctx.reloj) return;
   const r = aplicarGuia(ctx.reloj, { tipo, categoria }, ahora(), vozGuia);
+  if (r.hecho === "mal") {
+    const nota = $main.querySelector(".nota");
+    if (nota) nota.textContent = UI.esaNo;
+    if (pr.voz !== false) decirEs(UI.esaNo, { activo: true });
+    return;
+  }
   if (r.hecho === "avanzo" || r.hecho === "fin" || r.hecho === "saltar") aplicarResultadoGuia(r);
 }
 
@@ -367,6 +390,7 @@ function mostrarPuerta() {
   partida.puestas = [];
   partida.resuelto = false;
   partida.aviso = "";
+  partida.faltaS = false;
   brilloYa = false;
   limpiarAnim();
   pistaReloj = { t0: ahora(), base: 0, pausa: false };
@@ -377,28 +401,33 @@ function mostrarPuerta() {
 
 function infoPista() {
   const p = puertaActual();
-  if (!p) return { texto: "", flecha: null, paso: "corto" };
-  const completo = p.tipo === "oracion"
-    ? (p.meta || []).join(" ")
-    : p.tipo === "laberinto"
-      ? (p.lectura || []).join(" ")
-      : pistaCompleta(p.palabra, p.categoria);
-  return pista({
+  if (!p) return { texto: "", flecha: null, paso: "corto", voz: [] };
+  const segundos = segundosPista();
+  const paso = pasoPista(p.nivel, segundos, partida.errores);
+  const anula = anulaPrimera(p.nivel, segundos, partida.errores);
+  if (p.tipo === "laberinto" || p.tipo === "oracion") {
+    const revelar = (partida.errores || 0) > 0;
+    const h = paso === "completo" ? hintDePuerta(p, revelar) : { texto: UI.elige, voz: [{ lang: "es", texto: UI.elige }] };
+    return { paso, texto: h.texto, voz: h.voz, flecha: paso === "corto" ? null : destinoDe(p), anula };
+  }
+  const cat = vozDePista(p.palabra, p.categoria);
+  const info = pista({
     nivel: p.nivel,
-    segundos: segundosPista(),
+    segundos,
     errores: partida.errores,
-    palabra: p.palabra || p.respuesta || "",
-    categoria: p.categoria || (p.tipo === "oracion" ? "verb" : "noun"),
-    completo,
+    palabra: p.palabra,
+    categoria: p.categoria,
+    completo: cat.texto,
     destino: destinoDe(p),
   });
+  const voz = info.paso === "completo" ? cat.voz : [{ lang: "es", texto: info.texto }];
+  return { ...info, voz };
 }
 
 function destinoDe(p) {
   if (p.tipo === "taller") return `caja-${p.categoria}`;
   if (p.tipo === "laberinto") return `op-${p.respuesta}`;
-  const siguientePal = (p.meta || [])[partida.puestas.length];
-  return siguientePal ? `ficha-${siguientePal}` : "probar";
+  return focoSiguienteFicha(p.fichas, partida.puestas, p.meta);
 }
 
 function segundosPista() {
@@ -438,10 +467,13 @@ function reanudarPista() {
 function hablarPuerta() {
   const p = puertaActual();
   if (!p || !pr.voz || ctx.dialogo) return;
-  const lectura = p.lectura || [p.palabra];
-  decirLista(lectura, { activo: true }).then(() => {
+  let cadena;
+  if (p.tipo === "laberinto") cadena = decirIngles(fraseConPausa(p), { activo: true });
+  else if (p.tipo === "oracion") cadena = decirEs(UI.elige, { activo: true });
+  else cadena = decirIngles((p.lectura || [p.palabra]).join(" "), { activo: true });
+  cadena.then(() => {
     if (pantalla !== "jugar" || ctx.dialogo || puertaActual() !== p) return;
-    if ((p.nivel | 0) <= 1 && p.tipo === "taller") decirEs(pistaCompleta(p.palabra, p.categoria), { activo: true });
+    if ((p.nivel | 0) <= 1 && p.tipo === "taller") decirTrozos(vozDePista(p.palabra, p.categoria).voz, { activo: true });
   });
 }
 
@@ -455,6 +487,29 @@ function minisHtml() {
   return `<div class="minis" aria-hidden="true">${html}</div>`;
 }
 
+function elegirFoco(p, previo) {
+  const brilla = p.tipo === "oracion" && probarBrilla(partida.puestas, p);
+  if (brilla) return "probar";
+  if (p.tipo === "oracion") {
+    const sig = focoSiguienteFicha(p.fichas, partida.puestas, p.meta);
+    if (previo && previo.startsWith("ficha-")) {
+      const i = Number(previo.slice(6));
+      if (!partida.puestas.some((f) => f.i === i)) return previo;
+    }
+    if (previo === "quitar" || (previo && previo.startsWith("oir-ficha"))) return previo;
+    if (partida.puestas.length || !previo || previo === "oir") return sig;
+    return sig;
+  }
+  if (p.tipo === "laberinto") {
+    const ids = new Set((p.opciones || []).flatMap((o) => [`op-${o.palabra}`, `oir-${o.palabra}`]));
+    ids.add("oir");
+    if (previo && ids.has(previo)) return previo;
+    return p.opciones?.[0] ? `op-${p.opciones[0].palabra}` : "oir";
+  }
+  if (previo === "oir" || (previo && previo.startsWith("caja-"))) return previo;
+  return "oir";
+}
+
 function pintarJuego() {
   const p = puertaActual();
   if (!p) return;
@@ -463,18 +518,18 @@ function pintarJuego() {
   const coach = brilla
     ? (esTv() ? UI.brillaTv : UI.brillaTactil)
     : (partida.aviso || info.texto);
-  const foco = document.activeElement?.dataset?.focoId;
+  const previo = document.activeElement?.dataset?.focoId || "";
   mostrar(`
     <p class="coach">${esc(coach)}</p>
     <div class="barra">
-      <button type="button" class="ico-btn" data-foco="inicial" data-foco-id="oir" data-act="oir" aria-label="${esc(UI.escuchar)}">${cache["boton-escuchar"] || ""}</button>
+      <button type="button" class="ico-btn" data-foco data-foco-id="oir" data-act="oir" aria-label="${esc(UI.escuchar)}">${cache["boton-escuchar"] || ""}</button>
       ${minisHtml()}
     </div>
     <div class="escenario">
       ${robotHtml(look)}
       <div class="zona">${zonaHtml(p, info)}</div>
     </div>
-    ${partida.aviso && partida.aviso !== coach ? `<p class="pista-caja">${esc(info.texto)}</p>` : ""}`, "jugar", brilla ? "probar" : (foco || "oir"));
+    ${partida.aviso && partida.aviso !== coach ? `<p class="pista-caja">${esc(info.texto)}</p>` : ""}`, "jugar", elegirFoco(p, previo));
   if (brilla) sincronizarBrillo();
 }
 
@@ -496,6 +551,7 @@ function tallerHtml(p, info) {
       const marca = info.flecha === `caja-${cat}`;
       return `<button type="button" class="caja" data-foco data-foco-id="caja-${cat}" data-act="caja" data-cat="${cat}">
         ${cache[CAJA_SVG[cat]] || esc(infoC.nombre)}
+        <span class="caja-leyenda">${esc(infoC.pista)}</span>
         <span class="tecla">${esc(infoC.simbolo)}</span>
         ${flechaHtml(marca)}
       </button>`;
@@ -517,14 +573,14 @@ function laberintoHtml(p, info) {
     const marca = info.flecha === id;
     return `<div class="op-fila">
       <button type="button" class="opcion" data-foco data-foco-id="${esc(id)}" data-act="opcion" data-pal="${esc(o.palabra)}">
-        <span class="mini-dib">${dibujoDe(o.dibujo, o.copias)}</span>
+        <span class="mini-dib">${miniSvg(o.dibujo, o.copias)}</span>
         <span>${esc(o.palabra)}</span>
         ${flechaHtml(marca)}
       </button>
       <button type="button" class="ico-btn" data-foco data-foco-id="oir-${esc(o.palabra)}" data-act="oir-pal" data-pal="${esc(o.palabra)}" aria-label="${esc(UI.escuchar)}">${cache["boton-escuchar"] || ""}</button>
     </div>`;
   }).join("");
-  return `<div class="puerta-svg">${puerta}</div><p class="oracion">${fraseHtml(p)}</p><div class="opciones">${ops}</div>`;
+  return `<div class="pista-visual"><div class="puerta-svg">${puerta}</div><div class="blanco">${miniSvg(p.dibujo, p.copias)}</div></div><p class="oracion">${fraseHtml(p)}</p><div class="opciones">${ops}</div>`;
 }
 
 function oracionHtml(p, info) {
@@ -533,13 +589,20 @@ function oracionHtml(p, info) {
   const hueco = partida.puestas.length < (p.meta || []).length ? `<span class="hueco"></span>` : "";
   const fichas = (p.fichas || []).map((f, i) => {
     if (usadas.has(i)) return "";
-    const id = `ficha-${f.palabra}`;
+    const id = `ficha-${i}`;
     const marca = info.flecha === id && !usadas.has(i);
-    return `<button type="button" class="ficha" data-foco data-foco-id="${esc(id)}" data-act="ficha" data-i="${i}">
-      ${f.dibujo ? `<span class="mini-dib">${dibujoDe(f.dibujo, 1)}</span>` : ""}
-      <span>${esc(f.palabra)}</span>
-      ${flechaHtml(marca)}
-    </button>`;
+    const encender = partida.faltaS && f.palabra === p.verbo;
+    const letras = encender && String(f.palabra).endsWith("s")
+      ? `${esc(String(f.palabra).slice(0, -1))}<span class="ese encendida">s</span>`
+      : esc(f.palabra);
+    return `<div class="op-fila">
+      <button type="button" class="ficha" data-foco data-foco-id="${esc(id)}" data-act="ficha" data-i="${i}">
+        ${f.dibujo ? `<span class="mini-dib">${miniSvg(f.dibujo, 1)}</span>` : ""}
+        <span>${letras}</span>
+        ${flechaHtml(marca)}
+      </button>
+      <button type="button" class="ico-btn" data-foco data-foco-id="oir-ficha-${i}" data-act="oir-ficha" data-pal="${esc(f.palabra)}" aria-label="${esc(UI.escuchar)}">${cache["boton-escuchar"] || ""}</button>
+    </div>`;
   }).join("");
   const brilla = probarBrilla(partida.puestas, p);
   return `<div class="slots">${slots}${hueco}</div>
@@ -587,12 +650,24 @@ function acertar() {
   }
   abrir();
   pintarJuego();
-  const seguir = () => { if (!ctx.dialogo && partida) siguiente(); };
-  if (p.premio && pr.voz) decirIngles(p.premio, { activo: true }).then(() => esperar(400, seguir));
-  else esperar(900, seguir);
+  const cerrar = () => { if (partida && pantalla === "jugar" && !ctx.dialogo) siguiente(); };
+  const correr = (ms) => {
+    const plan = alTerminarPremio({ dialogo: ctx.dialogo, ms });
+    if (plan.accion === "guardar") {
+      esperaFn = cerrar;
+      esperaRestante = plan.ms;
+      return;
+    }
+    esperar(plan.ms, cerrar);
+  };
+  let frase = "";
+  if (p.tipo === "laberinto" || p.tipo === "oracion") frase = fraseCompleta(p);
+  if (p.premio) frase = frase ? `${frase}. ${p.premio}` : p.premio;
+  if (frase && pr.voz) decirIngles(frase, { activo: true }).then(() => correr(400));
+  else correr(900);
 }
 
-function fallar(palabra, aviso, cara) {
+function fallar(palabra, aviso, cara, voz) {
   if (!partida || partida.resuelto || ctx.dialogo) return;
   partida.errores++;
   if (aviso) partida.aviso = aviso;
@@ -600,7 +675,8 @@ function fallar(palabra, aviso, cara) {
   pr = anotarFallo(pr, palabra);
   guardar();
   pintarJuego();
-  if (pr.voz) decirEs(partida.aviso || infoPista().texto, { activo: true });
+  const trozos = voz || [{ lang: "es", texto: aviso || "" }];
+  if (pr.voz) decirTrozos(trozos, { activo: true });
 }
 
 function responderCaja(cat) {
@@ -609,7 +685,10 @@ function responderCaja(cat) {
   if (!(p.cajas || []).includes(cat)) return;
   clic();
   if (cat === p.categoria) acertar();
-  else fallar(p.palabra, pistaCompleta(p.palabra, p.categoria));
+  else {
+    const h = vozDePista(p.palabra, p.categoria);
+    fallar(p.palabra, h.texto, null, h.voz);
+  }
 }
 
 function responderOpcion(pal) {
@@ -617,7 +696,10 @@ function responderOpcion(pal) {
   if (!p || p.tipo !== "laberinto" || partida.resuelto) return;
   clic();
   if (pal === p.respuesta) acertar();
-  else fallar(p.respuesta, (p.nivel | 0) <= 1 ? "" : pistaCompleta(p.respuesta, "noun"));
+  else {
+    const h = hintDePuerta(p, true);
+    fallar(p.respuesta, h.texto, null, h.voz);
+  }
 }
 
 function ponerFicha(i) {
@@ -628,6 +710,7 @@ function ponerFicha(i) {
   clic();
   partida.puestas = [...partida.puestas, { ...f, i }];
   partida.aviso = "";
+  partida.faltaS = false;
   if (look.cara === "risa" || look.cara === "duda") look.cara = "normal";
   pintarJuego();
 }
@@ -637,6 +720,7 @@ function quitarFicha() {
   clic();
   partida.puestas = partida.puestas.slice(0, -1);
   partida.aviso = "";
+  partida.faltaS = false;
   look.cara = "normal";
   pintarJuego();
 }
@@ -645,10 +729,12 @@ function probarFrase() {
   const p = puertaActual();
   if (!p || p.tipo !== "oracion" || partida.resuelto) return;
   const efecto = efectoOracion(partida.puestas, p);
+  partida.faltaS = efecto === "falta-s";
   if (efecto === "actua") acertar();
-  else if (efecto === "risa") fallar(p.verbo, UI.risa, "risa");
-  else if (efecto === "duda") fallar(p.verbo, UI.duda, "duda");
-  else fallar(p.verbo, (p.meta || []).join(" "));
+  else if (efecto === "risa") fallar(p.verbo, UI.orden, "risa", [{ lang: "es", texto: UI.orden }]);
+  else if (efecto === "falta-s") fallar(p.verbo, UI.miraEse, null, [{ lang: "es", texto: UI.miraEse }]);
+  else if (efecto === "duda") fallar(p.verbo, UI.duda, "duda", [{ lang: "es", texto: UI.duda }]);
+  else fallar(p.verbo, UI.orden, null, [{ lang: "es", texto: UI.orden }]);
 }
 
 function siguiente() {
@@ -784,12 +870,9 @@ function teclaGuia(accion) {
   const a = ahora();
   if (accion === "ok") {
     if (ignoraEntrada(ctx.reloj.tragarHasta || ctx.tragarHasta || 0, a, "ok")) return true;
-    const e = document.activeElement;
-    const act = e?.dataset?.act;
-    if (act === "saltar" || act === "oir") { e.click(); return true; }
-    if (!esMirar(ctx.reloj.paso) && act === "caja") { e.click(); return true; }
     if (esMirar(ctx.reloj.paso)) { alTocarGuia("ok"); return true; }
-    if (e && $main.contains(e) && e.dataset.act && !e.disabled) e.click();
+    const e = document.activeElement;
+    if (e?.dataset?.act === "oir") { e.click(); return true; }
     return true;
   }
   if (!esMirar(ctx.reloj.paso)) {
@@ -810,10 +893,7 @@ function teclaJuego(accion) {
   const p = puertaActual();
   if (!p) return true;
   const a = ahora();
-  if (partida.resuelto && accion === "ok") {
-    if (!ignoraEntrada(ctx.tragarHasta || 0, a, "ok")) siguiente();
-    return true;
-  }
+  if (partida.resuelto) return true;
   if (p.tipo === "taller") {
     if (accion === "ok") {
       if (ignoraEntrada(ctx.tragarHasta || 0, a, "ok")) return true;
@@ -873,8 +953,10 @@ function tocar(act, el) {
     else hablarPuerta();
     return;
   }
-  if (act === "oir-pal") {
-    if (pr.voz) decirLista([el.dataset.pal], { activo: true });
+  if (act === "oir-pal" || act === "oir-ficha") {
+    const pal = el.dataset.pal || "";
+    if (pr.voz && pal.includes(" ")) decirIngles(pal, { activo: true });
+    else if (pr.voz) decirPalabra(pal, { activo: true });
     return;
   }
   if (act === "caja") {
@@ -898,11 +980,16 @@ $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   const act = t?.dataset?.act || "";
   if (ctx.dialogo) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    const enVelo = !!ev.target.closest(".velo");
     if (act === "seguir" || act === "salir-si") {
       aplicarSalida(responder(ctx, { tipo: act === "seguir" ? "seguir" : "salir-si", ahora: ahora() }));
+    } else if (enVelo && !enDialogo && toqueEnVelo({ tv: esTv(), enDialogo }) === "seguir") {
+      aplicarSalida(responder(ctx, { tipo: "seguir", ahora: ahora() }));
     }
     return;
   }
+  if (pantalla === "jugar" && partida?.resuelto) return;
   if (act === "saltar" || act === "oir" || act === "oir-pal" || act === "voz" || act === "como" || act === "jugar" || act === "reto" || act === "nivel" || act === "inicio" || act === "otro" || act === "quitar") {
     if (ignoraEntrada(ctx.tragarHasta || 0, ahora(), "toque") && pantalla !== "inicio") return;
     tocar(act, t);

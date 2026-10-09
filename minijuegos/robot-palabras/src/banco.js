@@ -2,7 +2,7 @@
 // Si la forma no está grabada, la voz del sistema en inglés la dice.
 import { buscar } from "../../spelling/src/palabras.js";
 
-export const AMBIGUAS = ["jump", "spin", "run", "kick", "drink"];
+export const AMBIGUAS = ["jump", "spin", "run", "kick", "drink", "watch"];
 
 export const SUSTANTIVOS = [
   { id: "cat", dibujo: "cat" },
@@ -14,7 +14,6 @@ export const SUSTANTIVOS = [
   { id: "bus", dibujo: "bus" },
   { id: "box", dibujo: "box" },
   { id: "dish", dibujo: "dish" },
-  { id: "watch", dibujo: "watch" },
   { id: "fish", dibujo: "fish" },
   { id: "mouse", dibujo: "mouse" },
   { id: "sheep", dibujo: "sheep" },
@@ -37,32 +36,32 @@ export const ADJETIVOS = [
 ];
 
 export const PLURALES_S = [
-  par("cat", "cats", "cat", "s"),
-  par("dog", "dogs", "dog", "s"),
-  par("ball", "balls", "ball", "s"),
-  par("head", "heads", "head", "s"),
-  par("wheel", "wheels", "wheel", "s"),
-  par("arm", "arms", "arm", "s"),
+  par("cat", "cats", "cat", "s", 2, "gatos"),
+  par("dog", "dogs", "dog", "s", 2, "perros"),
+  par("ball", "balls", "ball", "s", 2, "pelotas"),
+  par("head", "heads", "head", "s", 2, "cabezas"),
+  par("wheel", "wheels", "wheel", "s", 2, "ruedas"),
+  par("arm", "arms", "arm", "s", 2, "brazos"),
 ];
 
 export const PLURALES_ES = [
-  par("bus", "buses", "bus", "es"),
-  par("dish", "dishes", "dish", "es"),
-  par("box", "boxes", "box", "es"),
-  par("watch", "watches", "watch", "es"),
+  par("bus", "buses", "bus", "es", 2, "buses"),
+  par("dish", "dishes", "dish", "es", 2, "platos"),
+  par("box", "boxes", "box", "es", 2, "cajas"),
+  par("watch", "watches", "watch", "es", 2, "relojes"),
 ];
 
 export const PLURALES_IRR = [
-  par("mouse", "mice", "mouse", "irregular"),
-  par("foot", "feet", "foot", "irregular"),
-  par("tooth", "teeth", "tooth", "irregular"),
-  par("child", "children", "child", "irregular"),
-  par("man", "men", "man", "irregular"),
-  par("woman", "women", "woman", "irregular"),
-  par("person", "people", "child", "irregular", 3),
-  par("goose", "geese", "goose", "irregular"),
-  par("fish", "fish", "fish", "irregular"),
-  par("sheep", "sheep", "sheep", "irregular"),
+  par("mouse", "mice", "mouse", "irregular", 2, "ratones"),
+  par("foot", "feet", "foot", "irregular", 2, "pies"),
+  par("tooth", "teeth", "tooth", "irregular", 2, "dientes"),
+  par("child", "children", "child", "irregular", 2, "niños"),
+  par("man", "men", "man", "irregular", 2, "hombres"),
+  par("woman", "women", "woman", "irregular", 2, "mujeres"),
+  par("person", "people", "child", "irregular", 3, "personas"),
+  par("goose", "geese", "goose", "irregular", 2, "gansos"),
+  par("fish", "fish", "fish", "irregular", 2, "peces"),
+  par("sheep", "sheep", "sheep", "irregular", 2, "ovejas"),
 ];
 
 export const PASADOS_ED = [
@@ -106,7 +105,7 @@ const TAMBIEN = {
   sheeps: ["sheep"],
 };
 
-function par(base, plural, dibujo, clase, copias) {
+function par(base, plural, dibujo, clase, copias, glosa) {
   return {
     id: plural,
     base,
@@ -114,8 +113,38 @@ function par(base, plural, dibujo, clase, copias) {
     dibujo,
     clase,
     copias: copias || 2,
+    glosa: glosa || "",
     premio: `one ${base}, two ${plural}`,
   };
+}
+
+const PASADO_DE = {
+  jump: "jumped", kick: "kicked", play: "played", paint: "painted", want: "wanted",
+  run: "ran", eat: "ate", see: "saw", go: "went", come: "came", sit: "sat",
+  get: "got", have: "had", make: "made", say: "said", take: "took", sing: "sang",
+  swim: "swam", spin: "spun", drink: "drank",
+};
+
+const TERCERA_ESP = { have: "has", go: "goes" };
+
+export function articulo(base) {
+  return /^[aeiou]/i.test(String(base || "")) ? "an" : "a";
+}
+
+export function conArticulo(base) {
+  return `${articulo(base)} ${base}`;
+}
+
+export function terceraDe(base) {
+  const b = String(base || "");
+  if (TERCERA_ESP[b]) return TERCERA_ESP[b];
+  if (/(?:ch|sh|s|x|o)$/i.test(b)) return `${b}es`;
+  if (/[^aeiou]y$/i.test(b)) return `${b.slice(0, -1)}ies`;
+  return `${b}s`;
+}
+
+export function pasadoDe(base) {
+  return PASADO_DE[base] || "";
 }
 
 function pasado(base, forma, dibujo, sonido) {

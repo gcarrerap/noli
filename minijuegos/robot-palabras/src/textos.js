@@ -60,6 +60,9 @@ export const UI = {
   otro: "Otro turno",
   inicio: "El taller",
   otraVez: "Otra vez",
+  elige: "Elige la palabra.",
+  esaNo: "Esa no.",
+  orden: "¿Quién va primero?",
   brillaTactil: "¡Brilla! Toca Probar.",
   brillaTv: "¡Brilla! Pulsa OK.",
   brillaVozTactil: "Brilla. Toca Probar.",
@@ -112,6 +115,50 @@ export function pistaCompleta(palabra, categoria) {
   if (categoria === "verb") return PISTAS.moverse(palabra);
   if (categoria === "adjective") return PISTAS.como(palabra);
   return PISTAS.pieza(palabra);
+}
+
+function todoEs(texto) {
+  return { texto, voz: [{ lang: "es", texto }] };
+}
+
+function mezcla(espanol, ingles) {
+  const texto = `${espanol} ${ingles}.`.replace(/\s+\./, ".").replace(":. ", ": ");
+  return { texto, voz: [{ lang: "es", texto: espanol }, { lang: "en", texto: ingles }] };
+}
+
+export function vozDePista(palabra, categoria) {
+  const cola = categoria === "verb" ? "es moverse." : categoria === "adjective" ? "es cómo es." : "es una pieza.";
+  const texto = `${capital(palabra)} ${cola}`;
+  return { texto, voz: [{ lang: "en", texto: palabra }, { lang: "es", texto: cola }] };
+}
+
+export function hintDePuerta(puerta, revelar) {
+  const est = puerta?.estructura;
+  if (est === "ayer") {
+    if (revelar) return mezcla("Ayer:", puerta.respuesta);
+    return todoEs("Ayer: termina en -ed.");
+  }
+  if (est === "ayer-irr") {
+    if (revelar) return mezcla("Ayer:", puerta.respuesta);
+    return todoEs("Ayer: la palabra cambia.");
+  }
+  if (est === "two-see" || est === "two-can") {
+    if (puerta.clase === "es") return todoEs("Más de uno: termina en -es.");
+    if (puerta.clase === "irregular" && puerta.base === puerta.respuesta) {
+      return todoEs("Más de uno: se queda igual.");
+    }
+    if (puerta.clase === "irregular") {
+      if (revelar) return mezcla(`Dos ${puerta.glosa || "así"}:`, puerta.respuesta);
+      return todoEs("Más de uno: la palabra cambia.");
+    }
+    return todoEs("Más de uno: termina en -s.");
+  }
+  if (est === "el-salta") {
+    if (revelar) return mezcla("Un robot:", puerta.respuesta);
+    return todoEs("Un robot: le pones -s.");
+  }
+  if (est === "oracion") return todoEs(UI.orden);
+  return todoEs(UI.elige);
 }
 
 export function textoRacha(dias) {

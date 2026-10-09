@@ -7,6 +7,7 @@ import {
   PLURALES_S, PLURALES_ES, PLURALES_IRR,
   PASADOS_ED, PASADOS_IRR, ORACIONES,
   TERCERA, tambienCorrecta, formasPasado, formasPasadoIrregular,
+  conArticulo, terceraDe, pasadoDe,
 } from "./banco.js";
 
 export const ESTRUCTURAS = {
@@ -104,10 +105,6 @@ function opciones(correcto, candidatos, rnd) {
   return revolver(rnd, [correcto, ...malos]);
 }
 
-function poolPlural(items) {
-  return items.map((p) => opcion(p.plural, p.dibujo, p.copias));
-}
-
 export function crearLaberinto(nivel, rnd, usadas, fallos) {
   if (nivel >= 7) return laberintoEse(rnd, usadas, fallos);
   if (nivel === 6) return laberintoPasado(PASADOS_IRR, "ayer-irr", rnd, usadas, fallos, nivel);
@@ -116,72 +113,92 @@ export function crearLaberinto(nivel, rnd, usadas, fallos) {
   return laberintoRegular(rnd, usadas, fallos, nivel);
 }
 
-function laberintoRegular(rnd, usadas, fallos, nivel) {
-  const lista = rnd() < 0.5 ? PLURALES_ES : PLURALES_S;
-  const item = tomar(lista, rnd, usadas, fallos);
-  const correcto = opcion(item.plural, item.dibujo, item.copias);
-  const otros = poolPlural([...PLURALES_S, ...PLURALES_ES]).concat([
-    opcion(item.base, item.dibujo, 1),
-  ]);
-  const lectura = ["I", "see", "two", item.plural];
+function formasPlural(item) {
+  const formas = [
+    opcion(item.plural, item.dibujo, item.copias),
+    opcion(conArticulo(item.base), item.dibujo, 1),
+  ];
+  if (item.base !== item.plural) formas.push(opcion(item.base, item.dibujo, 1));
+  else formas.push(opcion(`the ${item.base}`, item.dibujo, 1));
+  return formas;
+}
+
+function formasVerbo(base, buena, dibujo) {
+  const tercera = terceraDe(base);
+  const pasado = pasadoDe(base);
+  return [
+    opcion(buena, dibujo, 1),
+    opcion(base, dibujo, 1),
+    opcion(buena === pasado ? tercera : pasado, dibujo, 1),
+  ];
+}
+
+function armarLaberinto(nivel, estructura, item, lectura, hueco, formas, rnd, extra) {
+  const respuesta = item.plural || item.pasado || item.verbo;
+  const correcto = formas.find((f) => f.palabra === respuesta) || formas[0];
+  const otros = formas.filter((f) => f.palabra !== respuesta);
   return {
-    ...basePuerta("laberinto", nivel, "two-see", lectura),
-    hueco: 3,
-    respuesta: item.plural,
+    ...basePuerta("laberinto", nivel, estructura, lectura),
+    hueco,
+    respuesta,
+    base: item.base,
+    clase: item.clase || "",
+    glosa: item.glosa || "",
     opciones: opciones(correcto, otros, rnd),
+    familia: formas.map((f) => f.palabra),
     dibujo: item.dibujo,
-    copias: item.copias,
+    copias: item.copias || 1,
+    premio: extra.premio ?? null,
+    sonido: extra.sonido ?? null,
+  };
+}
+
+export function puertaPlural(item, nivel, rnd = Math.random) {
+  const irregular = item.clase === "irregular";
+  const estructura = irregular && nivel >= 4 ? "two-can" : "two-see";
+  const lectura = estructura === "two-can"
+    ? ["Two", item.plural, "can", "run"]
+    : ["I", "see", "two", item.plural];
+  return armarLaberinto(nivel, estructura, item, lectura, estructura === "two-can" ? 1 : 3, formasPlural(item), rnd, {
     premio: item.premio,
     sonido: item.clase === "es" ? "es" : null,
-  };
+  });
+}
+
+export function puertaPasado(item, nivel, rnd = Math.random) {
+  const estructura = item.sonido ? "ayer" : "ayer-irr";
+  return armarLaberinto(nivel, estructura, item, ["Yesterday", "I", item.pasado], 2, formasVerbo(item.base, item.pasado, item.dibujo), rnd, {
+    premio: null,
+    sonido: item.sonido,
+  });
+}
+
+export function puertaRobot(item, rnd = Math.random) {
+  const pasado = pasadoDe(item.base);
+  const formas = [
+    opcion(item.verbo, item.dibujo, 1),
+    opcion(item.base, item.dibujo, 1),
+    opcion(pasado, item.dibujo, 1),
+  ];
+  return armarLaberinto(7, "el-salta", { ...item, pasado: item.verbo, clase: "s" }, ["The", "robot", item.verbo], 2, formas, rnd, {
+    premio: null,
+    sonido: null,
+  });
+}
+
+function laberintoRegular(rnd, usadas, fallos, nivel) {
+  const lista = rnd() < 0.5 ? PLURALES_ES : PLURALES_S;
+  return puertaPlural(tomar(lista, rnd, usadas, fallos), nivel, rnd);
 }
 
 function laberintoPlural4(rnd, usadas, fallos) {
   const irregular = rnd() < 0.65;
-  if (irregular) {
-    const item = tomar(PLURALES_IRR, rnd, usadas, fallos);
-    const correcto = opcion(item.plural, item.dibujo, item.copias);
-    const otros = poolPlural(PLURALES_IRR).concat(poolPlural(PLURALES_S));
-    const lectura = ["Two", item.plural, "can", "run"];
-    return {
-      ...basePuerta("laberinto", 4, "two-can", lectura),
-      hueco: 1,
-      respuesta: item.plural,
-      opciones: opciones(correcto, otros, rnd),
-      dibujo: item.dibujo,
-      copias: item.copias,
-      premio: item.premio,
-    };
-  }
-  const item = tomar([...PLURALES_S, ...PLURALES_ES], rnd, usadas, fallos);
-  const correcto = opcion(item.plural, item.dibujo, item.copias);
-  const otros = poolPlural([...PLURALES_S, ...PLURALES_ES]).concat([opcion(item.base, item.dibujo, 1)]);
-  return {
-    ...basePuerta("laberinto", 4, "two-see", ["I", "see", "two", item.plural]),
-    hueco: 3,
-    respuesta: item.plural,
-    opciones: opciones(correcto, otros, rnd),
-    dibujo: item.dibujo,
-    copias: item.copias,
-    premio: item.premio,
-    sonido: item.clase === "es" ? "es" : null,
-  };
+  const lista = irregular ? PLURALES_IRR : [...PLURALES_S, ...PLURALES_ES];
+  return puertaPlural(tomar(lista, rnd, usadas, fallos), 4, rnd);
 }
 
-function laberintoPasado(lista, estructura, rnd, usadas, fallos, nivel) {
-  const item = tomar(lista, rnd, usadas, fallos);
-  const correcto = opcion(item.pasado, item.dibujo, 1);
-  const otros = lista.map((p) => opcion(p.pasado, p.dibujo, 1));
-  return {
-    ...basePuerta("laberinto", nivel, estructura, ["Yesterday", "I", item.pasado]),
-    hueco: 2,
-    respuesta: item.pasado,
-    opciones: opciones(correcto, otros, rnd),
-    dibujo: item.dibujo,
-    copias: 1,
-    sonido: item.sonido,
-    premio: null,
-  };
+function laberintoPasado(lista, _estructura, rnd, usadas, fallos, nivel) {
+  return puertaPasado(tomar(lista, rnd, usadas, fallos), nivel, rnd);
 }
 
 function conId(lista, id) {
@@ -190,20 +207,8 @@ function conId(lista, id) {
 
 function laberintoEse(rnd, usadas, fallos) {
   const item = tomar(conId(ORACIONES, (o) => o.verbo), rnd, usadas, fallos);
-  const correcto = opcion(item.verbo, item.dibujo, 1);
-  const otros = ORACIONES.map((o) => opcion(o.verbo, o.dibujo, 1)).concat([
-    opcion(item.base, item.dibujo, 1),
-  ]);
-  return {
-    ...basePuerta("laberinto", 7, "el-salta", ["The", "robot", item.verbo]),
-    hueco: 2,
-    respuesta: item.verbo,
-    opciones: opciones(correcto, otros, rnd),
-    dibujo: item.dibujo,
-    copias: 1,
-    ensenar: `The robot ${item.verbo}`,
-    premio: null,
-  };
+  const puerta = puertaRobot(item, rnd);
+  return { ...puerta, ensenar: `The robot ${item.verbo}` };
 }
 
 export function crearOracion(nivel, rnd, usadas, fallos) {
@@ -224,7 +229,9 @@ export function crearOracion(nivel, rnd, usadas, fallos) {
     fichas,
     adjetivo: item.adj,
     verbo: item.verbo,
+    base: item.base,
     dibujo: item.dibujo,
+    copias: 1,
     ensenar: "The robot jumps",
   };
 }
@@ -274,6 +281,13 @@ export function problemas(puerta) {
     if (new Set(ops).size !== ops.length || !ops.includes(puerta.respuesta)) errs.push("opciones");
     if (ops.some((o) => o !== puerta.respuesta && tambienCorrecta(puerta.respuesta, o))) errs.push("trampa");
     if (ops.includes("fishes") || ops.includes("sheeps")) errs.push("fish");
+    if (!puerta.dibujo) errs.push("dibujo");
+    const familia = new Set(puerta.familia || []);
+    if (familia.size && ops.some((o) => !familia.has(o))) errs.push("familia");
+    if (buenasDe(puerta).length !== 1) errs.push("unica");
+    const pausa = fraseConPausa(puerta).split(/\s+/);
+    if (!pausa.includes("mm")) errs.push("pausa");
+    if (pausa.includes(puerta.respuesta)) errs.push("dice-respuesta");
   }
   if (puerta.tipo === "oracion") {
     if (puerta.meta.join(" ") !== `The ${puerta.adjetivo} robot ${puerta.verbo}`) errs.push("meta");
@@ -287,11 +301,45 @@ export function problemas(puerta) {
   return errs;
 }
 
+export function fraseConPausa(puerta) {
+  const pals = puerta.lectura || [];
+  if (puerta.hueco == null || puerta.hueco < 0) return pals.join(" ");
+  const antes = pals.slice(0, puerta.hueco).join(" ");
+  const despues = pals.slice(puerta.hueco + 1).join(" ");
+  return [antes, "mm", despues].filter(Boolean).join(" ");
+}
+
+export function fraseCompleta(puerta) {
+  return (puerta.lectura || []).join(" ");
+}
+
+export function buenasDe(puerta) {
+  if (!puerta || puerta.tipo !== "laberinto") return [];
+  const buena = puerta.respuesta;
+  return (puerta.opciones || [])
+    .filter((o) => o.palabra === buena || tambienCorrecta(buena, o.palabra))
+    .map((o) => o.palabra);
+}
+
+export function focoSiguienteFicha(fichas, puestas, meta) {
+  const usadas = new Set((puestas || []).map((f) => (f && typeof f === "object" ? f.i : -1)));
+  const sig = (meta || [])[(puestas || []).length];
+  const idx = (fichas || []).findIndex((f, i) => !usadas.has(i) && f.palabra === sig);
+  if (idx >= 0) return `ficha-${idx}`;
+  const any = (fichas || []).findIndex((_, i) => !usadas.has(i));
+  if (any >= 0) return `ficha-${any}`;
+  return "probar";
+}
+
 export function efectoOracion(puestas, puerta) {
   const palabras = puestas.map((f) => (typeof f === "string" ? f : f.palabra));
   if (igual(palabras, puerta.meta)) return "actua";
-  if (igual(palabras, puerta.alReves)) return "risa";
-  const verbos = new Set([puerta.verbo, puerta.verbo.replace(/s$/, "")]);
+  const base = puerta.base || String(puerta.verbo || "").replace(/s$/, "");
+  const metaBase = (puerta.meta || []).map((w, i) => (i === puerta.meta.length - 1 ? base : w));
+  const revesBase = (puerta.alReves || []).map((w, i) => (i === puerta.alReves.length - 1 ? base : w));
+  if (igual(palabras, puerta.alReves) || igual(palabras, revesBase)) return "risa";
+  if (igual(palabras, metaBase)) return "falta-s";
+  const verbos = new Set([puerta.verbo, base]);
   if (!palabras.some((w) => verbos.has(w))) return "duda";
   return "mal";
 }
