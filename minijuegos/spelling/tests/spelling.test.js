@@ -9,7 +9,7 @@ import { nuevo, cargar, registrar, dominio, cerrarRonda, armarRonda, colocar, cu
 import { empezarPrueba, responderPrueba, palabraActual } from "../src/nivelacion.js";
 import { retoDelDia, alcance } from "../src/reto.js";
 import { escogerVoz, ordenarVoces, letraPorLetra } from "../src/voz.js";
-import { BANCO, SONIDOS, buscarCh, resaltar, chDe, registrarCh, pctCh, cerrarRondaCh, armarRondaCh } from "../src/ch.js";
+import { BANCO, SONIDOS, NIVELES, buscarCh, resaltar, chDe, registrarCh, pctCh, cerrarRondaCh, armarRondaCh, ponerNivelCh } from "../src/ch.js";
 import fs from "node:fs";
 
 const HOY = "2026-10-08";
@@ -314,6 +314,7 @@ test("ETAPAS: de la más fácil a la más difícil", () => {
 
 test("CH: banco amplio, cada palabra con su sonido, nivel y frase; sin repetir ni chocar con las listas", () => {
   assert.ok(BANCO.length >= 120);
+  assert.equal(NIVELES, 5);
   const vistas = new Set();
   for (const p of BANCO) {
     const w = p.palabra.toLowerCase();
@@ -322,16 +323,29 @@ test("CH: banco amplio, cada palabra con su sonido, nivel y frase; sin repetir n
     assert.match(p.palabra, /^[A-Za-z]+$/);
     assert.ok(/ch/i.test(p.palabra), `${p.palabra} no tiene ch`);
     assert.ok(["ch", "k", "sh"].includes(p.sonido), p.palabra);
-    assert.ok([1, 2, 3].includes(p.n), p.palabra);
+    assert.ok([1, 2, 3, 4, 5].includes(p.n), `${p.palabra} sin nivel`);
     assert.ok(new RegExp(`\\b${p.palabra}\\b`, "i").test(p.frase), `${p.palabra}: "${p.frase}"`);
     assert.ok(p.frase.split(" ").length <= 12, `frase larga: ${p.frase}`);
     // Si ya está en una lista, su grabación de frase es la misma: la frase debe ser idéntica
     const enLista = buscar(p.palabra);
     if (enLista) assert.equal(enLista.frase, p.frase, `${p.palabra}: la frase difiere de la de la lista`);
   }
-  // cada sonido tiene palabras en los tres niveles y bastantes de dónde sacar
-  for (const s of SONIDOS) for (const n of [1, 2, 3]) assert.ok(BANCO.filter((p) => p.sonido === s.id && p.n === n).length >= 3, `${s.id} nivel ${n}`);
   assert.ok(BANCO.filter((p) => p.sonido === "k").length >= 25 && BANCO.filter((p) => p.sonido === "sh").length >= 15);
+});
+
+test("CH: los niveles van de lo conocido a lo raro: el 1 tiene palabras de sobra de cada sonido y el 5 las más difíciles", () => {
+  for (const s of SONIDOS) {
+    // con las palabras del nivel 1 se arma una ronda sola (4 o más de cada sonido)
+    assert.ok(BANCO.filter((p) => p.sonido === s.id && p.n === 1).length >= 5, `${s.id} nivel 1`);
+    for (let n = 2; n <= 4; n++) assert.ok(BANCO.filter((p) => p.sonido === s.id && p.n === n).length >= 3, `${s.id} nivel ${n}`);
+  }
+  const largo = (n) => BANCO.filter((p) => p.n === n).reduce((t, p) => t + p.palabra.length, 0) / BANCO.filter((p) => p.n === n).length;
+  for (let n = 3; n <= 5; n++) assert.ok(largo(n) > largo(n - 2), `las palabras del nivel ${n} no son más largas que las del ${n - 2}`);
+  assert.ok(largo(2) > largo(1) && largo(5) > largo(1) + 2);
+  // el nivel 1 son palabras que conoce un niño de 7 años
+  for (const w of "chips chair cheese child lunch school Christmas chef machine".split(" ")) assert.equal(buscarCh(w).n, 1, w);
+  for (const w of "chimpanzee orchestra architect chandelier archive technique".split(" ")) assert.ok(buscarCh(w).n >= 4, w);
+  assert.ok(BANCO.filter((p) => p.n === 1).length >= 25);
 });
 
 test("CH: las palabras de la imagen de la maestra están, con el sonido que dice la lección", () => {
@@ -353,10 +367,10 @@ test("CH: resaltar parte la palabra marcando las ch", () => {
   assert.equal(resaltar("chef").map((t) => t.texto).join(""), "chef");
 });
 
-test("CH: progreso por sonido y modo; datos rotos o ausentes dan valores seguros", () => {
-  assert.deepEqual(chDe(undefined).nivel, 2);
-  assert.equal(chDe({ ch: { nivel: 99, stats: "mal" } }).nivel, 3);
-  assert.equal(chDe({ ch: { nivel: -3 } }).nivel, 2);
+test("CH: progreso por sonido y modo; datos rotos, ausentes o de la versión anterior dan valores seguros (nivel 1)", () => {
+  assert.deepEqual(chDe(undefined).niveles, { sonido: 1, escribe: 1 });
+  assert.deepEqual(chDe({ ch: { nivel: 3, niveles: { sonido: 99, escribe: -3 }, stats: "mal" } }).niveles, { sonido: 5, escribe: 1 });
+  assert.deepEqual(chDe({ ch: { nivel: 3 } }).niveles, { sonido: 1, escribe: 1 });   // el "nivel" de antes ya no cuenta
   let pr = nuevo();
   pr = registrarCh(pr, "sonido", "k", true);
   pr = registrarCh(pr, "sonido", "k", false);
@@ -365,47 +379,60 @@ test("CH: progreso por sonido y modo; datos rotos o ausentes dan valores seguros
   assert.equal(pctCh(pr, "escribe", "sh"), 0);
   assert.equal(pctCh(pr, "escribe", "k"), null);
   assert.equal(chDe(pr).stats.sonido.k.t, 2);
-  assert.equal(pr.listas && Object.keys(pr.listas).length, 0);      // no toca las listas
+  assert.equal(Object.keys(pr.listas).length, 0);      // no toca las listas
   assert.equal(cargar(JSON.parse(JSON.stringify(pr))).ch.stats.sonido.k.a, 1);   // se guarda y se recupera
 });
 
-test("CH: la ronda de escribir sube de nivel con 8 de 10, baja con 4 o menos; la de sonido solo da estrellas", () => {
-  let pr = nuevo();
-  let r = cerrarRondaCh(pr, "escribe", 9);
-  assert.deepEqual([r.nivel, r.cambio, r.estrellas], [3, 1, 2]);
-  r = cerrarRondaCh(r.pr, "escribe", 10);
-  assert.deepEqual([r.nivel, r.cambio, r.estrellas], [3, 0, 3]);      // tope
+test("CH: cada juego tiene su nivel: sube con 8 de 10, baja con 4 o menos, de 1 a 5", () => {
+  let r = cerrarRondaCh(nuevo(), "escribe", 9);
+  assert.deepEqual([r.nivel, r.cambio, r.estrellas], [2, 1, 2]);
+  assert.deepEqual(chDe(r.pr).niveles, { sonido: 1, escribe: 2 });     // el otro juego no cambia
+  r = cerrarRondaCh(r.pr, "escribe", 7);
+  assert.deepEqual([r.nivel, r.cambio], [2, 0]);
   r = cerrarRondaCh(r.pr, "escribe", 3);
-  assert.deepEqual([r.nivel, r.cambio], [2, -1]);
-  r = cerrarRondaCh(cerrarRondaCh(nuevo(), "escribe", 2).pr, "escribe", 1);   // nunca baja de 1
-  assert.equal(r.nivel, 1);
-  const s = cerrarRondaCh(nuevo(), "sonido", 10);
-  assert.deepEqual([s.nivel, s.cambio, s.estrellas], [2, 0, 3]);
-  assert.equal(chDe(s.pr).rondas.sonido, 1);
-  assert.equal(chDe(s.pr).rondas.escribe, 0);
+  assert.deepEqual([r.nivel, r.cambio], [1, -1]);
+  r = cerrarRondaCh(r.pr, "escribe", 0);
+  assert.deepEqual([r.nivel, r.cambio], [1, 0]);                       // nunca baja de 1
+  let pr = nuevo();
+  for (let i = 0; i < 7; i++) pr = cerrarRondaCh(pr, "sonido", 10).pr;
+  assert.equal(chDe(pr).niveles.sonido, 5);                            // tope
+  assert.equal(chDe(pr).rondas.sonido, 7);
+  assert.equal(chDe(pr).rondas.escribe, 0);
+  assert.equal(chDe(pr).estrellas.sonido, 3);
 });
 
-test("CH: una ronda trae 10 palabras distintas con los tres sonidos mezclados (4 del más flojo)", () => {
-  for (const modo of ["sonido", "escribe"]) for (const nivel of [1, 2, 3]) for (let semilla = 1; semilla <= 20; semilla++) {
-    const pr = { ...nuevo(), ch: { nivel } };
+test("CH: el nivel también se cambia a mano, dentro de 1 a 5", () => {
+  let pr = ponerNivelCh(nuevo(), "escribe", 3);
+  assert.equal(chDe(pr).niveles.escribe, 3);
+  assert.equal(chDe(ponerNivelCh(pr, "escribe", 0)).niveles.escribe, 1);
+  assert.equal(chDe(ponerNivelCh(pr, "escribe", 9)).niveles.escribe, 5);
+  assert.equal(chDe(pr).niveles.sonido, 1);
+});
+
+test("CH: una ronda trae 10 palabras distintas, de su nivel o más fáciles, con los tres sonidos (4 del más flojo)", () => {
+  for (const modo of ["sonido", "escribe"]) for (let nivel = 1; nivel <= 5; nivel++) for (let semilla = 1; semilla <= 20; semilla++) {
+    const pr = ponerNivelCh(nuevo(), modo, nivel);
     const r = armarRondaCh(pr, modo, rngConSemilla(semilla));
     assert.equal(r.length, 10);
     assert.equal(new Set(r.map((p) => p.palabra)).size, 10);
     const por = (s) => r.filter((p) => p.sonido === s).length;
     assert.deepEqual([por("ch"), por("k"), por("sh")].sort(), [3, 3, 4], `${modo} nivel ${nivel}`);
-    const tope = Math.min(3, nivel + (modo === "sonido" ? 1 : 0));
-    for (const p of r) assert.ok(p.n <= tope, `${p.palabra} (nivel ${p.n}) en ${modo} nivel ${nivel}`);
-    if (modo === "sonido") for (const s of SONIDOS) assert.ok(!r.some((p) => p.palabra === s.como), `${s.como} saldría escrita en su botón`);
+    for (const p of r) assert.ok(p.n <= nivel, `${p.palabra} (nivel ${p.n}) en ${modo} nivel ${nivel}`);
   }
   // el sonido que más falla recibe la palabra extra
-  let pr = { ...nuevo(), ch: { nivel: 2 } };
+  let pr = ponerNivelCh(nuevo(), "escribe", 2);
   for (let i = 0; i < 6; i++) pr = registrarCh(pr, "escribe", "sh", false);
   for (const s of ["ch", "k"]) for (let i = 0; i < 6; i++) pr = registrarCh(pr, "escribe", s, true);
   for (let semilla = 1; semilla <= 10; semilla++) assert.equal(armarRondaCh(pr, "escribe", rngConSemilla(semilla)).filter((p) => p.sonido === "sh").length, 4);
 });
 
+test("CH: la primera ronda es de palabras fáciles (nivel 1)", () => {
+  for (const modo of ["sonido", "escribe"]) for (let semilla = 1; semilla <= 30; semilla++)
+    for (const p of armarRondaCh(nuevo(), modo, rngConSemilla(semilla))) assert.equal(p.n, 1, p.palabra);
+});
+
 test("CH: las palabras que falló salen más seguido", () => {
-  const base = { ...nuevo(), ch: { nivel: 3 } };
+  const base = ponerNivelCh(nuevo(), "escribe", 5);
   const con = { ...base, fallos: { mechanic: { lista: 1, veces: 1, seguidos: 0 } } };
   let sin = 0, falla = 0;
   for (let semilla = 1; semilla <= 300; semilla++) {
