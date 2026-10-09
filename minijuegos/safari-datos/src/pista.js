@@ -72,9 +72,12 @@ function pistaPregunta(elemento, paso, errores) {
     return { paso, ...frase(`Son ${elemento.correcta} más.`), flecha: "baja", linea: true, sombra: true };
   }
   if (elemento.clase === "total" || elemento.clase === "total-todos") {
-    if (!dio && paso === "corto") return { paso, ...frase("Junta los números."), flecha: null, linea: false, luces: false };
-    if (!dio) return { paso, ...frase("Suma una y luego la otra."), flecha: "barras", linea: false, luces: true };
-    return { paso, ...frase(`Son ${elemento.correcta}.`), flecha: "barras", linea: false, luces: true };
+    const todos = elemento.clase === "total-todos";
+    const marca = todos ? "barras" : "par";
+    const par = elemento.par || null;
+    if (!dio && paso === "corto") return { paso, ...frase("Junta los números."), flecha: null, linea: false, luces: false, par };
+    if (!dio) return { paso, ...frase("Suma una y luego la otra."), flecha: marca, linea: false, luces: true, par };
+    return { paso, ...frase(`Son ${elemento.correcta}.`), flecha: marca, linea: false, luces: true, par };
   }
   if (elemento.clase === "mas") {
     if (!dio && paso === "flecha") return { paso, ...frase("Mira la más alta."), flecha: "alta", linea: false };

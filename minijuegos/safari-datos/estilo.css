@@ -61,7 +61,14 @@ button.pedido{width:100%;text-align:left;min-height:64px;box-shadow:none;border-
 
 .mesa{width:100%;min-width:0;max-width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
 .zona-grafica{flex:1;min-height:0;min-width:0;width:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;overflow-x:hidden;overflow-y:auto}
+.zona-grafica:has(> .grafica-svg),.armando .zona-grafica{overflow:hidden}
+.armando .zona-grafica{min-height:200px}
 .controles{width:100%;min-width:0;display:flex;flex-direction:column;gap:4px;flex:none}
+.controles.dos{display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:stretch}
+.controles.dos .listo,.controles.dos .opciones,.controles.dos .palitos-vivo{grid-column:1 / -1}
+.controles.dos .fila-barra{grid-template-columns:48px minmax(0,1fr) 48px;min-height:64px}
+.controles.dos .pm,.controles.dos .pm svg{width:48px;height:48px}
+.controles.dos .medio .nom{min-height:48px;font-size:.78rem}
 .lecturas{display:flex;gap:6px;width:100%;flex:none}
 .leer,.nom{min-height:64px;min-width:64px;background:var(--card);border-radius:14px;padding:.2em .5em;font-weight:800;box-shadow:var(--sombra);line-height:1.05}
 .leer small{display:block;font-weight:700;color:var(--muted);font-size:.72rem}
@@ -74,6 +81,7 @@ button.pedido{width:100%;text-align:left;min-height:64px;box-shadow:none;border-
 html[data-modo="tv"] .signo-tv{display:grid}
 html[data-modo="tv"] .pm svg path{opacity:0}
 .medio{min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px}
+.marca-num{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .medio .nom{font-weight:800;font-size:.9rem;line-height:1.05;min-height:64px;width:100%}
 .medio .nom small{display:block;font-weight:700;color:var(--muted);font-size:.68rem}
 .pista-num{font-family:"Fredoka",sans-serif;font-size:1.35rem;line-height:1}
@@ -114,8 +122,8 @@ html[data-modo="tv"] .pm img{opacity:0}
 .palitos-vivo{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;min-height:40px;flex:none}
 .palitos-vivo img{height:44px;width:auto}
 
-.grafica-svg{position:relative;flex:0 0 auto;width:100%;min-height:200px;display:flex;align-items:stretch;justify-content:center}
-.grafica-svg svg.eje{width:100%;height:auto;min-height:200px;max-width:100%}
+.grafica-svg{position:relative;flex:1 1 0;min-height:0;width:100%;overflow:hidden}
+.grafica-svg svg.eje{position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%}
 .nombres-bajo{position:absolute;left:0;right:0;bottom:0;height:64px;display:grid;grid-template-columns:9.76% repeat(var(--n), minmax(64px, 1fr));pointer-events:none}
 .nombres-bajo .leer{pointer-events:auto;min-height:64px;background:transparent;box-shadow:none;color:transparent}
 .nombres-bajo .leer small{color:transparent}
@@ -125,6 +133,7 @@ html[data-modo="tv"] .pm img{opacity:0}
 .tabla{display:flex;flex-direction:column;gap:4px;width:100%;overflow:visible}
 .fila-tabla{display:grid;grid-template-columns:48px minmax(0,1.2fr) minmax(120px,1fr);gap:4px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:4px 6px;min-height:64px}
 .fila-tabla .nom{white-space:normal;min-height:64px;font-size:.95rem}
+.fila-tabla .nom small{display:block;font-weight:700;color:var(--muted);font-size:.72rem}
 .fila-tabla img.cabeza{width:44px;height:48px;object-fit:contain}
 .fila-tabla .num{font-family:"Fredoka",sans-serif;font-size:1.4rem;background:#fff3c4;border-radius:10px;min-width:48px;min-height:48px;display:grid;place-items:center}
 
@@ -177,9 +186,16 @@ html[data-modo="tv"] .tono-verde{box-shadow:inset 10px 0 0 #3ccf8e}
 html[data-modo="tv"] .tono-morado{box-shadow:inset 10px 0 0 #c86bfa}
 html[data-modo="tv"] .menu-inicio{display:grid;grid-template-columns:1fr 1fr;width:min(760px, 100%)}
 html[data-modo="tv"] .menu-inicio .principal{grid-column:1 / -1}
-html[data-modo="tv"] .p-juego .mesa,html[data-modo="tv"] .p-guia .mesa{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(240px,.85fr);gap:10px;align-items:center}
-html[data-modo="tv"] .zona-grafica{height:100%}
-html[data-modo="tv"] svg.eje.eje-20{max-height:520px}
+html[data-modo="tv"] .p-juego .mesa,html[data-modo="tv"] .p-guia .mesa{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(240px,.85fr);gap:10px;align-items:stretch;min-height:0;max-height:100%;overflow:hidden}
+html[data-modo="tv"] .zona-grafica{height:100%;min-height:0;overflow:hidden}
+html[data-modo="tv"] .controles{min-height:0;max-height:100%;overflow:hidden;justify-content:center}
+html[data-modo="tv"] .fila-barra .medio{flex-direction:row;align-items:center;justify-content:space-between;gap:6px}
+html[data-modo="tv"] .fila-barra .nom{min-height:0;width:auto;flex:1 1 auto}
+html[data-modo="tv"] .marca-num{flex-direction:row;align-items:center;gap:6px;flex:none}
+html[data-modo="tv"] .fila-barra.con-marcas{min-height:0;flex:0 1 auto}
+html[data-modo="tv"] .con-marcas .palitos-vivo{min-height:0;flex-wrap:nowrap}
+html[data-modo="tv"] .con-marcas .palitos-vivo img{height:28px}
+html[data-modo="tv"] svg.eje.eje-20{max-height:min(520px, 100%)}
 html[data-modo="tv"] .cuidador{width:84px}
 html[data-modo="tv"] .pedido{font-size:1.3rem}
 html[data-modo="tv"] .manada{grid-template-columns:repeat(var(--cols), minmax(64px, 72px))}

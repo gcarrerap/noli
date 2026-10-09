@@ -217,7 +217,7 @@ function preguntasDe(n, categorias, rnd, modo, horizontal) {
 
 function elementoContar(cat, categorias, rnd, mixto) {
   const otras = categorias.filter((c) => c.id !== cat.id).map((c) => c.cantidad);
-  return {
+  const el = {
     tipo: "contar",
     id: cat.id,
     cantidad: cat.cantidad,
@@ -228,6 +228,14 @@ function elementoContar(cat, categorias, rnd, mixto) {
     leer: textoContar(cat.id),
     categorias,
   };
+  if (mixto) {
+    const piezas = [];
+    for (const c of categorias) {
+      for (let k = 0; k < c.cantidad; k++) piezas.push(c.id);
+    }
+    el.orden = revolver(rnd, piezas);
+  }
+  return el;
 }
 
 export function tipoErrorDetective(indice, hechosAntes, forzarAltura) {
@@ -375,13 +383,24 @@ export function crearCenso(rnd, nivelActual) {
   const cs = repartirSuma(rnd, n, suma);
   const categorias = ids.map((id, i) => ({ id, cantidad: cs[i] }));
   const base = basePregunta(categorias, "barras", false);
-  const elementos = categorias.map((c) => elementoContar(c, categorias, rnd, true));
-  elementos.push(pregCuantos(categorias[0], rnd, base));
-  elementos.push(pregMas(categorias, rnd, base));
-  let extra = 0;
-  while (elementos.length < 6) {
-    elementos.push(pregCuantos(categorias[extra % categorias.length], rnd, base));
-    extra++;
+  const elementos = [];
+  const vistos = new Set();
+  const meter = (el) => {
+    if (!el || elementos.length >= 6 || vistos.has(el.texto)) return false;
+    vistos.add(el.texto);
+    elementos.push(el);
+    return true;
+  };
+  for (const c of categorias) meter(elementoContar(c, categorias, rnd, true));
+  meter(pregMas(categorias, rnd, base));
+  if (categorias.length >= 2) {
+    meter(pregTotal([categorias[0], categorias[1]], rnd, base));
+    if (categorias.length > 2) meter(pregTotal(categorias, rnd, base));
+  }
+  for (const c of categorias) meter(pregCuantos(c, rnd, base));
+  if (categorias.length >= 3) {
+    meter(pregTotal([categorias[0], categorias[categorias.length - 1]], rnd, base));
+    meter(pregTotal([categorias[1], categorias[2]], rnd, base));
   }
   return {
     nivel: Math.max(1, nivelActual | 0),

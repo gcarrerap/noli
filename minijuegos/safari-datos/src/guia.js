@@ -1,8 +1,8 @@
 // Guía fija: 3 monos, la barra de los monos hasta 3, y la jirafa es la que hay más.
-// Los pasos de mirar avanzan con un toque o OK al momento.
-// Solos duran al menos 2 s y como mucho 3 s: solo si la voz termina de verdad
-// (onend después de empezar). Un error, cero voces o una frase que no empieza
-// no cuentan como fin: se queda el reloj de 3 s.
+// Los pasos de mirar aceptan un toque o OK solo después del segundo mínimo
+// y de que la voz haya acabado, haya fallado, o hayan pasado 3 s.
+// Solos duran al menos 2 s y como mucho 3 s: si la voz sigue, el tope es 3 s.
+// Un error o una frase que no empieza no alargan ese reloj.
 // Los de acción solo con la acción de verdad, y aguantan el bloqueo de 1 a 3 s.
 // Con «¿Salir?» abierto se pausan el avance solo y la espera de la voz.
 // Seguir los reinicia enteros para el paso en el que estaba.
@@ -155,6 +155,22 @@ export function bloqueada(g, ahora) {
   return ahora < finCandado(g);
 }
 
+// Un paso de solo mirar no se corta mientras la frase sigue.
+// El segundo mínimo lo pone el candado (bloqueoHasta). Aquí, además,
+// la voz tiene que haber acabado, haber fallado, o que ya pasaran 3 s
+// desde que apareció el paso. Tras Seguir el candado no vuelve a empezar,
+// pero la frase nueva sí: si sigue en espera o hablando, no se salta.
+export function mirarCerrada(g, ahora) {
+  if (!g || !esMirar(g.paso)) return false;
+  const inicio = Number(g.aparecio);
+  const base = Number.isFinite(inicio) ? inicio : 0;
+  const t = ahora - base;
+  if (t >= MIRAR_MAX_MS) return false;
+  const voz = g.vozEstado;
+  if (voz === "termino" || voz === "fallo") return false;
+  return true;
+}
+
 export function abrirSalirGuia(g, ahora) {
   if (!g || g.saliendo) return g;
   return { ...g, saliendo: true, pausadoEn: ahora };
@@ -246,10 +262,10 @@ export function aplicarGuia(g, evento, ahora) {
     if (!debeAvanzarSolo(g, ahora)) return g;
     return avanzarMirar(g, ahora);
   }
-  // En mirar, el toque y OK avanzan sin esperar los 2–3 s de la voz,
-  // pero sí el candado de 1 s del paso y los 400 ms tras «¿Salir?».
+  // En mirar, el toque y OK esperan el candado de 1 s y a la voz
+  // (acabó, falló, o ya van 3 s). Los 400 ms tras «¿Salir?» siguen valiendo.
   if (esMirar(g.paso) && (evento.tipo === "toque" || evento.tipo === "ok")) {
-    if (bloqueada(g, ahora)) return g;
+    if (bloqueada(g, ahora) || mirarCerrada(g, ahora)) return g;
     return avanzarMirar(g, ahora);
   }
   if (bloqueada(g, ahora)) return g;

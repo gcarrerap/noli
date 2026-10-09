@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { rngConSemilla } from "../src/rng.js";
 import { ORDEN, animal, fraseIngles, fraseLlego } from "../src/animales.js";
-import { TEXTOS, textoGuia, vozGuia, vozLeyenda, textoContar, textoCuantos, textoDiferencia } from "../src/textos.js";
+import { TEXTOS, textoGuia, vozGuia, vozLeyenda, textoContar, textoCuantos, textoDiferencia, textoTotalDos, textoAcierto } from "../src/textos.js";
 import { limpiarHabla, hablar, cuentaComoFin, prepararVoces, elegirVoz } from "../src/voz.js";
 import { IGNORAR_MS, efectoAtras, resolverToque, alCerrarDialogo } from "../src/salida.js";
 import { controlesCaben, eje20Cabe, animalesEnFila, CONTROL_PX, TV_MARGEN } from "../src/medidas.js";
@@ -151,7 +151,10 @@ test("¿Salir? pausa el avance y la voz, y Seguir los reinicia", () => {
   assert.notEqual(finCandado(g), 2900 + IGNORAR_MS + 1000);
   assert.equal(bloqueada(g, 2900 + 399), true);
   assert.equal(bloqueada(g, 2900 + 400), false);
-  assert.equal(aplicarGuia(g, { tipo: "ok" }, 2900 + 650).paso, "contar");
+  assert.equal(g.vozEstado, "esperando");
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 2900 + 650).paso, "cuidar");
+  const conFallo = anotarVoz(g, "fallo", 2900 + 50);
+  assert.equal(aplicarGuia(conFallo, { tipo: "ok" }, 2900 + 650).paso, "contar");
   let fresco = abrirSalirGuia(guiaNueva(0), 400);
   fresco = seguirSalirGuia(fresco, 700);
   assert.equal(fresco.bloqueoHasta, 700 + 600);
@@ -168,7 +171,7 @@ test("¿Salir? pausa el avance y la voz, y Seguir los reinicia", () => {
   assert.equal(efectoAtras(false), "abrir");
 });
 
-test("Saltar guarda la guía; en mirar OK avanza al momento y en acción el bloqueo aguanta", () => {
+test("Saltar guarda la guía; en mirar OK espera a la voz y en acción el bloqueo aguanta", () => {
   const s = aplicarGuia(guiaNueva(0), { tipo: "saltar" }, 0);
   assert.equal(s.fin, true);
   assert.equal(s.guardada, true);
@@ -176,8 +179,10 @@ test("Saltar guarda la guía; en mirar OK avanza al momento y en acción el bloq
   assert.equal(bloqueada(g, 500), true);
   assert.equal(aplicarGuia(g, { tipo: "ok" }, 0).paso, "cuidar");
   assert.equal(aplicarGuia(g, { tipo: "toque" }, 100).paso, "cuidar");
-  assert.equal(aplicarGuia(g, { tipo: "ok" }, 1000).paso, "contar");
-  const contando = aplicarGuia(g, { tipo: "ok" }, 1000);
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 1000).paso, "cuidar");
+  const fallada = anotarVoz(g, "fallo", 80);
+  assert.equal(aplicarGuia(fallada, { tipo: "ok" }, 999).paso, "cuidar");
+  const contando = aplicarGuia(fallada, { tipo: "ok" }, 1000);
   assert.equal(contando.paso, "contar");
   assert.equal(aplicarGuia(contando, { tipo: "marcar", i: 0 }, 500).marcados[0], false);
   assert.equal(aplicarGuia(contando, { tipo: "marcar", i: 0 }, contando.bloqueoHasta).marcados[0], true);
@@ -196,6 +201,44 @@ function vozFalsa(speak) {
 }
 
 function Frase(texto) { this.text = texto; }
+
+test("mirar espera a la voz: 2.5 s, spam y un tope de 3 s con tiempos enormes", () => {
+  const t0 = 1.7e12;
+  let g = anotarVoz(guiaNueva(t0), "hablando", t0 + 40);
+  for (let t = t0; t < t0 + 2500; t += 50) {
+    assert.equal(aplicarGuia(g, { tipo: "ok" }, t).paso, "cuidar");
+  }
+  for (let t = t0; t < t0 + 2500; t += 80) {
+    assert.equal(aplicarGuia(g, { tipo: "toque" }, t).paso, "cuidar");
+  }
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, t0 + 1100).paso, "cuidar");
+  g = anotarVoz(g, "termino", t0 + 2500);
+  assert.equal(g.vozEstado, "termino");
+  assert.equal(g.bloqueoHasta, t0 + 2500);
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, t0 + 2499).paso, "cuidar");
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, t0 + 2500).paso, "contar");
+
+  const eterna = anotarVoz(guiaNueva(t0), "hablando", t0 + 10);
+  assert.equal(aplicarGuia(eterna, { tipo: "ok" }, t0 + 2999).paso, "cuidar");
+  assert.equal(aplicarGuia(eterna, { tipo: "toque" }, t0 + 2999).paso, "cuidar");
+  assert.equal(aplicarGuia(eterna, { tipo: "ok" }, t0 + 3000).paso, "contar");
+
+  const grafica = anotarVoz({
+    ...guiaNueva(t0),
+    paso: "grafica",
+    aparecio: t0,
+    bloqueoHasta: t0 + 1000,
+    autoHasta: t0 + 3000,
+    vozHasta: t0 + 3000,
+    vozEstado: "esperando",
+  }, "hablando", t0 + 20);
+  assert.equal(aplicarGuia(grafica, { tipo: "ok" }, t0 + 1100).paso, "grafica");
+  assert.equal(aplicarGuia(grafica, { tipo: "toque" }, t0 + 2600).paso, "grafica");
+  const dicha = anotarVoz(grafica, "termino", t0 + 2600);
+  assert.equal(aplicarGuia(dicha, { tipo: "ok" }, t0 + 2600).paso, "subir");
+  assert.equal(textoGuia("cuidar", false), "Ayuda al cuidador.");
+  assert.equal(textoGuia("grafica", false), "Ahora la gráfica.");
+});
 
 test("un error de voz no cierra el paso de mirar: cae al reloj de 2 a 3 s", () => {
   assert.equal(MIRAR_MIN_MS, 2000);
@@ -309,6 +352,10 @@ test("no hay escala de 2: el nivel 5 es la tabla de conteo", () => {
   assert.equal(textoContar("mono"), "Cuenta los monos.");
   assert.equal(textoCuantos("jirafa"), "¿Cuántas jirafas hay?");
   assert.equal(textoDiferencia("jirafa", "mono"), "¿Cuántas jirafas más que los monos?");
+  assert.equal(textoTotalDos("jirafa", "elefante"), "¿Cuántos animales hay entre jirafas y elefantes?");
+  assert.equal(textoAcierto({ clase: "diferencia", correcta: 4 }), "¡Sí! Son 4 más.");
+  assert.equal(textoAcierto({ clase: "mas", correcta: "jirafa" }), "¡Sí! Hay más jirafas.");
+  assert.equal(textoAcierto({ tipo: "contar", cantidad: 3 }), "¡Sí! Son 3.");
   assert.equal(fraseLlego("elefante"), "Llegó el elefante.");
   assert.equal(fraseLlego("cebra"), "Llegó la cebra.");
 });
@@ -477,6 +524,19 @@ test("la pista del nivel 1 es el paso entero y a los 40 s ya no es a la primera"
   assert.equal(full.paso, "completo");
   assert.equal(full.sombra, false);
   assert.doesNotMatch(full.leer, /\d/);
+  const visita4 = crearVisita(4, rngConSemilla("totales"), {});
+  const par = visita4.elementos.find((x) => x.clase === "total");
+  const todos = visita4.elementos.find((x) => x.clase === "total-todos");
+  assert.ok(par && par.par.length === 2);
+  assert.ok(todos && todos.par.length > 2);
+  assert.match(par.texto, /^¿Cuántos animales hay entre .+ y .+\?$/);
+  const luzPar = pista(par, {}, { nivel: 4, segundos: 20, errores: 0 });
+  assert.equal(luzPar.flecha, "par");
+  assert.equal(luzPar.luces, true);
+  assert.deepEqual(luzPar.par, par.par);
+  const luzTodos = pista(todos, {}, { nivel: 4, segundos: 20, errores: 0 });
+  assert.equal(luzTodos.flecha, "barras");
+  assert.equal(luzTodos.luces, true);
   assert.equal(marcaPasoCompleto(3, "completo", 40), true);
   assert.equal(marcaPasoCompleto(1, "completo", 40), false);
   assert.equal(marcaPasoCompleto(3, "completo", 39), false);
@@ -528,18 +588,44 @@ test("8 de 10 sube, la racha no se arma con un fallo y el animal nuevo va en ord
   assert.equal(VENTANA, 10);
 });
 
+function manadaAgrupada(orden) {
+  const visto = new Set();
+  let prev = null;
+  for (const id of orden) {
+    if (id === prev) continue;
+    if (visto.has(id)) return false;
+    visto.add(id);
+    prev = id;
+  }
+  return true;
+}
+
 test("el censo suma como mucho 20 y las opciones de conteo no se repiten", () => {
   const ordenes = new Set();
+  let algunaMezclada = false;
   for (let i = 0; i < 12; i++) {
     const c = crearCenso(rngConSemilla("censo-" + i), 4);
     assert.equal(c.elementos.length, 6);
+    assert.equal(new Set(c.elementos.map((e) => e.texto)).size, c.elementos.length);
     assert.ok(c.suma <= 20 && c.suma >= 12);
     assert.ok(c.categorias.every((x) => x.cantidad >= 2 && x.cantidad <= 20));
     assert.equal(c.modo, "censo");
-    assert.equal(c.elementos.filter((e) => e.tipo === "contar" && e.mixto).length >= 1, true);
+    const mixtos = c.elementos.filter((e) => e.tipo === "contar" && e.mixto);
+    assert.equal(mixtos.length >= 1, true);
+    for (const m of mixtos) {
+      assert.equal(m.orden.length, c.suma);
+      const cuenta = {};
+      for (const id of m.orden) cuenta[id] = (cuenta[id] || 0) + 1;
+      for (const cat of c.categorias) assert.equal(cuenta[cat.id], cat.cantidad);
+      if (!manadaAgrupada(m.orden)) algunaMezclada = true;
+    }
     ordenes.add(c.categorias.map((x) => x.id).join(","));
   }
   assert.ok(ordenes.size > 1);
+  assert.equal(algunaMezclada, true);
+  const corto = crearCenso(rngConSemilla("censo-corto"), 1);
+  assert.equal(corto.elementos.length, 6);
+  assert.equal(new Set(corto.elementos.map((e) => e.texto)).size, 6);
   const ops = opcionesConteo(4, rngConSemilla(3), [9]);
   assert.equal(ops.length, 3);
   assert.ok(ops.includes(4));

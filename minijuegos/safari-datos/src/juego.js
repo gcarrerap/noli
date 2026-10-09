@@ -2,7 +2,7 @@
 // Se juega con el dedo o con flechas, OK y Atrás. Sin await al nivel del módulo.
 import { Noli, moverFoco, focoInicial } from "../../../kit/noli.js";
 import { ANIMALES, ORDEN, animal, colorDe, COLOR_HEX, nombreEs, fraseIngles, fraseLlego } from "./animales.js";
-import { TEXTOS, textoGuia, vozGuia, vozLeyenda } from "./textos.js";
+import { TEXTOS, textoAcierto, textoGuia, vozGuia, vozLeyenda } from "./textos.js";
 import { hablar, callar, cuentaComoFin } from "./voz.js";
 import { clic, listo as sonidoListo, bien, desbloquear } from "./sonido.js";
 import { IGNORAR_MS, resolverToque, alCerrarDialogo } from "./salida.js";
@@ -148,9 +148,12 @@ function cabezasDe(id, n) {
   return `<div class="cabezas">${s}</div>`;
 }
 
-function indicesMarcados(opts, cantidades) {
+function indicesMarcados(opts, cantidades, ids) {
   const f = opts.flecha;
   if (f === "barras") return cantidades.map((_, i) => i);
+  if (f === "par" && opts.par && ids) {
+    return opts.par.map((id) => ids.indexOf(id)).filter((i) => i >= 0);
+  }
   if (f === "alta") {
     let m = 0;
     cantidades.forEach((c, i) => { if (c > cantidades[m]) m = i; });
@@ -161,19 +164,28 @@ function indicesMarcados(opts, cantidades) {
   return [];
 }
 
+function claseLuz(i, opts, marcados) {
+  if (!opts.luces) return "";
+  if (opts.flecha === "barras") return `g${i % 2}`;
+  if (!marcados.has(i)) return "";
+  const orden = [...marcados].sort((a, b) => a - b);
+  return `g${orden.indexOf(i) % 2}`;
+}
+
 function svgVertical(ids, cantidades, eje, opts) {
   const ejeH = eje === 20 ? 624 : 324;
   const pie = 40;
   const vbH = ejeH + pie;
   const base = eje === 20 ? 600 : 300;
   const barras = geometriaBarras(cantidades, eje);
-  const marcados = new Set(indicesMarcados(opts, cantidades));
+  const marcados = new Set(indicesMarcados(opts, cantidades, ids));
   let capas = "";
   barras.forEach((b, i) => {
     const id = ids[i];
     const n = Math.max(0, cantidades[i] | 0);
     const hex = COLOR_HEX[colorDe(i)];
-    const luz = opts.luces ? ` class="g${i % 2}"` : "";
+    const luzClase = claseLuz(i, opts, marcados);
+    const luz = luzClase ? ` class="${luzClase}"` : "";
     if ((opts.modo || "barras") === "dibujos") {
       for (let u = 0; u < n; u++) {
         capas += `<image${luz} href="img/cabeza-${id}.svg" x="${b.x}" y="${b.base - (u + 1) * UNIDAD}" width="${b.ancho}" height="${UNIDAD - 2}"/>`;
@@ -198,22 +210,25 @@ function svgVertical(ids, cantidades, eje, opts) {
     }
   }
   const botones = ids.map((id, i) => `<button type="button" class="leer tapa" data-act="leer" data-que="ingles" data-id="${id}"${foco("nombre-" + i)}><span>${esc(nombreEs(id))}</span><small>${esc(animal(id).en)}</small></button>`).join("");
-  return `<div class="grafica-svg${opts.luces ? " luces" : ""}"><svg class="eje eje-${eje}" viewBox="0 -14 410 ${vbH}" preserveAspectRatio="xMidYMax meet" role="img">
+  return `<div class="grafica-svg${opts.luces ? " luces" : ""}"><svg class="eje eje-${eje}" viewBox="0 -14 410 ${vbH}" preserveAspectRatio="xMidYMid meet" role="img">
     <image href="img/eje-${eje === 20 ? 20 : 10}.svg" x="0" y="-14" width="410" height="${ejeH}"/>
     ${capas}
   </svg><div class="nombres-bajo" style="--n:${ids.length}"><span></span>${botones}</div></div>`;
 }
 
 function htmlHorizontal(ids, cantidades, opts) {
-  const marcados = new Set(indicesMarcados(opts || {}, cantidades));
-  return `<div class="tabla${opts && opts.luces ? " luces" : ""}">${ids.map((id, i) => {
-    const celdas = Array.from({ length: cantidades[i] }, () => `<i class="g${i % 2}" style="background:${COLOR_HEX[colorDe(i)]}"></i>`).join("");
+  const o = opts || {};
+  const marcados = new Set(indicesMarcados(o, cantidades, ids));
+  return `<div class="tabla${o.luces ? " luces" : ""}">${ids.map((id, i) => {
+    const luz = claseLuz(i, o, marcados);
+    const celdas = Array.from({ length: cantidades[i] }, () => `<i class="${luz}" style="background:${COLOR_HEX[colorDe(i)]}"></i>`).join("");
     const flecha = marcados.has(i) ? " con-flecha" : "";
     return `<div class="fila-h tono-${colorDe(i)}${flecha}"><img src="img/cabeza-${id}.svg" alt=""><div class="unidades">${celdas}</div></div>`;
   }).join("")}</div>`;
 }
 
-function lecturas(modo) {
+function lecturas(modo, ocultar) {
+  if (ocultar) return "";
   const ley = vozLeyenda(modo === "dibujos" ? "dibujos" : modo === "palitos" ? "palitos" : "barras");
   return `<div class="lecturas">
     <button type="button" class="leer" data-act="leer" data-que="titulo"${foco("titulo")}>${esc(TEXTOS.tituloGrafica)}</button>
@@ -236,9 +251,12 @@ function filaControl(id, i, valor, editable, flecha, extra) {
     ? `<button type="button" class="pm" data-act="barra" data-i="${i}" data-delta="1" aria-label="Subir"><img src="img/boton-mas.svg" alt=""><span class="signo-tv">+</span></button>`
     : `<span class="pm"></span>`;
   const tab = editable ? ` tabindex="0"${foco("barra-" + i)}` : "";
-  return `<div class="fila-barra tono-${colorDe(i)}${flecha ? " con-flecha" : ""}"${tab}>${menos}<div class="medio">
+  const marca = extra
+    ? `<div class="marca-num">${extra}<div class="pista-num">${valor}</div></div>`
+    : `<div class="pista-num">${valor}</div>`;
+  return `<div class="fila-barra tono-${colorDe(i)}${flecha ? " con-flecha" : ""}${extra ? " con-marcas" : ""}"${tab}>${menos}<div class="medio">
     <button type="button" class="nom" data-act="leer" data-que="ingles" data-id="${id}"${foco("nombre-" + i)}>${esc(nombreEs(id))}<small>${esc(a.en)}</small></button>
-    ${extra || ""}<div class="pista-num">${valor}</div>
+    ${marca}
   </div>${mas}</div>`;
 }
 
@@ -276,6 +294,7 @@ function graficaDe(ids, cantidades, eje, modo, horizontal, pistaAhora) {
   };
   if (opts.linea && pistaAhora && pistaAhora._dif) opts.dif = pistaAhora._dif;
   opts.flecha = pistaAhora && pistaAhora.flecha;
+  opts.par = pistaAhora && pistaAhora.par;
   if (horizontal) return htmlHorizontal(ids, cantidades, opts) + nombresHtml(ids);
   return svgVertical(ids, cantidades, eje || 10, opts);
 }
@@ -374,7 +393,6 @@ function pintarGuia() {
   if (!guia) return;
   programarOpcionesGuia();
   pantalla = "guia";
-  $main.className = "p-guia";
   if (guia.paso === "listo" && listoGuiaActivo(guia) && !sonoListo) {
     sonoListo = true;
     sonidoListo();
@@ -386,6 +404,8 @@ function pintarGuia() {
     : `<button type="button" class="boton saltar" data-act="saltar">${esc(TEXTOS.saltar)}</button>`;
   const frase = guia.mal ? "Mira otra vez. " + textoGuia(guia.paso, esTv()) : textoGuia(guia.paso, esTv());
   const mirar = esMirar(guia.paso);
+  const armaGuia = guia.paso === "grafica" || guia.paso === "subir" || guia.paso === "listo";
+  const sinEjes = armaGuia && !esTv();
   let zona = "";
   let controles = "";
   if (guia.paso === "cuidar") {
@@ -403,7 +423,7 @@ function pintarGuia() {
     const ids = ["mono", "jirafa"];
     const cs = guia.barras.slice();
     const eje = 10;
-    zona = lecturas("barras") + svgVertical(ids, cs, eje, { modo: "barras" });
+    zona = lecturas("barras", sinEjes) + svgVertical(ids, cs, eje, { modo: "barras" });
     if (guia.paso === "subir" || guia.paso === "listo") {
       controles = filaControl("mono", 0, cs[0], guia.paso === "subir", false, cabezasDe("mono", cs[0]))
         + filaControl("jirafa", 1, cs[1], false, false, cabezasDe("jirafa", cs[1]));
@@ -412,10 +432,12 @@ function pintarGuia() {
       controles = opcionesHtml(OPCIONES_GUIA_MAS, true);
     }
   }
+  const dosGuia = sinEjes && (guia.paso === "subir" || guia.paso === "listo");
+  $main.className = "p-guia" + (armaGuia ? " armando" : "");
   pintar(`
     <header class="cab"><span class="nivel-mini">${esc(TEXTOS.guia)}</span>${saltar}</header>
     <div class="encargo">${burbuja(frase, "", mirar)}</div>
-    <div class="mesa"><div class="zona-grafica">${zona}</div><div class="controles">${controles}</div></div>
+    <div class="mesa"><div class="zona-grafica">${zona}</div><div class="controles${dosGuia ? " dos" : ""}">${controles}</div></div>
     ${dialogo()}
   `, quiere);
 }
@@ -563,17 +585,11 @@ function acertar(ok) {
       guardar();
     }
     bien();
-    if (e.clase === "diferencia") {
-      partida.elem.fase = "muestra";
-      partida.elem.muestraHasta = Date.now() + MUESTRA_MS;
-      pintarJuego();
-      programarMuestra();
-      return;
-    }
-    partida.i++;
-    if (partida.i >= partida.visita.elementos.length) { terminarPartida(); return; }
-    prepararElem();
+    partida.elem.fase = "muestra";
+    partida.elem.muestraHasta = Date.now() + MUESTRA_MS;
+    partida.elem.feedback = textoAcierto(e);
     pintarJuego();
+    programarMuestra();
     return;
   }
   partida.elem.errores++;
@@ -588,7 +604,9 @@ function acertar(ok) {
 
 function manadaHtml(e) {
   const piezas = [];
-  if (e.mixto) {
+  if (e.orden && e.orden.length) {
+    for (const id of e.orden) piezas.push(id);
+  } else if (e.mixto) {
     for (const c of e.categorias) {
       for (let k = 0; k < c.cantidad; k++) piezas.push(c.id);
     }
@@ -608,14 +626,19 @@ function manadaHtml(e) {
   return `<div class="recinto sobre"><img class="fondo" src="${fondo}" alt=""><div class="manada" style="--cols:${cols}">${celdas}</div></div>`;
 }
 
+function armaBarras(e) {
+  return !!(e && (e.tipo === "grafica" || (e.tipo === "detective" && e.error === "altura")));
+}
+
 function zonaGraficaElem(e, p) {
+  const ocultar = !esTv() && armaBarras(e);
   if (e.tipo === "contar") return manadaHtml(e);
   if (e.modo === "palitos" && e.tipo !== "grafica") {
     const ids = e.categorias.map((c) => c.id);
     const filas = ids.map((id, i) => `<div class="fila-tabla"><img class="cabeza" src="img/cabeza-${id}.svg" alt=""><div class="palitos-vivo">${htmlPalitos(e.categorias[i].cantidad)}</div><button type="button" class="nom" data-act="leer" data-que="ingles" data-id="${id}"${foco("nombre-" + i)}>${esc(nombreEs(id))}<small>${esc(animal(id).en)}</small></button></div>`).join("");
     return lecturas("palitos") + `<div class="tabla">${filas}</div>`;
   }
-  if (e.tipo === "grafica" && e.modo === "palitos") return lecturas("palitos");
+  if (e.tipo === "grafica" && e.modo === "palitos") return lecturas("palitos", ocultar);
   const ids = (e.categorias || []).map((c) => c.id);
   const cs = e.tipo === "grafica" || (e.tipo === "detective" && e.error === "altura")
     ? partida.elem.alturas
@@ -624,12 +647,12 @@ function zonaGraficaElem(e, p) {
   const modo = e.modo || (e.tipo === "detective" ? "barras" : "barras");
   const horizontal = !!(e.horizontal);
   if (e.tipo === "detective" && e.error === "falta") {
-    return lecturas("barras") + graficaDe(e.visibles, e.mostrado, e.eje || 10, "barras", false, p);
+    return lecturas("barras", ocultar) + graficaDe(e.visibles, e.mostrado, e.eje || 10, "barras", false, p);
   }
   if (e.tipo === "detective" && e.error === "etiquetas") {
-    return lecturas("barras") + graficaDe(e.etiquetas, e.mostrado, e.eje || 10, "barras", false, p);
+    return lecturas("barras", ocultar) + graficaDe(e.etiquetas, e.mostrado, e.eje || 10, "barras", false, p);
   }
-  return lecturas(modo) + graficaDe(ids, cs, eje, modo, horizontal, p);
+  return lecturas(modo, ocultar) + graficaDe(ids, cs, eje, modo, horizontal, p);
 }
 
 function controlesElem(e, p) {
@@ -685,18 +708,22 @@ function pintarJuego(conservar) {
   const e = elemActual();
   if (!e) return;
   pantalla = "juego";
-  $main.className = "p-juego";
+  const armando = armaBarras(e);
+  const nFilas = (e.tipo === "detective" ? e.realIds : e.categorias) || [];
+  const dos = armando && !esTv() && nFilas.length >= 2;
+  $main.className = "p-juego" + (armando ? " armando" : "");
   const p = pistaDe();
   const quiere = conservar || focoDeJuego(e);
   focoQuiere = quiere;
   const titulo = partida.modo === "reto" ? partida.reto.nombre : nivel(partida.visita.nivel).nombre;
   const puntos = partida.visita.elementos.map((_, i) => `<i class="${i < partida.i ? "lleno" : ""} ${i === partida.i ? "ahora" : ""}"></i>`).join("");
-  const frase = e.texto || "";
-  const ayuda = p.texto && p.texto !== frase ? p.texto : "";
+  const enFeed = enMuestra() && partida.elem.feedback;
+  const frase = enFeed ? partida.elem.feedback : (e.texto || "");
+  const ayuda = enFeed ? "" : (p.texto && p.texto !== frase ? p.texto : "");
   pintar(`
     <header class="cab"><span class="nivel-mini">${esc(titulo)}</span><span class="puntos">${puntos}</span></header>
     <div class="encargo"><img class="cuidador" src="img/cuidador.svg" alt="">${burbuja(frase, ayuda, false)}</div>
-    <div class="mesa"><div class="zona-grafica">${zonaGraficaElem(e, p)}</div><div class="controles">${controlesElem(e, p)}</div></div>
+    <div class="mesa"><div class="zona-grafica">${zonaGraficaElem(e, p)}</div><div class="controles${dos ? " dos" : ""}">${controlesElem(e, p)}</div></div>
     ${dialogo()}
   `, quiere);
   programarOpcionesJuego();
@@ -1099,7 +1126,7 @@ $main.addEventListener("pointerup", (ev) => {
 
 $main.addEventListener("click", (ev) => {
   if (ev.target.classList && ev.target.classList.contains("salir-velo")) {
-    seguir();
+    if (!esTv()) seguir();
     return;
   }
   const t = ev.target.closest("[data-act]");

@@ -55,11 +55,17 @@ export function textoDiferencia(idMayor, idMenor) {
 export function textoTotalDos(idA, idB) {
   const a = animal(idA);
   const b = animal(idB);
-  if (a.art === b.art) {
-    const q = a.art === "la" ? "Cuántas" : "Cuántos";
-    return `¿${q} ${a.plural} y ${b.plural} hay en total?`;
-  }
-  return `¿Cuántos animales hay: ${los(idA)} ${a.plural} y ${los(idB)} ${b.plural}?`;
+  return `¿Cuántos animales hay entre ${a.plural} y ${b.plural}?`;
+}
+
+export function textoAcierto(elemento) {
+  if (!elemento) return "¡Sí!";
+  if (elemento.clase === "diferencia") return `¡Sí! Son ${elemento.correcta} más.`;
+  if (elemento.clase === "mas") return `¡Sí! Hay más ${animal(elemento.correcta).plural}.`;
+  if (elemento.tipo === "contar") return `¡Sí! Son ${elemento.cantidad}.`;
+  if (elemento.tipo === "detective") return "¡Sí!";
+  if (elemento.correcta != null && typeof elemento.correcta !== "object") return `¡Sí! Son ${elemento.correcta}.`;
+  return "¡Sí!";
 }
 
 export function textoTotalTodos() {
