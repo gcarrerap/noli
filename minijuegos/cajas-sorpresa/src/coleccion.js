@@ -37,6 +37,9 @@ export function estadoNuevo(config) {
     semilla: null,
     meta: "",
     pendiente: null,
+    puertaHasta: 0,
+    puertaFallos: 0,
+    puertaNivel: 0,
   };
 }
 
@@ -79,11 +82,21 @@ export function cargar(datos, config) {
     semilla: Number.isInteger(datos.semilla) ? datos.semilla : null,
     meta: typeof datos.meta === "string" ? datos.meta : "",
     pendiente: pendienteDe(datos.pendiente),
+    puertaHasta: marcaTiempo(datos.puertaHasta),
+    puertaFallos: entero(datos.puertaFallos, 0),
+    puertaNivel: entero(datos.puertaNivel, 0),
   };
 }
 
 function entero(n, fallo) {
   return Number.isInteger(n) && n >= 0 ? n : fallo;
+}
+
+/** Una marca de tiempo guardada. Nunca se recorta a 32 bits. */
+function marcaTiempo(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x) || x <= 0) return 0;
+  return x;
 }
 
 function historialDe(v) {

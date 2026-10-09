@@ -20,8 +20,8 @@ import {
   MARCA, esc, estrellasSvg, claseMarco, frascoSvg, iconoPolvo, iconoCredito, iconoVoz,
   fichasProbabilidad, htmlFoto, rutaPieza, rutaFamilia,
 } from "./dibujo.js";
-import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoAbrir, entradaTienda, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
-import { preguntaPapas, responderPapas, PAPAS_QUIETO_MS } from "./papas.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoAbrir, pulsoTrasCarta, entradaTienda, entradaDetalle, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
+import { preguntaPapas, responderPapas, entrarPuerta, salirPuerta, pulsoPuerta, PAPAS_QUIETO_MS } from "./papas.js";
 import { QUIEN_VISIBLE, opcionesQuien, candidatosMeta } from "./quien.js";
 import { sonar } from "./sonido.js";
 
@@ -52,6 +52,7 @@ let papasSeguidas = 0;
 let papasFallos = 0;
 let papasAceptaDesde = 0;
 let papasCerradoHasta = 0;
+let papasNivel = 0;
 
 let aparecio = 0;
 let vozTerminoEn = null;
@@ -762,6 +763,15 @@ function dialogoVigente(ahora = Date.now()) {
   return d > 0 && t < d;
 }
 
+function alargarBloqueo() {
+  const ahora = Number(Date.now()) || 0;
+  const pulso = pulsoTrasCarta({ ahora, hasta: bloqueoPasoHasta, carta: false });
+  if (!pulso.abre) {
+    bloqueoPasoHasta = pulso.hasta;
+    programarFinBloqueo();
+  }
+}
+
 function pulsarAbrir() {
   if (cobrando || abrirApagado()) return;
   if (pantalla === "abriendo" || pantalla === "carta") return;
@@ -790,11 +800,13 @@ function abrirDetalle(id) {
   pantalla = "detalle";
   const p = piezas.find((x) => x.id === id);
   const tiene = pr.tenidas.includes(id);
+  const entrada = entradaDetalle({ ahora: Date.now(), hasta: bloqueoPasoHasta, tv: esTv(), tiene });
+  bloqueoPasoHasta = entrada.hasta;
   if (p && tiene) {
     try { const img = new Image(); img.src = rutaPieza(p.archivo, 512); } catch { /* sigue la miniatura */ }
     if (pr.voz) hablarIngles(p);
   }
-  pintar(tiene ? "volver" : "conseguir");
+  pintar(entrada.foco);
 }
 
 function comprarPieza() {
@@ -867,12 +879,15 @@ function actuar(act, data) {
       fallos: papasFallos,
       aceptaDesde: papasAceptaDesde,
       cerradoHasta: papasCerradoHasta,
+      escalada: papasNivel,
     });
     papasSeguidas = r.seguidas;
     papasFallos = r.fallos;
     papasAceptaDesde = r.aceptaDesde;
     papasCerradoHasta = r.cerradoHasta;
+    papasNivel = r.escalada;
     papasAviso = r.aviso;
+    guardarPuerta();
     if (r.abre) {
       papasOk = true;
       papasAviso = "";
@@ -885,6 +900,10 @@ function actuar(act, data) {
     return;
   }
   if (act === "volver") {
+    const salida = salirPuerta();
+    papasSeguidas = salida.seguidas;
+    papasAceptaDesde = salida.aceptaDesde;
+    if (papasAviso === "fallo" || papasAviso === "otra") papasAviso = salida.aviso;
     const entrada = entradaTienda({ ahora: Date.now(), hasta: bloqueoPasoHasta });
     pantalla = "tienda";
     detalleId = null;
@@ -1001,21 +1020,38 @@ function cerrarDialogo() {
   pintar(guia ? focoDeGuia(guia.paso) : undefined);
 }
 
+function guardarPuerta() {
+  if (!pr) return;
+  const hasta = Number(papasCerradoHasta) || 0;
+  const fallos = Number(papasFallos) || 0;
+  const nivel = Number(papasNivel) || 0;
+  if ((Number(pr.puertaHasta) || 0) === hasta && (Number(pr.puertaFallos) || 0) === fallos && (Number(pr.puertaNivel) || 0) === nivel) return;
+  pr = { ...pr, puertaHasta: hasta, puertaFallos: fallos, puertaNivel: nivel };
+  guardar();
+}
+
+function leerPuerta() {
+  papasCerradoHasta = Number(pr && pr.puertaHasta) || 0;
+  papasFallos = Number(pr && pr.puertaFallos) || 0;
+  papasNivel = Number(pr && pr.puertaNivel) || 0;
+}
+
 function asegurarPregunta() {
   const ahora = Number(Date.now()) || 0;
+  if (papasOk) return;
+  const entrada = entrarPuerta({ ahora, aceptaDesde: papasAceptaDesde, seguidas: papasSeguidas, abierta: false });
+  papasSeguidas = entrada.seguidas;
+  papasAceptaDesde = entrada.aceptaDesde;
+  papasAviso = papasCerrada(ahora) ? "descanso" : entrada.aviso;
   if (papasCerrada(ahora)) return;
-  if ((Number(papasCerradoHasta) || 0) && ahora >= (Number(papasCerradoHasta) || 0)) {
+  if ((Number(papasCerradoHasta) || 0) > 0 && ahora >= (Number(papasCerradoHasta) || 0)) {
     papasCerradoHasta = 0;
     papasFallos = 0;
-    papasSeguidas = 0;
     papasAviso = "";
     pregunta = null;
+    guardarPuerta();
   }
-  if (!pregunta) {
-    pregunta = preguntaPapas(rngUi);
-    papasAceptaDesde = ahora + PAPAS_QUIETO_MS;
-    papasAviso = "";
-  }
+  if (!pregunta) pregunta = preguntaPapas(rngUi);
 }
 
 function programarFinPapas() {
@@ -1030,6 +1066,7 @@ function programarFinPapas() {
     papasAviso = "";
     pregunta = preguntaPapas(rngUi);
     papasAceptaDesde = (Number(Date.now()) || 0) + PAPAS_QUIETO_MS;
+    guardarPuerta();
     pintar("volver");
   }, falta + 20);
 }
@@ -1052,8 +1089,13 @@ $main.addEventListener("click", (ev) => {
     }
     return;
   }
+  if (pantalla === "papas" && !papasOk && act !== "respuesta") {
+    const p = pulsoPuerta({ ahora: Date.now(), aceptaDesde: papasAceptaDesde, cuenta: false });
+    papasAceptaDesde = p.aceptaDesde;
+  }
   if (bloqueado(act)) {
     if (act === "abrir" && !dialogoVigente()) pulsarAbrir();
+    else if (act === "conseguir") alargarBloqueo();
     return;
   }
   if (!t || t.disabled) return;
@@ -1076,8 +1118,19 @@ Noli.alEntrar((accion) => {
     if (el && !el.disabled) el.click();
     return true;
   }
+  if (!salir && pantalla === "papas" && !papasOk && accion !== "atras") {
+    const ahora = Number(Date.now()) || 0;
+    const enOpcion = idFoco().startsWith("op-");
+    const cuenta = accion === "ok" && enOpcion && !papasCerrada(ahora) && ahora >= (Number(papasAceptaDesde) || 0);
+    if (!cuenta && (accion === "ok" || accion === "arriba" || accion === "abajo" || accion === "izquierda" || accion === "derecha")) {
+      const p = pulsoPuerta({ ahora, aceptaDesde: papasAceptaDesde, cuenta: false });
+      papasAceptaDesde = p.aceptaDesde;
+    }
+    if (accion === "ok" && enOpcion && !cuenta) return true;
+  }
   if (accion === "ok" && bloqueado(idFoco() === "saltar" ? "saltar" : "ok")) {
     if (!guia && pantalla === "tienda" && idFoco() === "abrir" && !dialogoVigente()) pulsarAbrir();
+    else if (!guia && idFoco() === "conseguir") alargarBloqueo();
     return true;
   }
   if (accion === "ok" && pantalla === "abriendo") {
@@ -1158,6 +1211,7 @@ Promise.all([Noli.datos, Noli.creditos, leerJson("piezas.json"), leerJson("regla
   pr = alinearDia(cargar(datos, reglas), fechaLocal());
   if (datos && datos.dia && pr.dia !== datos.dia) guardar();
   saldo = typeof creditos === "number" ? creditos : null;
+  leerPuerta();
   if (pr.pendiente) reanudarPendiente();
   else if (!pr.guiaHecha) empezarGuia();
   else pintar("abrir");

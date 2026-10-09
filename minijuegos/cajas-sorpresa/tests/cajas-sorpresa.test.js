@@ -18,8 +18,8 @@ import { decir, calentarVoces, escogerVoz, escogerVozIngles, olvidarVoz, vozActu
 import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, fraseNueva, fraseTuya, fraseCosto, fraseGuardar } from "../src/textos.js";
 import { htmlFoto, rutaPieza, rutaFamilia, frascoSvg, MARCA, fichasProbabilidad } from "../src/dibujo.js";
 import { FAMILIAS, familiaCompleta, familiaQueSeCompleto, ordenarFamilia } from "../src/familias.js";
-import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, pulsoAbrir, entradaTienda, REVELAR_MS, CARTA_MS, TRAS_ABRIR_MS } from "../src/apertura.js";
-import { preguntaPapas, aciertoPapas, pulsoPapas, responderPapas, PAPAS_QUIETO_MS, PAPAS_CIERRE_MS } from "../src/papas.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, pulsoAbrir, entradaTienda, entradaDetalle, REVELAR_MS, CARTA_MS, TRAS_ABRIR_MS } from "../src/apertura.js";
+import { preguntaPapas, aciertoPapas, pulsoPapas, responderPapas, entrarPuerta, salirPuerta, pulsoPuerta, plazoDescanso, PAPAS_QUIETO_MS, PAPAS_CIERRE_MS } from "../src/papas.js";
 import { QUIEN_VISIBLE, opcionesQuien, candidatosMeta } from "../src/quien.js";
 
 const piezas = JSON.parse(fs.readFileSync(new URL("../datos/piezas.json", import.meta.url), "utf8"));
@@ -914,6 +914,196 @@ test("toques al azar durante 60 s no abren Para papás y dos aciertos seguidos s
   assert.equal(/\d/.test(TEXTOS.papasOtra), false);
 });
 
+test("volver, las flechas y un toque en cualquier sitio no abren Para papás", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  const rng = rngConSemilla("papas-reentrada");
+  const primera = preguntaPapas(rng);
+  let estado = entrarPuerta({ ahora: t0, seguidas: 0, aceptaDesde: 0 });
+  estado = { ...estado, ...salirPuerta(), seguidas: 1 };
+  const vuelta = entrarPuerta({ ahora: t0 + 1600, seguidas: estado.seguidas, aceptaDesde: estado.aceptaDesde });
+  assert.equal(vuelta.seguidas, 0);
+  assert.equal(vuelta.aviso, "");
+  assert.ok(vuelta.aceptaDesde >= t0 + 1600 + PAPAS_QUIETO_MS);
+  const pronto = responderPapas({
+    ahora: t0 + 1660,
+    pregunta: primera,
+    valor: primera.r,
+    enOpcion: true,
+    seguidas: vuelta.seguidas,
+    aceptaDesde: vuelta.aceptaDesde,
+  });
+  assert.equal(pronto.abre, false);
+  assert.equal(pronto.seguidas, 0);
+  const otraVuelta = entrarPuerta({
+    ahora: t0 + 1660 + 1600,
+    seguidas: 1,
+    aceptaDesde: salirPuerta().aceptaDesde,
+  });
+  const segunda = responderPapas({
+    ahora: t0 + 1660 + 1600 + 60,
+    pregunta: primera,
+    valor: primera.r,
+    enOpcion: true,
+    seguidas: otraVuelta.seguidas,
+    aceptaDesde: otraVuelta.aceptaDesde,
+  });
+  assert.equal(segunda.abre, false);
+
+  const acciones = ["arriba", "abajo", "izquierda", "derecha", "ok"];
+  let desde = t0 + PAPAS_QUIETO_MS;
+  let seguidas = 0;
+  let abrioFlechas = false;
+  let t = t0;
+  const fin = t0 + 60000;
+  while (t < fin) {
+    t += 50 + Math.floor(rng() * 251);
+    if (t > fin) break;
+    const accion = acciones[Math.floor(rng() * acciones.length)];
+    const enOpcion = accion === "ok" && rng() < 0.5;
+    const pulso = pulsoPuerta({ ahora: t, aceptaDesde: desde, cuenta: enOpcion });
+    if (!pulso.cuenta) {
+      desde = pulso.aceptaDesde;
+      continue;
+    }
+    const r = responderPapas({
+      ahora: t,
+      pregunta: primera,
+      valor: primera.r,
+      enOpcion: true,
+      seguidas,
+      aceptaDesde: desde,
+    });
+    if (r.abre) abrioFlechas = true;
+    seguidas = r.seguidas;
+    desde = r.aceptaDesde;
+  }
+  assert.equal(abrioFlechas, false);
+
+  let desdeToque = t0 + PAPAS_QUIETO_MS;
+  let seguidasToque = 0;
+  let abrioToque = false;
+  t = t0;
+  while (t < fin) {
+    t += 50 + Math.floor(rng() * 251);
+    if (t > fin) break;
+    const enRespuesta = rng() < 0.6;
+    const pulso = pulsoPuerta({ ahora: t, aceptaDesde: desdeToque, cuenta: enRespuesta });
+    if (!pulso.cuenta) {
+      desdeToque = pulso.aceptaDesde;
+      continue;
+    }
+    const r = responderPapas({
+      ahora: t,
+      pregunta: primera,
+      valor: primera.opciones[Math.floor(rng() * 3)],
+      enOpcion: true,
+      seguidas: seguidasToque,
+      aceptaDesde: desdeToque,
+    });
+    if (r.abre) abrioToque = true;
+    seguidasToque = r.seguidas;
+    desdeToque = r.aceptaDesde;
+  }
+  assert.equal(abrioToque, false);
+
+  const adulto = entrarPuerta({ ahora: t0, aceptaDesde: 0 });
+  const uno = responderPapas({
+    ahora: adulto.aceptaDesde,
+    pregunta: primera,
+    valor: primera.r,
+    enOpcion: true,
+    seguidas: adulto.seguidas,
+    aceptaDesde: adulto.aceptaDesde,
+    escalada: 2,
+  });
+  assert.equal(uno.abre, false);
+  assert.equal(uno.seguidas, 1);
+  const segundaPregunta = preguntaPapas(rng);
+  const dos = responderPapas({
+    ahora: uno.aceptaDesde,
+    pregunta: segundaPregunta,
+    valor: segundaPregunta.r,
+    enOpcion: true,
+    seguidas: uno.seguidas,
+    aceptaDesde: uno.aceptaDesde,
+    escalada: uno.escalada,
+  });
+  assert.equal(dos.abre, true);
+  assert.equal(dos.escalada, 0);
+});
+
+test("el descanso de Para papás se guarda, crece y se borra al entrar", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  const p = preguntaPapas(rngConSemilla("papas-descanso"));
+  const mal = p.opciones.find((n) => n !== p.r);
+  let nivel = 0;
+  let cuando = t0;
+  const plazos = [];
+  for (let i = 0; i < 3; i++) {
+    const uno = responderPapas({
+      ahora: cuando,
+      pregunta: p,
+      valor: mal,
+      enOpcion: true,
+      aceptaDesde: cuando,
+      escalada: nivel,
+    });
+    assert.equal(uno.fallos, 1);
+    const dos = responderPapas({
+      ahora: uno.aceptaDesde,
+      pregunta: p,
+      valor: mal,
+      enOpcion: true,
+      fallos: uno.fallos,
+      aceptaDesde: uno.aceptaDesde,
+      escalada: uno.escalada,
+    });
+    assert.equal(dos.aviso, "descanso");
+    assert.equal(dos.cerradoHasta - uno.aceptaDesde, plazoDescanso(nivel));
+    plazos.push(dos.cerradoHasta - uno.aceptaDesde);
+    nivel = dos.escalada;
+    cuando = dos.cerradoHasta;
+  }
+  assert.deepEqual(plazos, [30000, 120000, 300000]);
+  assert.equal(plazoDescanso(9), 300000);
+  const durante = responderPapas({
+    ahora: t0 + 1000,
+    pregunta: p,
+    valor: p.r,
+    enOpcion: true,
+    cerradoHasta: t0 + plazos[0],
+    aceptaDesde: t0 + plazos[0],
+    escalada: 1,
+  });
+  assert.equal(durante.abre, false);
+  const guardado = cargar({
+    ...estadoNuevo(),
+    puertaHasta: t0 + PAPAS_CIERRE_MS,
+    puertaFallos: 1,
+    puertaNivel: 1,
+  });
+  assert.equal(guardado.puertaHasta, t0 + PAPAS_CIERRE_MS);
+  assert.notEqual(guardado.puertaHasta, (t0 + PAPAS_CIERRE_MS) | 0);
+  assert.equal(guardado.puertaFallos, 1);
+  assert.equal(guardado.puertaNivel, 1);
+  const recargado = cargar(JSON.parse(JSON.stringify(guardado)));
+  assert.equal(recargado.puertaHasta > t0 + 1000, true);
+  const alVolver = responderPapas({
+    ahora: t0 + 1000,
+    pregunta: p,
+    valor: p.r,
+    enOpcion: true,
+    cerradoHasta: recargado.puertaHasta,
+    fallos: recargado.puertaFallos,
+    escalada: recargado.puertaNivel,
+    aceptaDesde: entrarPuerta({ ahora: t0 + 1000, aceptaDesde: 0 }).aceptaDesde,
+  });
+  assert.equal(alVolver.abre, false);
+  assert.equal(alVolver.aviso, "descanso");
+});
+
 test("volver de Para papás no deja comprar con OK ni con toques durante 10 s", () => {
   const t0 = 1.7e12;
   assert.notEqual(t0 | 0, t0);
@@ -945,6 +1135,62 @@ test("volver de Para papás no deja comprar con OK ni con toques durante 10 s", 
     assert.equal(gasto, 0, via);
     assert.equal(foco, "vitrina", via);
     assert.ok(hastaPaso > t0 + 10000 || via === "ok");
+  }
+});
+
+test("el OK y los toques desde Para papás no gastan polvo ni créditos", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  for (const via of ["ok", "toque"]) {
+    let pantalla = "papas";
+    let foco = "volver";
+    let hasta = 0;
+    let polvo = 25;
+    let creditos = 20;
+    for (let dt = 0; dt <= 10000; dt += 50) {
+      const ahora = t0 + dt;
+      const cerrado = ahora < hasta;
+      if (pantalla === "papas") {
+        const entrada = entradaTienda({ ahora, hasta });
+        pantalla = "tienda";
+        foco = entrada.foco;
+        hasta = entrada.hasta;
+        continue;
+      }
+      const quiereAbrir = pantalla === "tienda" && (via === "toque" && foco === "abrir" || foco === "abrir");
+      const quiereConseguir = pantalla === "detalle" && (via === "toque" || foco === "conseguir");
+      if (cerrado && (quiereAbrir || quiereConseguir)) {
+        const pulso = pulsoTrasCarta({ ahora, hasta, carta: false });
+        hasta = pulso.hasta;
+        continue;
+      }
+      if (cerrado) continue;
+      if (pantalla === "tienda") {
+        pantalla = "vitrina";
+        foco = "hueco";
+        continue;
+      }
+      if (pantalla === "vitrina") {
+        const ficha = entradaDetalle({ ahora, hasta, tv: via === "ok", tiene: false });
+        pantalla = "detalle";
+        foco = ficha.foco;
+        hasta = ficha.hasta;
+        continue;
+      }
+      if (pantalla === "detalle" && (via === "toque" || foco === "conseguir")) {
+        polvo -= 5;
+        continue;
+      }
+      if (pantalla === "detalle" && foco === "volver") {
+        const entrada = entradaTienda({ ahora, hasta });
+        pantalla = "tienda";
+        foco = entrada.foco;
+        hasta = entrada.hasta;
+      }
+    }
+    assert.equal(polvo, 25, via);
+    assert.equal(creditos, 20, via);
+    if (via === "ok") assert.notEqual(foco, "conseguir");
   }
 });
 

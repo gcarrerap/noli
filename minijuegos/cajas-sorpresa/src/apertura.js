@@ -68,3 +68,13 @@ export function entradaTienda({ ahora, hasta = 0 } = {}) {
   const previo = Number(hasta) || 0;
   return { hasta: Math.max(previo, t + TRAS_ABRIR_MS), foco: "vitrina" };
 }
+
+/**
+ * Al abrir una ficha, Conseguir espera 1 s.
+ * En la tele el foco cae en Volver, no en Conseguir.
+ */
+export function entradaDetalle({ ahora, hasta = 0, tv = false, tiene = false } = {}) {
+  const t = Number(ahora) || 0;
+  const previo = Number(hasta) || 0;
+  return { hasta: Math.max(previo, t + TRAS_ABRIR_MS), foco: tv || tiene ? "volver" : "conseguir" };
+}
