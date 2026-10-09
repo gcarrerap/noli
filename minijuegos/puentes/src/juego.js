@@ -1,6 +1,6 @@
 // Pantallas de Puentes para el Bosque. La lógica está en los otros módulos.
 import { Noli, moverFoco, focoInicial } from "../../../kit/noli.js";
-import { decir, callar } from "./voz.js";
+import { decir, callar, prepararVoces } from "./voz.js";
 import { clic, listo as sonidoListo, feliz as sonidoFeliz, splash as sonidoSplash, desbloquear } from "./sonido.js";
 import {
   crearReloj, abrirDialogoGuia, seguirDialogoGuia, responderGuia, debeAvanzarSolo,
@@ -335,13 +335,16 @@ function hablarGuia() {
   };
   partida.reloj = { ...partida.reloj, reiniciarVoz: false, vozSigue: false };
   if (!pr.voz || !linea || !esMirar(paso)) { programarGuia(); return; }
-  const acepto = decir(linea, "es-MX", () => aplicar("fin"), (motivo) => aplicar(motivo || "error"), () => {
+  let avisoYa = false;
+  const acepto = decir(linea, "es-MX", () => { avisoYa = true; aplicar("fin"); }, (motivo) => { avisoYa = true; aplicar(motivo || "error"); }, () => {
     if (!vigente()) return;
     partida.reloj = marcarVozEmpezada(partida.reloj);
     programarGuia();
   });
-  if (acepto !== true) partida.reloj = { ...partida.reloj, vozSigue: false, vozFallo: true, vozTermino: false };
-  programarGuia();
+  if (!avisoYa && acepto !== true && vigente()) {
+    partida.reloj = { ...partida.reloj, vozSigue: false, vozFallo: true, vozTermino: false };
+  }
+  if (!avisoYa && vigente()) programarGuia();
 }
 
 function aplicarReloj(reloj) {
@@ -1082,4 +1085,5 @@ document.addEventListener("pointerdown", () => {
   desbloquear();
 }, true);
 
+prepararVoces();
 Noli.datos.then((d) => { pr = cargar(d); return cargarTodo(); }).then(() => inicio());

@@ -3,6 +3,7 @@
 // en ese hueco, también se avanza. Un error de voz, cero voces o una
 // frase que no empieza NO cuentan como el final: se usa el reloj.
 // Un toque o OK en un paso de mirar avanza enseguida.
+// Tras «¿Salir?», los 400 ms y el candado del paso empiezan juntos y no se suman.
 // Los de acción solo avanzan con la acción, y el primer segundo no entra.
 // Con «¿Salir?» abierto el reloj y la espera de la voz se pausan.
 // Seguir los reinicia para el paso en curso.
@@ -95,13 +96,20 @@ export function msHastaAvance(reloj, ahora) {
   return GUIA_TOQUE_MS - t;
 }
 
+// El candado de ~400 ms tras «¿Salir?» y el del paso (1 s en los de acción)
+// comparten el origen. No se suman: se abre cuando acaba el más largo.
+// En un paso de mirar, un toque o OK no espera ese segundo.
+export function limiteEntrada(reloj, tipo) {
+  if (!reloj) return 0;
+  const dialogo = reloj.ignorarHasta | 0;
+  const toqueLibre = esMirar(reloj.paso) && (tipo === "toque" || tipo === "ok");
+  const paso = (reloj.inicio | 0) + (toqueLibre ? 0 : GUIA_CIERRE_MS);
+  return Math.max(dialogo, paso);
+}
+
 export function guiaBloqueada(reloj, ahora, tipo) {
   if (!reloj || reloj.pausado) return true;
-  if (ahora < (reloj.ignorarHasta | 0)) return true;
-  if (esMirar(reloj.paso) && (tipo === "toque" || tipo === "ok")) return false;
-  const t = ahora - reloj.inicio;
-  if (t < GUIA_CIERRE_MS) return true;
-  return false;
+  return ahora < limiteEntrada(reloj, tipo);
 }
 
 export function pasoSiguiente(paso, evento) {

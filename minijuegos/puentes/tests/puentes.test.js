@@ -12,7 +12,8 @@ import {
 import {
   crearReloj, abrirDialogoGuia, seguirDialogoGuia, debeAvanzarSolo, msHastaAvance,
   alAvisoVoz, marcarVozEmpezada, responderGuia, guiaTerminada, textoDeGuia, vozDeGuia,
-  saltarAlcanzable, focoDeGuia, HUECO_GUIA, GUIA_TOQUE_MS, GUIA_TOPE_MS,
+  saltarAlcanzable, focoDeGuia, HUECO_GUIA, GUIA_TOQUE_MS, GUIA_TOPE_MS, GUIA_CIERRE_MS,
+  limiteEntrada,
 } from "../src/guia.js";
 import { anulaPrimera, cuentaPrimera, fasePista, glifoMas, textoPista } from "../src/pista.js";
 import {
@@ -21,7 +22,7 @@ import {
 } from "../src/progreso.js";
 import { retoDelDia, retosCoherentes, estimaBien, META } from "../src/reto.js";
 import { resolverAtras, resolverEntrada, marcarIgnorar, TRAS_DIALOGO_MS, accionAtras } from "../src/salida.js";
-import { decir, interpretarVoz } from "../src/voz.js";
+import { decir, interpretarVoz, elegirVoz, prepararVoces } from "../src/voz.js";
 import { htmlComparar } from "../src/escena.js";
 
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
@@ -208,6 +209,15 @@ test("la guía del 6 y el diálogo de salir", () => {
   assert.equal(responderGuia(sigue, 5399, { tipo: "toque" }).accion, "ignorar");
   assert.equal(responderGuia(sigue, 5399, { tipo: "ok" }).accion, "ignorar");
   assert.equal(responderGuia(sigue, 5400, { tipo: "ok" }).accion, "avanzo");
+  assert.equal(limiteEntrada(sigue, "toque"), 5000 + TRAS_DIALOGO_MS);
+
+  const accion = seguirDialogoGuia(abrirDialogoGuia(crearReloj(0, 2), 10), 5000);
+  const suma = 5000 + TRAS_DIALOGO_MS + GUIA_CIERRE_MS;
+  assert.equal(limiteEntrada(accion, "poner"), 5000 + GUIA_CIERRE_MS);
+  assert.notEqual(limiteEntrada(accion, "poner"), suma);
+  assert.equal(responderGuia(accion, 5000 + TRAS_DIALOGO_MS, { tipo: "poner", desplaza: 0 }).accion, "nada");
+  assert.equal(responderGuia(accion, 5000 + GUIA_CIERRE_MS - 1, { tipo: "poner", desplaza: 0 }).accion, "nada");
+  assert.equal(responderGuia(accion, 5000 + GUIA_CIERRE_MS, { tipo: "poner", desplaza: 0 }).accion, "avanzo");
 
   assert.equal(marcarIgnorar(1000), 1400);
   assert.equal(resolverEntrada({ dialogo: true, ahora: 1000, tipo: "ok" }), "dialogo");
@@ -258,28 +268,77 @@ test("un speechSynthesis que falla no termina el paso de mirar", () => {
   }
 });
 
-test("sin voces o sin empezar tampoco cuenta como el final", () => {
+test("getVoices vacío no impide hablar y onend no adelanta el paso", () => {
   const anterior = globalThis.window;
-  const Utterance = function Utterance(texto) { this.text = texto; };
-  globalThis.window = {
-    speechSynthesis: {
-      speaking: false,
-      cancel() {},
-      getVoices() { return []; },
-      speak() { throw new Error("no debía hablar"); },
+  const Utterance = function Utterance(texto) { this.text = texto; this.lang = ""; };
+  let emitida = null;
+  let llamadas = 0;
+  const voces = [];
+  let alCambiar = null;
+  const synth = {
+    speaking: false,
+    cancel() {},
+    getVoices() { return voces; },
+    addEventListener(tipo, fn) { if (tipo === "voiceschanged") alCambiar = fn; },
+    speak(u) {
+      llamadas++;
+      emitida = u;
+      if (typeof u.onstart === "function") u.onstart();
+      if (typeof u.onend === "function") u.onend();
     },
-    SpeechSynthesisUtterance: Utterance,
   };
+  globalThis.window = { speechSynthesis: synth, SpeechSynthesisUtterance: Utterance };
   try {
+    prepararVoces(synth);
+    assert.equal(typeof alCambiar, "function");
     let fin = 0;
-    const ok = decir("Hola.", "es-MX", () => { fin++; }, (motivo) => { assert.equal(motivo, "sin-voces"); });
+    let no = 0;
+    const ok = decir("El conejo quiere cruzar.", "es-MX", () => { fin++; }, () => { no++; });
+    assert.equal(llamadas, 1);
     assert.equal(ok, false);
-    assert.equal(fin, 0);
+    assert.equal(fin, 1);
+    assert.equal(no, 0);
+    assert.equal(emitida.lang, "es-MX");
+    assert.equal(emitida.voice, undefined);
+    const aviso = alAvisoVoz(marcarVozEmpezada(crearReloj(0, 0)), 20, "fin");
+    assert.equal(aviso.avanza, false);
+    assert.equal(debeAvanzarSolo(aviso.reloj, 1999), false);
+    assert.equal(debeAvanzarSolo(aviso.reloj, 2000), true);
+    assert.equal(debeAvanzarSolo(aviso.reloj, 3000), true);
+    assert.equal(responderGuia(aviso.reloj, 20, { tipo: "toque" }).accion, "avanzo");
+    assert.equal(responderGuia(aviso.reloj, 20, { tipo: "ok" }).accion, "avanzo");
+
+    const paulina = { lang: "es-MX", name: "Paulina" };
+    voces.push(paulina);
+    alCambiar();
+    assert.equal(elegirVoz(voces), paulina);
+    synth.speak = (u) => {
+      llamadas++;
+      emitida = u;
+      if (typeof u.onstart === "function") u.onstart();
+      if (typeof u.onend === "function") u.onend();
+    };
+    fin = 0;
+    no = 0;
+    let empezo = 0;
+    decir("Hola.", "es-MX", () => { fin++; }, () => { no++; }, () => { empezo++; });
+    assert.equal(emitida.voice, paulina);
+    assert.equal(emitida.lang, "es-MX");
+    assert.equal(empezo, 1);
+    assert.equal(fin, 1);
+    assert.equal(no, 0);
+    const temprano = alAvisoVoz(marcarVozEmpezada(crearReloj(0, 0)), 30, "fin");
+    assert.equal(temprano.avanza, false);
+    assert.equal(debeAvanzarSolo(temprano.reloj, 2000), true);
   } finally {
     if (anterior === undefined) delete globalThis.window;
     else globalThis.window = anterior;
   }
+});
 
+test("sin empezar tampoco cuenta como el final", () => {
+  const anterior = globalThis.window;
+  const Utterance = function Utterance(texto) { this.text = texto; };
   globalThis.window = {
     speechSynthesis: {
       speaking: false,
