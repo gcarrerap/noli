@@ -6,7 +6,7 @@ import { usarReglas } from "./coleccion.js";
 import { rngConSemilla } from "./rng.js";
 import {
   cargar, puedeAbrir, abrirConCreditos, comprar, cambiarLimite, ponerCerrada, ponerVoz,
-  marcarGuia, cuentaRara, cuentaUltra, fechaLocal, ponerMeta,
+  marcarGuia, cuentaRara, cuentaUltra, fechaLocal, ponerMeta, alinearDia,
 } from "./coleccion.js";
 import {
   guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso, bloqueoAlSeguir, muestraPuedeAvanzar,
@@ -15,14 +15,14 @@ import {
 import { unirBloqueos, tapBloqueado, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "./salida.js";
 import { decir, calentarVoces } from "./voz.js";
 import { FAMILIAS, ordenarFamilia, familiaCompleta, familiaQueSeCompleto } from "./familias.js";
-import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, frasePolvo, frasePrecio, fraseNueva, fraseTuya, etiquetaRol, fraseFamilia } from "./textos.js";
+import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, frasePolvo, frasePrecio, fraseCosto, fraseGuardar, fraseNueva, fraseTuya, etiquetaRol, fraseFamilia } from "./textos.js";
 import {
   MARCA, esc, estrellasSvg, claseMarco, frascoSvg, iconoPolvo, iconoCredito, iconoVoz,
   fichasProbabilidad, htmlFoto, rutaPieza, rutaFamilia,
 } from "./dibujo.js";
-import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
-import { preguntaPapas, aciertoPapas } from "./papas.js";
-import { opcionesQuien, candidatosMeta } from "./quien.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
+import { preguntaPapas, aciertoPapas, PAPAS_FALLO_MS } from "./papas.js";
+import { QUIEN_VISIBLE, opcionesQuien, candidatosMeta } from "./quien.js";
 import { sonar } from "./sonido.js";
 
 const $main = document.getElementById("juego");
@@ -197,7 +197,7 @@ function htmlTienda() {
     <div class="layout-tienda">
       <div class="col-caja">
         <div class="escena etapa-cerrado" aria-hidden="true">${frascoSvg()}</div>
-        <button type="button" class="boton grande primario" data-act="abrir" ${focoAttr("abrir", inicial)} ${on ? "" : "disabled"}>${esc(TEXTOS.abrir)}<small>${iconoCredito()} ${esc(TEXTOS.costo)}</small></button>
+        <button type="button" class="boton grande primario" data-act="abrir" ${focoAttr("abrir", inicial)} ${on ? "" : "disabled"}>${esc(TEXTOS.abrir)}<small>${iconoCredito()} ${esc(fraseCosto(reglas.costoCaja))}</small></button>
         ${aviso}
       </div>
       <div class="col-info">
@@ -299,7 +299,7 @@ function htmlMetaCarta() {
   const opciones = candidatosMeta(pr.tenidas, piezas);
   if (!opciones.length) return `<p class="nota">${esc(frasePolvo(carta.polvoGanado))}</p>`;
   const botones = opciones.map((p, i) =>
-    `<button type="button" class="boton" data-act="meta" data-id="${esc(p.id)}" ${focoAttr("meta-" + p.id, i === 0)}>${esc(TEXTOS.guardarPara)} ${esc(p.nombre)}</button>`
+    `<button type="button" class="boton" data-act="meta" data-id="${esc(p.id)}" ${focoAttr("meta-" + p.id, i === 0)}>${esc(fraseGuardar(p.nombre, p.genero))}</button>`
   ).join("");
   return `<p class="nota">${esc(frasePolvo(carta.polvoGanado))}</p><div class="fila">${botones}</div>`;
 }
@@ -375,7 +375,7 @@ function htmlDetalle() {
     ? `<button type="button" class="boton grande" data-act="ver-foto" data-familia="${esc(p.familia)}" ${focoAttr("ver-foto", false)}>${esc(TEXTOS.verFoto)}</button>`
     : "";
   const guardarMeta = !tiene
-    ? `<button type="button" class="boton" data-act="meta" data-id="${esc(p.id)}" ${focoAttr("meta-" + p.id, false)}>${esc(TEXTOS.guardarPara)}</button>`
+    ? `<button type="button" class="boton" data-act="meta" data-id="${esc(p.id)}" ${focoAttr("meta-" + p.id, false)}>${esc(fraseGuardar(p.nombre, p.genero))}</button>`
     : "";
   const accion = tiene
     ? `<p class="aviso amable">${esc(recien ? fraseTuya(p.genero) : MARCA[p.rareza].nombre)}</p>`
@@ -401,14 +401,14 @@ function htmlDetalle() {
 function htmlPregunta() {
   const aviso = falloPapas ? `<p class="aviso">${esc(TEXTOS.esaNo)}</p>` : "";
   const ops = (pregunta ? pregunta.opciones : []).map((n, i) =>
-    `<button type="button" class="boton grande" data-act="respuesta" data-valor="${n}" ${focoAttr("op-" + i, i === 0)}>${n}</button>`
+    `<button type="button" class="boton grande" data-act="respuesta" data-valor="${n}" ${focoAttr("op-" + i, false)}>${n}</button>`
   ).join("");
   return `${cabecera()}
     <h2>${esc(TEXTOS.papas)}</h2>
     ${aviso}
-    <p class="aviso">${esc(TEXTOS.cuantoEs)} ${pregunta ? pregunta.a : ""} × ${pregunta ? pregunta.b : ""}?</p>
+    <p class="aviso pregunta-papas">${esc(TEXTOS.cuantoEs)} ${pregunta ? pregunta.a : ""} × ${pregunta ? pregunta.b : ""}?</p>
     <div class="papas-opciones">${ops}</div>
-    <button type="button" class="boton" data-act="volver" ${focoAttr("volver", false)}>${esc(TEXTOS.volver)}</button>
+    <button type="button" class="boton" data-act="volver" ${focoAttr("volver", true)}>${esc(TEXTOS.volver)}</button>
     ${dialogo()}`;
 }
 
@@ -461,7 +461,21 @@ function pintar(foco) {
   $main.innerHTML = html();
   if (esTv()) document.documentElement.classList.add("teclado");
   enfocar(salir ? "seguir" : foco);
+  animarBarras();
   programarFinBloqueo();
+}
+
+function animarBarras() {
+  const barras = [...$main.querySelectorAll(".barra-meta")];
+  const reducir = pocaAnimacion();
+  for (const b of barras) {
+    const s = b.querySelector("span");
+    if (!s) continue;
+    const meta = b.style.getPropertyValue("--lleno") || "0%";
+    if (reducir) { s.style.width = meta; continue; }
+    s.style.width = "0%";
+    requestAnimationFrame(() => { if (s.isConnected) s.style.width = meta; });
+  }
 }
 
 function cancelarVoz() {
@@ -619,7 +633,7 @@ function entrarFigura() {
   if (!carta) return;
   etapa = "figura";
   pantalla = "carta";
-  const quiz = carta.ejemplo ? null : opcionesQuien(carta.pieza, pr.tenidas, piezas, rngUi);
+  const quiz = QUIEN_VISIBLE && !carta.ejemplo ? opcionesQuien(carta.pieza, pr.tenidas, piezas, rngUi) : null;
   carta = { ...carta, fase: "plain", quiz, volar: false };
   cartaHasta = Date.now() + CARTA_MS;
   aperturaToken += 1;
@@ -685,8 +699,7 @@ async function abrirDeVerdad() {
     alCobrar(resultado) {
       const antes = pr.tenidas.slice();
       const familiaNueva = resultado.duplicado ? null : familiaQueSeCompleto(antes, resultado.estado.tenidas, piezas);
-      saldo = resultado.creditos;
-      pr = {
+      const siguiente = {
         ...resultado.estado,
         pendiente: {
           id: resultado.pieza.id,
@@ -695,8 +708,13 @@ async function abrirDeVerdad() {
           familiaNueva: familiaNueva || null,
         },
       };
+      pr = siguiente;
       guardar();
       return pr;
+    },
+    alFallar(anterior) {
+      pr = anterior;
+      guardar();
     },
   });
   cobrando = false;
@@ -720,10 +738,15 @@ async function abrirDeVerdad() {
 
 function pulsarAbrir() {
   if (cobrando || abrirApagado()) return;
-  if (bloqueado("abrir")) return;
   if (pantalla === "abriendo" || pantalla === "carta") return;
   if (guia && guia.paso === "abrir") { abrirDemo(); return; }
   if (guia) return;
+  const pulso = pulsoTrasCarta({ ahora: Date.now(), hasta: bloqueoPasoHasta, carta: false });
+  if (!pulso.abre) {
+    bloqueoPasoHasta = pulso.hasta;
+    programarFinBloqueo();
+    return;
+  }
   abrirDeVerdad();
 }
 
@@ -805,10 +828,11 @@ function actuar(act, data) {
       pregunta = preguntaPapas(rngUi);
       falloPapas = false;
     }
-    pintar(papasOk ? "menos" : "op-0");
+    pintar(papasOk ? "menos" : "volver");
     return;
   }
   if (act === "respuesta") {
+    if (bloqueado("respuesta")) return;
     if (aciertoPapas(pregunta, data.valor)) {
       papasOk = true;
       falloPapas = false;
@@ -817,7 +841,8 @@ function actuar(act, data) {
     }
     falloPapas = true;
     pregunta = preguntaPapas(rngUi);
-    pintar("op-0");
+    bloqueoPasoHasta = Date.now() + PAPAS_FALLO_MS;
+    pintar("volver");
     return;
   }
   if (act === "volver") {
@@ -957,7 +982,10 @@ $main.addEventListener("click", (ev) => {
     }
     return;
   }
-  if (bloqueado(act)) return;
+  if (bloqueado(act)) {
+    if (act === "abrir") pulsarAbrir();
+    return;
+  }
   if (!t || t.disabled) return;
   if ((act === "guardar-carta" || act === "ver-foto") && cartaQuieta()) return;
   actuar(act, t.dataset);
@@ -978,7 +1006,10 @@ Noli.alEntrar((accion) => {
     if (el && !el.disabled) el.click();
     return true;
   }
-  if (accion === "ok" && bloqueado(idFoco() === "saltar" ? "saltar" : "ok")) return true;
+  if (accion === "ok" && bloqueado(idFoco() === "saltar" ? "saltar" : "ok")) {
+    if (!guia && pantalla === "tienda" && idFoco() === "abrir") pulsarAbrir();
+    return true;
+  }
   if (accion === "ok" && pantalla === "abriendo") {
     const e = document.activeElement;
     if (e && $main.contains(e) && !e.disabled) e.click();
@@ -1054,7 +1085,8 @@ Promise.all([Noli.datos, Noli.creditos, leerJson("piezas.json"), leerJson("regla
   reglas = normalizarReglas(reglasJson);
   usarReglas(reglas);
   piezas = Array.isArray(lista) ? lista : [];
-  pr = cargar(datos, reglas);
+  pr = alinearDia(cargar(datos, reglas), fechaLocal());
+  if (datos && datos.dia && pr.dia !== datos.dia) guardar();
   saldo = typeof creditos === "number" ? creditos : null;
   prepararPregunta();
   if (pr.pendiente) reanudarPendiente();

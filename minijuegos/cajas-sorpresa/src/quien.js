@@ -1,5 +1,9 @@
-// «¿Quién crees que es?»: la respuesta y dos Brumitos que ella ya tiene.
-// Si no hay dos señuelos distintos, no se pregunta.
+// «¿Quién crees que es?» está apagado: se iba a los 0.6 s y no daba tiempo.
+// TODO: volver cuando haya siluetas, opciones que se distingan y unos 5 s.
+// Los señuelos salen de los Brumitos que ella ya tiene.
+// Si no hay dos distintos de la respuesta, no se pregunta.
+
+export const QUIEN_VISIBLE = false;
 
 export function opcionesQuien(pieza, tenidas, piezas, rng) {
   if (!pieza) return null;

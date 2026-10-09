@@ -10,12 +10,11 @@ export const GUIA_MAX_MS = 3000;
 export const GUIA_BLOQUEO_MS = 1000;
 export const TRAS_GUIA_MS = 1000;
 
-export const PASOS = ["tienda", "probabilidades", "garantia", "abrir", "carta", "vitrina"];
+export const PASOS = ["tienda", "probabilidades", "abrir", "carta", "vitrina"];
 
 const SIGUIENTE = {
   tienda: "probabilidades",
-  probabilidades: "garantia",
-  garantia: "abrir",
+  probabilidades: "abrir",
   abrir: "carta",
   carta: "vitrina",
 };

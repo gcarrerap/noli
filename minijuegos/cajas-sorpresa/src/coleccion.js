@@ -104,12 +104,26 @@ function historialDe(v) {
 }
 
 /**
- * Si el reloj del aparato va hacia atrás, el día guardado (el más nuevo) sigue
- * valiendo. Solo un día posterior reinicia la cuenta.
+ * Frascos ya abiertos en el día que se pregunta.
+ * Si hoy es anterior al día guardado, la cuenta sigue (mover el reloj no regala
+ * frascos). Ese día futuro hay que bajarlo con `alinearDia` al cargar: si no,
+ * la tienda se queda cerrada hasta esa fecha.
+ * Un día posterior de verdad reinicia la cuenta.
  */
 export function abiertasHoy(estado, fecha) {
   if (!estado || !estado.dia) return 0;
   return fecha <= estado.dia ? estado.hoy : 0;
+}
+
+/**
+ * Al cargar: si hoy es anterior al día guardado, ese día era un reloj adelantado
+ * (o se atrasó). Se guarda hoy y se conserva la cuenta. Un día de verdad nuevo
+ * no se toca aquí: la cuenta se reinicia al abrir.
+ */
+export function alinearDia(estado, fecha) {
+  if (!estado || typeof fecha !== "string" || !fecha) return estado;
+  if (estado.dia && fecha < estado.dia) return { ...estado, dia: fecha };
+  return estado;
 }
 
 export function cuentaRara(estado, config) {
@@ -178,9 +192,9 @@ export function abrirCaja(estado, { rng, piezas, fecha, config, registrar = true
   if (pieza.rareza === "ultra") { desdeUltra = 0; desdeRara = 0; }
   else if (pieza.rareza === "rara") { desdeRara = 0; desdeUltra += 1; }
   else { desdeRara += 1; desdeUltra += 1; }
-  const conservar = !!(estado.dia && fecha <= estado.dia);
-  const dia = conservar ? estado.dia : fecha;
-  const hoy = (conservar ? estado.hoy : 0) + 1;
+  const sigue = !!(estado.dia && fecha <= estado.dia);
+  const dia = sigue && fecha < estado.dia ? fecha : (sigue ? estado.dia : fecha);
+  const hoy = (sigue ? estado.hoy : 0) + 1;
   const mov = { dia, id: pieza.id, rareza: pieza.rareza, nueva: !duplicado, polvo: polvoGanado };
   const historial = registrar ? [...estado.historial, mov].slice(-HISTORIAL_MAX) : estado.historial;
   return {
@@ -293,18 +307,20 @@ export async function abrirConCreditos(estado, opts) {
     creditos: opts.creditos, fecha: opts.fecha, config, piezas: opts.piezas,
   });
   if (!p.ok) return { ok: false, razon: p.razon, estado, creditos: opts.creditos };
+  const r = abrirCaja(estado, { ...opts, config });
+  const estimado = typeof opts.creditos === "number" ? opts.creditos - p.costo : opts.creditos;
+  let estadoListo = r.estado;
+  if (typeof opts.alCobrar === "function") {
+    const extra = opts.alCobrar({ ...r, creditos: estimado, costo: p.costo });
+    if (extra) estadoListo = extra;
+  }
   const cobro = await opts.gastar(p.costo);
   if (!cobro || cobro.ok !== true) {
+    if (typeof opts.alFallar === "function") opts.alFallar(estado);
     const creditos = cobro && typeof cobro.saldo === "number" ? cobro.saldo : opts.creditos;
     return { ok: false, razon: "creditos", estado, creditos };
   }
-  const r = abrirCaja(estado, { ...opts, config });
-  const creditos = typeof cobro.saldo === "number" ? cobro.saldo : opts.creditos - p.costo;
-  let estadoListo = r.estado;
-  if (typeof opts.alCobrar === "function") {
-    const extra = opts.alCobrar({ ...r, creditos, costo: p.costo });
-    if (extra) estadoListo = extra;
-  }
+  const creditos = typeof cobro.saldo === "number" ? cobro.saldo : estimado;
   return { ok: true, ...r, estado: estadoListo, creditos, costo: p.costo };
 }
 

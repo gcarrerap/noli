@@ -296,7 +296,7 @@ main[data-fase="plain"] .frasco-svg { width: 96px; }
 .meta-linea { width: 100%; display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
 .meta-linea p { margin: 0; font-weight: 800; }
 .barra-meta { width: 100%; height: 18px; border-radius: 999px; background: rgba(255, 255, 255, .25); overflow: hidden; }
-.barra-meta span { display: block; height: 100%; width: var(--lleno, 0%); background: #fff4cc; }
+.barra-meta span { display: block; height: 100%; width: 0; background: #fff4cc; transition: width .55s ease; }
 .polvo-vuela { position: absolute; left: 50%; bottom: 0; display: flex; gap: 6px; animation: al-barrote .9s ease forwards; }
 .polvo-vuela .icono-polvo { width: 28px; height: 28px; }
 @keyframes al-barrote {
@@ -359,4 +359,5 @@ html[data-modo="tv"] .velo { padding: 36px; }
   .brillo-ultra::after,
   .polvo-vuela,
   .entra-album { animation: none; }
+  .barra-meta span { transition: none; }
 }

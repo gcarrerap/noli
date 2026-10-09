@@ -34,3 +34,16 @@ export function seDeshabilitaAbrir({ cobrando = false, enGuia = false, paso = ""
   if (enGuia) return paso !== "abrir";
   return !puede;
 }
+
+/**
+ * Después de una carta, Abrir pide una pausa de verdad.
+ * Cada OK o toque que se ignora vuelve a contar 1 s.
+ * Un toque mientras la carta anterior sigue en pantalla no abre la siguiente.
+ */
+export function pulsoTrasCarta({ ahora, hasta = 0, carta = false } = {}) {
+  const t = Number(ahora) || 0;
+  const plazo = Number(hasta) || 0;
+  if (carta) return { abre: false, hasta: plazo };
+  if (t < plazo) return { abre: false, hasta: t + TRAS_ABRIR_MS };
+  return { abre: true, hasta: plazo };
+}

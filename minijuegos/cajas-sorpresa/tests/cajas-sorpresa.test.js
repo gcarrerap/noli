@@ -7,7 +7,7 @@ import { rngConSemilla } from "../src/rng.js";
 import {
   usarReglas, estadoNuevo, cargar, puedeAbrir, sortearRareza, abrirCaja, comprar, simularColeccion,
   resumirCajas, cambiarLimite, ponerCerrada, cuentaRara, cuentaUltra, abrirConCreditos,
-  abiertasHoy, marcarGuia, fechaLocal, ponerMeta,
+  abiertasHoy, alinearDia, marcarGuia, fechaLocal, ponerMeta,
 } from "../src/coleccion.js";
 import {
   PASOS, guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso,
@@ -15,12 +15,12 @@ import {
 } from "../src/guia.js";
 import { unirBloqueos, tapBloqueado, resolverAtras, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "../src/salida.js";
 import { decir, calentarVoces, escogerVoz, escogerVozIngles, olvidarVoz, vozActual, paraVoz } from "../src/voz.js";
-import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, fraseNueva, fraseTuya } from "../src/textos.js";
+import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, fraseNueva, fraseTuya, fraseCosto, fraseGuardar } from "../src/textos.js";
 import { htmlFoto, rutaPieza, rutaFamilia, frascoSvg, MARCA, fichasProbabilidad } from "../src/dibujo.js";
 import { FAMILIAS, familiaCompleta, familiaQueSeCompleto, ordenarFamilia } from "../src/familias.js";
-import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, REVELAR_MS, CARTA_MS } from "../src/apertura.js";
-import { preguntaPapas, aciertoPapas } from "../src/papas.js";
-import { opcionesQuien, candidatosMeta } from "../src/quien.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, REVELAR_MS, CARTA_MS, TRAS_ABRIR_MS } from "../src/apertura.js";
+import { preguntaPapas, aciertoPapas, pulsoPapas, PAPAS_FALLO_MS } from "../src/papas.js";
+import { QUIEN_VISIBLE, opcionesQuien, candidatosMeta } from "../src/quien.js";
 
 const piezas = JSON.parse(fs.readFileSync(new URL("../datos/piezas.json", import.meta.url), "utf8"));
 const REGLAS = normalizarReglas(JSON.parse(fs.readFileSync(new URL("../datos/reglas.json", import.meta.url), "utf8")));
@@ -268,8 +268,10 @@ test("la guía espera la voz entre 2 s y 3 s", () => {
   assert.equal(aplicarGuia("tienda", "tiempo").paso, "probabilidades");
   assert.equal(aplicarGuia("abrir", "toque").paso, "abrir");
   assert.equal(aplicarGuia("abrir", "abrir").paso, "carta");
-  assert.equal(PASOS.length, 6);
+  assert.equal(PASOS.length, 5);
   assert.equal(PASOS.includes("fin"), false);
+  assert.equal(PASOS.includes("garantia"), false);
+  assert.equal(aplicarGuia("probabilidades", "voz").paso, "abrir");
   assert.equal(aplicarGuia("vitrina", "voz").fin, true);
   assert.equal(aplicarGuia("vitrina", "voz").guardo, true);
   assert.equal(aplicarGuia("carta", "voz").fin, false);
@@ -633,7 +635,15 @@ test("en pantalla no hay porcentajes y en la tele no se dice Toca", () => {
   }
   assert.equal(textoGuia("abrir", "tv", REGLAS), "Pulsa OK.");
   assert.match(textoGuia("abrir", "tactil", REGLAS), /Toca/);
-  assert.equal(textoGuia("garantia", "tv", REGLAS), "Tu rara llega en 8 cajas o menos.");
+  for (const paso of PASOS) assert.equal(/llega en/.test(textoGuia(paso, "tv", REGLAS)), false, paso);
+  assert.equal(fraseCosto(REGLAS.costoCaja), "5 créditos");
+  assert.equal(fraseCosto(7), "7 créditos");
+  assert.equal(fraseCosto(1), "1 crédito");
+  assert.equal(fraseGuardar("Hada", "f"), "Guardar para esta Hada");
+  assert.equal(fraseGuardar("Toto", "m"), "Guardar para este Toto");
+  const juegoSrc = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.equal(juegoSrc.includes("TEXTOS.costo"), false);
+  assert.match(juegoSrc, /fraseCosto\(reglas\.costoCaja\)/);
   const pipo = piezas[0];
   const vacio = htmlFoto(pipo, { tiene: false });
   const mini = htmlFoto(pipo, { tiene: true });
@@ -657,9 +667,10 @@ test("atrasar el reloj no reinicia el límite del día", () => {
   assert.equal(abiertasHoy(e, "2026-10-08"), 2);
   assert.equal(puedeAbrir(e, { creditos: 20, fecha: "2026-10-08", piezas }).razon, "limite");
   const seguido = abrirCaja({ ...e, limite: 4 }, { rng: cero, piezas, fecha: "2026-10-08" });
-  assert.equal(seguido.estado.dia, "2026-10-09");
+  assert.equal(seguido.estado.dia, "2026-10-08");
   assert.equal(seguido.estado.hoy, 3);
   assert.equal(abiertasHoy(seguido.estado, "2026-10-08"), 3);
+  assert.equal(puedeAbrir(seguido.estado, { creditos: 20, fecha: "2026-10-09", piezas }).ok, true);
   assert.equal(puedeAbrir(e, { creditos: 20, fecha: "2026-10-10", piezas }).ok, true);
   const reglasSrc = fs.readFileSync(new URL("../src/reglas.js", import.meta.url), "utf8");
   const colSrc = fs.readFileSync(new URL("../src/coleccion.js", import.meta.url), "utf8");
@@ -685,6 +696,28 @@ test("la apertura son tres brumas y la rareza espera, sin apagar Abrir por un pl
   const tienda = juego.slice(juego.indexOf("function htmlTienda"), juego.indexOf("function htmlHueco"));
   assert.equal(tienda.includes("htmlGarantias"), false);
   assert.equal(tienda.includes("fraseGarantia"), false);
+});
+
+test("el reloj adelantado no deja la tienda cerrada hasta esa fecha", () => {
+  const base = { ...estadoNuevo(), hoy: 2, limite: 2 };
+  const futuro = alinearDia({ ...base, dia: "2026-11-08" }, "2026-10-09");
+  assert.equal(futuro.dia, "2026-10-09");
+  assert.equal(futuro.hoy, 2);
+  assert.equal(abiertasHoy(futuro, "2026-10-09"), 2);
+  assert.equal(puedeAbrir(futuro, { creditos: 20, fecha: "2026-10-09", piezas }).razon, "limite");
+  assert.equal(puedeAbrir(futuro, { creditos: 20, fecha: "2026-10-10", piezas }).ok, true);
+  assert.equal(puedeAbrir({ ...base, dia: "2026-11-08" }, { creditos: 20, fecha: "2026-10-10", piezas }).razon, "limite");
+
+  const atras = alinearDia({ ...base, dia: "2026-10-09" }, "2026-10-08");
+  assert.equal(atras.dia, "2026-10-08");
+  assert.equal(atras.hoy, 2);
+  assert.equal(puedeAbrir(atras, { creditos: 20, fecha: "2026-10-08", piezas }).razon, "limite");
+  assert.equal(puedeAbrir(atras, { creditos: 20, fecha: "2026-10-09", piezas }).ok, true);
+
+  const nuevo = alinearDia({ ...base, dia: "2026-10-08" }, "2026-10-09");
+  assert.equal(nuevo.dia, "2026-10-08");
+  assert.equal(nuevo.hoy, 2);
+  assert.equal(abiertasHoy(nuevo, "2026-10-09"), 0);
 });
 
 test("papás pide una multiplicación y el repetido se celebra", () => {
@@ -714,15 +747,78 @@ test("papás pide una multiplicación y el repetido se celebra", () => {
   const elegida = ponerMeta(estadoNuevo(), meta[0].id);
   assert.equal(elegida.meta, meta[0].id);
   assert.equal(ponerMeta({ ...elegida, tenidas: [meta[0].id] }, meta[0].id).meta, elegida.meta);
+  assert.equal(QUIEN_VISIBLE, false);
+});
+
+test("el OK cada 50 ms no abre Para papás y la respuesta buena cambia de sitio", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  const p = preguntaPapas(rngConSemilla("papas-spam"));
+  let hasta = 0;
+  let abre = false;
+  for (let dt = 0; dt <= 10000; dt += 50) {
+    const r = pulsoPapas({ ahora: t0 + dt, foco: "volver", valor: p.r, pregunta: p, hasta });
+    hasta = r.hasta;
+    if (r.abre) abre = true;
+  }
+  assert.equal(abre, false);
+  const mal = p.opciones.find((n) => n !== p.r);
+  const fallo = pulsoPapas({ ahora: t0, foco: "opcion", valor: mal, pregunta: p, hasta: 0 });
+  assert.equal(fallo.abre, false);
+  assert.equal(fallo.hasta, t0 + PAPAS_FALLO_MS);
+  assert.equal(pulsoPapas({ ahora: t0 + 50, foco: "opcion", valor: p.r, pregunta: p, hasta: fallo.hasta }).abre, false);
+  assert.equal(pulsoPapas({ ahora: fallo.hasta, foco: "opcion", valor: p.r, pregunta: p, hasta: fallo.hasta }).abre, true);
+
+  const sitios = new Set();
+  let medianas = 0;
+  const rng = rngConSemilla("papas-sitio");
+  const n = 90;
+  for (let i = 0; i < n; i++) {
+    const q = preguntaPapas(rng);
+    assert.equal(new Set(q.opciones).size, 3);
+    assert.ok(q.a >= 6 && q.a <= 9 && q.b >= 6 && q.b <= 9);
+    assert.equal(q.r, q.a * q.b);
+    sitios.add(q.opciones.indexOf(q.r));
+    const ord = [...q.opciones].sort((x, y) => x - y);
+    if (ord[1] === q.r) medianas += 1;
+  }
+  assert.equal(sitios.size, 3);
+  assert.ok(medianas < n);
+});
+
+test("un OK cada 50 ms durante 10 s después de la carta no abre otro frasco", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  let hasta = t0 + TRAS_ABRIR_MS;
+  let abrio = false;
+  for (let dt = 0; dt <= 10000; dt += 50) {
+    const r = pulsoTrasCarta({ ahora: t0 + dt, hasta, carta: false });
+    hasta = r.hasta;
+    if (r.abre) abrio = true;
+  }
+  assert.equal(abrio, false);
+  assert.ok(hasta > t0 + 10000);
+  assert.notEqual(hasta, (t0 | 0) + 10000);
+  const durante = pulsoTrasCarta({ ahora: t0 + 200, hasta: t0 + TRAS_ABRIR_MS, carta: true });
+  assert.equal(durante.abre, false);
+  assert.equal(durante.hasta, t0 + TRAS_ABRIR_MS);
+  assert.equal(pulsoTrasCarta({ ahora: hasta, hasta, carta: false }).abre, true);
 });
 
 test("el pendiente se guarda en el mismo cobro y se puede repetir la carta", async () => {
   let gastos = 0;
+  let guardado = null;
+  let rPieza = "";
   const r = await abrirConCreditos(estadoNuevo(), {
     creditos: 10, fecha: FECHA, piezas, rng: cero,
-    gastar() { gastos += 1; return { ok: true, saldo: 5 }; },
+    gastar() {
+      assert.equal(guardado && guardado.pendiente && guardado.pendiente.id, rPieza);
+      gastos += 1;
+      return { ok: true, saldo: 5 };
+    },
     alCobrar(res) {
-      return {
+      rPieza = res.pieza.id;
+      guardado = {
         ...res.estado,
         pendiente: {
           id: res.pieza.id,
@@ -731,6 +827,7 @@ test("el pendiente se guarda en el mismo cobro y se puede repetir la carta", asy
           familiaNueva: null,
         },
       };
+      return guardado;
     },
   });
   assert.equal(gastos, 1);
@@ -740,4 +837,15 @@ test("el pendiente se guarda en el mismo cobro y se puede repetir la carta", asy
   assert.equal(otra.pendiente.id, r.pieza.id);
   assert.equal(otra.pendiente.duplicado, false);
   assert.equal(otra.cajas, 1);
+
+  let revertido = false;
+  const fallo = await abrirConCreditos(estadoNuevo(), {
+    creditos: 10, fecha: FECHA, piezas, rng: cero,
+    gastar() { return { ok: false, saldo: 10 }; },
+    alCobrar(res) { return { ...res.estado, pendiente: { id: res.pieza.id, duplicado: false, polvoGanado: 0, familiaNueva: null } }; },
+    alFallar() { revertido = true; },
+  });
+  assert.equal(fallo.ok, false);
+  assert.equal(revertido, true);
+  assert.equal(fallo.estado.pendiente, null);
 });

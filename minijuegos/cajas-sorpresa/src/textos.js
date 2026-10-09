@@ -6,7 +6,6 @@ export const TEXTOS = {
   titulo: "Cajas sorpresa",
   subtitulo: "Colección de Brumitos",
   abrir: "Abrir frasco",
-  costo: "5 créditos",
   vitrina: "Vitrina",
   como: "¿Cómo se juega?",
   papas: "Para papás",
@@ -58,7 +57,6 @@ export const TEXTOS = {
   noAbrio: "No se pudo abrir la tienda.",
   quien: "¿Quién crees que es?",
   esaNo: "Esa no es. Intenta otra vez.",
-  guardarPara: "Guardar para este",
   album: "Ya está en el álbum",
   cuantoEs: "¿Cuánto es",
   metaPara: "Guardas polvo para",
@@ -90,6 +88,16 @@ export function frasePrecio(nombre, precio) {
   return `${nombre} cuesta ${precio} de polvo de estrellas`;
 }
 
+export function fraseCosto(n) {
+  const k = Number(n) || 0;
+  return k === 1 ? "1 crédito" : `${k} créditos`;
+}
+
+export function fraseGuardar(nombre, genero) {
+  const este = genero === "f" ? "esta" : "este";
+  return `Guardar para ${este} ${nombre}`;
+}
+
 const ROLES = {
   bebe: "Bebé",
   nino: "Niño",
@@ -113,7 +121,6 @@ export function textoGuia(paso, modo, reglas) {
   const tv = modo === "tv";
   if (paso === "tienda") return "Cada frasco trae un Brumito.";
   if (paso === "probabilidades") return TEXTOS.probComun + ".";
-  if (paso === "garantia") return `Tu rara llega en ${reglas ? reglas.garantiaRara : ""} cajas o menos.`;
   if (paso === "abrir") return tv ? "Pulsa OK." : "Toca Abrir frasco.";
   if (paso === "carta") return "Las estrellas dicen si es rara.";
   if (paso === "vitrina") return "Con polvo escoges la que te falta.";
