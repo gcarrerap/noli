@@ -1,5 +1,6 @@
 // Guía fija de 2 partes iguales.
-// Los pasos 0, 1 y 2 solo muestran algo: avanzan con cualquier toque, con OK o solos a los 2 s.
+// Los pasos 0, 1 y 2 solo muestran algo: avanzan con cualquier toque, con OK,
+// o solos cuando acaba la frase (al menos 2 s, nunca más de 3 s).
 // El paso 3 es servir: solo avanza al pulsar la pizza igual. OK repetido no lo salta.
 // Con «¿Salir?» abierto solo valen Seguir y Salir. El foco nunca cae en Saltar solo.
 // En el paso 3 el foco está en la pizza igual, para que OK la sirva.
@@ -54,6 +55,16 @@ export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}
   if (t < GUIA_CIERRE_MS) return true;
   if (t >= GUIA_TOPE_MS) return false;
   return !!vozSigue;
+}
+
+// Un paso que solo se mira no se va a los 2 s si la frase sigue.
+// Espera a que termine, con el mismo tope de 3 s. Si no hay voz, se queda 2 s.
+export function siguienteAutoGuia({ transcurrido = 0, vozSigue = false } = {}) {
+  const t = Number(transcurrido) || 0;
+  if (t >= GUIA_TOPE_MS) return { avanzar: true, espera: 0 };
+  if (!vozSigue && t >= GUIA_TOQUE_MS) return { avanzar: true, espera: 0 };
+  const meta = vozSigue ? GUIA_TOPE_MS : GUIA_TOQUE_MS;
+  return { avanzar: false, espera: Math.max(0, meta - t) };
 }
 
 // El primer pedido, justo después de la guía, no acepta respuesta el primer segundo.

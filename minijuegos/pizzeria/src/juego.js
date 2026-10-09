@@ -5,7 +5,7 @@ import { clic, listo as sonidoListo, feliz as sonidoFeliz, desbloquear } from ".
 import { patron, lineasSvg, rebanadasDe, svgPila } from "./cortes.js";
 import { svgFigura, nombreFigura } from "./figuras.js";
 import { esCorrecto } from "./pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, GUIA_TOQUE_MS } from "./guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia } from "./guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, textoPista, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import { abiertos, recienAbierto } from "./deco.js";
 import { ajustar, opcionesCuantos, bandejaLista, focoTrasContador, BANDEJA_MAX } from "./bandeja.js";
@@ -14,7 +14,7 @@ import {
   fechaLocal, semana, resumen, marcarGuia, textoRacha, VENTANA, nuevo as progresoNuevo,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
-import { accionAtras, resolverAtras, alCerrarSalir } from "./salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo } from "./salida.js";
 
 const $main = document.getElementById("juego");
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -279,17 +279,22 @@ function limpiarRelojGuia() {
 }
 
 function programarGuia() {
-  if (!esGuia() || saliendo || !guiaAvanzaConToque(partida.paso)) {
-    if (!esGuia() || !guiaAvanzaConToque(partida.paso)) limpiarRelojGuia();
+  limpiarRelojGuia();
+  if (!esGuia() || saliendo || !guiaAvanzaConToque(partida.paso)) return;
+  const paso = partida.paso;
+  const decision = siguienteAutoGuia({
+    transcurrido: Date.now() - (pasoAparecio || Date.now()),
+    vozSigue,
+  });
+  if (decision.avanzar) {
+    aplicarPasoGuia(siguientePasoGuia(paso, { tipo: "tiempo" }));
     return;
   }
-  if (relojGuia) return;
-  const paso = partida.paso;
   relojGuia = setTimeout(() => {
     relojGuia = 0;
     if (saliendo || !esGuia() || partida.paso !== paso) return;
-    aplicarPasoGuia(siguientePasoGuia(paso, { tipo: "tiempo" }));
-  }, GUIA_TOQUE_MS);
+    programarGuia();
+  }, Math.max(16, decision.espera));
 }
 
 function pintarGuia() {
@@ -310,8 +315,8 @@ function pintarGuia() {
     </div>
     <p class="pista"></p>
     <p class="aviso" aria-live="polite"></p>`, "guia", foco);
-  programarGuia();
   hablarGuia(paso);
+  programarGuia();
 }
 
 function estadoGuia() {
@@ -330,7 +335,9 @@ function hablarGuia(paso) {
   const linea = hablaSegura(vozDeGuia(paso, textos, modoJuego()));
   if (!linea) return;
   vozSigue = decir(linea, "es-MX", () => {
-    if (mio === vozGen) vozSigue = false;
+    if (mio !== vozGen) return;
+    vozSigue = false;
+    programarGuia();
   }) === true;
 }
 
@@ -907,6 +914,11 @@ $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   const ir = (t && t.dataset.ir) || "";
   if (saliendo) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    if (!enDialogo && toqueEnVelo({ modo: modoJuego(), enDialogo }) === "seguir") {
+      cerrarSalir(false);
+      return;
+    }
     const efecto = toqueDuranteGuia(esGuia() ? partida.paso : 0, { dialogoAbierto: true, ir });
     if (efecto.accion === "seguir") cerrarSalir(false);
     else if (efecto.accion === "salir") cerrarSalir(true);

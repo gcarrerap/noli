@@ -6,7 +6,7 @@ import { analizar, sonIguales } from "../src/area.js";
 import { medir, lineasSvg, patron, opcionesCorte } from "../src/cortes.js";
 import { ladosDe, opcionesForma, crearFigura, reiniciarIds } from "../src/figuras.js";
 import { crearPedido, esCorrecto, POR_TURNO } from "../src/pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, siguienteAutoGuia, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, textoPista, IDLE_COMPLETA_MS } from "../src/pista.js";
 import { abiertos, recienAbierto, sumarPropinas, PROPINA, ADORNOS } from "../src/deco.js";
 import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista, focoTrasContador } from "../src/bandeja.js";
@@ -15,7 +15,7 @@ import {
   marcarGuia, textoRacha, racha, cumplirReto, VENTANA, PARA_SUBIR,
 } from "../src/progreso.js";
 import { retoDelDia, META_GIGANTE } from "../src/reto.js";
-import { accionAtras, resolverAtras, alCerrarSalir } from "../src/salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo } from "../src/salida.js";
 
 const banco = JSON.parse(fs.readFileSync(new URL("../datos/cortes.json", import.meta.url), "utf8"));
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
@@ -346,6 +346,49 @@ test("un OK o un toque rápido no salta la guía ni contesta el primer pedido", 
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.match(juego, /entradaGuia/);
   assert.match(juego, /entradaPedido/);
+});
+
+test("un paso que solo se mira espera a la voz y no pasa de 3 s", () => {
+  assert.equal(siguienteAutoGuia({ transcurrido: 2000, vozSigue: true }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 2600, vozSigue: true }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 2600, vozSigue: false }).avanzar, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: 3000, vozSigue: true }).avanzar, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: 5000, vozSigue: true }).avanzar, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: 1999, vozSigue: false }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 2000, vozSigue: false }).avanzar, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: 0, vozSigue: true }).espera, GUIA_TOPE_MS);
+  assert.equal(siguienteAutoGuia({ transcurrido: 0, vozSigue: false }).espera, GUIA_TOQUE_MS);
+  function simular(vozHasta) {
+    let t = 0;
+    let paso = 0;
+    while (paso < 1 && t <= 4000) {
+      const vozSigue = t < vozHasta;
+      const d = siguienteAutoGuia({ transcurrido: t, vozSigue });
+      if (d.avanzar) {
+        paso = siguientePasoGuia(paso, { tipo: "tiempo" });
+        break;
+      }
+      const siguiente = t + d.espera;
+      if (vozSigue && vozHasta < siguiente) t = vozHasta;
+      else t = siguiente;
+    }
+    return { paso, t };
+  }
+  assert.deepEqual(simular(2600), { paso: 1, t: 2600 });
+  assert.deepEqual(simular(5000), { paso: 1, t: GUIA_TOPE_MS });
+  assert.deepEqual(simular(0), { paso: 1, t: GUIA_TOQUE_MS });
+  assert.deepEqual(simular(400), { paso: 1, t: GUIA_TOQUE_MS });
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /siguienteAutoGuia/);
+  assert.equal(guiaBloqueada({ ahora: 1500, aparecio: 0, vozSigue: true }), true);
+});
+
+test("en el teléfono el fondo de ¿Salir? es Seguir y en la tele no", () => {
+  assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: false }), "seguir");
+  assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: true }), "nada");
+  assert.equal(toqueEnVelo({ modo: "tv", enDialogo: false }), "nada");
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /toqueEnVelo/);
 });
 
 test("sube con 8 de los últimos 10 y la propina es fija", () => {
