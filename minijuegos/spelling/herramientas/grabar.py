@@ -12,7 +12,7 @@ Uso (una vez: pip install piper-tts, y la voz de https://github.com/rhasspy/pipe
 
     python3 minijuegos/spelling/herramientas/grabar.py --voz /ruta/en-us-lessac-medium.onnx [--todo]
 
-Sin --todo solo graba lo que falta (al agregar palabras a src/palabras.js). Necesita node y ffmpeg.
+Sin --todo solo graba lo que falta (al agregar palabras a src/palabras.js o src/ch.js). Necesita node y ffmpeg.
 """
 import argparse, io, json, os, subprocess, sys, wave
 from pathlib import Path
@@ -30,8 +30,10 @@ LETRAS = {
 PRUEBA = "Hello Noli! Can you spell cat? C, A, T. Cat."
 
 
-def listas():
-    js = "import { LISTAS } from './src/palabras.js'; console.log(JSON.stringify(LISTAS));"
+def contenido():
+    """Las listas de palabras y el banco de "Sonidos de CH" (src/ch.js)."""
+    js = ("import { LISTAS } from './src/palabras.js'; import { BANCO } from './src/ch.js'; "
+          "console.log(JSON.stringify({ listas: LISTAS, ch: BANCO }));")
     out = subprocess.run(["node", "--input-type=module", "-e", js], cwd=JUEGO, capture_output=True, text=True, check=True)
     return json.loads(out.stdout)
 
@@ -77,13 +79,26 @@ def main():
         return True
 
     hechos = 0
-    for l in listas():
+    vistas = set()
+
+    def palabra(p):
+        nonlocal hechos
+        w, slug = p["palabra"], p["palabra"].lower()
+        if slug in vistas:   # una palabra puede estar en una lista y en el banco de CH
+            return
+        vistas.add(slug)
+        hechos += grabar(f"{w}.", AUDIO / "p" / f"{slug}.mp3", normal)
+        hechos += grabar(f"{w}.", AUDIO / "d" / f"{slug}.mp3", lenta)
+        hechos += grabar(p["frase"], AUDIO / "f" / f"{slug}.mp3", frase)
+
+    datos = contenido()
+    for l in datos["listas"]:
         for p in l["palabras"]:
-            w, slug = p["palabra"], p["palabra"].lower()
-            hechos += grabar(f"{w}.", AUDIO / "p" / f"{slug}.mp3", normal)
-            hechos += grabar(f"{w}.", AUDIO / "d" / f"{slug}.mp3", lenta)
-            hechos += grabar(p["frase"], AUDIO / "f" / f"{slug}.mp3", frase)
+            palabra(p)
         print(f"lista {l['n']} lista", file=sys.stderr)
+    for p in datos["ch"]:
+        palabra(p)
+    print("sonidos de CH listos", file=sys.stderr)
     for letra, nombre in LETRAS.items():
         hechos += grabar(f"{nombre}.", AUDIO / "l" / f"{letra}.mp3", normal, ANTES_LETRA_MS)
     hechos += grabar(PRUEBA, AUDIO / "prueba.mp3", frase)

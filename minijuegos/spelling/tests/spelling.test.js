@@ -9,6 +9,7 @@ import { nuevo, cargar, registrar, dominio, cerrarRonda, armarRonda, colocar, cu
 import { empezarPrueba, responderPrueba, palabraActual } from "../src/nivelacion.js";
 import { retoDelDia, alcance } from "../src/reto.js";
 import { escogerVoz, ordenarVoces, letraPorLetra } from "../src/voz.js";
+import { BANCO, SONIDOS, buscarCh, resaltar, chDe, registrarCh, pctCh, cerrarRondaCh, armarRondaCh } from "../src/ch.js";
 import fs from "node:fs";
 
 const HOY = "2026-10-08";
@@ -285,7 +286,7 @@ test("resumen para papás", () => {
 test("grabaciones: cada palabra tiene su audio (normal, despacio y frase), las 26 letras y la prueba", () => {
   const hay = (r) => fs.existsSync(new URL(`../audio/${r}.mp3`, import.meta.url));
   const faltan = [];
-  for (const { palabra } of todas) for (const d of ["p", "d", "f"]) if (!hay(`${d}/${palabra.toLowerCase()}`)) faltan.push(`${d}/${palabra}`);
+  for (const { palabra } of [...todas, ...BANCO]) for (const d of ["p", "d", "f"]) if (!hay(`${d}/${palabra.toLowerCase()}`)) faltan.push(`${d}/${palabra}`);
   for (const c of "abcdefghijklmnopqrstuvwxyz") if (!hay(`l/${c}`)) faltan.push(`l/${c}`);
   if (!hay("prueba")) faltan.push("prueba");
   assert.deepEqual(faltan, [], "graba lo que falta con: python3 minijuegos/spelling/herramientas/grabar.py --voz …");
@@ -307,4 +308,109 @@ test("voz: prefiere inglés de EE. UU. y voces conocidas; sin inglés no hay voz
 test("ETAPAS: de la más fácil a la más difícil", () => {
   assert.deepEqual(ETAPAS.map((e) => e.id), ["escoge", "arma", "escribe"]);
   assert.ok(buscar("CAKE").lista === 5);
+});
+
+// ---------- Sonidos de CH ----------
+
+test("CH: banco amplio, cada palabra con su sonido, nivel y frase; sin repetir ni chocar con las listas", () => {
+  assert.ok(BANCO.length >= 120);
+  const vistas = new Set();
+  for (const p of BANCO) {
+    const w = p.palabra.toLowerCase();
+    assert.ok(!vistas.has(w), `repetida: ${w}`);
+    vistas.add(w);
+    assert.match(p.palabra, /^[A-Za-z]+$/);
+    assert.ok(/ch/i.test(p.palabra), `${p.palabra} no tiene ch`);
+    assert.ok(["ch", "k", "sh"].includes(p.sonido), p.palabra);
+    assert.ok([1, 2, 3].includes(p.n), p.palabra);
+    assert.ok(new RegExp(`\\b${p.palabra}\\b`, "i").test(p.frase), `${p.palabra}: "${p.frase}"`);
+    assert.ok(p.frase.split(" ").length <= 12, `frase larga: ${p.frase}`);
+    // Si ya está en una lista, su grabación de frase es la misma: la frase debe ser idéntica
+    const enLista = buscar(p.palabra);
+    if (enLista) assert.equal(enLista.frase, p.frase, `${p.palabra}: la frase difiere de la de la lista`);
+  }
+  // cada sonido tiene palabras en los tres niveles y bastantes de dónde sacar
+  for (const s of SONIDOS) for (const n of [1, 2, 3]) assert.ok(BANCO.filter((p) => p.sonido === s.id && p.n === n).length >= 3, `${s.id} nivel ${n}`);
+  assert.ok(BANCO.filter((p) => p.sonido === "k").length >= 25 && BANCO.filter((p) => p.sonido === "sh").length >= 15);
+});
+
+test("CH: las palabras de la imagen de la maestra están, con el sonido que dice la lección", () => {
+  const de = { ch: "chips chest child rich such chick", k: "mechanic character chemist school Christmas scheme architect",
+    sh: "chef machine parachute chauffeur chic champagne" };
+  for (const [sonido, ws] of Object.entries(de)) for (const w of ws.split(" ")) assert.equal(buscarCh(w)?.sonido, sonido, w);
+  for (const s of SONIDOS) for (const e of s.ejemplos) assert.equal(buscarCh(e)?.sonido, s.id, `ejemplo ${e}`);
+});
+
+test("CH: sin homófonos conocidos en el banco (escucharla no debe ser ambiguo)", () => {
+  const malas = ["chews", "choose", "chute", "chord", "cord", "which", "witch", "beech", "cheep", "chili", "chilly", "choir", "avalanche"];
+  for (const w of malas) assert.equal(buscarCh(w), null, w);
+});
+
+test("CH: resaltar parte la palabra marcando las ch", () => {
+  assert.deepEqual(resaltar("school"), [{ texto: "s", ch: false }, { texto: "ch", ch: true }, { texto: "ool", ch: false }]);
+  assert.deepEqual(resaltar("Chicago").map((t) => t.texto), ["Ch", "icago"]);
+  assert.deepEqual(resaltar("church").filter((t) => t.ch).length, 2);
+  assert.equal(resaltar("chef").map((t) => t.texto).join(""), "chef");
+});
+
+test("CH: progreso por sonido y modo; datos rotos o ausentes dan valores seguros", () => {
+  assert.deepEqual(chDe(undefined).nivel, 2);
+  assert.equal(chDe({ ch: { nivel: 99, stats: "mal" } }).nivel, 3);
+  assert.equal(chDe({ ch: { nivel: -3 } }).nivel, 2);
+  let pr = nuevo();
+  pr = registrarCh(pr, "sonido", "k", true);
+  pr = registrarCh(pr, "sonido", "k", false);
+  pr = registrarCh(pr, "escribe", "sh", false);
+  assert.equal(pctCh(pr, "sonido", "k"), 50);
+  assert.equal(pctCh(pr, "escribe", "sh"), 0);
+  assert.equal(pctCh(pr, "escribe", "k"), null);
+  assert.equal(chDe(pr).stats.sonido.k.t, 2);
+  assert.equal(pr.listas && Object.keys(pr.listas).length, 0);      // no toca las listas
+  assert.equal(cargar(JSON.parse(JSON.stringify(pr))).ch.stats.sonido.k.a, 1);   // se guarda y se recupera
+});
+
+test("CH: la ronda de escribir sube de nivel con 8 de 10, baja con 4 o menos; la de sonido solo da estrellas", () => {
+  let pr = nuevo();
+  let r = cerrarRondaCh(pr, "escribe", 9);
+  assert.deepEqual([r.nivel, r.cambio, r.estrellas], [3, 1, 2]);
+  r = cerrarRondaCh(r.pr, "escribe", 10);
+  assert.deepEqual([r.nivel, r.cambio, r.estrellas], [3, 0, 3]);      // tope
+  r = cerrarRondaCh(r.pr, "escribe", 3);
+  assert.deepEqual([r.nivel, r.cambio], [2, -1]);
+  r = cerrarRondaCh(cerrarRondaCh(nuevo(), "escribe", 2).pr, "escribe", 1);   // nunca baja de 1
+  assert.equal(r.nivel, 1);
+  const s = cerrarRondaCh(nuevo(), "sonido", 10);
+  assert.deepEqual([s.nivel, s.cambio, s.estrellas], [2, 0, 3]);
+  assert.equal(chDe(s.pr).rondas.sonido, 1);
+  assert.equal(chDe(s.pr).rondas.escribe, 0);
+});
+
+test("CH: una ronda trae 10 palabras distintas con los tres sonidos mezclados (4 del más flojo)", () => {
+  for (const modo of ["sonido", "escribe"]) for (const nivel of [1, 2, 3]) for (let semilla = 1; semilla <= 20; semilla++) {
+    const pr = { ...nuevo(), ch: { nivel } };
+    const r = armarRondaCh(pr, modo, rngConSemilla(semilla));
+    assert.equal(r.length, 10);
+    assert.equal(new Set(r.map((p) => p.palabra)).size, 10);
+    const por = (s) => r.filter((p) => p.sonido === s).length;
+    assert.deepEqual([por("ch"), por("k"), por("sh")].sort(), [3, 3, 4], `${modo} nivel ${nivel}`);
+    const tope = Math.min(3, nivel + (modo === "sonido" ? 1 : 0));
+    for (const p of r) assert.ok(p.n <= tope, `${p.palabra} (nivel ${p.n}) en ${modo} nivel ${nivel}`);
+    if (modo === "sonido") for (const s of SONIDOS) assert.ok(!r.some((p) => p.palabra === s.como), `${s.como} saldría escrita en su botón`);
+  }
+  // el sonido que más falla recibe la palabra extra
+  let pr = { ...nuevo(), ch: { nivel: 2 } };
+  for (let i = 0; i < 6; i++) pr = registrarCh(pr, "escribe", "sh", false);
+  for (const s of ["ch", "k"]) for (let i = 0; i < 6; i++) pr = registrarCh(pr, "escribe", s, true);
+  for (let semilla = 1; semilla <= 10; semilla++) assert.equal(armarRondaCh(pr, "escribe", rngConSemilla(semilla)).filter((p) => p.sonido === "sh").length, 4);
+});
+
+test("CH: las palabras que falló salen más seguido", () => {
+  const base = { ...nuevo(), ch: { nivel: 3 } };
+  const con = { ...base, fallos: { mechanic: { lista: 1, veces: 1, seguidos: 0 } } };
+  let sin = 0, falla = 0;
+  for (let semilla = 1; semilla <= 300; semilla++) {
+    sin += armarRondaCh(base, "escribe", rngConSemilla(semilla)).some((p) => p.palabra === "mechanic") ? 1 : 0;
+    falla += armarRondaCh(con, "escribe", rngConSemilla(semilla)).some((p) => p.palabra === "mechanic") ? 1 : 0;
+  }
+  assert.ok(falla > sin * 1.5, `${falla} vs ${sin}`);
 });
