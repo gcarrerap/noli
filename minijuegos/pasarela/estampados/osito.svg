@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Osito (original, para Noli). Fondo transparente; colores fijos -->
+  <g stroke="#2b2236" stroke-width="2.4" stroke-linejoin="round">
+    <circle cx="16" cy="17" r="9" fill="#a0703f"/><circle cx="48" cy="17" r="9" fill="#a0703f"/>
+    <circle cx="32" cy="37" r="23" fill="#a0703f"/>
+    <ellipse cx="32" cy="45" rx="11" ry="8.5" fill="#ecc9a0"/>
+  </g>
+  <circle cx="16" cy="17" r="4.5" fill="#ecc9a0"/><circle cx="48" cy="17" r="4.5" fill="#ecc9a0"/>
+  <circle cx="23.5" cy="33" r="3.2" fill="#2b2236"/><circle cx="40.5" cy="33" r="3.2" fill="#2b2236"/>
+  <circle cx="24.5" cy="32" r="1" fill="#fff"/><circle cx="41.5" cy="32" r="1" fill="#fff"/>
+  <ellipse cx="32" cy="41.5" rx="4.2" ry="3.2" fill="#2b2236"/>
+  <path d="M27 47Q32 52 37 47" fill="none" stroke="#2b2236" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="17.5" cy="42" r="3.5" fill="#ff8fa3" opacity=".7"/><circle cx="46.5" cy="42" r="3.5" fill="#ff8fa3" opacity=".7"/>
+</svg>

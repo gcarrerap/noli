@@ -4,6 +4,7 @@
 //  3. las fotos del clóset (los atuendos guardados).
 // Cada prenda dice qué figura usa con "dibujo2d" en prendas.json; las figuras están en FIGURAS.
 // Coordenadas: viewBox 0 0 200 360, la muñeca mirando al frente, pies en y ≈ 335.
+import { pintarSVG, interiorSVG } from "../../../../kit/3d/pintar.js";
 
 const B = 'stroke="#2b2236" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"';
 
@@ -118,6 +119,32 @@ function colores(prenda, color, idx) {
   return [hex(color), hex(prenda.secundario || "#ffffff")];
 }
 
+// ---------- Patrones y estampados (#79) ----------
+// El patrón entra como <pattern> y la prenda se rellena con url(#id) en lugar de su color. El id lleva el patrón y
+// los colores: en una página hay varios SVG (miniaturas, clóset) y un mismo id debe dibujar siempre lo mismo.
+
+const T2D = 14; // tamaño de la baldosa en el dibujo 2D (unidades del viewBox) con escala 1
+
+function relleno(prenda, color, patron, idx) {
+  const [p, s] = colores(prenda, color, idx);
+  const pa = patron && idx.patrones ? idx.patrones.get(patron) : null;
+  if (!pa || !pa.svg) return { p, s, defs: "" };
+  const id = ("pt-" + patron + p + s).replace(/[^a-z0-9-]/gi, "");
+  const t = T2D * (pa.escala || 1);
+  const defs = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${t}" height="${t}" viewBox="0 0 64 64">${interiorSVG(pintarSVG(pa.svg, { p, s }))}</pattern>`;
+  return { p: `url(#${id})`, s, defs };
+}
+
+/** El estampado de una prenda (estampado2d en prendas.json: centro x, y y tamaño) */
+function estampado2d(prenda, hexP, idx) {
+  const q = prenda.estampado2d, e = q && idx.estampados ? idx.estampados.get(q.estampado) : null;
+  if (!e) return "";
+  const x = q.x - q.tam / 2, y = q.y - q.tam / 2;
+  if (e.svg) return `<svg x="${x}" y="${y}" width="${q.tam}" height="${q.tam}" viewBox="0 0 64 64">${interiorSVG(pintarSVG(e.svg, { p: hexP }))}</svg>`;
+  if (e.url) return `<image href="${e.url}" x="${x}" y="${y}" width="${q.tam}" height="${q.tam}"/>`;
+  return "";
+}
+
 /** El cuerpo: piel, malla de base y cara. fantasma = silueta clarita para las miniaturas. */
 function cuerpo(piel, base, fantasma) {
   const pi = fantasma ? "#ece6f5" : piel, ba = fantasma ? "#f4f0f8" : base, b = fantasma ? 'stroke="#d8d0e6" stroke-width="2"' : B;
@@ -148,11 +175,15 @@ export function dibujarMuneca(atuendo, idx, op) {
   const lista = [];
   for (const k of ["abajo", "arriba", "vestido", "zapatos"]) if (atuendo[k]) lista.push(atuendo[k]);
   for (const p of Object.values(atuendo.accesorios || {})) if (p) lista.push(p);
-  for (const { id, color } of lista) {
+  const defs = [];
+  for (const { id, color, patron } of lista) {
     const prenda = idx.prendas.get(id), f = prenda && FIGURAS[prenda.dibujo2d];
     if (!f) continue;
-    const [p, s] = colores(prenda, color, idx);
+    const { p, s, defs: d } = relleno(prenda, color, patron, idx);
+    if (d) defs.push(d);
     for (const capa of ["atras", "ropa", "frente"]) if (f[capa]) capas[capa].push(f[capa](p, s));
+    const est = estampado2d(prenda, colores(prenda, color, idx)[0], idx);
+    if (est) capas[f.ropa ? "ropa" : "frente"].push(est);
   }
   if (atuendo.peinado) {
     const prenda = idx.prendas.get(atuendo.peinado.id), f = prenda && FIGURAS[prenda.dibujo2d];
@@ -160,7 +191,7 @@ export function dibujarMuneca(atuendo, idx, op) {
   }
   const c = cuerpo(op.piel, op.base, false);
   return `<svg class="${op.clase || "muneca"}" viewBox="0 0 200 360" role="img" aria-label="${op.titulo || "Muñeca"}">
-    ${capas.atras.join("")}${capas.peloAtras.join("")}${c.abajo}${capas.ropa.join("")}${c.cabeza}${capas.pelo.join("")}${capas.frente.join("")}</svg>`;
+    ${defs.length ? `<defs>${defs.join("")}</defs>` : ""}${capas.atras.join("")}${capas.peloAtras.join("")}${c.abajo}${capas.ropa.join("")}${c.cabeza}${capas.pelo.join("")}${capas.frente.join("")}</svg>`;
 }
 
 /**
@@ -168,16 +199,18 @@ export function dibujarMuneca(atuendo, idx, op) {
  * @param {object} prenda
  * @param {string} color id del color
  * @param {object} idx
+ * @param {string|null} [patron] id del patrón
  */
-export function miniPrenda(prenda, color, idx) {
+export function miniPrenda(prenda, color, idx, patron = null) {
   const f = FIGURAS[prenda.dibujo2d];
-  const [p, s] = colores(prenda, color, idx);
+  const { p, s, defs } = relleno(prenda, color, patron, idx);
+  const est = estampado2d(prenda, colores(prenda, color, idx)[0], idx);
   const c = cuerpo("#ece6f5", "#f4f0f8", true);
   const recorte = RECORTES[prenda.lugar || prenda.categoria] || "0 0 200 360";
   let dentro = "";
   if (f) {
     if (prenda.categoria === "peinado") dentro = f.atras(p, s) + c.cabeza + f.pelo(p, s);
-    else dentro = (f.atras ? f.atras(p, s) : "") + c.abajo + c.cabeza + (f.ropa ? f.ropa(p, s) : "") + (f.frente ? f.frente(p, s) : "");
+    else dentro = (f.atras ? f.atras(p, s) : "") + c.abajo + c.cabeza + (f.ropa ? f.ropa(p, s) : "") + (f.frente ? f.frente(p, s) : "") + est;
   }
-  return `<svg class="mini" viewBox="${recorte}" aria-hidden="true">${dentro}</svg>`;
+  return `<svg class="mini" viewBox="${recorte}" aria-hidden="true">${defs ? `<defs>${defs}</defs>` : ""}${dentro}</svg>`;
 }

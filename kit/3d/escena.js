@@ -3,6 +3,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { liberarMateriales } from "./materiales.js";
 import { liberarFormas } from "./formas.js";
+import { liberarTexturas } from "./texturas.js";
 
 /** ¿Hay WebGL en este navegador? (sin él, se usa la vista 2D) */
 export { hayWebGL } from "./webgl.js";
@@ -137,7 +138,7 @@ export function crearEscena(cont, op) {
       window.removeEventListener("resize", tamano);
       document.removeEventListener("visibilitychange", alVer);
       scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
-      liberarFormas(); liberarMateriales();
+      liberarFormas(); liberarMateriales(); liberarTexturas();
       renderer.dispose();
       renderer.domElement.remove();
     },

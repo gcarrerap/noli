@@ -1,0 +1,9 @@
+{
+  "_ayuda": "Estampados (calcomanías) para las prendas. archivo: SVG de 64×64 con fondo transparente en estampados/ (puede usar los marcadores de color {p} {s} {t} {c}) o un PNG con fondo transparente (un dibujo de Noelia fotografiado; no cambia de color). es/en: nombre. etiquetas: se suman a las de la prenda para los jueces. Se ponen en una prenda con una pieza 'calca' (docs/ESCENA-3D.md § Texturas) o en el Taller de diseño. En qué nivel se abre cada uno: desbloqueos.json → estampados. Cómo hacer uno: docs/ASSETS.md § F.",
+  "estampados": [
+    { "id": "corazon",  "es": "corazón",  "en": "heart",       "archivo": "estampados/corazon.svg",  "etiquetas": ["fiesta"] },
+    { "id": "osito",    "es": "osito",    "en": "teddy bear",  "archivo": "estampados/osito.svg",    "etiquetas": ["pijama", "casual"] },
+    { "id": "estrella", "es": "estrella", "en": "star",        "archivo": "estampados/estrella.svg", "etiquetas": ["magia", "brillo"] },
+    { "id": "arcoiris", "es": "arcoíris", "en": "rainbow",     "archivo": "estampados/arcoiris.svg", "etiquetas": ["verano", "fiesta"] }
+  ]
+}

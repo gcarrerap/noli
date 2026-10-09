@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Cebra: tres rayas onduladas de arriba a abajo; cada una sale por abajo en el mismo x en que entra por arriba -->
+  <rect width="64" height="64" fill="{p}"/>
+  <g fill="{t}">
+    <path d="M6 0C12 12 2 22 10 32C16 42 6 54 6 64H14C14 54 24 42 18 32C12 22 20 12 14 0Z"/>
+    <path d="M28 0C34 10 24 24 32 34C38 44 30 56 28 64H37C38 56 46 44 40 34C34 24 42 10 37 0Z"/>
+    <path d="M48 0C56 14 46 26 52 38C56 48 50 58 48 64H56C58 56 62 46 60 38C56 26 62 14 56 0Z"/>
+  </g>
+</svg>

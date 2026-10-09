@@ -10,7 +10,7 @@ import { crearVista2d } from "./vista2d.js";
 import { crearJoystick } from "../../../../kit/3d/joystick.js";
 import { hayVoz, decir } from "./voz.js";
 import * as P from "./pantallas.js";
-import { atuendoVacio, atuendoInicial, poner, colorPuesto, fraseIngles } from "../atuendo.js";
+import { atuendoVacio, atuendoInicial, poner, ponerPatron, colorPuesto, patronPuesto, fraseIngles } from "../atuendo.js";
 import { calificar } from "../puntuacion.js";
 import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, nivelDePrenda, esNuevo } from "../progreso.js";
 import { siguiente, quedan, EN_ESTUDIO } from "../partida.js";
@@ -275,11 +275,13 @@ function dibujarPanel(enfocar) {
   const el = $("panel");
   if (!S.zona) { el.hidden = true; el.innerHTML = ""; return; }
   const enfocado = el.contains(document.activeElement) ? document.activeElement : null;
-  const clave = enfocado && (enfocado.dataset.prenda || enfocado.dataset.color || enfocado.dataset.accion);
-  el.innerHTML = P.panel({ zona: S.zona, idx: S.idx, atuendo: S.atuendo, ab: S.ab, progreso: S.progreso, sel: S.sel, voz: hayVoz(), girar: S.vista.tipo === "3d" });
+  const clave = enfocado && (enfocado.dataset.prenda || enfocado.dataset.color || (enfocado.dataset.patron !== undefined ? "pt:" + enfocado.dataset.patron : "") || enfocado.dataset.accion);
+  el.innerHTML = P.panel({ zona: S.zona, idx: S.idx, atuendo: S.atuendo, ab: S.ab, progreso: S.progreso, sel: S.sel, voz: hayVoz(), girar: S.vista.tipo === "3d",
+    colorElegido: S._colorSel, patronElegido: S._patronSel });
   el.hidden = false;
   if (clave) {
-    const otro = el.querySelector(`[data-prenda="${clave}"],[data-color="${clave}"],[data-accion="${clave}"]`);
+    const otro = clave.startsWith("pt:") ? el.querySelector(`[data-patron="${clave.slice(3)}"]`)
+      : el.querySelector(`[data-prenda="${clave}"],[data-color="${clave}"],[data-accion="${clave}"]`);
     if (otro) otro.focus({ preventScroll: false });
   } else if (enfocar && (S.tv || document.documentElement.classList.contains("teclado"))) focoInicial(el);
 }
@@ -290,9 +292,11 @@ function cerrarPanel(volver = true) {
   // Lo que ya vio en este perchero deja de brillar como nuevo
   const claves = [];
   for (const p of prendasDeZona(z, S.idx)) if (S.ab.prendas.has(p.id)) { claves.push(p.id); for (const col of coloresDe(p, S.ab)) claves.push("c:" + col); }
+  if (S.sel || S._vioPatrones) for (const x of S.ab.patrones) claves.push("pt:" + x);
+  S._vioPatrones = false;
   S.progreso = marcarVistos(S.progreso, claves);
   guardar();
-  S.zona = null; S.sel = null;
+  S.zona = null; S.sel = null; S._colorSel = null; S._patronSel = null;
   dibujarPanel();
   if (volver && EN_ESTUDIO.includes(S.estado)) {
     S.vista.modo("estudio");
@@ -307,8 +311,11 @@ function cerrarPanel(volver = true) {
 function tocarPrenda(id) {
   const p = S.idx.prendas.get(id);
   if (!p || !S.ab.prendas.has(id)) return;
-  const color = colorPuesto(S.atuendo, p) || (S.sel === id && S._colorSel) || coloresDe(p, S.ab)[0];
-  S.atuendo = poner(S.atuendo, p, color);
+  const puesta = colorPuesto(S.atuendo, p);
+  const color = puesta || (S.sel === id && S._colorSel && coloresDe(p, S.ab).includes(S._colorSel) && S._colorSel) || coloresDe(p, S.ab)[0];
+  const patron = puesta ? patronPuesto(S.atuendo, p) : (S.sel === id && S._patronSel) || null;
+  S.atuendo = poner(S.atuendo, p, color, patron);
+  if (S.sel !== id) { S._colorSel = null; S._patronSel = null; }
   S.sel = id;
   S.vista.vestir(S.atuendo);
   dibujarPanel();
@@ -317,8 +324,27 @@ function tocarPrenda(id) {
 function tocarColor(c) {
   const p = S.sel && S.idx.prendas.get(S.sel);
   if (!p) return;
-  if (colorPuesto(S.atuendo, p) !== c) S.atuendo = poner(S.atuendo, p, c);
+  const puesta = colorPuesto(S.atuendo, p);
+  if (puesta !== c) S.atuendo = poner(S.atuendo, p, c, puesta ? patronPuesto(S.atuendo, p) : S._patronSel || null);
   S._colorSel = c;
+  S.vista.vestir(S.atuendo);
+  dibujarPanel();
+}
+
+/** Un patrón para la prenda escogida ("" = lisa). Si no la trae puesta, se la pone con ese patrón. */
+function tocarPatron(id) {
+  const p = S.sel && S.idx.prendas.get(S.sel);
+  if (!p) return;
+  const patron = id && S.ab.patrones.has(id) ? id : null;
+  const puesta = colorPuesto(S.atuendo, p);
+  if (puesta) {
+    if ((patronPuesto(S.atuendo, p) || null) !== patron) S.atuendo = ponerPatron(S.atuendo, p, patron);
+  } else {
+    const color = (S._colorSel && coloresDe(p, S.ab).includes(S._colorSel) && S._colorSel) || coloresDe(p, S.ab)[0];
+    S.atuendo = poner(S.atuendo, p, color, patron);
+  }
+  S._patronSel = patron;
+  S._vioPatrones = true;
   S.vista.vestir(S.atuendo);
   dibujarPanel();
 }
@@ -476,7 +502,12 @@ function accion(nombre, el) {
     case "prenda": return tocarPrenda(el.dataset.prenda);
     case "bloqueada": { const n = nivelDePrenda(el.dataset.prenda, S.idx.niveles); return toast(n ? `Se abre en el nivel ${n.nombre} (${n.puntos} puntos de estilo)` : "Todavía no está abierta"); }
     case "color": return tocarColor(el.dataset.color);
-    case "decir": { const p = S.idx.prendas.get(S.sel), c = S.idx.colores.get(colorPuesto(S.atuendo, p) || S._colorSel); return decir(((c && c.en) || "") + " " + p.en); }
+    case "patron": return tocarPatron(el.dataset.patron);
+    case "decir": {
+      const p = S.idx.prendas.get(S.sel), c = S.idx.colores.get(colorPuesto(S.atuendo, p) || S._colorSel);
+      const pa = S.idx.patrones.get((colorPuesto(S.atuendo, p) ? patronPuesto(S.atuendo, p) : S._patronSel) || "");
+      return decir([c && c.en, pa && pa.en, p.en].filter(Boolean).join(" "));
+    }
     case "decir-frase": return decir(fraseIngles(S.atuendo, S.idx));
     case "cerrar-panel": return cerrarPanel();
     case "girar": return S.vista.girar(+el.dataset.grados);

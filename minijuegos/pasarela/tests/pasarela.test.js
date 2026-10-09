@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const raiz = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { revisarDatos, indexar, ARCHIVOS, ANCLAS, prendasDeZona, ENFOQUES: ENFOQUES_DATOS } = await import("../src/datos.js");
+const { revisarDatos, indexar, ARCHIVOS, ANCLAS, prendasDeZona, ENFOQUES: ENFOQUES_DATOS, arteDe, aceptaPatron } = await import("../src/datos.js");
 const A = await import("../src/atuendo.js");
 const { calificar, componentes, encaje, estrellasNoli, estrellasJuez, comentar } = await import("../src/puntuacion.js");
 const PR = await import("../src/progreso.js");
@@ -19,6 +19,8 @@ const E = await import("../src/espanol.js");
 
 const leer = () => Object.fromEntries(Object.entries(ARCHIVOS).map(([k, f]) => [k, JSON.parse(fs.readFileSync(path.join(raiz, "datos", f), "utf8"))]));
 const D = leer();
+// El arte de patrones y estampados, como lo hace cargar.js en el navegador
+for (const { archivo, x } of arteDe(D)) x.svg = fs.readFileSync(path.join(raiz, archivo), "utf8");
 const idx = indexar(D);
 const vestir = (lista) => lista.reduce((a, [id, c]) => A.poner(a, idx.prendas.get(id), c), A.atuendoVacio());
 
@@ -180,7 +182,7 @@ test("progreso: registrar una pasarela suma puntos, guarda la foto y dice qué s
   const reg = PR.registrarPasarela(pr, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: r.puntos }, 123, idx);
   assert.equal(reg.progreso.puntos, 35); assert.equal(reg.progreso.pasarelas, 1);
   assert.equal(reg.subio, true); assert.equal(reg.nivel.nombre, "Con estilo");
-  assert.deepEqual(reg.nuevos, { prendas: ["b-pantalon"], colores: [], temas: [], poses: ["vuelta"] });
+  assert.deepEqual(reg.nuevos, { prendas: ["b-pantalon"], colores: [], temas: [], poses: ["vuelta"], patrones: ["corazones"], estampados: [] });
   assert.deepEqual(reg.progreso.atuendos[0], { fecha: 123, tema: "playa", atuendo: PLAYA, estrellas: [5, 5, 5], puntos: 15 });
   const sin = PR.registrarPasarela({ ...PR.progresoNuevo(), puntos: 35 }, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 3 }, 1, idx);
   assert.equal(sin.subio, false);
@@ -216,7 +218,7 @@ test("progreso: cada nivel abre poco (1 a 3 cosas) y los niveles se espacian cad
   let antes = 0;
   for (const [i, n] of idx.niveles.entries()) {
     if (i === 0) continue;
-    const cuantas = ["prendas", "colores", "temas", "poses"].reduce((s, k) => s + (n[k] || []).length, 0);
+    const cuantas = PR.QUE_ABRE.reduce((s, k) => s + (n[k] || []).length, 0);
     assert.ok(cuantas >= 1 && cuantas <= 3, `${n.nombre} abre ${cuantas}`);
     const salto = n.puntos - idx.niveles[i - 1].puntos;
     assert.ok(salto >= antes, `${n.nombre}: el salto no se achica`);
@@ -369,4 +371,116 @@ test("#26: las poses existen en el personaje 3D y en el modo sencillo", async ()
 test("#26: la cámara tiene un enfoque para cada zona", async () => {
   const { ENFOQUES } = await import("../src/ui/vista3d.js");
   for (const e of ENFOQUES_DATOS) assert.ok(ENFOQUES[e], e);
+});
+
+// ---------- Patrones y estampados (#79) ----------
+
+test("patrones: cada SVG existe, es de 64×64, se rellena con {p} y no carga nada de fuera", () => {
+  for (const { tipo, id, x } of arteDe(D)) {
+    assert.ok(x.svg && x.svg.includes("<svg"), `${id}: hay SVG`);
+    assert.match(x.svg, /viewBox="0 0 64 64"/, `${id}: viewBox 0 0 64 64`);
+    assert.doesNotMatch(x.svg, /<script|href="http|xlink:href="http|<image|<text/i, `${id}: sin scripts, imágenes ni texto`);
+    if (tipo === "patrones") assert.match(x.svg, /<rect[^>]*fill="\{p\}"/, `${id}: el fondo es el color de la prenda`);
+    else assert.doesNotMatch(x.svg, /<rect width="64" height="64"/, `${id}: el estampado no tapa todo (fondo transparente)`);
+  }
+});
+
+test("patrones: pintarSVG cambia los marcadores y la tinta contrasta", async () => {
+  const T = await import("../../../kit/3d/texturas.js");
+  assert.equal(T.tinta("#ffffff"), "#2b2236"); assert.equal(T.tinta("#2b2236"), "#ffffff");
+  assert.equal(T.mezcla("#000000", "#ffffff", 0.5), "#808080");
+  const svg = T.pintarSVG('<svg viewBox="0 0 64 64"><rect fill="{p}"/><path fill="{t}"/><path fill="{m}"/><path fill="{s}"/><path fill="{c}"/></svg>', { p: "#ff7eb6", s: "#4cb3ff" });
+  assert.doesNotMatch(svg, /\{[pstmc]\}/);
+  assert.match(svg, /#ff7eb6/); assert.match(svg, /#4cb3ff/);
+  assert.equal(T.interiorSVG('<svg viewBox="0 0 1 1"><g/></svg>'), "<g/>");
+  // Sin navegador no hay texturas (la ropa sale lisa) y nada truena
+  assert.equal(T.texturaSVG(svg, { repetir: true }), null);
+  assert.equal(T.texturaPixeles("x", 2, ["#000000", null, null, "#ffffff"]), null);
+});
+
+test("patrones: qué prendas aceptan patrón", () => {
+  const P = (id) => aceptaPatron(idx.prendas.get(id), D.config);
+  assert.ok(P("a-camiseta")); assert.ok(P("b-falda")); assert.ok(P("v-verano")); assert.ok(P("z-tenis"));
+  assert.ok(P("x-gorra")); assert.ok(P("x-bolsa"));          // accesorios de tela: "patrones": true
+  assert.ok(!P("p-cola")); assert.ok(!P("x-lentes")); assert.ok(!P("m-rubor")); assert.ok(!P("x-aretes-perla"));
+});
+
+test("patrones: ponerse, cambiar y quitar un patrón; la frase en inglés lo dice", () => {
+  const cam = idx.prendas.get("a-camiseta");
+  let a = A.poner(A.atuendoVacio(), cam, "rosa", "cebra");
+  assert.deepEqual(a.arriba, { id: "a-camiseta", color: "rosa", patron: "cebra" });
+  assert.equal(A.patronPuesto(a, cam), "cebra");
+  assert.equal(A.fraseIngles(a, idx), "a pink zebra print T-shirt");
+  a = A.ponerPatron(a, cam, "puntos");
+  assert.deepEqual(a.arriba, { id: "a-camiseta", color: "rosa", patron: "puntos" });
+  a = A.ponerPatron(a, cam, "puntos"); // tocar el mismo: vuelve a lisa
+  assert.deepEqual(a.arriba, { id: "a-camiseta", color: "rosa" });
+  assert.equal(A.patronPuesto(a, cam), null);
+  assert.equal(A.ponerPatron(A.atuendoVacio(), cam, "rayas").arriba, null); // sin camiseta puesta no hace nada
+  // Con otro patrón, tocar la prenda no la quita: la cambia
+  a = A.poner(A.poner(A.atuendoVacio(), cam, "rosa", "rayas"), cam, "rosa", "cebra");
+  assert.equal(a.arriba.patron, "cebra");
+  assert.equal(A.poner(a, cam, "rosa", "cebra").arriba, null);
+  assert.equal(A.fraseIngles(A.poner(A.atuendoVacio(), idx.prendas.get("a-tirantes"), "azul", "rayas"), idx), "a blue striped tank top");
+});
+
+test("patrones: limpiar quita patrones que no existen o en prendas que no los aceptan", () => {
+  const a = A.limpiar({ arriba: { id: "a-camiseta", color: "rosa", patron: "cebra" }, abajo: { id: "b-falda", color: "azul", patron: "dinosaurios" },
+    peinado: { id: "p-cola", color: "cafe", patron: "rayas" }, accesorios: { cabeza: { id: "x-gorra", color: "rojo", patron: "puntos" } } }, idx);
+  assert.equal(a.arriba.patron, "cebra"); assert.equal(a.abajo.patron, undefined); assert.equal(a.peinado.patron, undefined);
+  assert.equal(a.accesorios.cabeza.patron, "puntos");
+});
+
+test("patrones: las etiquetas del patrón cuentan para la jueza del tema", () => {
+  const rock = idx.temas.get("rock");
+  const lisa = componentes(vestir([["a-camiseta", "negro"]]), rock, idx).tema;
+  const cebra = componentes(A.poner(A.atuendoVacio(), idx.prendas.get("a-camiseta"), "negro", "cebra"), rock, idx).tema;
+  assert.ok(cebra > lisa, `cebra ${cebra} > lisa ${lisa}`);
+});
+
+test("patrones: prendas estampadas con calca; datos mal escritos se avisan", () => {
+  for (const id of ["a-camiseta-osito", "a-tirantes-corazon", "a-sudadera-estrella", "v-arcoiris"]) {
+    const p = idx.prendas.get(id);
+    assert.ok(p.piezas.some((z) => z.f === "calca" && idx.estampados.has(z.estampado)), `${id}: tiene calca`);
+    assert.ok(idx.estampados.has(p.estampado2d.estampado), `${id}: estampado2d`);
+  }
+  const malo = leer();
+  for (const { archivo, x } of arteDe(malo)) x.svg = "<svg/>";
+  malo.prendas.prendas[1].piezas.push({ f: "calca", y: [0.1, 0.2], r: [0.1, 0.1], ancho: 0.1, estampado: "dinosaurio" });
+  malo.patrones.patrones.push({ id: "Mal", es: "mal", archivo: "otro/mal.png" });
+  malo.desbloqueos.niveles[0].patrones.push("no-existe");
+  const e = revisarDatos(malo).join("\n");
+  assert.match(e, /calca pide y \[arriba, abajo\]/);
+  assert.match(e, /estampado "dinosaurio" no está/);
+  assert.match(e, /patrón Mal: id en minúsculas/);
+  assert.match(e, /patrón Mal: falta es o en/);
+  assert.match(e, /patrón Mal: archivo en patrones\//);
+  assert.match(e, /no-existe/);
+});
+
+test("patrones: el avatar se viste con patrón y estampado sin navegador (sale liso)", async () => {
+  const { crearAvatar } = await import("../../../kit/3d/avatar.js");
+  const av = crearAvatar({ piel: "#ffd9c0", base: D.config.colorBase });
+  const a = A.poner(A.poner(A.atuendoVacio(), idx.prendas.get("a-camiseta-osito"), "rosa", "cebra"), idx.prendas.get("b-falda"), "azul", "cuadros");
+  av.vestir(a, idx, "#ffd9c0");
+});
+
+test("patrones: el panel enseña los patrones abiertos y la pantalla de nivel los nuevos", async () => {
+  const P = await import("../src/ui/pantallas.js");
+  const ab = PR.abiertosHasta(0, idx.niveles);
+  const zona = D.zonas.zonas.find((z) => z.id === "arriba");
+  const html = P.panel({ zona, idx, atuendo: A.poner(A.atuendoVacio(), idx.prendas.get("a-camiseta"), "rosa", "rayas"), ab, progreso: PR.progresoNuevo(), sel: "a-camiseta", voz: false, girar: true });
+  assert.match(html, /data-patron="rayas"/); assert.match(html, /data-patron="puntos"/); assert.match(html, /data-patron=""/);
+  assert.doesNotMatch(html, /data-patron="cebra"/);
+  assert.match(html, /pink striped T-shirt/); assert.match(html, /camiseta rosa de rayas/);
+  assert.match(html, /6 patrones más se abren/);
+  // El peinado no acepta patrón: no hay botones
+  const zp = D.zonas.zonas.find((z) => z.id === "peinados");
+  assert.doesNotMatch(P.panel({ zona: zp, idx, atuendo: A.atuendoVacio(), ab, progreso: PR.progresoNuevo(), sel: "p-cola", voz: false }), /data-patron/);
+  const des = P.desbloqueo({ nivel: idx.niveles[30], nuevos: { prendas: ["v-arcoiris"], colores: [], temas: [], poses: [], patrones: ["cebra"], estampados: ["arcoiris"] }, idx });
+  assert.match(des, /Patrón nuevo/); assert.match(des, /zebra print/); assert.match(des, /Estampado nuevo/);
+  assert.doesNotMatch(des, /undefined|\{[pstmc]\}/);
+  // La muñeca 2D con patrón y estampado
+  const svg = dibujarMuneca(A.poner(A.atuendoVacio(), idx.prendas.get("a-camiseta-osito"), "rosa", "cebra"), idx, { piel: "#ffd9c0", base: "#cbbfe6" });
+  assert.match(svg, /<pattern id="pt-cebra/); assert.match(svg, /url\(#pt-cebra/); assert.doesNotMatch(svg, /undefined|NaN|\{[pstmc]\}/);
 });

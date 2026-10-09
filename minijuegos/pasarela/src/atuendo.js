@@ -1,10 +1,13 @@
 // El atuendo: qué trae puesto el personaje. Lógica pura. Ver docs/JUEGO.md.
 //
-//   atuendo = { peinado, arriba, abajo, vestido, zapatos: { id, color } | null,  accesorios: { [lugar]: { id, color } } }
+//   atuendo = { peinado, arriba, abajo, vestido, zapatos: { id, color, patron? } | null,  accesorios: { [lugar]: { id, color, patron? } } }
+//   patron: id de patrones.json (cebra, puntos…) o nada (lisa). Solo en prendas que aceptan patrón (datos.aceptaPatron).
 //
 // Reglas: un vestido ocupa arriba y abajo (ponerse un vestido quita lo de arriba y lo de abajo, y al revés); de
 // accesorios y maquillaje, uno por lugar (cabeza, cara, orejas, cuello, muñeca… labios, ojos, mejillas, pintura).
 // El maquillaje se guarda junto con los accesorios (en "accesorios", por lugar): sus lugares no se repiten.
+
+import { aceptaPatron } from "./datos.js";
 
 /** @returns {object} un atuendo vacío */
 export const atuendoVacio = () => ({ peinado: null, arriba: null, abajo: null, vestido: null, zapatos: null, accesorios: {} });
@@ -23,23 +26,45 @@ export function atuendoInicial(idx) {
  * @param {object} atuendo
  * @param {{id, categoria, lugar?}} prenda
  * @param {string} color id del color
+ * @param {string|null} [patron] id del patrón (o nada = lisa)
  * @returns {object}
  */
-export function poner(atuendo, prenda, color) {
+export function poner(atuendo, prenda, color, patron = null) {
   const a = { ...atuendo, accesorios: { ...atuendo.accesorios } };
-  const pieza = { id: prenda.id, color };
+  const pieza = patron ? { id: prenda.id, color, patron } : { id: prenda.id, color };
+  const igual = (x) => x && x.id === prenda.id && x.color === color && (x.patron || null) === (patron || null);
   if (prenda.lugar) {
-    const actual = a.accesorios[prenda.lugar];
-    if (actual && actual.id === prenda.id && actual.color === color) delete a.accesorios[prenda.lugar];
+    if (igual(a.accesorios[prenda.lugar])) delete a.accesorios[prenda.lugar];
     else a.accesorios[prenda.lugar] = pieza;
     return a;
   }
-  const actual = a[prenda.categoria];
-  if (actual && actual.id === prenda.id && actual.color === color) { a[prenda.categoria] = null; return a; }
+  if (igual(a[prenda.categoria])) { a[prenda.categoria] = null; return a; }
   a[prenda.categoria] = pieza;
   if (prenda.categoria === "vestido") { a.arriba = null; a.abajo = null; }
   if (prenda.categoria === "arriba" || prenda.categoria === "abajo") a.vestido = null;
   return a;
+}
+
+/**
+ * Cambia el patrón de una prenda que ya trae puesta (con el mismo color). Tocar el patrón que ya tiene lo quita
+ * (vuelve a lisa). Si no la trae puesta, no cambia nada.
+ * @param {object} atuendo
+ * @param {{id, categoria, lugar?}} prenda
+ * @param {string|null} patron
+ * @returns {object}
+ */
+export function ponerPatron(atuendo, prenda, patron) {
+  const actual = prenda.lugar ? atuendo.accesorios[prenda.lugar] : atuendo[prenda.categoria];
+  if (!actual || actual.id !== prenda.id) return atuendo;
+  const nuevo = patron && actual.patron !== patron ? { id: actual.id, color: actual.color, patron } : { id: actual.id, color: actual.color };
+  if (prenda.lugar) return { ...atuendo, accesorios: { ...atuendo.accesorios, [prenda.lugar]: nuevo } };
+  return { ...atuendo, accesorios: { ...atuendo.accesorios }, [prenda.categoria]: nuevo };
+}
+
+/** El patrón de esta prenda si la trae puesta (o null: lisa o no puesta) */
+export function patronPuesto(atuendo, prenda) {
+  const p = prenda.lugar ? atuendo.accesorios[prenda.lugar] : atuendo[prenda.categoria];
+  return p && p.id === prenda.id && p.patron ? p.patron : null;
 }
 
 /**
@@ -78,9 +103,10 @@ export function colorPuesto(atuendo, prenda) {
  */
 export function fraseIngles(atuendo, idx) {
   const partes = puestas(atuendo).map((p) => {
-    const pr = idx.prendas.get(p.id), c = idx.colores.get(p.color);
+    const pr = idx.prendas.get(p.id), c = idx.colores.get(p.color), pa = p.patron && idx.patrones ? idx.patrones.get(p.patron) : null;
     if (!pr) return null;
-    const txt = (c ? c.en + " " : "") + pr.en;
+    // "a pink zebra print T-shirt": color, patrón y prenda (como en inglés)
+    const txt = (c ? c.en + " " : "") + (pa ? pa.en + " " : "") + pr.en;
     if (pr.enPlural) return txt;
     return (/^[aeiou]/i.test(txt) ? "an " : "a ") + txt;
   }).filter(Boolean);
@@ -94,8 +120,14 @@ export function limpiar(atuendo, idx) {
   const a = atuendoVacio();
   if (!atuendo || typeof atuendo !== "object") return a;
   const ok = (p) => p && idx.prendas.has(p.id) && idx.colores.has(p.color);
-  for (const k of ["peinado", "arriba", "abajo", "vestido", "zapatos"]) if (ok(atuendo[k]) && idx.prendas.get(atuendo[k].id).categoria === k) a[k] = { id: atuendo[k].id, color: atuendo[k].color };
-  for (const [lugar, p] of Object.entries(atuendo.accesorios || {})) if (ok(p) && idx.prendas.get(p.id).lugar === lugar) a.accesorios[lugar] = { id: p.id, color: p.color };
+  // El patrón se queda solo si existe y la prenda lo acepta (si no, la prenda queda lisa)
+  const copia = (p) => {
+    const r = { id: p.id, color: p.color };
+    if (p.patron && idx.patrones && idx.patrones.has(p.patron) && aceptaPatron(idx.prendas.get(p.id), idx.config || {})) r.patron = p.patron;
+    return r;
+  };
+  for (const k of ["peinado", "arriba", "abajo", "vestido", "zapatos"]) if (ok(atuendo[k]) && idx.prendas.get(atuendo[k].id).categoria === k) a[k] = copia(atuendo[k]);
+  for (const [lugar, p] of Object.entries(atuendo.accesorios || {})) if (ok(p) && idx.prendas.get(p.id).lugar === lugar) a.accesorios[lugar] = copia(p);
   if (a.vestido) { a.arriba = null; a.abajo = null; }
   return a;
 }

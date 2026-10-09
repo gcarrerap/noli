@@ -2,7 +2,7 @@
 // (eso lo hace src/ui/cargar.js en el navegador y las pruebas con fs). Ver docs/ARQUITECTURA.md.
 
 /** Formas con las que se arma una prenda (kit/3d/formas.js las dibuja). */
-export const FORMAS = ["tubo", "esfera", "caja", "capsula", "toro", "cono", "disco", "plano", "octaedro", "anillo"];
+export const FORMAS = ["tubo", "esfera", "caja", "capsula", "toro", "cono", "disco", "plano", "octaedro", "anillo", "calca"];
 
 /** Partes del cuerpo a las que se pega una pieza (kit/3d/avatar.js). I = izquierda del personaje, D = derecha. */
 export const ANCLAS = ["cadera", "torso", "cuello", "cabeza", "brazoI", "brazoD", "antebrazoI", "antebrazoD", "manoI", "manoD",
@@ -40,7 +40,7 @@ const esHex = (v) => typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v);
  * @param {boolean} [dentroDeAnillo] la pieza repetida de un anillo no lleva ancla
  * @returns {string[]}
  */
-export function revisarPieza(p, donde, colores, dentroDeAnillo = false) {
+export function revisarPieza(p, donde, colores, dentroDeAnillo = false, estampados = null) {
   const e = [];
   if (!p || typeof p !== "object") return [`${donde}: no es un objeto`];
   if (!FORMAS.includes(p.f)) e.push(`${donde}: forma "${p.f}" desconocida (${FORMAS.join(", ")})`);
@@ -52,14 +52,20 @@ export function revisarPieza(p, donde, colores, dentroDeAnillo = false) {
   if (p.esc !== undefined && !esVec(p.esc, 3)) e.push(`${donde}: "esc" debe ser [x, y, z]`);
   if (p.opacidad !== undefined && !(esNum(p.opacidad) && p.opacidad > 0 && p.opacidad <= 1)) e.push(`${donde}: "opacidad" de 0 a 1`);
   const col = p.col;
-  if (p.f !== "anillo" && !(col === "p" || col === "s" || esHex(col) || colores.has(col))) e.push(`${donde}: "col" debe ser "p", "s", un color o #hex`);
+  if (p.f !== "anillo" && p.f !== "calca" && !(col === "p" || col === "s" || esHex(col) || colores.has(col))) e.push(`${donde}: "col" debe ser "p", "s", un color o #hex`);
   const pide = { tubo: ["y", "r"], esfera: ["r"], caja: ["tam"], capsula: ["r", "largo"], toro: ["r", "grosor"], cono: ["r", "alto"],
-    disco: ["r", "alto"], plano: ["tam"], octaedro: ["r"], anillo: ["radio", "n", "pieza"] }[p.f] || [];
+    disco: ["r", "alto"], plano: ["tam"], octaedro: ["r"], anillo: ["radio", "n", "pieza"],
+    calca: ["y", "r", "ancho", "estampado"] }[p.f] || [];
   for (const k of pide) if (p[k] === undefined) e.push(`${donde}: falta "${k}"`);
   if (p.f === "tubo" && !(esVec(p.y, 2) && esVec(p.r, 2) && p.y[0] > p.y[1])) e.push(`${donde}: tubo pide y [arriba, abajo] y r [arriba, abajo]`);
   if (p.f === "tubo" && p.tapa !== undefined && !["arriba", "abajo", "ambas"].includes(p.tapa)) e.push(`${donde}: "tapa" es arriba, abajo o ambas`);
   if (p.f === "caja" && !esVec(p.tam, 3)) e.push(`${donde}: caja pide tam [ancho, alto, fondo]`);
   if (p.f === "plano" && !esVec(p.tam, 2)) e.push(`${donde}: plano pide tam [ancho, alto]`);
+  if (p.f === "calca") {
+    if (!(esVec(p.y, 2) && esVec(p.r, 2) && p.y[0] > p.y[1])) e.push(`${donde}: calca pide y [arriba, abajo] y r [arriba, abajo] (un poco más que la tela)`);
+    if (p.lado !== undefined && !["frente", "espalda"].includes(p.lado)) e.push(`${donde}: "lado" es frente o espalda`);
+    if (estampados && p.estampado && !estampados.has(p.estampado)) e.push(`${donde}: estampado "${p.estampado}" no está en estampados.json`);
+  }
   if (p.f === "anillo") {
     if (!(Number.isInteger(p.n) && p.n >= 2 && p.n <= 24)) e.push(`${donde}: "n" de 2 a 24`);
     if (p.pieza) e.push(...revisarPieza(p.pieza, donde + " (pieza del anillo)", colores, true));
@@ -79,6 +85,19 @@ export function revisarDatos(d) {
   const etiquetas = new Set(d.config.etiquetas);
   const categorias = new Set(d.config.categorias.map((c) => c.id));
   const lugares = new Set(d.config.lugares);
+
+  // Patrones y estampados (arte SVG o PNG)
+  const patrones = new Set(), estampados = new Set();
+  for (const [lista, set, carpeta, nombre] of [[d.patrones ? d.patrones.patrones : [], patrones, "patrones", "patrón"], [d.estampados ? d.estampados.estampados : [], estampados, "estampados", "estampado"]]) {
+    for (const x of lista) {
+      if (!/^[a-z0-9-]+$/.test(x.id || "") || set.has(x.id)) e.push(`${nombre} ${x.id}: id en minúsculas y sin repetir`);
+      set.add(x.id);
+      if (!x.es || !x.en) e.push(`${nombre} ${x.id}: falta es o en`);
+      const ext = carpeta === "patrones" ? /\.svg$/ : /\.(svg|png)$/;
+      if (!(typeof x.archivo === "string" && x.archivo.startsWith(carpeta + "/") && ext.test(x.archivo))) e.push(`${nombre} ${x.id}: archivo en ${carpeta}/ (${carpeta === "patrones" ? ".svg" : ".svg o .png"})`);
+      for (const t of x.etiquetas || []) if (!etiquetas.has(t)) e.push(`${nombre} ${x.id}: etiqueta "${t}" desconocida`);
+    }
+  }
 
   for (const c of d.colores.colores) if (!c.id || !c.es || !c.en || !esHex(c.hex)) e.push(`color ${c.id}: pide id, es, en y hex`);
 
@@ -102,7 +121,12 @@ export function revisarDatos(d) {
     if (p.modelo !== undefined && !/^modelos\/[a-z0-9-]+\.glb$/.test(p.modelo)) e.push(`${donde}: modelo debe ser modelos/<nombre>.glb`);
     if (p.modelo && !ANCLAS.includes(p.ancla)) e.push(`${donde}: una prenda con modelo pide "ancla" (${ANCLAS.join(", ")})`);
     if (!p.modelo && (!Array.isArray(p.piezas) || !p.piezas.length)) e.push(`${donde}: sin piezas ni modelo`);
-    (p.piezas || []).forEach((pz, i) => e.push(...revisarPieza(pz, `${donde} pieza ${i + 1}`, colores)));
+    (p.piezas || []).forEach((pz, i) => e.push(...revisarPieza(pz, `${donde} pieza ${i + 1}`, colores, false, estampados)));
+    if (p.patrones !== undefined && typeof p.patrones !== "boolean") e.push(`${donde}: "patrones" es true o false`);
+    if (p.estampado2d !== undefined) {
+      const q = p.estampado2d;
+      if (!(q && estampados.has(q.estampado) && esNum(q.x) && esNum(q.y) && esNum(q.tam))) e.push(`${donde}: estampado2d pide { estampado, x, y, tam }`);
+    }
   }
 
   const temas = new Set();
@@ -118,13 +142,13 @@ export function revisarDatos(d) {
   }
 
   const poses = new Set((d.poses ? d.poses.poses : []).map((x) => x.id));
-  const abre = { prendas: new Map(), colores: new Map(), temas: new Map(), poses: new Map() };
+  const abre = { prendas: new Map(), colores: new Map(), temas: new Map(), poses: new Map(), patrones: new Map(), estampados: new Map() };
   let antes = -1;
   d.desbloqueos.niveles.forEach((n, i) => {
     if (!(Number.isInteger(n.puntos) && n.puntos > antes)) e.push(`nivel ${n.nombre}: los puntos deben subir de nivel en nivel`);
     antes = n.puntos;
     if (i === 0 && n.puntos !== 0) e.push("el primer nivel debe empezar en 0 puntos");
-    for (const [k, valid] of [["prendas", ids], ["colores", colores], ["temas", temas], ["poses", poses]]) {
+    for (const [k, valid] of [["prendas", ids], ["colores", colores], ["temas", temas], ["poses", poses], ["patrones", patrones], ["estampados", estampados]]) {
       for (const x of n[k] || []) {
         if (!valid.has(x)) e.push(`nivel ${n.nombre}: ${k} "${x}" no existe`);
         if (abre[k].has(x)) e.push(`nivel ${n.nombre}: "${x}" ya se abría en ${abre[k].get(x)}`);
@@ -136,6 +160,8 @@ export function revisarDatos(d) {
   for (const x of colores) if (!abre.colores.has(x)) e.push(`color ${x}: no se abre en ningún nivel`);
   for (const x of temas) if (!abre.temas.has(x)) e.push(`tema ${x}: no se abre en ningún nivel`);
   for (const x of poses) if (!abre.poses.has(x)) e.push(`pose ${x}: no se abre en ningún nivel`);
+  for (const x of patrones) if (!abre.patrones.has(x)) e.push(`patrón ${x}: no se abre en ningún nivel`);
+  for (const x of estampados) if (!abre.estampados.has(x)) e.push(`estampado ${x}: no se abre en ningún nivel`);
   if (d.poses && !(d.desbloqueos.niveles[0].poses || []).length) e.push("el primer nivel debe abrir al menos una pose");
 
   const catsConZona = new Set();
@@ -176,6 +202,9 @@ export function indexar(d) {
     temas: new Map(d.temas.temas.map((t) => [t.id, t])),
     niveles: d.desbloqueos.niveles,
     poses: new Map((d.poses ? d.poses.poses : []).map((x) => [x.id, x])),
+    // Patrones y estampados: cada uno con su .svg (texto) o .url (PNG), que pone cargar.js (o las pruebas)
+    patrones: new Map((d.patrones ? d.patrones.patrones : []).map((x) => [x.id, x])),
+    estampados: new Map((d.estampados ? d.estampados.estampados : []).map((x) => [x.id, x])),
     zonas: d.zonas,
     jueces: d.jueces.jueces,
   };
@@ -183,4 +212,28 @@ export function indexar(d) {
 
 /** Archivos de datos/ que hay que leer, con la clave que usa revisarDatos/indexar. */
 export const ARCHIVOS = { config: "config.json", colores: "colores.json", temas: "temas.json", prendas: "prendas.json",
-  desbloqueos: "desbloqueos.json", zonas: "zonas.json", jueces: "jueces.json", poses: "poses.json" };
+  desbloqueos: "desbloqueos.json", zonas: "zonas.json", jueces: "jueces.json", poses: "poses.json",
+  patrones: "patrones.json", estampados: "estampados.json" };
+
+/**
+ * ¿Esta prenda acepta un patrón? La ropa de config.categoriasConPatron sí (salvo "patrones": false); los accesorios
+ * solo si dicen "patrones": true. El peinado y el maquillaje nunca.
+ * @param {{categoria: string, patrones?: boolean, modelo?: string}} prenda
+ * @param {{categoriasConPatron?: string[]}} config
+ */
+export function aceptaPatron(prenda, config) {
+  if (prenda.modelo) return false;
+  if (prenda.patrones === false) return false;
+  return prenda.patrones === true || (config.categoriasConPatron || []).includes(prenda.categoria);
+}
+
+/**
+ * El arte que hay que leer aparte de los JSON: { tipo: "patrones" | "estampados", id, archivo }.
+ * cargar.js lo lee del sitio; las pruebas, del disco. Después se pone en cada uno .svg (texto) o .url (PNG).
+ */
+export function arteDe(d) {
+  const r = [];
+  for (const [tipo, lista] of [["patrones", d.patrones ? d.patrones.patrones : []], ["estampados", d.estampados ? d.estampados.estampados : []]])
+    for (const x of lista) r.push({ tipo, id: x.id, archivo: x.archivo, x });
+  return r;
+}

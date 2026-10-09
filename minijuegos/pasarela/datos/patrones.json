@@ -1,0 +1,13 @@
+{
+  "_ayuda": "Patrones que se repiten en la ropa. archivo: baldosa SVG de 64×64 en patrones/ que empalma por las cuatro orillas, con marcadores de color ({p} color de la prenda, {t} tinta que contrasta, {m} mitad, {s} secundario). es/en: nombre (en inglés va antes de la prenda: 'a pink zebra print T-shirt'). etiquetas: se suman a las de la prenda para los jueces. escala: tamaño de la baldosa (1 = 12 cm). En qué nivel se abre cada uno: desbloqueos.json → patrones. Cómo hacer uno: docs/ASSETS.md § F.",
+  "patrones": [
+    { "id": "rayas",     "es": "rayas",       "en": "striped",       "archivo": "patrones/rayas.svg",     "etiquetas": ["casual", "deportivo", "playa"], "escala": 1 },
+    { "id": "puntos",    "es": "puntos",      "en": "polka dot",     "archivo": "patrones/puntos.svg",    "etiquetas": ["fiesta", "verano"], "escala": 0.9 },
+    { "id": "corazones", "es": "corazones",   "en": "heart print",   "archivo": "patrones/corazones.svg", "etiquetas": ["fiesta", "pijama"], "escala": 0.9 },
+    { "id": "cuadros",   "es": "cuadros",     "en": "plaid",         "archivo": "patrones/cuadros.svg",   "etiquetas": ["escuela", "aventura", "frio"], "escala": 1.2 },
+    { "id": "flores",    "es": "flores",      "en": "flower print",  "archivo": "patrones/flores.svg",    "etiquetas": ["flores", "verano"], "escala": 0.9 },
+    { "id": "estrellas", "es": "estrellas",   "en": "star print",    "archivo": "patrones/estrellas.svg", "etiquetas": ["magia", "fiesta", "brillo"], "escala": 0.9 },
+    { "id": "cebra",     "es": "cebra",       "en": "zebra print",   "archivo": "patrones/cebra.svg",     "etiquetas": ["rock", "aventura"], "escala": 1.3 },
+    { "id": "leopardo",  "es": "leopardo",    "en": "leopard print", "archivo": "patrones/leopardo.svg",  "etiquetas": ["rock", "elegante"], "escala": 1.1 }
+  ]
+}

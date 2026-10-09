@@ -6,6 +6,19 @@ import { puestas } from "./atuendo.js";
 import { el, un, concuerda, es, queda, tu, mayuscula, conEl, conUn } from "./espanol.js";
 
 /**
+ * Las piezas puestas con su prenda. Si la pieza trae patrón, la prenda lleva también las etiquetas del patrón
+ * (una camiseta con estampado de cebra cuenta como "rock" para la jueza del tema).
+ */
+function conPrendas(atuendo, idx) {
+  return puestas(atuendo).map((p) => {
+    let prenda = idx.prendas.get(p.id);
+    const pa = prenda && p.patron && idx.patrones ? idx.patrones.get(p.patron) : null;
+    if (pa) prenda = { ...prenda, etiquetas: [...new Set([...prenda.etiquetas, ...(pa.etiquetas || [])])] };
+    return { ...p, prenda };
+  }).filter((p) => p.prenda);
+}
+
+/**
  * Qué tanto va una prenda con un tema: el peso más alto de sus etiquetas en el tema (0 a 3), menos 2 si alguna de
  * sus etiquetas está en "evitar". Va de -2 a 3.
  * @param {{etiquetas: string[]}} prenda
@@ -34,7 +47,7 @@ const lim = (x) => Math.max(0, Math.min(1, x));
  * @returns {{tema: number, color: number, completo: number, detalles: number, enTema: number, distintos: number}}
  */
 export function componentes(atuendo, tema, idx) {
-  const items = puestas(atuendo).map((p) => ({ ...p, prenda: idx.prendas.get(p.id) })).filter((p) => p.prenda);
+  const items = conPrendas(atuendo, idx);
   let suma = 0, pesos = 0;
   for (const it of items) {
     const w = it.prenda.categoria === "vestido" ? 2 : it.prenda.lugar ? 0.5 : 1;
@@ -97,7 +110,7 @@ const nombreColor = (idx, id) => (idx.colores.get(id) || { es: id }).es;
  * @returns {{ positivo: string, mejora: string | null }}
  */
 export function comentar(juez, atuendo, tema, idx, abiertas, coloresAbiertos) {
-  const items = puestas(atuendo).map((p) => ({ ...p, prenda: idx.prendas.get(p.id) })).filter((p) => p.prenda);
+  const items = conPrendas(atuendo, idx);
   const ropa = items.filter((it) => it.prenda.categoria !== "peinado");
   const k = componentes(atuendo, tema, idx);
   if (!items.length) return { positivo: "¡Qué valiente, salir a la pasarela así!", mejora: "La próxima vez escoge ropa en los percheros." };

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Arcoíris con nubes (original, para Noli) -->
+  <g fill="none" stroke-width="5.2">
+    <path d="M6 46A26 26 0 0 1 58 46" stroke="#ef4343"/>
+    <path d="M11.5 46A20.5 20.5 0 0 1 52.5 46" stroke="#ff9a3c"/>
+    <path d="M17 46A15 15 0 0 1 47 46" stroke="#ffd23f"/>
+    <path d="M22.5 46A9.5 9.5 0 0 1 41.5 46" stroke="#3cbf7e"/>
+    <path d="M27.5 46A4.5 4.5 0 0 1 36.5 46" stroke="#4c7dff"/>
+  </g>
+  <g fill="#fff" stroke="#2b2236" stroke-width="2">
+    <path d="M2 54a6 6 0 0 1 6-8a7 7 0 0 1 12 1a5 5 0 0 1 2 9H4a3 3 0 0 1-2-2z"/>
+    <path d="M42 54a6 6 0 0 1 6-8a7 7 0 0 1 12 1a5 5 0 0 1 2 9H44a3 3 0 0 1-2-2z"/>
+  </g>
+</svg>

@@ -12,6 +12,8 @@ En una hoja, dibuja la prenda **de frente**. Ponle:
 - **¿Para qué tema va?** Playa, fiesta, escuela, deportes, pijamada, nieve, princesa, jardín, campamento, rock, gala, hada… ¿o un tema nuevo?
 - **¿Brilla?**
 
+**¿Tiene un dibujo o un estampado?** Una cebra, cuadritos, flores, un osito en el pecho… ¡Dibújalo también! Los dibujos que se repiten (como la cebra) se dibujan en un **cuadrito** que se pega muchas veces, como un azulejo: lo que se sale por un lado tiene que entrar por el otro. Un estampado (un osito, una estrella) se dibuja solito con un borde oscuro.
+
 ## 2. Mírala con papá en el probador
 
 Papá abre el **probador** en la computadora y la arma con formas: tubos, bolitas, cajas, conos. Tú le dices si se parece:
@@ -36,4 +38,4 @@ Después de que papá la sube, aparece en su perchero con **¡Nuevo!**. Pruébat
 
 ---
 
-*Para papá:* los pasos con detalle están en [ASSETS.md](ASSETS.md) (con formas, sin programas) y, para piezas especiales, la parte de Blender. Un tema nuevo va en `datos/temas.json` (ASSETS.md § E); el maquillaje y las joyas, en ASSETS.md § C, y las poses y bailes nuevos, en § D.
+*Para papá:* los pasos con detalle están en [ASSETS.md](ASSETS.md) (con formas, sin programas) y, para piezas especiales, la parte de Blender. Un tema nuevo va en `datos/temas.json` (ASSETS.md § E); el maquillaje y las joyas, en ASSETS.md § C; las poses y bailes nuevos, en § D, y los patrones y estampados (un dibujo de Noelia fotografiado sirve como estampado PNG), en § F.

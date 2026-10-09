@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Corazones sueltos (no tocan la orilla) -->
+  <rect width="64" height="64" fill="{p}"/>
+  <g fill="{t}">
+    <path d="M16 26C6 19 6 10 12 9C14.5 8.6 16 10.5 16 12C16 10.5 17.5 8.6 20 9C26 10 26 19 16 26Z"/>
+    <path d="M48 58C38 51 38 42 44 41C46.5 40.6 48 42.5 48 44C48 42.5 49.5 40.6 52 41C58 42 58 51 48 58Z"/>
+  </g>
+</svg>
