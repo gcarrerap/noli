@@ -24,6 +24,8 @@ main{width:100%;max-width:1100px;margin:0 auto;padding:8px 12px 10px;
   display:flex;flex-direction:column;align-items:center;text-align:center;gap:.3rem;
   height:100dvh;max-height:100dvh;overflow:hidden}
 html[data-modo="tv"] main{padding:36px}
+/* La casita del catálogo mide 52 px y flota arriba a la izquierda. */
+html.en-catalogo:not([data-modo="tv"]) main{padding-top:calc(env(safe-area-inset-top, 0px) + 66px)}
 .titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.55rem;margin:0;line-height:1.05}
 .sub{font-size:.95rem;color:var(--muted);margin:0}
 .cargando{color:var(--muted);margin:auto}
@@ -55,6 +57,8 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .hueco{flex:none;position:relative}
 .bicho{position:absolute;bottom:18%;width:54px;height:48px;z-index:2}
 .bicho svg{width:54px;height:48px}
+/* Con bloques, el animal espera detrás: nunca tapa un bloque que hay que contar (#76). */
+.bicho.atras{z-index:1;left:0 !important}
 .marca-fin{position:absolute;bottom:0;width:28px;height:70%;transform:translateX(-50%);z-index:2}
 .marca-fin svg{width:100%;height:100%}
 .riel{width:100%;overflow:hidden;max-height:none}
@@ -96,6 +100,10 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .bloques{position:relative;width:min(100%,420px);height:64px;margin:0 auto}
 .hueco .bloques{position:absolute;left:0;width:100%;bottom:14%;height:auto;margin:0;z-index:2}
 .hueco .cubo{height:100%;top:0}
+.hueco .cubo.arriba{top:-38%;z-index:3}
+.regla-bloques{display:flex;justify-content:center;gap:10px;background:var(--card);border-radius:14px;padding:6px 10px;box-shadow:var(--sombra);width:min(100%,420px)}
+.regla-bloques .mini{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.85rem}
+.regla-bloques svg{width:100%;max-width:96px;height:auto;display:block}
 .sombra-hueco{position:absolute;left:0;right:0;bottom:16%;height:24%;z-index:1}
 .sombra-hueco svg{width:100%;height:100%;display:block}
 .comp-leyenda{display:flex;justify-content:space-between;gap:8px;width:min(100%,520px);margin:.15rem auto 0;font-weight:800}
@@ -183,3 +191,9 @@ html[data-modo="tv"] .pedido{font-size:1.55rem}
 html[data-modo="tv"] .mapa-zonas svg{height:72px}
 html[data-modo="tv"] .ico-btn span.glifo{font-size:3rem}
 html[data-modo="tv"] .inicio-fila{flex-direction:row;align-items:center;justify-content:center;gap:1rem}
+
+/* Modo oscuro: el fondo claro fijo de body dejaba las letras blancas sobre blanco (#76).
+   Va al final para ganarle a la regla de body. */
+@media (prefers-color-scheme:dark){
+  body{background:radial-gradient(circle at 90% 0%, #1f4a33 0, transparent 42%), linear-gradient(#0f1d19, var(--bg) 28%)}
+}

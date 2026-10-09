@@ -74,7 +74,8 @@ function cruceBloques(base, rnd, facil) {
     longitud,
     modoBloques: modo,
     cubos: cubosDe(longitud, modo),
-    fases: modo === "bien" ? ["bien"] : ["bien", "cuantos"],
+    // Siempre se cuenta: primero «¿bien puestos?», luego «¿cuántos?» (#76).
+    fases: ["bien", "cuantos"],
     opciones: opcionesNumero(longitud, rnd, 1, 10),
   };
 }

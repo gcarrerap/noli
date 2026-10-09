@@ -26,8 +26,8 @@ import {
 import { retoDelDia, retosCoherentes, estimaBien, META } from "../src/reto.js";
 import { resolverAtras, resolverEntrada, marcarIgnorar, TRAS_DIALOGO_MS, accionAtras, entradaIgnorada } from "../src/salida.js";
 import { decir, interpretarVoz, elegirVoz, prepararVoces } from "../src/voz.js";
-import { htmlComparar, posicionRegla, svgInline } from "../src/escena.js";
-import { notaReferencia, explicaBloques } from "../src/frases.js";
+import { htmlComparar, posicionRegla, svgInline, htmlBloques, svgMiniBloques } from "../src/escena.js";
+import { notaReferencia, explicaBloques, avisoBloques } from "../src/frases.js";
 
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
 const HOY = "2026-10-09";
@@ -142,7 +142,6 @@ test("los bloques mal medidos no cuentan como bien", () => {
   assert.equal(seMidioBien("hueco"), false);
   assert.equal(seMidioBien("encimado"), false);
   const hueco = cubosDe(4, "hueco");
-  assert.ok(hueco.some((c) => c.coral));
   assert.ok(Math.max(...hueco.map((c) => c.x)) > 3);
   assert.deepEqual(cubosDe(4, "bien").map((c) => c.x), [0, 1, 2, 3]);
   assert.equal(explicaBloques("hueco", textos), "Había un hueco entre los bloques.");
@@ -152,10 +151,8 @@ test("los bloques mal medidos no cuentan como bien", () => {
   for (let i = 0; i < 20; i++) {
     const c = crearCruce(1, rngConSemilla("bloques-" + i), { facil: false });
     assert.equal(c.fases[0], "bien");
-    if (c.modoBloques !== "bien") {
-      vioMal = true;
-      assert.deepEqual(c.fases, ["bien", "cuantos"]);
-    }
+    assert.deepEqual(c.fases, ["bien", "cuantos"], "siempre se cuenta (#76)");
+    if (c.modoBloques !== "bien") vioMal = true;
   }
   assert.equal(vioMal, true);
 });
@@ -668,4 +665,39 @@ test("#74: el juego ya no enciende Listo ni Cruzar según la respuesta", () => {
   assert.equal(/data-act="listo"[^>]*disabled/.test(src), false);
   assert.match(src, /data-i="\$\{i\}"/);
   for (const k of ["casiOtra", "juntaCorta", "juntaSobra", "asiEraTablas"]) assert.ok(textos[k], k);
+});
+
+// #76: el nivel 1 no se entendía y el color delataba el bloque mal puesto.
+test("#76: ningún bloque se ve distinto; el hueco y el encimado se ven por su lugar", () => {
+  for (const modo of ["bien", "hueco", "encimado"]) {
+    for (let n = 3; n <= 8; n++) {
+      const cubos = cubosDe(n, modo);
+      assert.equal(cubos.length, n);
+      assert.equal(cubos.some((c) => "coral" in c && c.coral), false);
+      const html = htmlBloques(cubos, "<svg>A</svg>", "<svg>B</svg>", 40);
+      assert.equal(html.includes("B"), false, "un solo dibujo para todos");
+      assert.equal(html.includes("coral"), false);
+    }
+  }
+  const h = cubosDe(6, "hueco").map((c) => c.x);
+  assert.ok(h.some((x, i) => i && x - h[i - 1] === 2), "un hueco de un bloque");
+  const e = cubosDe(6, "encimado");
+  assert.equal(e.filter((c) => c.arriba).length, 1, "un bloque montado");
+  assert.ok(e.some((c, i) => i && c.x - e[i - 1].x < 1), "se enciman");
+  assert.ok(cubosDe(6, "bien").every((c, i) => c.x === i && !c.arriba));
+});
+
+test("#76: la pregunta, la pista y la tarjeta explican qué es «bien puestos»", () => {
+  assert.match(textos.pregBien, /bien puestos/);
+  assert.match(textos.pistaBloquesBien, /huecos/);
+  assert.match(textos.pistaBloquesBien, /encim/);
+  assert.equal(textoPista({ nivel: 1, tipo: "bloques" }, "completa", textos, "bien"), textos.pistaBloquesBien);
+  assert.equal(textoPista({ nivel: 1, tipo: "bloques" }, "completa", textos, "cuantos"), textos.pistaBloques);
+  for (const m of ["hueco", "encimado", "bien"]) assert.ok(avisoBloques(m, textos), m);
+  for (const k of ["reglaSi", "reglaHueco", "reglaEncima"]) assert.ok(textos[k], k);
+  assert.match(svgMiniBloques(cubosDe(4, "bien"), true), /#2fbf7f/);
+  assert.match(svgMiniBloques(cubosDe(4, "hueco"), false), /#ff6b4a/);
+  const css = fs.readFileSync(new URL("../estilo.css", import.meta.url), "utf8");
+  assert.match(css, /prefers-color-scheme:dark[\s\S]*body\{background/, "fondo oscuro en modo oscuro");
+  assert.match(css, /en-catalogo/);
 });
