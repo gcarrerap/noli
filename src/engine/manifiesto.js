@@ -1,6 +1,8 @@
 // Manifiesto de un minijuego (minijuegos/<id>/juego.json): validarlo y completar valores por omisión.
 // Función pura: no lee archivos (eso lo hace services/catalogo-repo.js).
 
+import { TIPOS_CREDITOS } from "./creditos.js";
+
 export const CONTROLES = ["tactil", "flechas", "remoto"];
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -31,6 +33,13 @@ export function validarManifiesto(m, idCarpeta) {
   if (edades !== null && !(Array.isArray(edades) && edades.length === 2 && edades.every(Number.isInteger) && edades[0] <= edades[1]))
     errores.push(`${idCarpeta}: "edades" debe ser [mínima, máxima]`);
 
+  // Créditos (#20): "gana" (juego educativo: da créditos por estrellas), "gasta" (los cobra, como la Pasarela) o nada
+  const creditos = m.creditos ?? null;
+  if (creditos !== null && !TIPOS_CREDITOS.includes(creditos)) errores.push(`${idCarpeta}: "creditos" debe ser "gana" o "gasta"`);
+  const costo = m.costo ?? null;
+  if (costo !== null && !(Number.isInteger(costo) && costo > 0 && costo <= 100)) errores.push(`${idCarpeta}: "costo" debe ser un entero de 1 a 100`);
+  if (costo !== null && creditos !== "gasta") errores.push(`${idCarpeta}: "costo" solo va con "creditos": "gasta"`);
+
   if (errores.length) return { errores };
   return {
     juego: {
@@ -44,6 +53,8 @@ export function validarManifiesto(m, idCarpeta) {
       controles,
       entrada,
       version: m.version != null ? String(m.version) : "1",
+      creditos,
+      costo,
     },
   };
 }

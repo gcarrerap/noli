@@ -4,3 +4,5 @@ export { materias, filtrar, mover } from "./catalogo.js";
 export { nuevoCodigo, esCodigo, leerCodigo, salaVigente, controlVivo, urlControl,
   SALA_VIDA_MS, LATIDO_TV_MS, LATIDO_CONTROL_MS, CONTROL_VIVO_MS, ESPERA_WEBRTC_MS } from "./sala.js";
 export { qr, qrSvg } from "./qr.js";
+export { REGLAS, MOTIVOS, TIPOS_CREDITOS, libroVacio, leerLibro, saldo, saldoVisible, dia, ganadoHoy, ganancia, idMov, agregar,
+  gastar, unir, iguales, compactar, historial } from "./creditos.js";

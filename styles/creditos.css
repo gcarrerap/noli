@@ -1,0 +1,21 @@
+/* Créditos (#20): pastilla con el saldo (arriba a la izquierda del catálogo) y su ventana */
+.creditos-btn{position:absolute;left:0;top:0;height:3rem;min-width:3rem;padding:0 .9rem 0 .55rem;border-radius:999px;background:var(--card);
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:.35rem;font-family:var(--display);font-size:1.3rem;color:var(--fg)}
+.creditos-btn .moneda{width:1.6rem;height:1.6rem}
+.tarjeta .costo{display:inline-flex;align-items:center;gap:.25em;font-family:var(--display);font-weight:700;font-size:1.2rem}
+.tarjeta .costo .moneda{width:1.3em;height:1.3em}
+.ventana.creditos h3{font-family:var(--display);font-size:1.1rem;margin:.2em 0 .4em}
+.ventana .saldo-grande{display:flex;align-items:center;justify-content:center;gap:.35em;font-family:var(--display);font-size:3rem;margin:.1em 0}
+.ventana .saldo-grande .moneda{width:3rem;height:3rem}
+.ventana .saldo-grande span{font-size:1.2rem;color:var(--muted)}
+:root[data-modo="tv"] .ventana .saldo-grande{font-size:4.5rem}
+.ventana ul.hoy,.ventana ul.historial{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ventana ul.hoy li,.ventana ul.historial li{display:flex;gap:10px;align-items:baseline;justify-content:space-between;background:var(--card);
+  border-radius:14px;padding:.45em .8em}
+.ventana ul.historial .cuando{color:var(--muted);font-size:.85rem;min-width:7.5em}
+.ventana ul.historial span:nth-child(2){flex:1}
+.ventana .mas{color:#1f8a5a}.ventana .menos{color:#c4553f}
+.ventana ul.historial{max-height:14rem;overflow:auto}
+.celebrar .ganados{display:flex;align-items:center;justify-content:center;gap:.3em;font-family:var(--display);font-size:1.3rem;margin-top:.2em}
+.celebrar .ganados .moneda{width:1.5em;height:1.5em}
+.celebrar .ganados.nota{font-size:1rem;opacity:.8}

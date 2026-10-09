@@ -49,6 +49,10 @@ python3 -m http.server 8000
 
 En cada cambio que se publique (del catálogo o de cualquier juego), **cambia el número en `src/version.js`** (por ejemplo de `2026-10-08.1` a `2026-10-08.2`). Así, quien tenga Noli abierto verá "Hay juegos nuevos · Actualizar".
 
+## Créditos
+
+Los juegos educativos dan **créditos**: 1 por cada estrella y 2 más por el reto del día (hasta 15 por juego al día). Se gastan en juegos de premio, como la Pasarela. El saldo está arriba a la izquierda del catálogo; al tocarlo se ve cómo se ganan, lo ganado hoy y el historial. En **Para papás** (con una multiplicación de por medio) se pueden regalar o quitar créditos. Se sincronizan con la nube sin perder lo ganado o gastado en otro dispositivo sin conexión. Detalles en [DESIGN.md §12](DESIGN.md#12-créditos-20).
+
 ## Progreso en la nube
 
 El progreso (niveles, rachas, estrellas) se puede compartir entre la TV y el teléfono. Toca la **nube** arriba a la derecha del catálogo:

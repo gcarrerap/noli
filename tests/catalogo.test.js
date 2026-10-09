@@ -19,7 +19,7 @@ test("manifiesto: completa los valores por omisión", () => {
   const { juego, errores } = validarManifiesto({ id: "sumas", titulo: " Sumas " }, "sumas");
   assert.equal(errores, undefined);
   assert.deepEqual(juego, { id: "sumas", titulo: "Sumas", descripcion: "", icono: "🎲", iconoArchivo: false, color: null, materia: "otros",
-    edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1" });
+    edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1", creditos: null, costo: null });
 });
 
 test("manifiesto: rechaza id distinto a la carpeta, rutas fuera de la carpeta y controles desconocidos", () => {

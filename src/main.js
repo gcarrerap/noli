@@ -9,11 +9,13 @@ import { renderUpdateBar } from "./ui/components/update-bar.js";
 import { renderCelebrar } from "./ui/components/celebrar.js";
 import { renderNube, botonNube } from "./ui/components/nube.js";
 import { renderRemoto } from "./ui/components/remoto.js";
+import { renderCreditos, botonCreditos } from "./ui/components/creditos.js";
 
 let estaba = null; // para regresar el foco a la tarjeta del juego al salir
 subscribe((what) => {
   if (what === "remoto") return renderRemoto(); // solo el botón y el recuadro: el catálogo no se redibuja
-  renderNube();
+  renderNube(); renderCreditos();
+  if (what === "creditos") { const b = document.getElementById("creditosBtn"); if (b) { b.outerHTML = botonCreditos(); document.getElementById("creditosBtn").onclick = actions.abrirCreditos; } return; }
   if (what === "nube") { if (!state.jugando) { const b = document.getElementById("nubeBtn"); if (b) b.outerHTML = botonNube(); const n = document.getElementById("nubeBtn"); if (n) n.onclick = actions.abrirNube; } return; }
   if (what === "foco") moverFoco(conTeclado);
   else {

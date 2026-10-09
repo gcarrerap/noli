@@ -33,12 +33,20 @@ export function aplicarAccion(accion) {
     if (accion === "ok" && modal.contains(document.activeElement)) document.activeElement.click();
     return;
   }
+  if (state.creditosAbierto) {
+    const modal = document.getElementById("modalCreditos");
+    if (accion === "atras") return actions.cerrarCreditos();
+    if (moverFocoEn(accion, modal)) return;
+    if (accion === "ok" && modal.contains(document.activeElement)) document.activeElement.click();
+    return;
+  }
   if (state.jugando) return actions.entrada(accion);
   if (state.remoto.panel && accionEnPanel(accion)) return;
   const el = document.activeElement;
   if (el && el.classList.contains("chip")) return teclaEnFiltros(accion, el);
-  if (el && el.id === "nubeBtn") {
+  if (el && (el.id === "nubeBtn" || el.id === "creditosBtn")) {
     if (accion === "ok") return el.click();
+    if (accion === "izquierda" || accion === "derecha") { const o = document.getElementById(el.id === "nubeBtn" ? "creditosBtn" : "nubeBtn"); if (o) o.focus(); return; }
     if (accion === "abajo") return enfocarFiltros() || enfocarTarjeta();
     return;
   }

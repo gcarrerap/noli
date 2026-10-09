@@ -4,7 +4,9 @@
 //   Noli.alEntrar((accion) => { … });    // "arriba" | "abajo" | "izquierda" | "derecha" | "ok" | "atras"
 //   const datos = await Noli.datos;      // lo que el juego guardó la última vez (o null)
 //   Noli.guardar(datos);                 // guardar el progreso (objeto JSON)
-//   Noli.terminar({ estrellas: 3 });     // al terminar una partida
+//   Noli.terminar({ estrellas: 3 });     // al terminar una partida (reto: true si fue el reto del día completado)
+//   const saldo = await Noli.creditos;   // créditos de Noelia (solo juegos con "creditos": "gasta"; si no, null)
+//   const { ok, saldo } = await Noli.gastar(3, "pasarela");  // cobrar créditos (#20); ok=false si no alcanza
 //   Noli.salir();                        // regresar al catálogo
 //
 // Dentro del catálogo (en un iframe) las acciones llegan del catálogo, que ya juntó dedo, teclado, control de
@@ -22,11 +24,25 @@ let modo = "tactil";
 // Clave para guardar cuando el juego está abierto solo: la carpeta del juego
 const claveSola = () => "noli.solo." + location.pathname.replace(/[^/]*$/, "");
 
-let resolverDatos;
+let resolverDatos, resolverCreditos;
 const datos = new Promise((r) => (resolverDatos = r));
+const creditos = new Promise((r) => (resolverCreditos = r));
+
+// Abierto solo (sin catálogo) los créditos se simulan, para poder probar un juego que los gasta.
+// Se pueden cambiar en la consola: localStorage.setItem("noli.solo.creditos", "20")
+const CREDITOS_SOLO = "noli.solo.creditos", CREDITOS_SOLO_INICIAL = 10;
+function creditosSolo() {
+  try { const v = parseInt(localStorage.getItem(CREDITOS_SOLO), 10); return Number.isFinite(v) ? v : CREDITOS_SOLO_INICIAL; } catch { return CREDITOS_SOLO_INICIAL; }
+}
 if (!enCatalogo && typeof window !== "undefined") {
   try { resolverDatos(JSON.parse(localStorage.getItem(claveSola()))); } catch { resolverDatos(null); }
+  resolverCreditos(creditosSolo());
 }
+
+// Gastos esperando respuesta del catálogo: id → resolver
+const gastos = new Map();
+let siguienteGasto = 0;
+const ESPERA_GASTO_MS = 5000;
 
 function emitir(accion) {
   let atendida = false;
@@ -45,6 +61,11 @@ if (typeof window !== "undefined") {
     if (e.data.tipo === "hola") {
       modo = e.data.modo || "tactil"; document.documentElement.dataset.modo = modo;
       resolverDatos(e.data.datos ?? null);
+      resolverCreditos(typeof e.data.creditos === "number" ? e.data.creditos : null);
+    }
+    if (e.data.tipo === "gasto") {
+      const r = gastos.get(e.data.id);
+      if (r) { gastos.delete(e.data.id); r({ ok: e.data.ok, saldo: typeof e.data.saldo === "number" ? e.data.saldo : null }); }
     }
     if (e.data.tipo === "entrada") emitir(e.data.accion);
   });
@@ -66,7 +87,26 @@ export const Noli = {
     if (enCatalogo) aCatalogo(mensaje("guardar", { datos: d }));
     else try { localStorage.setItem(claveSola(), JSON.stringify(d)); } catch {}
   },
-  terminar({ estrellas = 0 } = {}) { aCatalogo(mensaje("terminar", { estrellas: aEstrellas(estrellas) })); },
+  // reto: true cuando la partida fue el reto del día y se completó (el catálogo da el bono una vez al día)
+  terminar({ estrellas = 0, reto = false } = {}) { aCatalogo(mensaje("terminar", { estrellas: aEstrellas(estrellas), reto: reto === true })); },
+  // Promesa con el saldo de créditos (número), o null si el juego no declara "creditos": "gasta" en juego.json
+  creditos,
+  // Pide gastar `cantidad` créditos. Promesa con { ok, saldo }: ok=false si no alcanza o el catálogo no contestó
+  // (en 5 s). El catálogo es el único que valida y descuenta; el juego nunca lleva la cuenta.
+  gastar(cantidad, motivo = "") {
+    if (!enCatalogo) {
+      const s = creditosSolo();
+      if (!(Number.isInteger(cantidad) && cantidad > 0) || s < cantidad) return Promise.resolve({ ok: false, saldo: s });
+      try { localStorage.setItem(CREDITOS_SOLO, String(s - cantidad)); } catch {}
+      return Promise.resolve({ ok: true, saldo: s - cantidad });
+    }
+    const id = "g" + (++siguienteGasto) + "-" + Date.now().toString(36);
+    return new Promise((r) => {
+      gastos.set(id, r);
+      aCatalogo(mensaje("gastar", { id, cantidad, motivo: String(motivo).slice(0, 40) }));
+      setTimeout(() => { if (gastos.has(id)) { gastos.delete(id); r({ ok: false, saldo: null }); } }, ESPERA_GASTO_MS);
+    });
+  },
   salir() { if (enCatalogo) aCatalogo(mensaje("salir")); else history.back(); },
   // "tactil" o "tv": en la TV conviene letra más grande y no depender del dedo
   get modo() { return modo; },

@@ -8,5 +8,6 @@
   "edades": [6, 8],
   "controles": ["tactil", "flechas", "remoto"],
   "entrada": "index.html",
-  "version": "1"
+  "version": "1",
+  "creditos": "gana"
 }
