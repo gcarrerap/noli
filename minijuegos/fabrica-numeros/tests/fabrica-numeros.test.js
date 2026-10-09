@@ -20,11 +20,13 @@ import { PIEZAS, ciclarRanura, decoNueva, pisosFabrica, piezasDisponibles } from
 import { retoDelDia, pistasDe, soluciones, cumplePista } from "../src/reto.js";
 import {
   siguientePaso, exigeCanje, puedeHablarDeCanje, pistaCorta, fasePista, cuentaParaDominio,
-  textoRomper, canjeEsLargo, avisoDiez, textoEnPantalla, IDLE_FLECHA_MS, IDLE_COMPLETA_MS,
+  textoRomper, canjeEsLargo, avisoDiez, textoEnPantalla, repetirAvisoDiez, IDLE_FLECHA_MS, IDLE_COMPLETA_MS,
 } from "../src/pista.js";
 import { resolverAtras, accionAtras } from "../src/salida.js";
 import {
-  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, GUIA_TOQUE_MS,
+  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia,
+  esperaVozGuia, relojDeGuia, toqueTrasSalir, resolverToqueGuia,
+  GUIA_VOZ_TOPE_MS, GUIA_TRAS_SALIR_MS,
 } from "../src/guia.js";
 
 const muchos = (n, sub, rnd, k = 200, extra = {}) => Array.from({ length: k }, () => crearPedido(n, rnd, { sub, ...extra }));
@@ -474,8 +476,10 @@ test("siguientePaso nombra la primera banda que no coincide, de grande a chica",
   assert.equal(siguientePaso(desdeNumero(80), 86).texto, "Pon 6 cubitos");
   assert.equal(siguientePaso(desdeNumero(90), 86).texto, "Quita 1 barra");
   assert.equal(siguientePaso(desdeNumero(86), 86).texto, "Toca Enviar");
+  assert.equal(siguientePaso(desdeNumero(86), 86, "tv").texto, "Pulsa OK");
   assert.equal(siguientePaso(desdeNumero(86), 86).listo, true);
   assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 10 }, 10).texto, "¡10 cubitos! Toca la máquina o sube otra vez.");
+  assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 10 }, 10, "tv").texto, "¡10 cubitos! Pulsa OK en la máquina o sube otra vez.");
   assert.equal(siguientePaso({ mil: 0, c: 0, d: 1, u: 0 }, 1).texto, "Quita 1 barra");
   assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 0 }, 1000).texto, "Pon el mil");
 });
@@ -551,16 +555,99 @@ test("la guía no avanza sin las piezas y Enviar no responde antes del final", (
   assert.equal(guiaEnviarActivo(4), true);
   assert.equal(textoDeGuia(1, "tactil"), "Pon 2 barras");
   assert.equal(textoDeGuia(1, "tv"), "▲ 2 veces");
+  assert.equal(textoDeGuia(4, "tactil"), "Toca Enviar");
+  assert.equal(textoDeGuia(4, "tv"), "Pulsa OK");
   assert.equal(vozDeGuia(1), "Pon 2 barras");
-  assert.equal(/[▲+]/.test([0, 1, 2, 3, 4].map(vozDeGuia).join(" ")), false);
-  assert.equal(GUIA_TOQUE_MS, 2000);
+  assert.equal(vozDeGuia(4), "Toca Enviar");
+  assert.equal(vozDeGuia(4, "tv"), "Pulsa OK");
+  assert.equal(/[▲+]/.test([0, 1, 2, 3, 4].map((p) => vozDeGuia(p, "tv")).join(" ")), false);
+  assert.equal(GUIA_VOZ_TOPE_MS, 3000);
+  assert.equal(esperaVozGuia(0), 3000);
+  assert.equal(esperaVozGuia(undefined), 3000);
+  assert.equal(esperaVozGuia(1500), 1500);
+  assert.equal(esperaVozGuia(2000), 2000);
+  assert.equal(esperaVozGuia(9000), 3000);
   const diez = avisoDiez("u", "tactil");
-  assert.equal(diez.pantalla, "¡10 cubitos! Toca la máquina o + otra vez.");
+  assert.equal(diez.pantalla, "¡10 cubitos! Toca la máquina o toca + otra vez.");
   assert.equal(diez.voz, "¡10 cubitos! Toca la máquina o sube otra vez.");
-  assert.equal(avisoDiez("d", "tv").pantalla, "¡10 barras! Toca la máquina o ▲ otra vez.");
+  assert.equal(avisoDiez("d", "tv").pantalla, "¡10 barras! Pulsa OK en la máquina o pulsa ▲ otra vez.");
+  assert.equal(avisoDiez("u", "tv").voz, "¡10 cubitos! Pulsa OK en la máquina o sube otra vez.");
+  assert.equal(avisoDiez("u", "tv").pantalla, "¡10 cubitos! Pulsa OK en la máquina o pulsa ▲ otra vez.");
   assert.equal(/[▲+]/.test(avisoDiez("u", "tv").voz), false);
-  assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tv"), "Toca la máquina o ▲ otra vez.");
-  assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tactil"), "Toca la máquina o + otra vez.");
+  assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tv"), "Pulsa OK en la máquina o pulsa ▲ otra vez.");
+  assert.equal(textoEnPantalla("Toca Enviar", "tv"), "Pulsa OK");
+  assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tactil"), "Toca la máquina o toca + otra vez.");
+  assert.equal(repetirAvisoDiez({ fase: "completa", paso: { canje: "pegar" } }), false);
+  assert.equal(repetirAvisoDiez({ fase: "corta", paso: { canje: "pegar" } }), true);
+  assert.equal(repetirAvisoDiez({ fase: "completa", paso: { texto: "Pon 1 cubito" } }), true);
+  assert.equal(repetirAvisoDiez(null), true);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /esperaVozGuia/);
+  assert.doesNotMatch(juego, /GUIA_TOQUE_MS/);
+});
+
+test("en la tele ninguna pista ni ninguna voz dice Toca", () => {
+  const lineas = [];
+  const anotar = (nombre, linea) => lineas.push([nombre, String(linea)]);
+  for (let paso = 0; paso <= 4; paso++) {
+    anotar("guía " + paso, textoDeGuia(paso, "tv"));
+    anotar("voz guía " + paso, vozDeGuia(paso, "tv"));
+    assert.equal(/[▲+]/.test(vozDeGuia(paso, "tv")), false, "voz " + paso);
+  }
+  for (const banda of ["c", "d", "u"]) {
+    const aviso = avisoDiez(banda, "tv");
+    anotar("aviso " + banda, aviso.pantalla);
+    anotar("voz diez " + banda, aviso.voz);
+    assert.equal(/[▲+]/.test(aviso.voz), false, banda);
+  }
+  for (let n = 1; n <= 8; n++) anotar("corta " + n, pistaCorta(n, "tv"));
+  const estados = [];
+  for (const mil of [0, 1]) {
+    for (const c of [0, 10]) {
+      for (const d of [0, 9, 10]) {
+        for (const u of [0, 3, 10]) estados.push({ mil, c, d, u });
+      }
+    }
+  }
+  for (const estado of estados) {
+    for (const meta of [0, 1, 10, 23, 86, 100, 305, 1000]) {
+      const paso = siguientePaso(estado, meta, "tv");
+      anotar("paso", paso.texto);
+      anotar("pantalla", textoEnPantalla(paso.texto, "tv"));
+    }
+  }
+  anotar("listo", textoEnPantalla("Toca Enviar", "tv"));
+  anotar("diez teléfono", textoEnPantalla("¡10 cubitos! Toca la máquina o sube otra vez.", "tv"));
+  for (const [nombre, linea] of lineas) {
+    assert.equal(linea.includes("Toca"), false, `${nombre}: ${linea}`);
+  }
+});
+
+test("¿Salir? pausa la guía y el toque de después no la salta", () => {
+  assert.equal(GUIA_TRAS_SALIR_MS, 400);
+  assert.equal(relojDeGuia(true), "pausa");
+  assert.equal(relojDeGuia(false), "reiniciar");
+  assert.equal(esperaVozGuia(0), GUIA_VOZ_TOPE_MS);
+  assert.equal(resolverToqueGuia({ dialogo: true, ir: "seguir-juego", paso: 0 }), "seguir");
+  assert.equal(resolverToqueGuia({ dialogo: true, ir: "salir-juego", paso: 3 }), "salir");
+  assert.equal(resolverToqueGuia({ dialogo: true, paso: 0 }), "nada");
+  assert.equal(resolverToqueGuia({ dialogo: true, ir: "saltar-guia", paso: 0 }), "nada");
+  assert.equal(resolverToqueGuia({ callado: true, paso: 0 }), "nada");
+  assert.equal(resolverToqueGuia({ callado: true, paso: 3, ir: "saltar-guia" }), "nada");
+  assert.equal(resolverToqueGuia({ paso: 0 }), "mostrar");
+  assert.equal(resolverToqueGuia({ paso: 3, ir: "saltar-guia" }), "saltar");
+  assert.equal(resolverToqueGuia({ paso: 1 }), "juego");
+  assert.equal(resolverToqueGuia({ paso: 4, ir: "" }), "juego");
+  assert.equal(toqueTrasSalir(0), true);
+  assert.equal(toqueTrasSalir(399), true);
+  assert.equal(toqueTrasSalir(400), false);
+  assert.equal(toqueTrasSalir(2500), false);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /relojDeGuia\(true\)/);
+  assert.match(juego, /relojDeGuia\(false\)/);
+  assert.match(juego, /toqueTrasSalir/);
+  assert.match(juego, /resolverToqueGuia/);
+  assert.match(juego, /callar\(\)/);
 });
 
 test("el dominio de 8 de 10 cruza turnos: cerrar el turno no vacía la ventana", () => {

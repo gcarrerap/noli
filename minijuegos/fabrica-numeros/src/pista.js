@@ -14,13 +14,14 @@ const NOMBRE = {
 };
 
 // La primera banda que no coincide, de la más grande a la más chica.
-// Si ya coincide, «Toca Enviar». Si hay una banda en 10, el paso es pegar.
-export function siguientePaso(estado, objetivo) {
+// Si ya coincide, en el teléfono «Toca Enviar» y en la tele «Pulsa OK».
+// Si hay una banda en 10, el paso es pegar.
+export function siguientePaso(estado, objetivo, modo = "tactil") {
   const meta = desdeNumero(objetivo);
   for (const b of ["c", "d", "u"]) {
     if ((estado[b] || 0) === 10) {
       const que = NOMBRE[b][1];
-      return { texto: `¡10 ${que}! Toca la máquina o sube otra vez.`, banda: b, listo: false, canje: "pegar" };
+      return { texto: fraseDiez(que, modo).voz, banda: b, listo: false, canje: "pegar" };
     }
   }
   if ((estado.mil || 0) !== (meta.mil || 0)) {
@@ -37,7 +38,7 @@ export function siguientePaso(estado, objetivo) {
     const palabra = NOMBRE[id][n === 1 ? 0 : 1];
     return { texto: `${tiene < quiere ? "Pon" : "Quita"} ${n} ${palabra}`, banda: id, listo: false };
   }
-  return { texto: "Toca Enviar", banda: null, listo: true };
+  return { texto: modo === "tv" ? "Pulsa OK" : "Toca Enviar", banda: null, listo: true };
 }
 
 // El pedido, para llegar al número, obliga a pegar o a partir.
@@ -67,15 +68,34 @@ export function glifoSubir(modo) {
   return modo === "tv" ? "▲" : "+";
 }
 
-// En pantalla el control es + o ▲. La voz dice «sube», sin símbolos.
+// En el teléfono, «sube» es «toca +». En la tele es «pulsa ▲», y «Toca» no se dice.
+// La voz de la tele dice «sube», sin el símbolo.
 export function textoEnPantalla(texto, modo = "tactil") {
-  return String(texto).replaceAll(" sube ", ` ${glifoSubir(modo)} `);
+  const s = String(texto);
+  if (modo === "tv") {
+    return s
+      .replaceAll("Toca Enviar", "Pulsa OK")
+      .replaceAll("Toca la máquina", "Pulsa OK en la máquina")
+      .replaceAll(" sube ", " pulsa ▲ ");
+  }
+  return s.replaceAll(" sube ", " toca + ");
+}
+
+function fraseDiez(que, modo) {
+  const voz = modo === "tv"
+    ? `¡10 ${que}! Pulsa OK en la máquina o sube otra vez.`
+    : `¡10 ${que}! Toca la máquina o sube otra vez.`;
+  return { voz, pantalla: textoEnPantalla(voz, modo) };
+}
+
+/** La frase del 10 ya está en la pista completa: el aviso de abajo no la repite. */
+export function repetirAvisoDiez(info) {
+  return !(info && info.fase === "completa" && info.paso && info.paso.canje === "pegar");
 }
 
 export function avisoDiez(banda, modo = "tactil") {
   const que = banda === "c" ? "placas" : banda === "d" ? "barras" : "cubitos";
-  const frase = `¡10 ${que}! Toca la máquina o sube otra vez.`;
-  return { pantalla: textoEnPantalla(frase, modo), voz: frase };
+  return fraseDiez(que, modo);
 }
 
 export function pistaCorta(nivel, modo = "tactil") {

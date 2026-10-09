@@ -110,6 +110,7 @@ main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 
 .maquina-btn,.enviar{flex:0 0 auto;min-width:88px;min-height:64px;border-radius:20px;background:var(--card);box-shadow:var(--sombra);
   display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;font-weight:800}
 .enviar{background:var(--verde);color:#143024;font-family:"Fredoka",sans-serif;font-size:1.25rem;min-width:104px}
+.enviar:disabled{background:var(--off);color:var(--muted);opacity:.45;box-shadow:none;filter:saturate(.15)}
 .enviar.bloqueado{filter:saturate(.4)}
 .maquina-svg svg{width:84px;height:auto;display:block}
 .maquina-btn.pide-pegar{box-shadow:0 0 0 4px var(--verde), 0 0 18px var(--verde);animation:pulso 1s ease-in-out infinite}
@@ -245,4 +246,10 @@ html[data-modo="tv"] .banda{flex-basis:140px;padding:6px;gap:2px}
   html:not([data-modo="tv"]) .barra-accion{display:flex;position:sticky;bottom:0;gap:8px;width:100%;align-items:stretch;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:4}
   html:not([data-modo="tv"]) .barra-accion .enviar{flex:1;min-width:0;min-height:72px}
   html:not([data-modo="tv"]) .barra-accion .maquina-btn{min-width:88px}
+  /* La guía lleva Saltar (64 px) en la cabecera. Sin esto, a 360×740 la página
+     medía unos 40 px de más. El camión y el hueco de abajo ceden; Enviar y los + siguen. */
+  html:not([data-modo="tv"]) main.p-problema.guia{gap:.08rem;padding-top:6px;padding-bottom:4px}
+  html:not([data-modo="tv"]) main.p-problema.guia .camion-wrap{width:min(150px, 48vw)}
+  html:not([data-modo="tv"]) main.p-problema.guia .aviso{min-height:0}
+  html:not([data-modo="tv"]) main.p-problema.guia .barra-accion{padding-top:4px;padding-bottom:4px}
 }
