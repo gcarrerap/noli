@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -20 140 234">
+<title>Chimenea con humo de colores</title>
+<g id="humo"><circle class="nube" cx="70" cy="26" r="16" fill="#ff7eb6" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="96" cy="12" r="13" fill="#c86bfa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="44" cy="12" r="12" fill="#4cb3ff" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="70" cy="-6" r="10" fill="#ffc43d" stroke="#2b2236" stroke-width="3"/></g>
+<rect x="44" y="64" width="52" height="144" rx="6" fill="#4cb3ff" stroke="#2b2236" stroke-width="5"/>
+<path d="M58 72v128" stroke="#fff" stroke-opacity=".5" stroke-width="7" stroke-linecap="round"/>
+<circle cx="76" cy="120" r="12" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/>
+<path d="M36 64q34-26 68 0z" fill="#3ccf8e" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M36 64h68" stroke="#2b2236" stroke-width="5" stroke-linecap="round"/>
+<path d="M44 176h52" stroke="#2b2236" stroke-width="4"/>
+</svg>

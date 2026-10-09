@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 160 76">
+<title>Luces redondas en dos caídas de cable</title>
+<path d="M6 14Q43 58 80 14Q117 58 154 14" fill="none" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/>
+<g transform="translate(20 22)"><rect x="-6" y="-2" width="12" height="10" rx="2" fill="#4a4060" stroke="#2b2236" stroke-width="3"/><circle class="foco" cy="21" r="13" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/><circle cx="-4.5" cy="16.5" r="4" fill="#fff" opacity=".75"/></g>
+<g transform="translate(50 32)"><rect x="-6" y="-2" width="12" height="10" rx="2" fill="#4a4060" stroke="#2b2236" stroke-width="3"/><circle class="foco" cy="21" r="13" fill="#ff7eb6" stroke="#2b2236" stroke-width="4"/><circle cx="-4.5" cy="16.5" r="4" fill="#fff" opacity=".75"/></g>
+<g transform="translate(80 14)"><rect x="-6" y="-2" width="12" height="10" rx="2" fill="#4a4060" stroke="#2b2236" stroke-width="3"/><circle class="foco" cy="21" r="13" fill="#4cb3ff" stroke="#2b2236" stroke-width="4"/><circle cx="-4.5" cy="16.5" r="4" fill="#fff" opacity=".75"/></g>
+<g transform="translate(110 32)"><rect x="-6" y="-2" width="12" height="10" rx="2" fill="#4a4060" stroke="#2b2236" stroke-width="3"/><circle class="foco" cy="21" r="13" fill="#3ccf8e" stroke="#2b2236" stroke-width="4"/><circle cx="-4.5" cy="16.5" r="4" fill="#fff" opacity=".75"/></g>
+<g transform="translate(140 22)"><rect x="-6" y="-2" width="12" height="10" rx="2" fill="#4a4060" stroke="#2b2236" stroke-width="3"/><circle class="foco" cy="21" r="13" fill="#ff6b4a" stroke="#2b2236" stroke-width="4"/><circle cx="-4.5" cy="16.5" r="4" fill="#fff" opacity=".75"/></g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -6 140 220">
+<title>Chimenea alta de rayas con humo</title>
+<g id="humo"><circle class="nube" cx="70" cy="22" r="15" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="94" cy="10" r="11" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="48" cy="10" r="10" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/></g>
+<path d="M44 50h52l12 158H32z" fill="#f2545b"/>
+<path d="M42.72 66h54.56v16h-55.86z" fill="#fff"/><path d="M38.88 114h62.24v16h-63.54z" fill="#fff"/><path d="M35.04 162h69.92v16h-71.22z" fill="#fff"/>
+<path d="M44 50h52l12 158H32z" fill="none" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<rect x="38" y="38" width="64" height="16" rx="5" fill="#4a4060" stroke="#2b2236" stroke-width="5"/>
+</svg>

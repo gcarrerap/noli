@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 96">
+<title>Estrellas colgadas del techo</title>
+<rect x="6" y="4" width="288" height="12" rx="6" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/>
+<g class="banderin" transform="translate(38 16)"><path d="M0 0v14" stroke="#2b2236" stroke-width="3"/><path d="M0 10.85L6.42 23.02L19.97 25.36L10.39 35.22L12.34 48.84L0 42.77L-12.34 48.84L-10.39 35.22L-19.97 25.36L-6.42 23.02z" fill="#ff6b4a" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/></g>
+<g class="banderin" transform="translate(94 16)"><path d="M0 0v30" stroke="#2b2236" stroke-width="3"/><path d="M0 27.15L5.81 38.16L18.07 40.28L9.4 49.2L11.17 61.52L0 56.03L-11.17 61.52L-9.4 49.2L-18.07 40.28L-5.81 38.16z" fill="#4cb3ff" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/></g>
+<g class="banderin" transform="translate(150 16)"><path d="M0 0v10" stroke="#2b2236" stroke-width="3"/><path d="M0 6.4L7.34 20.3L22.83 22.98L11.87 34.26L14.11 49.82L0 42.88L-14.11 49.82L-11.87 34.26L-22.83 22.98L-7.34 20.3z" fill="#ff7eb6" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/></g>
+<g class="banderin" transform="translate(206 16)"><path d="M0 0v30" stroke="#2b2236" stroke-width="3"/><path d="M0 27.15L5.81 38.16L18.07 40.28L9.4 49.2L11.17 61.52L0 56.03L-11.17 61.52L-9.4 49.2L-18.07 40.28L-5.81 38.16z" fill="#3ccf8e" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/></g>
+<g class="banderin" transform="translate(262 16)"><path d="M0 0v14" stroke="#2b2236" stroke-width="3"/><path d="M0 10.85L6.42 23.02L19.97 25.36L10.39 35.22L12.34 48.84L0 42.77L-12.34 48.84L-10.39 35.22L-19.97 25.36L-6.42 23.02z" fill="#c86bfa" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/></g>
+</svg>

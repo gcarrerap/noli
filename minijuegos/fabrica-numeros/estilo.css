@@ -1,0 +1,197 @@
+/* Fábrica de Números. Estilos propios: el juego no usa los del catálogo. */
+:root{
+  --bg:#fff7ec; --fg:#2b2236; --muted:#76698a; --card:#fff; --line:#ecdcc6;
+  --azul:#4cb3ff; --coral:#ff6b4a; --sol:#ffc43d; --verde:#3ccf8e; --morado:#c86bfa;
+  --bien:#2fbf7f; --mal:#ff6b4a; --star:#ffb400; --off:#e7dccb; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12), 0 10px 20px rgba(43,34,54,.08);
+}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1726;--fg:#f6f0ff;--muted:#b5a9c9;--card:#2a2338;--line:#342b45;--off:#4a4060;--foco:#fff;
+  --sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.3)}}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, 2.2vmin, 22px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.6vmin, 34px)}
+body{margin:0;min-height:100dvh;background:
+  radial-gradient(circle at 20% 0%, #fff 0, transparent 40%),
+  linear-gradient(#d7f3e4, var(--bg) 28%);
+  color:var(--fg);font-family:"Nunito",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+:focus{outline:none}
+html.teclado :focus-visible{outline:5px solid var(--foco);outline-offset:4px;box-shadow:0 0 0 10px var(--halo)}
+main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 12px 24px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:.7rem;min-height:100dvh}
+.titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:2.1rem;margin:.15em 0 0;line-height:1.05}
+.sub{font-size:1.05rem;color:var(--muted);margin:0}
+.cargando{color:var(--muted);margin:auto}
+
+.boton{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.55em 1.2em;font-weight:800;font-size:1.05rem;box-shadow:var(--sombra);min-height:64px}
+.boton.grande{font-family:"Fredoka",system-ui,sans-serif;font-size:1.35rem;font-weight:600;padding:.55em 1.1em;border-radius:22px;min-width:9em;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.boton.grande small{font-family:"Nunito",sans-serif;font-size:.75rem;font-weight:700;opacity:.85}
+.boton.primario{background:var(--verde);color:#143024;border-color:transparent}
+.boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
+.boton.hecho{background:var(--azul);color:#fff;border-color:transparent}
+.menu{display:flex;flex-direction:column;gap:.6rem;align-items:stretch}
+.menu.fila{flex-direction:row;flex-wrap:wrap;justify-content:center}
+
+.inicio-layout{width:100%;display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;align-items:flex-end}
+.fabrica{width:min(460px, 100%);background:var(--card);border-radius:28px;padding:10px 12px 14px;box-shadow:var(--sombra);
+  display:grid;grid-template-columns:88px 1fr 88px;grid-template-areas:"banderines banderines banderines" "chimenea edificio luces" "entrada entrada entrada";gap:8px}
+.ranura{min-height:64px;min-width:64px;border-radius:16px;border:3px dashed var(--line);background:#fffdf8;display:grid;place-items:center;padding:4px;position:relative}
+.ranura.banderines{grid-area:banderines}
+.ranura.chimenea{grid-area:chimenea}
+.ranura.luces{grid-area:luces}
+.ranura.entrada{grid-area:entrada;min-height:72px}
+.ranura .deco{width:100%;display:grid;place-items:center}
+.ranura .deco svg{width:100%;height:64px;display:block}
+.ranura.chimenea .deco svg{height:92px}
+.ranura.entrada .deco svg{height:56px;width:auto}
+.p-finIngles .deco svg{width:140px;height:140px}
+.vacio-ranura{font-size:.75rem;font-weight:800;color:var(--muted)}
+.edificio{grid-area:edificio;min-height:120px}
+.edificio svg{width:100%;height:140px;display:block}
+.fabrica-ley{font-size:.85rem;color:var(--muted);margin:0}
+
+.dominio{width:min(420px, 100%);color:var(--muted)}
+.dominio.ok{color:var(--bien);font-weight:800}
+.barra{height:12px;background:var(--off);border-radius:999px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--verde)}
+.racha{display:flex;align-items:center;gap:.4rem;font-size:1.05rem;margin:0}
+.racha.grande{font-size:1.35rem}
+.ico{width:1.3em;height:1.3em;flex:none}
+
+.cab{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--muted);gap:.6rem}
+.puntos{display:flex;gap:5px}
+.puntos i{width:14px;height:14px;border-radius:50%;background:var(--off);display:block}
+.puntos i.lleno{background:var(--verde)}
+.pedido{font-family:"Fredoka",system-ui,sans-serif;font-size:1.7rem;margin:0;line-height:1.15;max-width:28ch}
+.pistas{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.25rem}
+.pistas li{background:var(--card);border-radius:999px;padding:.25em .8em;font-weight:800}
+.oir{min-height:64px;min-width:64px}
+
+.camion-wrap{position:relative;width:min(420px, 92vw)}
+.camion-wrap .camion-svg svg{width:100%;height:auto;display:block;position:relative;z-index:1}
+/* La caja abierta llega hasta y=92; la pared (y 92–144) taparía lo que quede detrás. */
+.carga{position:absolute;z-index:2;left:calc(18 / 330 * 100%);top:calc(8 / 196 * 100%);width:calc(160 / 330 * 100%);height:calc(84 / 196 * 100%);display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-end;justify-content:center;gap:1px;pointer-events:none;overflow:hidden}
+.camion-wrap.sacude{animation:sacude .35s linear}
+@keyframes sacude{25%{transform:translateX(-4px) rotate(-.4deg)}75%{transform:translateX(4px) rotate(.4deg)}}
+.total{font-family:"Fredoka",system-ui,sans-serif;font-size:1.8rem;margin:0}
+.total b{color:var(--fg)}
+.total.quieto{background:var(--sol);color:#2b2236;border-radius:999px;padding:.1em .7em}
+.operandos{display:flex;gap:.6rem;align-items:flex-end;justify-content:center;background:var(--card);border-radius:16px;padding:8px 12px}
+.operandos .signo{font-family:"Fredoka",sans-serif;font-size:2rem}
+
+.minis{display:inline-flex;flex-wrap:wrap;gap:1px;align-items:flex-end;justify-content:center;max-width:180px}
+.minis img.mini.c{width:22px;height:22px}
+.minis img.mini.d{height:40px;width:auto}
+.minis img.mini.u{width:10px;height:10px}
+/* La cara frontal del cubo de mil es 92/139 del archivo: ~1.5× una placa. */
+.minis img.mini.mil{width:calc(22px * 139 / 92);height:auto}
+
+.mesa{width:100%;display:flex;gap:8px;align-items:stretch;justify-content:center;overflow-x:auto;padding-bottom:4px}
+.banda{flex:1 0 132px;max-width:240px;background:var(--card);border-radius:20px;padding:8px;box-shadow:var(--sombra);
+  display:flex;flex-direction:column;gap:4px;align-items:center;border:3px solid transparent;min-width:132px}
+.banda.marcada{border-color:var(--coral)}
+.cartel svg{width:100%;height:48px;display:block}
+.piezas{min-height:70px;width:100%;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;align-content:flex-end;gap:2px}
+.piezas.c img{width:26px;height:26px}
+.piezas.c img.mil{width:calc(26px * 139 / 92);height:auto}
+.piezas.d img{height:62px;width:auto}
+.piezas.u img{width:14px;height:14px}
+.riel{width:100%;height:36px;background-repeat:repeat-x;background-size:calc(160 / 60 * 36px) 36px}
+.riel.c{background-image:url("img/banda-centenas.svg")}
+.riel.d{background-image:url("img/banda-decenas.svg")}
+.riel.u{background-image:url("img/banda-unidades.svg")}
+.riel.andando{animation:cinta 1.8s linear infinite}
+@keyframes cinta{to{background-position-x:calc(-160 / 60 * 36px)}}
+.pm{display:flex;gap:6px;width:100%}
+.pm-btn{flex:1;min-width:64px;min-height:64px;border-radius:16px;background:var(--off);font-family:"Fredoka",sans-serif;font-size:2rem;font-weight:700;box-shadow:var(--sombra)}
+.pm-btn:active{transform:translateY(2px)}
+
+.maquina-btn,.enviar{flex:0 0 auto;min-width:88px;min-height:64px;border-radius:20px;background:var(--card);box-shadow:var(--sombra);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;font-weight:800}
+.enviar{background:var(--verde);color:#143024;font-family:"Fredoka",sans-serif;font-size:1.25rem;min-width:104px}
+.enviar.bloqueado{filter:saturate(.4)}
+.maquina-svg svg{width:84px;height:auto;display:block}
+.maquina-btn.pide-pegar{box-shadow:0 0 0 4px var(--verde), 0 0 18px var(--verde);animation:pulso 1s ease-in-out infinite}
+.maq-etiq{font-size:.85rem}
+@keyframes pulso{50%{transform:translateY(-2px)}}
+.gira #engrane-izq{transform-box:view-box;transform-origin:80px 184px;animation:giro .8s linear infinite}
+.gira #engrane-der{transform-box:view-box;transform-origin:160px 184px;animation:giro .8s linear infinite reverse}
+@keyframes giro{to{transform:rotate(360deg)}}
+
+.canje{background:var(--card);border-radius:20px;padding:10px 14px;box-shadow:var(--sombra);min-width:min(420px, 94vw)}
+.canje .cuenta{font-family:"Fredoka",sans-serif;font-size:3rem;margin:0;line-height:1}
+.canje .frase{font-size:1.25rem;font-weight:800;margin:.2rem 0}
+.canje .conserva{margin:0;color:var(--muted);font-weight:800}
+.fichas{display:flex;gap:3px;justify-content:center;align-items:flex-end;min-height:48px;flex-wrap:wrap}
+.ficha{height:36px;width:auto}
+.ficha.cae{animation:caer .2s ease-in forwards}
+.ficha.desvanece{animation:fade .2s linear forwards}
+.ficha.espera{opacity:0}
+.ficha.espera.cae,.ficha.espera.desvanece{opacity:1;animation:surge .2s linear forwards}
+@keyframes caer{to{transform:translateY(26px);opacity:0}}
+@keyframes fade{to{opacity:.15}}
+@keyframes surge{from{opacity:.15}to{opacity:1}}
+
+.aviso{min-height:1.4em;margin:0;font-weight:800;font-size:1.15rem;color:var(--azul)}
+.feedback{background:var(--card);border-radius:18px;padding:10px 12px;box-shadow:var(--sombra);width:min(560px, 100%)}
+.lados{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lados > div{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:800}
+.bandas-fb{list-style:none;padding:0;margin:.4rem 0 0;display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center}
+.bandas-fb li{border-radius:999px;padding:.2em .7em;font-weight:800;background:var(--off)}
+.bandas-fb li.ok{background:#d8f6e8}
+.bandas-fb li.mal{background:#ffe0d8}
+.respuesta{font-weight:800;margin:.4rem 0 0}
+
+.camiones{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%}
+.camion-btn{width:min(240px, 30vw);min-width:140px;min-height:64px;border-radius:18px;border:4px solid transparent;padding:0;background:transparent}
+.camion-btn.sel{border-color:var(--sol)}
+.camion-btn.puesto-mal{outline:4px solid var(--coral)}
+.camion-btn svg{width:100%;height:auto;display:block}
+
+.velo{position:fixed;inset:0;background:rgba(43,34,54,.45);display:grid;place-items:center;z-index:5;padding:16px}
+.dialogo{background:var(--card);border-radius:24px;padding:1.2rem;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:.7rem;min-width:min(360px, 92vw)}
+.dialogo p{font-family:"Fredoka",sans-serif;font-size:2rem;margin:0}
+
+.estrellas{display:inline-flex;gap:.15em}
+.estrellas svg{width:1.3em;height:1.3em}
+.estrellas .on{fill:var(--star)}
+.estrellas .off{fill:var(--off)}
+.estrellas.grande svg{width:3.2rem;height:3.2rem}
+.subio{background:var(--sol);color:#2b2236;border-radius:18px;padding:.7rem 1rem}
+.subio b{font-family:"Fredoka",sans-serif;font-size:1.3rem;display:block}
+.tarjeta-reto{background:var(--card);border-radius:22px;padding:1rem 1.2rem;box-shadow:var(--sombra);max-width:32rem}
+.tarjeta-reto b{font-family:"Fredoka",sans-serif;font-size:1.5rem}
+.semana{display:flex;gap:.4rem;justify-content:center}
+.dia{display:flex;flex-direction:column;align-items:center;gap:.15rem;font-weight:800;color:var(--muted);font-size:.85rem}
+.dia .punto{width:2rem;height:2rem;border-radius:50%;background:var(--off);display:grid;place-items:center}
+.dia.jugo .punto{background:var(--azul)}
+.dia.reto .punto{background:var(--verde)}
+.dia .punto svg{width:1.1rem;height:1.1rem}
+
+.mapa{list-style:none;padding:0;margin:0;display:grid;gap:.45rem;width:min(560px, 100%)}
+.nivel{width:100%;display:flex;align-items:center;gap:.7rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:.45rem .8rem;min-height:64px}
+.nivel b.num{font-family:"Fredoka",sans-serif;width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;background:var(--off);flex:none}
+.nivel .nom{flex:1;display:flex;flex-direction:column;font-weight:800}
+.nivel .nom small{font-weight:600;color:var(--muted)}
+.nivel.dominado b.num{background:var(--verde);color:#143024}
+.nivel.abierto b.num{background:var(--azul);color:#fff}
+.nivel.actual{border-color:var(--verde)}
+.nivel.cerrado{opacity:.55}
+.nota{color:var(--muted);max-width:40rem;margin:0;text-align:left}
+.tabla{border-collapse:collapse;width:min(720px, 100%);font-size:.95rem;text-align:left}
+.tabla th,.tabla td{padding:.35rem .45rem;border-bottom:1px solid var(--line)}
+.tabla th{color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .riel.andando{animation:none}
+  .gira #engrane-izq,.gira #engrane-der{animation:none}
+  .ficha.cae{animation:fade .2s linear forwards}
+}
+html[data-modo="tv"] .pedido{font-size:2rem}
+html[data-modo="tv"] .pm-btn{min-height:72px;min-width:72px}
+html[data-modo="tv"] .piezas.c img{width:34px;height:34px}
+html[data-modo="tv"] .piezas.c img.mil{width:calc(34px * 139 / 92)}
+html[data-modo="tv"] .piezas.d img{height:78px}
+html[data-modo="tv"] .banda{flex-basis:160px}

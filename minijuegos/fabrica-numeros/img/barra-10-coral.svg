@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 93">
+<title>Barra de diez (10), coral</title>
+<rect x=".5" y=".5" width="11" height="92" rx="2" fill="#ff6b4a" stroke="rgba(0,0,0,.25)"/>
+<path d="M.5 10.5h11M.5 19.5h11M.5 28.5h11M.5 37.5h11M.5 46.5h11M.5 55.5h11M.5 64.5h11M.5 73.5h11M.5 82.5h11" stroke="rgba(0,0,0,.18)"/>
+</svg>

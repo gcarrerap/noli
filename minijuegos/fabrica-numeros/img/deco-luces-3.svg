@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -10 120 112">
+<title>Faro giratorio de la fábrica</title>
+<g id="rayos" stroke="#ffc43d" stroke-width="7" stroke-linecap="round" opacity=".9">
+  <path d="M20 54h-14M100 54h14M30 24l-10-10M90 24l10-10M60 8V-4"/>
+</g>
+<path class="foco" d="M30 80V52a30 30 0 0 1 60 0v28z" fill="#ffa21f" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M44 52a16 16 0 0 1 16-16" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<rect x="20" y="78" width="80" height="20" rx="6" fill="#4a4060" stroke="#2b2236" stroke-width="5"/>
+</svg>
