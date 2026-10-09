@@ -1,0 +1,13 @@
+{
+  "id": "safari-datos",
+  "titulo": "Safari de Datos",
+  "descripcion": "Cuenta animales, arma gráficas y contesta qué hay más.",
+  "icono": "icono.svg",
+  "color": "#5c6bc0",
+  "materia": "matemáticas",
+  "edades": [6, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}
