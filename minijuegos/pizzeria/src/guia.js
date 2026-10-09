@@ -1,5 +1,6 @@
 // Guía fija de 2 partes iguales.
-// Los pasos 0, 1 y 2 solo muestran algo: avanzan con cualquier toque, con OK o solos a los 2 s.
+// Los pasos 0, 1 y 2 solo muestran algo: avanzan con cualquier toque, con OK,
+// o solos cuando acaba la frase (al menos 2 s, nunca más de 3 s).
 // El paso 3 es servir: solo avanza al pulsar la pizza igual. OK repetido no lo salta.
 // Con «¿Salir?» abierto solo valen Seguir y Salir. El foco nunca cae en Saltar solo.
 // En el paso 3 el foco está en la pizza igual, para que OK la sirva.
@@ -54,6 +55,40 @@ export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}
   if (t < GUIA_CIERRE_MS) return true;
   if (t >= GUIA_TOPE_MS) return false;
   return !!vozSigue;
+}
+
+// «¿Salir?» pausa el paso. Al pulsar Seguir, el reloj y la espera de la voz
+// empiezan de cero: el tiempo con el diálogo abierto no adelanta el paso.
+// El cierre de 1 s solo vuelve a empezar si todavía no había pasado al abrir.
+// Si ya había pasado, no se suma a los 400 ms de después del diálogo.
+export function reanudarPasoGuia({ ahora = 0, vozSigue = false, bloqueoListo = false } = {}) {
+  const desdeBloqueo = bloqueoListo ? ahora - GUIA_CIERRE_MS : ahora;
+  return {
+    desde: ahora,
+    desdeBloqueo,
+    bloqueoAbierto: !!bloqueoListo,
+    auto: siguienteAutoGuia({ transcurrido: 0, vozSigue }),
+    bloqueada: bloqueoListo ? false : guiaBloqueada({ ahora, aparecio: ahora, vozSigue }),
+  };
+}
+
+// aviso true: la frase acabó bien. false: falló. undefined: sigue hablando.
+// Una falla o una voz que no empezó no es «ya terminó»: el piso sigue en 2 s.
+export function vozDelPaso(empezo, aviso) {
+  if (!empezo) return false;
+  if (aviso === true || aviso === false) return false;
+  return true;
+}
+
+// Un paso que solo se mira no se va a los 2 s si la frase sigue.
+// Espera a que termine, con el mismo tope de 3 s. Si no hay voz, se queda 2 s.
+// Nunca avanza solo antes de los 2 s.
+export function siguienteAutoGuia({ transcurrido = 0, vozSigue = false } = {}) {
+  const t = Number(transcurrido) || 0;
+  if (t >= GUIA_TOPE_MS) return { avanzar: true, espera: 0 };
+  if (!vozSigue && t >= GUIA_TOQUE_MS) return { avanzar: true, espera: 0 };
+  const meta = vozSigue ? GUIA_TOPE_MS : GUIA_TOQUE_MS;
+  return { avanzar: false, espera: Math.max(0, meta - t) };
 }
 
 // El primer pedido, justo después de la guía, no acepta respuesta el primer segundo.

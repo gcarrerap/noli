@@ -5,7 +5,7 @@ import { clic, listo as sonidoListo, feliz as sonidoFeliz, desbloquear } from ".
 import { patron, lineasSvg, rebanadasDe, svgPila } from "./cortes.js";
 import { svgFigura, nombreFigura } from "./figuras.js";
 import { esCorrecto } from "./pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, GUIA_TOQUE_MS } from "./guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia, reanudarPasoGuia, vozDelPaso, guiaBloqueada } from "./guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, textoPista, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import { abiertos, recienAbierto } from "./deco.js";
 import { ajustar, opcionesCuantos, bandejaLista, focoTrasContador, BANDEJA_MAX } from "./bandeja.js";
@@ -14,7 +14,7 @@ import {
   fechaLocal, semana, resumen, marcarGuia, textoRacha, VENTANA, nuevo as progresoNuevo,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
-import { accionAtras, resolverAtras, alCerrarSalir } from "./salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo, ignoraTrasCierre } from "./salida.js";
 
 const $main = document.getElementById("juego");
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -37,7 +37,10 @@ let relojGuia = 0;
 let focoAntes = null;
 let focosGuardados = null;
 let pasoAparecio = 0;
+let bloqueoDesde = 0;
+let bloqueoAlAbrir = false;
 let vozSigue = false;
+let cerroSalir = 0;
 let vozGen = 0;
 let ordenDesde = 0;
 let ordenTrasGuia = false;
@@ -279,17 +282,22 @@ function limpiarRelojGuia() {
 }
 
 function programarGuia() {
-  if (!esGuia() || saliendo || !guiaAvanzaConToque(partida.paso)) {
-    if (!esGuia() || !guiaAvanzaConToque(partida.paso)) limpiarRelojGuia();
+  limpiarRelojGuia();
+  if (!esGuia() || saliendo || !guiaAvanzaConToque(partida.paso)) return;
+  const paso = partida.paso;
+  const decision = siguienteAutoGuia({
+    transcurrido: Date.now() - (pasoAparecio || Date.now()),
+    vozSigue,
+  });
+  if (decision.avanzar) {
+    aplicarPasoGuia(siguientePasoGuia(paso, { tipo: "tiempo" }));
     return;
   }
-  if (relojGuia) return;
-  const paso = partida.paso;
   relojGuia = setTimeout(() => {
     relojGuia = 0;
     if (saliendo || !esGuia() || partida.paso !== paso) return;
-    aplicarPasoGuia(siguientePasoGuia(paso, { tipo: "tiempo" }));
-  }, GUIA_TOQUE_MS);
+    programarGuia();
+  }, Math.max(16, decision.espera));
 }
 
 function pintarGuia() {
@@ -310,12 +318,16 @@ function pintarGuia() {
     </div>
     <p class="pista"></p>
     <p class="aviso" aria-live="polite"></p>`, "guia", foco);
-  programarGuia();
   hablarGuia(paso);
+  programarGuia();
 }
 
 function estadoGuia() {
-  return { ahora: Date.now(), aparecio: pasoAparecio, vozSigue };
+  return {
+    ahora: Date.now(),
+    aparecio: bloqueoDesde || pasoAparecio,
+    vozSigue: bloqueoAlAbrir ? false : vozSigue,
+  };
 }
 
 function ordenCallada() {
@@ -324,14 +336,21 @@ function ordenCallada() {
 
 function hablarGuia(paso) {
   pasoAparecio = Date.now();
+  bloqueoDesde = pasoAparecio;
+  bloqueoAlAbrir = false;
   const mio = ++vozGen;
   vozSigue = false;
   if (!pr.voz) return;
   const linea = hablaSegura(vozDeGuia(paso, textos, modoJuego()));
   if (!linea) return;
-  vozSigue = decir(linea, "es-MX", () => {
-    if (mio === vozGen) vozSigue = false;
+  let aviso;
+  const empezo = decir(linea, "es-MX", (ok) => {
+    if (mio !== vozGen) return;
+    aviso = ok === true;
+    vozSigue = vozDelPaso(true, aviso);
+    programarGuia();
   }) === true;
+  vozSigue = vozDelPaso(empezo, aviso);
 }
 
 function aplicarPasoGuia(paso) {
@@ -850,6 +869,11 @@ function programarPista() {
 
 function abrirSalir() {
   if (saliendo) return;
+  bloqueoAlAbrir = esGuia() && !guiaBloqueada({
+    ahora: Date.now(),
+    aparecio: bloqueoDesde || pasoAparecio,
+    vozSigue,
+  });
   token++;
   clearTimeout(relojPista);
   limpiarRelojGuia();
@@ -865,7 +889,6 @@ function abrirSalir() {
 function cerrarSalir(ySalir) {
   const velo = $main.querySelector(".salir-velo");
   if (velo) velo.remove();
-  saliendo = false;
   if (focosGuardados) {
     for (const item of focosGuardados) {
       if (item.el.isConnected) item.el.setAttribute("data-foco", item.valor == null ? "" : item.valor);
@@ -878,6 +901,14 @@ function cerrarSalir(ySalir) {
     revelado: !!(partida && partida.revelado),
     guia: esGuia(),
   });
+  cerroSalir = Date.now();
+  if (esGuia() && que !== "salir") {
+    const re = reanudarPasoGuia({ ahora: cerroSalir, vozSigue, bloqueoListo: bloqueoAlAbrir });
+    pasoAparecio = re.desde;
+    bloqueoDesde = re.desdeBloqueo;
+    bloqueoAlAbrir = re.bloqueoAbierto;
+  }
+  saliendo = false;
   if (que === "salir") { Noli.salir(); return; }
   if (que === "avanzar") { avanzar(); return; }
   if (partida && partida.revelado && partida.espera) luego(avanzar, partida.espera);
@@ -907,11 +938,17 @@ $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   const ir = (t && t.dataset.ir) || "";
   if (saliendo) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    if (!enDialogo && toqueEnVelo({ modo: modoJuego(), enDialogo }) === "seguir") {
+      cerrarSalir(false);
+      return;
+    }
     const efecto = toqueDuranteGuia(esGuia() ? partida.paso : 0, { dialogoAbierto: true, ir });
     if (efecto.accion === "seguir") cerrarSalir(false);
     else if (efecto.accion === "salir") cerrarSalir(true);
     return;
   }
+  if (ignoraTrasCierre({ ahora: Date.now(), cerro: cerroSalir })) return;
   if (esGuia()) {
     const efecto = toqueDuranteGuia(partida.paso, { dialogoAbierto: false, ir });
     if (efecto.accion === "nada") return;
@@ -948,6 +985,7 @@ Noli.alEntrar((accion) => {
     else abrirSalir();
     return true;
   }
+  if (!saliendo && accion === "ok" && ignoraTrasCierre({ ahora: Date.now(), cerro: cerroSalir })) return true;
   if (saliendo) {
     if (moverFoco(accion, $main)) return true;
     if (accion === "ok") {
