@@ -110,16 +110,21 @@ main {
   gap: 6px;
 }
 .rejilla.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-.rejilla.n4 .dibujo { height: 44px; }
-.rejilla.n4 .zona-texto { font-size: .85rem; line-height: 1.15; }
-.huecos.n4 > button.hueco { height: 56px; max-height: 56px; overflow: hidden; }
-.huecos.n4 > button.hueco > .svg { height: 52px; }
+.rejilla.n4 .dibujo { height: 36px; }
+.rejilla.n4 .zona-texto { font-size: .78rem; line-height: 1.05; }
+.huecos.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.huecos.n4 > button.hueco { height: 44px; max-height: 44px; overflow: hidden; }
+.huecos.n4 > button.hueco > .svg { height: 40px; }
 .rejilla.n5, .rejilla.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.rejilla.n5 { gap: 4px; }
-.rejilla.n5 .dibujo { height: 36px; }
-.rejilla.n5 .zona-texto { font-size: .78rem; line-height: 1.1; }
-.huecos.n5 > button.hueco { height: 52px; max-height: 52px; overflow: hidden; }
-.huecos.n5 > button.hueco > .svg { height: 48px; }
+.rejilla.n5, .rejilla.n6 { gap: 3px; }
+.rejilla.n5 .dibujo, .rejilla.n6 .dibujo { height: 28px; }
+.rejilla.n5 .zona-texto, .rejilla.n6 .zona-texto { font-size: .7rem; line-height: 1.05; }
+.huecos.n5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.huecos.n6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.huecos.n5 > button.hueco,
+.huecos.n6 > button.hueco { height: 40px; max-height: 40px; overflow: hidden; }
+.huecos.n5 > button.hueco > .svg,
+.huecos.n6 > button.hueco > .svg { height: 36px; }
 .tarjeta, .hueco, .opcion {
   min-width: 0;
   min-height: 64px;
@@ -127,6 +132,34 @@ main {
   background: var(--card);
   border-radius: 16px;
   box-shadow: var(--sombra);
+}
+.tarjeta { display: flex; flex-direction: column; background: transparent; box-shadow: none; }
+.tarjeta > .cuerpo { background: var(--card); border-radius: 16px; box-shadow: var(--sombra); }
+.palabras-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+}
+.boton.palabras {
+  width: 64px;
+  min-width: 64px;
+  height: 64px;
+  min-height: 64px;
+  margin: 0;
+  padding: 2px;
+  font-size: .62rem;
+  line-height: 1.05;
+  flex: none;
+  flex-direction: column;
+  gap: 0;
+}
+.boton.palabras .cual {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: .62rem;
 }
 .cuerpo, .opcion, .hueco {
   width: 100%;
@@ -149,34 +182,60 @@ main {
 .linea { margin: 0; }
 .palabra { border-radius: 6px; font-weight: 800; }
 button.palabra {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 32px;
-  padding: 0 .2em;
-  font-size: 1.05rem;
+  padding: 0 .15em;
+  font-size: 1rem;
   line-height: 1.1;
   vertical-align: middle;
 }
-button.palabra::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 64px;
-  height: 64px;
-  transform: translate(-50%, -50%);
+.oracion button.palabra,
+.palabras-hoja button.palabra {
+  min-width: 64px;
+  min-height: 64px;
+  margin: 2px;
+  padding: 6px 8px;
+  font-size: 1.15rem;
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
 }
-.oracion button.palabra { min-height: 64px; font-size: 1.2rem; }
-.rejilla.n5 button.palabra,
-.rejilla.n6 button.palabra { min-height: 26px; font-size: .95rem; }
+.palabras-hoja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+}
 .palabra.habla { background: var(--sol); }
 .no-aqui { margin: 0; font-size: .72rem; font-weight: 800; color: var(--coral); text-align: center; }
 .tarjeta.mal { outline: 3px solid var(--coral); }
 .tarjeta.sin-dibujo .pista, .tarjeta.sin-dibujo .insignia { display: none; }
-.mano { background: var(--sol); border-radius: 14px; padding: .35em .7em; }
+.mano {
+  position: absolute;
+  z-index: 4;
+  left: 8px;
+  right: 8px;
+  bottom: 72px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  background: var(--sol);
+  border-radius: 14px;
+  padding: .25em .5em;
+}
+.mano .boton.palabras {
+  position: static;
+  pointer-events: auto;
+  width: 64px;
+  height: 64px;
+  margin: 0;
+  flex: none;
+}
 .num {
   position: absolute;
   top: 4px;
@@ -189,13 +248,7 @@ button.palabra::before {
 .hueco { background: transparent; box-shadow: none; }
 .hueco > .svg { height: 64px; }
 .huecos .dibujo { height: 48px; }
-.huecos.n6 > button.hueco { height: 72px; max-height: 80px; overflow: hidden; }
-.huecos.n6 > button.hueco > .svg { height: 64px; }
-.huecos.n6 .dibujo { height: 36px; }
-.huecos.n6 .zona-texto { font-size: .68rem; line-height: 1.1; }
-.rejilla.n6 { gap: 4px; }
-.rejilla.n6 .dibujo { height: 40px; }
-.p-jugar { gap: 4px; padding-bottom: 8px; }
+.p-jugar { gap: 4px; padding-bottom: 8px; position: relative; }
 .estante { width: min(100%, 520px); height: 168px; min-width: 0; position: relative; }
 .estante > .svg { position: absolute; inset: 0; height: 100%; }
 .libros {
@@ -261,22 +314,23 @@ html[data-modo="tv"] .rejilla.n5 { grid-template-columns: repeat(5, minmax(0, 1f
 html[data-modo="tv"] .rejilla.n6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 html[data-modo="tv"] .menu { display: grid; grid-template-columns: 1fr 1fr; }
 html[data-modo="tv"] .rejilla.n4 .dibujo,
-html[data-modo="tv"] .rejilla.n5 .dibujo { height: 72px; }
-html[data-modo="tv"] .rejilla.n5 .zona-texto { font-size: 1rem; line-height: 1.25; }
-html[data-modo="tv"] .huecos.n5 > button.hueco { height: auto; max-height: none; overflow: visible; }
-html[data-modo="tv"] .rejilla.n4 .zona-texto { font-size: 1rem; line-height: 1.25; }
-html[data-modo="tv"] .huecos.n4 > button.hueco { height: auto; max-height: none; overflow: visible; }
-html[data-modo="tv"] .dibujo { height: 88px; }
+html[data-modo="tv"] .rejilla.n5 .dibujo,
+html[data-modo="tv"] .rejilla.n6 .dibujo { height: 56px; }
+html[data-modo="tv"] .huecos.n4 > button.hueco,
+html[data-modo="tv"] .huecos.n5 > button.hueco,
+html[data-modo="tv"] .huecos.n6 > button.hueco { height: auto; max-height: none; overflow: visible; }
+html[data-modo="tv"] .dibujo { height: 72px; }
 html[data-modo="tv"] .hueco { max-height: none; overflow: visible; }
-html[data-modo="tv"] .hueco > .svg { height: 84px; }
+html[data-modo="tv"] .hueco > .svg { height: 72px; }
 html[data-modo="tv"] .huecos.n6 > .hueco,
 html[data-modo="tv"] .huecos.n6 > .hueco.lleno { max-height: none; overflow: visible; }
-html[data-modo="tv"] .huecos .dibujo,
-html[data-modo="tv"] .rejilla.n6 .dibujo,
-html[data-modo="tv"] .huecos.n6 .dibujo { height: 72px; }
 html[data-modo="tv"] .zona-texto,
 html[data-modo="tv"] .oracion,
-html[data-modo="tv"] .huecos.n6 .zona-texto { font-size: 1rem; line-height: 1.25; }
+html[data-modo="tv"] .rejilla.n4 .zona-texto,
+html[data-modo="tv"] .rejilla.n5 .zona-texto,
+html[data-modo="tv"] .rejilla.n6 .zona-texto,
+html[data-modo="tv"] .huecos.n6 .zona-texto { font-size: 22px; line-height: 1.2; }
+html[data-modo="tv"] .boton.palabras { font-size: 16px; }
 html[data-modo="tv"] .lobo, html[data-modo="tv"] .paginas { height: 120px; }
 html[data-modo="tv"] .estante { width: min(100%, 640px); height: 150px; }
 html[data-modo="tv"] .libro .svg { height: 64px; }

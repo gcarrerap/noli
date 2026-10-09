@@ -61,6 +61,18 @@ export function poner(estado, slot) {
   };
 }
 
+// Al tomar, el foco va al primer hueco vacío. Si no hay, a Soltar.
+// No usa el hueco de la pista: ese puede estar ocupado y el foco se cae a Escuchar.
+export function focoTrasTomar(estado) {
+  if (!estado) return "soltar";
+  if (estado.tomada) {
+    const vacio = (estado.huecos || []).findIndex((h) => !h);
+    return vacio >= 0 ? `hueco-${vacio}` : "soltar";
+  }
+  const id = (estado.mazo || [])[0];
+  return id ? `tarjeta-${id}` : "soltar";
+}
+
 export function estaCompleto(estado) {
   if (!estado) return false;
   return estado.huecos.every((id, i) => id === estado.meta[i]);

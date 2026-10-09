@@ -10,15 +10,15 @@ import {
   AUTO_MIRAR_MS, TOPE_VOZ_MS, BLOQUEO_MIRAR_MS,
 } from "../src/guia.js";
 import { hablarTexto, decirGrabacion, prepararVoces } from "../src/voz.js";
-import { ordenNuevo, tomar, poner, soltar, estaCompleto, cuentaPrimeraOrden, idsEnLectura } from "../src/orden.js";
-import { cuentaPrimeraPregunta, fasePista, marcaPasoCompleto, textoCorto, fraseListo } from "../src/pista.js";
+import { ordenNuevo, tomar, poner, soltar, estaCompleto, cuentaPrimeraOrden, idsEnLectura, focoTrasTomar } from "../src/orden.js";
+import { cuentaPrimeraPregunta, fasePista, marcaPasoCompleto, textoCorto, fraseListo, pistaConListo } from "../src/pista.js";
 import {
   nuevo, anotarTarea, dominio, estrellasTurno, cerrarCapitulo, guardarCurso, cuentoDe,
   leeSolo, desbloqueado, ponerCuento, cumplirReto,
 } from "../src/progreso.js";
 import { retoDelDia } from "../src/reto.js";
 import { archivosDe } from "../src/audios.js";
-import { resolverAtras, zonaPermitida, debeIgnorar, hastaIgnorar, hastaLibre, toqueEnVelo, TRAS_DIALOGO_MS } from "../src/salida.js";
+import { resolverAtras, zonaPermitida, debeIgnorar, hastaIgnorar, hastaLibre, toqueEnVelo, TRAS_DIALOGO_MS, focoAlAbrirEstante, bloqueoAlEntrar } from "../src/salida.js";
 import { relojNuevo, relojPausar, relojReanudar, relojReiniciar, relojMs } from "../src/reloj.js";
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -514,4 +514,68 @@ test("la pantalla no arrastra ni usa emojis", () => {
   assert.doesNotMatch(juego, /draggable|ondrag|ondrop|dragstart|pointermove/);
   assert.match(juego, /Escuchar|escuchar/);
   assert.match(juego, /boton-listo\.svg/);
+  assert.doesNotMatch(estilo, /button\.palabra::before/);
+});
+
+test("al tomar, el foco va al primer hueco vacío", () => {
+  let s = ordenNuevo(["a", "b", "c"], ["b", "a", "c"]);
+  s = poner(tomar(s, "b"), 0);
+  s = tomar(s, "a");
+  assert.equal(s.huecos[0], "b");
+  assert.equal(s.tomada, "a");
+  assert.equal(focoTrasTomar(s), "hueco-1");
+  assert.equal(focoTrasTomar({ tomada: "a", huecos: ["b", "c"], mazo: [] }), "soltar");
+  assert.equal(focoTrasTomar(ordenNuevo(["a"], ["a"])), "tarjeta-a");
+});
+
+test("con Listo encendido la pista solo dice Listo", () => {
+  assert.equal(pistaConListo({ completo: true, nivel: 2, tv: true, pista: "¿Qué pasa primero?" }), "Pulsa OK en Listo.");
+  assert.equal(pistaConListo({ completo: true, nivel: 4, tv: false, pista: "¿Qué pasa primero?" }), "Toca Listo.");
+  assert.equal(pistaConListo({ completo: false, nivel: 2, tv: true, pista: "¿Qué pasa primero?" }), "¿Qué pasa primero?");
+  assert.equal(pistaConListo({ completo: true, nivel: 1, tv: true, pista: "La casa de paja va primera." }), "¡Brilla! Pulsa OK en Listo.");
+  assert.equal(fraseListo(true).texto.includes("Toca"), false);
+});
+
+test("tras la guía no se enfoca un libro, y la tarea espera 1 s", () => {
+  assert.equal(focoAlAbrirEstante("cerditos", { trasGuia: true }), null);
+  assert.equal(focoAlAbrirEstante("cerditos"), "libro-cerditos");
+  const T = 1.7e12;
+  assert.equal(bloqueoAlEntrar(T + 400, T + 500), T + 1500);
+  assert.equal(bloqueoAlEntrar(T + 9000, T + 500), T + 9000);
+  assert.notEqual((T + 1500) | 0, T + 1500);
+});
+
+test("un OK cada 50 ms no pulsa Listo al encenderse, ni con tiempos de época", () => {
+  const T = 1.7e12;
+  let g = guiaNueva(T);
+  g = reducirGuia(g, { tipo: "voz", resultado: "fallo", ahora: T + 100 });
+  g = reducirGuia(g, { tipo: "ok", ahora: T + 1000 });
+  assert.equal(g.paso, 1);
+  g = reducirGuia(g, { tipo: "voz", resultado: "fallo", ahora: T + 1100 });
+  g = reducirGuia(g, { tipo: "ok", ahora: T + 2000 });
+  assert.equal(g.paso, 2);
+  g = reducirGuia(g, { tipo: "tomar", id: "casas", ahora: T + 3500 });
+  assert.equal(g.paso, 3);
+  const puesto = reducirGuia(g, { tipo: "poner", slot: 0, ahora: T + 5000 });
+  assert.equal(puesto.fin, false);
+  assert.ok(puesto.bloqueoHasta >= T + 6000);
+  for (let t = 5000; t < 6000; t += 50) {
+    assert.equal(reducirGuia(puesto, { tipo: "listo", ahora: T + t }).fin, false);
+    assert.equal(reducirGuia(puesto, { tipo: "ok", foco: "listo", ahora: T + t }).fin, false);
+  }
+  assert.equal(reducirGuia(puesto, { tipo: "listo", ahora: T + 6000 }).fin, true);
+  assert.notEqual((T + 6000) | 0, T + 6000);
+});
+
+test("la planta no tapa once palabras y nubes no es el castillo", () => {
+  const plantadas = ["bean", "beans", "climb", "cuts", "falls", "finds", "green", "grows", "plant", "plants", "tall"];
+  for (const clave of plantadas) {
+    const dato = glosario[clave];
+    const visible = !(dato.sinFigura || dato.funcion);
+    if (visible) assert.notEqual(dato.dibujo, "escena-frijol.svg", clave);
+    else assert.equal(dato.sinFigura, true, clave);
+  }
+  assert.equal(glosario.clouds.dibujo.includes("cloud"), true);
+  assert.notEqual(glosario.clouds.dibujo, "escena-castillo-nubes.svg");
+  assert.equal(glosario.clouds.sinFigura, undefined);
 });

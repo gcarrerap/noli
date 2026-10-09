@@ -40,4 +40,5 @@ export const TEXTOS = {
   capitulo: "Capítulo",
   domina: "¡Ya dominas este cuento!",
   mano: "En la mano",
+  palabras: "Palabras",
 };

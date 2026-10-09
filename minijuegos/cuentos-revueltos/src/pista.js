@@ -1,5 +1,6 @@
 // La pista dice cómo se hace. La respuesta no aparece hasta un intento fallido.
 // «En español» es el último escalón, y solo en las preguntas.
+import { TEXTOS } from "./textos.js";
 
 export const FLECHA_MS = 20000;
 export const COMPLETA_MS = 40000;
@@ -50,6 +51,13 @@ export function fraseListo(tv) {
   return tv
     ? { texto: "Pulsa OK en Listo.", voz: "Pulsa OK en Listo." }
     : { texto: "Toca Listo.", voz: "Toca Listo." };
+}
+
+// Con Listo encendido solo se dice eso. No se le suma «¿Qué pasa primero?».
+export function pistaConListo({ completo, nivel, tv, pista }) {
+  if (!completo) return pista || "";
+  if ((Number(nivel) || 0) <= 1) return tv ? TEXTOS.brillaTv : TEXTOS.brillaToca;
+  return fraseListo(!!tv).texto;
 }
 
 export function cuentaPrimeraPregunta({ nivel, vioCompleta, acerto }) {

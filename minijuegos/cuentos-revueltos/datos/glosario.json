@@ -49,11 +49,11 @@
   },
   "bean": {
     "es": "frijol",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "dibujos/dibujo-bean.svg"
   },
   "beans": {
     "es": "frijoles",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "dibujos/dibujo-bean.svg"
   },
   "bears": {
     "es": "osos",
@@ -145,7 +145,8 @@
   },
   "climb": {
     "es": "subir",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "climbs": {
     "es": "sube",
@@ -153,7 +154,7 @@
   },
   "clouds": {
     "es": "nubes",
-    "dibujo": "escena-castillo-nubes.svg"
+    "dibujo": "dibujos/dibujo-clouds.svg"
   },
   "come": {
     "es": "venir",
@@ -169,7 +170,8 @@
   },
   "cuts": {
     "es": "corta",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "did": {
     "es": "hizo",
@@ -215,7 +217,8 @@
   },
   "falls": {
     "es": "cae",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "fast": {
     "es": "rápido",
@@ -239,7 +242,8 @@
   },
   "finds": {
     "es": "encuentra",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "for": {
     "es": "para",
@@ -284,11 +288,13 @@
   },
   "green": {
     "es": "verde",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "grows": {
     "es": "crece",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "happened": {
     "es": "pasó",
@@ -438,11 +444,13 @@
   },
   "plant": {
     "es": "planta",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "plants": {
     "es": "siembra",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "puffed": {
     "es": "sopló",
@@ -541,7 +549,8 @@
   },
   "tall": {
     "es": "alta",
-    "dibujo": "escena-frijol.svg"
+    "dibujo": "escena-frijol.svg",
+    "sinFigura": true
   },
   "the": {
     "es": "el",

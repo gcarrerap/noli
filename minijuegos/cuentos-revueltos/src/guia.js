@@ -164,6 +164,15 @@ function seguirDialogo(estado, ahora) {
   };
 }
 
+// Al encenderse Listo hay 1 s de candado, para que un OK sostenido no lo pulse al momento.
+function alEncenderListo(estado, ahora) {
+  const puesto = { ...estado, huecos: ["casas", "lobo", "cozy"], tomada: null };
+  if (!listoGuiaActivo(puesto)) return puesto;
+  const hasta = ahora + 1000;
+  const previo = Number.isFinite(puesto.bloqueoHasta) ? puesto.bloqueoHasta : 0;
+  return { ...puesto, bloqueoHasta: Math.max(previo, hasta) };
+}
+
 export function reducirGuia(estado, evento) {
   if (!estado || estado.fin) return estado;
   const ahora = evento.ahora ?? 0;
@@ -204,7 +213,7 @@ export function reducirGuia(estado, evento) {
       return { ...estado, fin: true, guardar: true, paso: 4 };
     }
     if (estado.paso === 3 && evento.foco === "hueco-0" && estado.tomada === PRIMERA_GUIA) {
-      return { ...estado, huecos: ["casas", "lobo", "cozy"], tomada: null };
+      return alEncenderListo(estado, ahora);
     }
     return estado;
   }
@@ -221,7 +230,7 @@ export function reducirGuia(estado, evento) {
   if (tipo === "poner") {
     if (bloqueado(estado, ahora) || estado.paso !== 3) return estado;
     if (evento.slot !== 0 || estado.tomada !== PRIMERA_GUIA) return estado;
-    return { ...estado, huecos: ["casas", "lobo", "cozy"], tomada: null };
+    return alEncenderListo(estado, ahora);
   }
 
   if (tipo === "soltar") {

@@ -153,7 +153,7 @@
           "preguntaEs": "Beans quiere decir frijoles.",
           "pista": "Son las semillas de la planta.",
           "opciones": [
-            { "id": "beans", "dibujo": "escena-frijol.svg" },
+            { "id": "beans", "dibujo": "dibujos/dibujo-bean.svg" },
             { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" },
             { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" }
           ]

@@ -12,9 +12,10 @@ import {
 } from "./cuentos.js";
 import {
   ordenNuevo, tomar, soltar, poner, estaCompleto, siguienteTarjeta, cuentaPrimeraOrden, idsEnLectura,
+  focoTrasTomar,
 } from "./orden.js";
 import {
-  fasePista, marcaPasoCompleto, textoCorto, esPregunta, cuentaPrimeraPregunta, itemLimpio, fraseListo,
+  fasePista, marcaPasoCompleto, textoCorto, esPregunta, cuentaPrimeraPregunta, itemLimpio, pistaConListo,
 } from "./pista.js";
 import {
   cargar, cuentoDe, guardarCurso, anotarTarea, cerrarCapitulo, reiniciarCuento, marcarGuia,
@@ -26,7 +27,7 @@ import {
   guiaNueva, reducirGuia, debeAutoAvanzar, vozPaso, listoGuiaActivo, focoGuia, saltarEnFlechas, esMirar,
   bloqueoTrasGuia,
 } from "./guia.js";
-import { zonaPermitida, debeIgnorar, hastaIgnorar, hastaLibre, toqueEnVelo } from "./salida.js";
+import { zonaPermitida, debeIgnorar, hastaIgnorar, hastaLibre, toqueEnVelo, focoAlAbrirEstante, bloqueoAlEntrar } from "./salida.js";
 import { relojPausar, relojReanudar, relojMs } from "./reloj.js";
 
 const $main = document.getElementById("juego");
@@ -52,6 +53,8 @@ let guia = null;
 let sesion = null;
 let dialogo = false;
 let ayuda = null;
+let hoja = null;
+let estanteQuieto = false;
 let ignorarHasta = 0;
 let bloqueoGeneral = 0;
 let aviso = "";
@@ -61,7 +64,8 @@ let lecToken = 0;
 let nSvg = 0;
 let pulso = 0;
 const pendientesSvg = new Set();
-let repintarSvg = 0;
+const colaSvg = [];
+let svgTimer = 0;
 const precargadas = new Set();
 const FEEDBACK_MS = 1000;
 
@@ -84,8 +88,8 @@ Noli.alEntrar((accion) => {
     if (accion === "ok") document.activeElement?.click();
     return true;
   }
-  if (ayuda) {
-    const raiz = $main.querySelector(".ayuda") || $main;
+  if (ayuda || hoja) {
+    const raiz = $main.querySelector(".dialogo") || $main;
     if (moverFoco(accion, raiz)) return true;
     if (accion === "ok" && !debeIgnorar(Date.now(), ignorarHasta)) document.activeElement?.click();
     return true;
@@ -104,10 +108,25 @@ Noli.alEntrar((accion) => {
   return true;
 });
 
+// En la tele, un clic en lo oscuro no mueve el foco (el control mágico si no, lo saca de Seguir).
+$main?.addEventListener("pointerdown", (e) => {
+  if (!esTv()) return;
+  if (!e.target.closest(".velo") || e.target.closest(".dialogo")) return;
+  e.preventDefault();
+});
+
 $main?.addEventListener("click", (e) => {
-  if (dialogo && !e.target.closest(".dialogo") && e.target.closest(".velo")) {
-    if (toqueEnVelo({ tv: esTv(), enDialogo: false }) === "seguir") cerrarSalida();
-    return;
+  if (e.target.closest(".velo") && !e.target.closest(".dialogo")) {
+    if (dialogo) {
+      if (toqueEnVelo({ tv: esTv(), enDialogo: false }) === "seguir") cerrarSalida();
+      else $main.querySelector('[data-foco-id="seguir"]')?.focus({ preventScroll: true });
+      return;
+    }
+    if (ayuda || hoja) {
+      if (esTv()) $main.querySelector(".dialogo [data-foco]")?.focus({ preventScroll: true });
+      else { ayuda = null; hoja = null; pintar(false); }
+      return;
+    }
   }
   const btn = e.target.closest("[data-act]");
   if (!btn) {
@@ -126,6 +145,8 @@ $main?.addEventListener("click", (e) => {
   if (act === "seguir-dialogo") { cerrarSalida(); return; }
   if (act === "salir") { salirDelJuego(); return; }
   if (act === "cerrar-ayuda") { ayuda = null; pintar(false); return; }
+  if (act === "cerrar-hoja") { hoja = null; pintar(false); return; }
+  if (act === "palabras") { abrirHoja(btn.dataset.id); return; }
   if (act === "palabra") {
     e.stopPropagation();
     abrirAyuda(btn.dataset.clave);
@@ -143,6 +164,7 @@ document.addEventListener("pointerdown", () => {
 function onAtras() {
   if (dialogo) { cerrarSalida(); return; }
   ayuda = null;
+  hoja = null;
   abrirSalida();
 }
 
@@ -193,6 +215,11 @@ function mostrar(html, nombre, focoId, robar) {
   $main.innerHTML = html;
   if (esTv()) document.documentElement.classList.add("teclado");
   aplicarArte($main);
+  if (robar === "ninguno") {
+    const activo = document.activeElement;
+    if (activo && activo !== document.body && activo.blur) activo.blur();
+    return;
+  }
   const buscar = (id) => (id ? $main.querySelector(`[data-foco-id="${id}"]`) : null);
   if (robar === false) {
     const mismo = buscar(previo);
@@ -209,18 +236,24 @@ function mostrar(html, nombre, focoId, robar) {
 function pedirSvg(nombre) {
   if (!nombre || cache[nombre] != null || pendientesSvg.has(nombre)) return;
   pendientesSvg.add(nombre);
-  fetch(archivo(`../arte/${nombre}`))
+  colaSvg.push(nombre);
+  if (svgTimer) return;
+  svgTimer = setTimeout(vaciarSvg, 0);
+}
+
+function vaciarSvg() {
+  svgTimer = 0;
+  const lote = colaSvg.splice(0);
+  if (!lote.length) return;
+  Promise.all(lote.map((nombre) => fetch(archivo(`../arte/${nombre}`))
     .then((r) => (r.ok ? r.text() : ""))
+    .catch(() => "")
     .then((t) => { cache[nombre] = t || ""; })
-    .catch(() => { cache[nombre] = ""; })
-    .finally(() => {
-      pendientesSvg.delete(nombre);
-      if (repintarSvg) return;
-      repintarSvg = setTimeout(() => {
-        repintarSvg = 0;
-        if (cargado && $main) pintar(false);
-      }, 40);
-    });
+    .finally(() => { pendientesSvg.delete(nombre); })
+  )).then(() => {
+    if (colaSvg.length) { vaciarSvg(); return; }
+    if (cargado && $main) pintar(false);
+  });
 }
 
 function aplicarArte(raiz) {
@@ -254,17 +287,21 @@ function estrellasHtml(n) {
 function palabrasHtml(oracion, { foco, frase }) {
   const partes = String(oracion ?? "").split(/(\s+)/);
   let i = 0;
-  const tv = esTv();
+  const botones = !!foco && !esTv();
   return partes.map((parte) => {
     if (!parte) return "";
     if (!parte.trim()) return esc(parte);
     const clave = clavePalabra(parte);
     const idx = i;
     i += 1;
-    if (tv) return `<span class="palabra" data-frase="${frase}" data-i="${idx}">${esc(parte)}</span>`;
-    const focoAttr = foco ? ` tabindex="0" data-foco data-foco-id="w-${frase}-${idx}"` : "";
-    return `<button type="button" class="palabra" data-act="palabra" data-clave="${esc(clave)}" data-frase="${frase}" data-i="${idx}"${focoAttr}>${esc(parte)}</button>`;
+    if (!botones) return `<span class="palabra" data-frase="${frase}" data-i="${idx}">${esc(parte)}</span>`;
+    return `<button type="button" class="palabra" data-act="palabra" data-clave="${esc(clave)}" data-frase="${frase}" data-i="${idx}" tabindex="0" data-foco data-foco-id="w-${frase}-${idx}">${esc(parte)}</button>`;
   }).join("");
+}
+
+function botonPalabras(id, cual) {
+  const nombre = cual ? ` ${cual}` : "";
+  return `<button type="button" class="boton palabras" data-act="palabras" data-id="${esc(id)}" tabindex="0" data-foco data-foco-id="palabras-${esc(id)}" aria-label="${esc(TEXTOS.palabras + nombre)}"><span>${esc(TEXTOS.palabras)}</span>${cual ? `<span class="cual">${esc(cual)}</span>` : ""}</button>`;
 }
 
 function htmlCab(titulo, { saltar = false } = {}) {
@@ -288,10 +325,41 @@ function htmlDialogo() {
   </div></div>`;
 }
 
+function palabrasDeId(id) {
+  const p = paginaDe(cuentoActual(), id) || CARTAS_GUIA[id];
+  const out = [];
+  for (const o of p?.oraciones || []) {
+    for (const parte of String(o).split(/\s+/)) {
+      if (!parte) continue;
+      out.push({ texto: parte, clave: clavePalabra(parte) });
+    }
+  }
+  return out;
+}
+
+function abrirHoja(id) {
+  if (!id) return;
+  hoja = id;
+  ayuda = null;
+  pintar(true);
+}
+
+function htmlHoja() {
+  if (!hoja) return "";
+  const botones = palabrasDeId(hoja).map((w, i) => (
+    `<button type="button" class="palabra" data-act="palabra" data-clave="${esc(w.clave)}" tabindex="0" data-foco data-foco-id="hw-${i}">${esc(w.texto)}</button>`
+  )).join("");
+  return `<div class="velo hoja"><div class="dialogo" role="dialog" aria-label="${esc(TEXTOS.palabras)}">
+    <p class="coach">${esc(TEXTOS.palabras)}</p>
+    <div class="palabras-hoja">${botones}</div>
+    <button type="button" class="boton grande primario" data-foco="inicial" data-foco-id="cerrar-hoja" data-act="cerrar-hoja">${svg("boton-listo.svg")}<span>${esc(TEXTOS.listo)}</span></button>
+  </div></div>`;
+}
+
 function htmlAyuda() {
   if (!ayuda) return "";
   const dato = glosario[ayuda] || { es: ayuda, dibujo: "libro-abierto.svg" };
-  const dibujo = dato.funcion || !dato.dibujo ? "" : `<div class="dibujo grande">${svg(dato.dibujo)}</div>`;
+  const dibujo = dato.funcion || dato.sinFigura || !dato.dibujo ? "" : `<div class="dibujo grande">${svg(dato.dibujo)}</div>`;
   return `<div class="velo ayuda"><div class="dialogo" role="dialog" aria-label="${esc(dato.es)}">
     ${dibujo}
     <p class="coach">${esc(dato.es)}</p>
@@ -300,8 +368,8 @@ function htmlAyuda() {
 }
 
 function capas(html, nombre, focoId, robar) {
-  const foco = dialogo ? "seguir" : (ayuda ? "cerrar-ayuda" : focoId);
-  mostrar(html + htmlAyuda() + htmlDialogo(), nombre, foco, robar);
+  const foco = dialogo ? "seguir" : (ayuda ? "cerrar-ayuda" : (hoja ? "cerrar-hoja" : focoId));
+  mostrar(html + htmlHoja() + htmlAyuda() + htmlDialogo(), nombre, foco, robar);
 }
 
 function pintar(robar) {
@@ -324,7 +392,9 @@ function libroParaOir() {
   return enMarcha || cuentos[0];
 }
 
-function pintarLibrero() {
+function pintarLibrero(opts = {}) {
+  if (opts.trasGuia) estanteQuieto = true;
+  const quieto = !!opts.trasGuia || estanteQuieto;
   sesion = null;
   guia = null;
   const libros = cuentos.map((c) => {
@@ -354,11 +424,12 @@ function pintarLibrero() {
       <button type="button" class="boton grande" data-act="como" tabindex="0" data-foco data-foco-id="como">${esc(TEXTOS.como)}</button>
       <button type="button" class="boton grande" data-act="voz" tabindex="0" data-foco data-foco-id="voz">${esc(pr.voz ? TEXTOS.vozSi : TEXTOS.vozNo)}</button>
     </div>
-  `, "librero", cuentos[0] ? `libro-${cuentos[0].id}` : "reto", true);
+  `, "librero", focoAlAbrirEstante(cuentos[0]?.id, { trasGuia: quieto }), quieto ? "ninguno" : true);
 }
 
 function abrirCuento(id) {
   if (!desbloqueado(cuentos, pr, id)) return;
+  estanteQuieto = false;
   aviso = "";
   const e = cuentoDe(pr, id);
   if (e.enCurso && Array.isArray(e.tareas) && e.i < e.tareas.length) {
@@ -397,6 +468,7 @@ function empezarCapitulo(id, cap) {
 }
 
 function abrirReto() {
+  estanteQuieto = false;
   aviso = "";
   const reto = retoDelDia(hoy(), cuentos, pr);
   sesion = {
@@ -409,6 +481,7 @@ function abrirReto() {
 // ---------- Guía ----------
 
 function abrirGuia() {
+  estanteQuieto = false;
   guia = guiaNueva(Date.now());
   dialogo = false;
   ayuda = null;
@@ -469,7 +542,7 @@ function terminarGuia() {
   if (sale) { Noli.salir(); return; }
   bloqueoGeneral = bloqueoTrasGuia(Date.now());
   aviso = TEXTOS.vamos;
-  pintarLibrero();
+  pintarLibrero({ trasGuia: true });
 }
 
 function flechaGuiaCarta(id) {
@@ -516,8 +589,8 @@ function htmlCartaGuia(id) {
     <button type="button" class="cuerpo" data-act="tomar" data-id="${id}" tabindex="0" data-foco data-foco-id="tarjeta-${id}" aria-label="${esc(c.oraciones[0])}">
       <span class="dibujo">${svg(c.dibujo)}</span>
       ${flecha ? `<span class="flecha">${svg("flecha-pista.svg")}</span>` : ""}
+      <span class="zona-texto"><p class="linea">${palabrasHtml(c.oraciones[0], { foco: false, frase: id })}</p></span>
     </button>
-    <div class="zona-texto"><p class="linea">${palabrasHtml(c.oraciones[0], { foco: false, frase: id })}</p></div>
   </div>`;
 }
 
@@ -584,6 +657,7 @@ function entrarTarea(hablar) {
     else pintarFin();
     return;
   }
+  bloqueoGeneral = bloqueoAlEntrar(bloqueoGeneral, Date.now());
   sesion.feedback = null;
   sesion.item = itemLimpio(Date.now());
   listoSono = false;
@@ -761,13 +835,7 @@ function senal() {
 }
 
 function focoOrden() {
-  if (sesion.orden?.tomada) {
-    const sig = siguienteTarjeta(sesion.orden);
-    const vacio = sesion.orden.huecos.findIndex((h) => !h);
-    const slot = sig ? sig.slot : vacio;
-    return slot >= 0 ? `hueco-${slot}` : "soltar";
-  }
-  return `tarjeta-${(sesion.orden?.mazo || [])[0] || "0"}`;
+  return focoTrasTomar(sesion.orden);
 }
 
 function pintarJugar(robar, focoForzado) {
@@ -778,9 +846,9 @@ function pintarJugar(robar, focoForzado) {
   const completo = t.tipo === "ordenar" && estaCompleto(sesion.orden);
   if (completo && !listoSono) { listoSono = true; tonoListo(); }
   if (!completo) listoSono = false;
-  let pista = textoPista(t, fase);
-  if (completo && Number(nivelActual()) <= 1) pista = esTv() ? TEXTOS.brillaTv : TEXTOS.brillaToca;
-  else if (completo) pista = `${pista} ${fraseListo(esTv()).texto}`.trim();
+  const pista = pistaConListo({
+    completo, nivel: nivelActual(), tv: esTv(), pista: textoPista(t, fase),
+  });
   let cuerpo = "";
   if (t.tipo === "ordenar") cuerpo = htmlOrden(t, fase);
   else if (t.tipo === "cruce") cuerpo = htmlCruce(t);
@@ -814,12 +882,12 @@ function htmlOrden(t, fase) {
     }).join("");
     const dibujo = mostrarDibujo ? `<span class="dibujo">${svg(p?.escena || "tarjeta-sin-dibujo.svg")}</span>` : "";
     return `<div class="tarjeta${flecha ? " con-flecha" : ""}${mal ? " mal" : ""}${mostrarDibujo ? "" : " sin-dibujo"}">
-      <button type="button" class="cuerpo" data-act="tomar" data-id="${esc(id)}" tabindex="0" data-foco data-foco-id="tarjeta-${esc(id)}" aria-label="${esc(id)}">
+      <button type="button" class="cuerpo" data-act="tomar" data-id="${esc(id)}" tabindex="0" data-foco data-foco-id="tarjeta-${esc(id)}" aria-label="${esc(oraciones[0] || id)}">
         ${dibujo}
         ${enHueco ? `<span class="num">${slot + 1}</span>` : ""}
         ${flecha ? `<span class="flecha">${svg("flecha-pista.svg")}</span>` : ""}
+        <span class="zona-texto">${lineas}</span>
       </button>
-      <div class="zona-texto">${lineas}</div>
       ${mal ? `<p class="no-aqui">${esc(TEXTOS.noAqui)}</p>` : ""}
     </div>`;
   };
@@ -838,12 +906,18 @@ function htmlOrden(t, fase) {
   const tomada = sesion.orden.tomada;
   const textoMano = tomada ? (paginaDe(c, tomada)?.oraciones || []).join(" ") : "";
   const mano = tomada
-    ? `<p class="mano">${esc(TEXTOS.mano)}: ${esc(textoMano)}</p>`
+    ? `<div class="mano"><span>${esc(TEXTOS.mano)}: ${esc(textoMano)}</span>${botonPalabras(tomada, (paginaDe(c, tomada)?.oraciones || [""])[0].split(/\s+/)[0] || "")}</div>`
     : "";
+  const idsEnMesa = [...sesion.orden.mazo, ...sesion.orden.huecos.filter(Boolean)];
+  const filaPalabras = idsEnMesa.map((id) => {
+    const primera = (paginaDe(c, id)?.oraciones || [""])[0].split(/\s+/)[0] || "";
+    return botonPalabras(id, primera);
+  }).join("");
   const soltarBtn = tomada
     ? `<button type="button" class="boton" data-act="soltar" tabindex="0" data-foco data-foco-id="soltar">${svg("boton-soltar.svg")}<span>${esc(TEXTOS.soltar)}</span></button>`
     : "";
   return `<div class="rejilla n${n}">${mazo}</div>
+    <div class="palabras-fila">${filaPalabras}</div>
     ${mano}
     <div class="rejilla huecos n${n}">${huecos}</div>
     <div class="acciones">
@@ -1101,6 +1175,7 @@ function estrellasTurnoDesde(aciertos, de) {
 
 function abrirReleer(id) {
   if (!id || !desbloqueado(cuentos, pr, id)) return;
+  estanteQuieto = false;
   sesion = { modo: "leer", cuentoId: id, releer: 0, tareas: [], i: 0 };
   pintarReleer(true);
 }

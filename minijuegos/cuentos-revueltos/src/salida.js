@@ -30,6 +30,21 @@ export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
   return "seguir";
 }
 
+// Tras la guía no se marca un libro: un OK que sigue pulsado no debe abrirlo.
+export function focoAlAbrirEstante(primerId, { trasGuia = false } = {}) {
+  if (trasGuia) return null;
+  return primerId ? `libro-${primerId}` : "reto";
+}
+
+// La tarea nueva espera al menos 1 s. Si ya había un candado más largo, se queda ese.
+export function bloqueoAlEntrar(actual, ahora, ms = 1000) {
+  const a = Number(actual);
+  const t = Number(ahora);
+  const base = Number.isFinite(a) ? a : 0;
+  const momento = Number.isFinite(t) ? t : 0;
+  return Math.max(base, momento + ms);
+}
+
 export function hastaLibre(bloqueoHasta, ignorarHasta) {
   const paso = Number.isFinite(bloqueoHasta) ? bloqueoHasta : 0;
   const dialogo = Number.isFinite(ignorarHasta) ? ignorarHasta : 0;
