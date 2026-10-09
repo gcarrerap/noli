@@ -6,7 +6,7 @@ import { analizar, sonIguales } from "../src/area.js";
 import { medir, lineasSvg, patron, opcionesCorte } from "../src/cortes.js";
 import { ladosDe, opcionesForma, crearFigura, reiniciarIds } from "../src/figuras.js";
 import { crearPedido, esCorrecto, POR_TURNO } from "../src/pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, GUIA_TOQUE_MS } from "../src/guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, textoPista, IDLE_COMPLETA_MS } from "../src/pista.js";
 import { abiertos, recienAbierto, sumarPropinas, PROPINA, ADORNOS } from "../src/deco.js";
 import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista, focoTrasContador } from "../src/bandeja.js";
@@ -15,7 +15,7 @@ import {
   marcarGuia, textoRacha, racha, cumplirReto, VENTANA, PARA_SUBIR,
 } from "../src/progreso.js";
 import { retoDelDia, META_GIGANTE } from "../src/reto.js";
-import { accionAtras, resolverAtras } from "../src/salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir } from "../src/salida.js";
 
 const banco = JSON.parse(fs.readFileSync(new URL("../datos/cortes.json", import.meta.url), "utf8"));
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
@@ -305,6 +305,49 @@ test("con ¿Salir? abierto, Seguir y Salir no avanzan ningún paso de la guía",
   assert.ok(cuerpo.indexOf("if (saliendo)") < cuerpo.indexOf("if (esGuia())"));
 });
 
+test("un OK o un toque rápido no salta la guía ni contesta el primer pedido", () => {
+  assert.equal(GUIA_CIERRE_MS, 1000);
+  assert.equal(GUIA_TOPE_MS, 3000);
+  assert.equal(TRAS_GUIA_MS, 1000);
+  const base = 1760000000000;
+  function simular(eventos, vozSigue = false) {
+    let paso = 0;
+    let aparecio = base;
+    for (const ev of eventos) {
+      const r = entradaGuia(paso, ev.evento, { ahora: ev.ahora, aparecio, vozSigue });
+      if (r.accion === "avanzo") {
+        paso = r.paso;
+        aparecio = ev.ahora;
+      }
+    }
+    return paso;
+  }
+  const rapidos = (tipo, extra) => [0, 200, 400, 700].map((dt) => ({
+    ahora: base + dt,
+    evento: { tipo, ...extra },
+  }));
+  assert.equal(simular(rapidos("ok")), 0);
+  assert.equal(simular(rapidos("toque")), 0);
+  assert.equal(simular(rapidos("activar", { opcion: "buena" })), 0);
+  assert.equal(guiaBloqueada({ ahora: base + 1500, aparecio: base, vozSigue: true }), true);
+  assert.equal(guiaBloqueada({ ahora: base + 1500, aparecio: base, vozSigue: false }), false);
+  assert.equal(guiaBloqueada({ ahora: base + 3000, aparecio: base, vozSigue: true }), false);
+  assert.equal(entradaGuia(0, { tipo: "ok" }, { ahora: base + 1000, aparecio: base, vozSigue: false }).paso, 1);
+  assert.equal(entradaGuia(3, { tipo: "activar", opcion: "buena" }, { ahora: base + 999, aparecio: base, vozSigue: false }).paso, 3);
+  assert.equal(entradaGuia(3, { tipo: "activar", opcion: "buena" }, { ahora: base + 1000, aparecio: base, vozSigue: false }).paso, 4);
+  assert.equal(focoDeGuia(3), "buena");
+  assert.equal(entradaGuia(1, { tipo: "saltar" }, { ahora: base + 10, aparecio: base, vozSigue: true }).accion, "saltar");
+  const desde = base + 50000;
+  for (const dt of [0, 100, 400, 999]) {
+    assert.equal(entradaPedido("op-0", { ahora: desde + dt, desde, trasGuia: true }), null);
+  }
+  assert.equal(entradaPedido("op-0", { ahora: desde + 1000, desde, trasGuia: true }), "op-0");
+  assert.equal(entradaPedido("op-0", { ahora: desde, desde, trasGuia: false }), "op-0");
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /entradaGuia/);
+  assert.match(juego, /entradaPedido/);
+});
+
 test("sube con 8 de los últimos 10 y la propina es fija", () => {
   let pr = nuevo();
   for (let i = 0; i < 7; i++) pr = registrar(pr, 1, true, HOY);
@@ -379,6 +422,10 @@ test("la racha no regaña y atrás abre salir, también en la guía", () => {
   assert.notEqual(accionAtras("guia"), "saltar-guia");
   assert.equal(accionAtras("fin"), "preguntar");
   assert.equal(accionAtras("finReto"), "preguntar");
+  assert.equal(alCerrarSalir({ resuelto: true, revelado: true }), "quedarse");
+  assert.equal(alCerrarSalir({ resuelto: true, revelado: false }), "avanzar");
+  assert.equal(alCerrarSalir({ salir: true, resuelto: true, revelado: true }), "salir");
+  assert.equal(alCerrarSalir({ guia: true }), "quedarse");
   assert.notEqual(accionAtras("fin"), "inicio");
   assert.equal(accionAtras("papas"), "progreso");
   assert.equal(marcarGuia(nuevo()).guiaHecha, true);

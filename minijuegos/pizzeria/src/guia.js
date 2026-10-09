@@ -5,6 +5,9 @@
 // En el paso 3 el foco está en la pizza igual, para que OK la sirva.
 
 export const GUIA_TOQUE_MS = 2000;
+export const GUIA_CIERRE_MS = 1000;
+export const GUIA_TOPE_MS = 3000;
+export const TRAS_GUIA_MS = 1000;
 export const PASOS_GUIA = 4;
 
 const MIRAR = [
@@ -42,6 +45,35 @@ export function textoDeGuia(paso, textos, modo = "tactil") {
 
 export function vozDeGuia(paso, textos, modo = "tactil") {
   return String(textoDeGuia(paso, textos, modo)).replace(/[▲▼+−½¼⅓⅔]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Tras pintar un paso no entran OK ni toques: al menos 1 s, o hasta que
+// acabe la frase, lo que dure más. A los 3 s se abre aunque la voz siga.
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
+}
+
+// El primer pedido, justo después de la guía, no acepta respuesta el primer segundo.
+export function pedidoBloqueado({ ahora = 0, desde = 0, trasGuia = false } = {}) {
+  if (!trasGuia) return false;
+  return ahora - desde < TRAS_GUIA_MS;
+}
+
+// Saltar pasa aunque el paso esté cerrado. Lo demás espera.
+export function entradaGuia(paso, evento, estado) {
+  if (evento && (evento.ir === "saltar-guia" || evento.tipo === "saltar")) return { paso, accion: "saltar" };
+  if (guiaBloqueada(estado)) return { paso, accion: "nada" };
+  const siguiente = siguientePasoGuia(paso, evento);
+  if (siguiente === paso) return { paso, accion: "nada" };
+  return { paso: siguiente, accion: "avanzo" };
+}
+
+export function entradaPedido(respuesta, estado) {
+  if (pedidoBloqueado(estado)) return null;
+  return respuesta;
 }
 
 // Con el diálogo abierto, Seguir y Salir no cambian el paso.

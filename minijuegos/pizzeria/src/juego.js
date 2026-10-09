@@ -5,7 +5,7 @@ import { clic, listo as sonidoListo, feliz as sonidoFeliz, desbloquear } from ".
 import { patron, lineasSvg, rebanadasDe, svgPila } from "./cortes.js";
 import { svgFigura, nombreFigura } from "./figuras.js";
 import { esCorrecto } from "./pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, GUIA_TOQUE_MS } from "./guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, GUIA_TOQUE_MS } from "./guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, textoPista, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import { abiertos, recienAbierto } from "./deco.js";
 import { ajustar, opcionesCuantos, bandejaLista, focoTrasContador, BANDEJA_MAX } from "./bandeja.js";
@@ -14,7 +14,7 @@ import {
   fechaLocal, semana, resumen, marcarGuia, textoRacha, VENTANA, nuevo as progresoNuevo,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
-import { accionAtras, resolverAtras } from "./salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir } from "./salida.js";
 
 const $main = document.getElementById("juego");
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -36,6 +36,11 @@ let relojPista = 0;
 let relojGuia = 0;
 let focoAntes = null;
 let focosGuardados = null;
+let pasoAparecio = 0;
+let vozSigue = false;
+let vozGen = 0;
+let ordenDesde = 0;
+let ordenTrasGuia = false;
 
 try {
   if (new URLSearchParams(location.search).get("modo") === "tv") document.documentElement.dataset.modo = "tv";
@@ -48,6 +53,11 @@ function modoJuego() {
 function luego(fn, ms) {
   const t = ++token;
   setTimeout(() => { if (t === token && !saliendo) fn(); }, ms);
+}
+
+function programarSiguiente(ms) {
+  if (partida) partida.espera = ms;
+  luego(avanzar, ms);
 }
 
 function arte(nombre) {
@@ -243,17 +253,24 @@ function nuevaRonda() {
 function empezarGuia(destino) {
   partida = { modo: "guia", destino, paso: 0, pedido: { tipo: "guia", nivel: 1 }, i: 0, aciertos: 0 };
   pintarGuia();
-  hablar(vozDeGuia(0, textos, modoJuego()));
 }
 
 function terminarGuia() {
   const destino = partida && partida.destino;
   limpiarRelojGuia();
+  vozSigue = false;
+  vozGen++;
   pr = marcarGuia(pr);
   guardar();
   partida = null;
-  if (destino === "ronda") nuevaRonda();
-  else inicio();
+  if (destino === "ronda") {
+    ordenDesde = Date.now();
+    ordenTrasGuia = true;
+    nuevaRonda();
+  } else {
+    ordenTrasGuia = false;
+    inicio();
+  }
 }
 
 function limpiarRelojGuia() {
@@ -294,6 +311,27 @@ function pintarGuia() {
     <p class="pista"></p>
     <p class="aviso" aria-live="polite"></p>`, "guia", foco);
   programarGuia();
+  hablarGuia(paso);
+}
+
+function estadoGuia() {
+  return { ahora: Date.now(), aparecio: pasoAparecio, vozSigue };
+}
+
+function ordenCallada() {
+  return entradaPedido(true, { ahora: Date.now(), desde: ordenDesde, trasGuia: ordenTrasGuia }) == null;
+}
+
+function hablarGuia(paso) {
+  pasoAparecio = Date.now();
+  const mio = ++vozGen;
+  vozSigue = false;
+  if (!pr.voz) return;
+  const linea = hablaSegura(vozDeGuia(paso, textos, modoJuego()));
+  if (!linea) return;
+  vozSigue = decir(linea, "es-MX", () => {
+    if (mio === vozGen) vozSigue = false;
+  }) === true;
 }
 
 function aplicarPasoGuia(paso) {
@@ -302,12 +340,6 @@ function aplicarPasoGuia(paso) {
   partida.paso = paso;
   if (guiaTerminada(paso)) return terminarGuia();
   pintarGuia();
-  hablar(vozDeGuia(paso, textos, modoJuego()));
-}
-
-function guiaActivar(op) {
-  if (op === "buena" && !guiaServirActivo(partida.paso)) return;
-  aplicarPasoGuia(siguientePasoGuia(partida.paso, { tipo: "activar", opcion: op }));
 }
 
 function cargarPedido() {
@@ -604,6 +636,7 @@ function revelar() {
 }
 
 function elegirOpcion(id) {
+  if (ordenCallada()) return;
   if (!partida || partida.revelado || partida.resuelto) return;
   const p = visible();
   clic();
@@ -611,6 +644,7 @@ function elegirOpcion(id) {
 }
 
 function alternarRebanada(i) {
+  if (ordenCallada()) return;
   if (!partida || partida.revelado || partida.resuelto) return;
   const p = visible();
   if (p.tipo !== "decora") return;
@@ -626,6 +660,7 @@ function alternarRebanada(i) {
 }
 
 function servir() {
+  if (ordenCallada()) return;
   if (!partida || partida.revelado || partida.resuelto) return;
   if (!listoDecora()) return;
   const p = visible();
@@ -633,6 +668,7 @@ function servir() {
 }
 
 function cambiarMedida(cual, dir) {
+  if (ordenCallada()) return;
   if (!partida || partida.fase === "cuantos" || partida.revelado) return;
   const clave = cual === "filas" ? "filasHechas" : "columnasHechas";
   const antes = partida[clave];
@@ -650,6 +686,7 @@ function cambiarMedida(cual, dir) {
 }
 
 function confirmarBandeja() {
+  if (ordenCallada()) return;
   if (!partida || partida.revelado || partida.resuelto) return;
   const p = visible();
   if (partida.fase === "cuantos") return;
@@ -662,6 +699,7 @@ function confirmarBandeja() {
 }
 
 function elegirCuantos(n) {
+  if (ordenCallada()) return;
   if (!partida || partida.revelado) return;
   const p = visible();
   const ok = n === p.total;
@@ -680,7 +718,7 @@ function elegirCuantos(n) {
   partida.resuelto = true;
   pintar("num-0");
   aviso(`${textos.asiEra} ${p.total}`);
-  luego(avanzar, 900);
+  programarSiguiente(900);
 }
 
 function avanzar() {
@@ -834,8 +872,15 @@ function cerrarSalir(ySalir) {
     }
     focosGuardados = null;
   }
-  if (ySalir) { Noli.salir(); return; }
-  if (partida && partida.resuelto && !esGuia()) { avanzar(); return; }
+  const que = alCerrarSalir({
+    salir: !!ySalir,
+    resuelto: !!(partida && partida.resuelto),
+    revelado: !!(partida && partida.revelado),
+    guia: esGuia(),
+  });
+  if (que === "salir") { Noli.salir(); return; }
+  if (que === "avanzar") { avanzar(); return; }
+  if (partida && partida.revelado && partida.espera) luego(avanzar, partida.espera);
   const volver = focoAntes && focoAntes.isConnected && $main.contains(focoAntes) && focoAntes.dataset.focoId !== "saltar";
   if (volver) focoAntes.focus({ preventScroll: true });
   else focoInicial($main);
@@ -873,17 +918,18 @@ $main.addEventListener("click", (ev) => {
     if (efecto.accion === "seguir") { cerrarSalir(false); return; }
     if (efecto.accion === "salir") { cerrarSalir(true); return; }
     if (efecto.accion === "saltar") { terminarGuia(); return; }
-    if (efecto.accion === "avanzar") {
-      aplicarPasoGuia(siguientePasoGuia(partida.paso, { tipo: "toque" }));
-      return;
-    }
+    const evento = efecto.accion === "avanzar"
+      ? { tipo: "toque" }
+      : { tipo: "activar", opcion: t && t.dataset.op };
+    const r = entradaGuia(partida.paso, evento, estadoGuia());
+    if (r.accion === "avanzo") aplicarPasoGuia(r.paso);
+    return;
   }
 
   if (!t || !$main.contains(t)) return;
   if (t.disabled) return;
   const act = t.dataset.act;
-  if (act === "guia") guiaActivar(t.dataset.op);
-  else if (act === "opcion") elegirOpcion(t.dataset.id);
+  if (act === "opcion") elegirOpcion(t.dataset.id);
   else if (act === "rebanada") alternarRebanada(+t.dataset.i);
   else if (act === "servir") servir();
   else if (act === "filas" || act === "columnas") cambiarMedida(act, +t.dataset.dir);
@@ -915,12 +961,12 @@ Noli.alEntrar((accion) => {
       const e = document.activeElement;
       const id = e && e.dataset && e.dataset.focoId;
       if (id === "saltar" && e && !e.disabled) { e.click(); return true; }
-      if (guiaAvanzaConToque(partida.paso)) {
-        aplicarPasoGuia(siguientePasoGuia(partida.paso, { tipo: "ok" }));
-        return true;
-      }
+      const show = guiaAvanzaConToque(partida.paso);
       const op = e && e.dataset && e.dataset.op;
-      if (op && !e.disabled) guiaActivar(op);
+      if (!show && !(op && e && !e.disabled)) return true;
+      const evento = show ? { tipo: "ok" } : { tipo: "activar", opcion: op };
+      const r = entradaGuia(partida.paso, evento, estadoGuia());
+      if (r.accion === "avanzo") aplicarPasoGuia(r.paso);
       return true;
     }
     if (moverFoco(accion, $main)) return true;
