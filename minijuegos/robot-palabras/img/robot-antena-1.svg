@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+<title>Antena con foco</title>
+<g class="parte parte-antena"><path d="M100 32V12" stroke="#2b2236" stroke-width="6"/><circle class="foco" cx="100" cy="10" r="9" fill="#ff6b4a" stroke="#2b2236" stroke-width="4"/></g>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<title>have</title>
+<rect x="30" y="34" width="40" height="32" rx="6" fill="#4cb3ff" stroke="#2b2236" stroke-width="4"/>
+<path d="M18 48c6 16 10 22 16 22M82 48c-6 16-10 22-16 22" fill="none" stroke="#f6c79e" stroke-width="8" stroke-linecap="round"/>
+<path d="M18 48c6 16 10 22 16 22M82 48c-6 16-10 22-16 22" fill="none" stroke="#2b2236" stroke-width="3" stroke-linecap="round"/>
+</svg>

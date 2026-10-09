@@ -1,0 +1,11 @@
+{
+  "_ayuda": "Lista fija, como la Pasarela. visitas: cuántas visitas terminadas hacen falta. dinero: qué monedas trae la bolsa de esa visita. Cada mueble y cada cuarto se abre una sola vez.",
+  "niveles": [
+    { "visitas": 0, "nombre": "La recámara", "dinero": 1, "cuartos": ["recamara"], "muebles": ["lampara", "silla", "planta", "alfombra6"] },
+    { "visitas": 1, "nombre": "La cama", "dinero": 1, "muebles": ["cama", "mesa"] },
+    { "visitas": 3, "nombre": "Más recámara", "dinero": 2, "muebles": ["librero", "ropero", "alfombra4"] },
+    { "visitas": 5, "nombre": "La cocina", "dinero": 2, "cuartos": ["cocina"], "muebles": ["estufa", "refri", "fregadero"] },
+    { "visitas": 7, "nombre": "El jardín", "dinero": 3, "cuartos": ["jardin"], "muebles": ["flores", "banca", "arbol", "fuente"] },
+    { "visitas": 9, "nombre": "La sala", "dinero": 3, "muebles": ["sofa", "tele", "escritorio"] }
+  ]
+}

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "conejo", "nombre": "Lalo", "animal": "conejo", "orejas": "largas", "color": "#f6d7c3", "panza": "#fff8f2",
+    "lineas": {
+      "cuenta": "¿Cuánto te di?",
+      "cambio": "¿Me das el cambio?",
+      "suma": "Quiero las dos. ¿Cuánto es?",
+      "alcanza": "¿Me alcanza para esto?",
+      "bien": "¡Gracias! Me encanta tu tienda.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Creo que te faltó un poquito.",
+      "mal": "Vamos a contarlo juntos."
+    }
+  },
+  {
+    "id": "gato", "nombre": "Mía", "animal": "gato", "orejas": "puntiagudas", "color": "#f2b15a", "panza": "#fff6e8",
+    "lineas": {
+      "cuenta": "¿Cuánto puse en el mostrador?",
+      "cambio": "El cambio, por favor.",
+      "suma": "Me llevo las dos cosas. ¿Cuánto cuestan?",
+      "alcanza": "¿Me alcanza con esto?",
+      "bien": "Perfecto. Hasta luego.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Falta un poquito de cambio.",
+      "mal": "Mmm, esa cuenta no me queda."
+    }
+  },
+  {
+    "id": "oso", "nombre": "Tomi", "animal": "oso", "orejas": "redondas", "color": "#c4894f", "panza": "#f6e2cc",
+    "lineas": {
+      "cuenta": "¿Cuánto te di, amiga?",
+      "cambio": "¿Me devuelves el cambio?",
+      "suma": "Las dos, por favor. ¿Cuánto es?",
+      "alcanza": "¿Me alcanza?",
+      "bien": "¡Qué bien cobras!",
+      "deMas": "¡Me diste de más!",
+      "falta": "Te faltó un poquito.",
+      "mal": "Contemos otra vez, despacito."
+    }
+  },
+  {
+    "id": "rana", "nombre": "Lila", "animal": "rana", "orejas": "chicas", "color": "#7dce6a", "panza": "#eefae8",
+    "lineas": {
+      "cuenta": "¿Cuánto hay aquí?",
+      "cambio": "¿Y mi cambio?",
+      "suma": "Quiero las dos. Suma los precios.",
+      "alcanza": "¿Me alcanza para comprarlo?",
+      "bien": "¡Croac! Gracias.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Falta cambio.",
+      "mal": "Esa no es la cuenta."
+    }
+  },
+  {
+    "id": "buho", "nombre": "Nilo", "animal": "buho", "orejas": "plumas", "color": "#d7c4a0", "panza": "#f8f1e4",
+    "lineas": {
+      "cuenta": "¿Cuánto dinero te entregué?",
+      "cambio": "El cambio exacto, por favor.",
+      "suma": "Los dos productos. ¿Cuál es el total?",
+      "alcanza": "¿Me alcanza con lo que traigo?",
+      "bien": "Correcto. Buen trabajo.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Falta un poco.",
+      "mal": "Revisa la cuenta con calma."
+    }
+  },
+  {
+    "id": "zorro", "nombre": "Roni", "animal": "zorro", "orejas": "puntiagudas", "color": "#e07a3d", "panza": "#ffe6d4",
+    "lineas": {
+      "cuenta": "A ver, ¿cuánto te di?",
+      "cambio": "¿Me das el cambio justo?",
+      "suma": "Me llevo las dos. ¿Cuánto juntas?",
+      "alcanza": "¿Crees que me alcance?",
+      "bien": "¡Listo! Nos vemos.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Te faltó algo.",
+      "mal": "Casi. Cuenta de nuevo."
+    }
+  },
+  {
+    "id": "pato", "nombre": "Pío", "animal": "pato", "orejas": "pico", "color": "#f6e27a", "panza": "#fff8dc",
+    "lineas": {
+      "cuenta": "¿Cuánto te di?",
+      "cambio": "¿Mi cambio?",
+      "suma": "Las dos cosas. ¿Cuánto es?",
+      "alcanza": "¿Me alcanza?",
+      "bien": "¡Cuac! Gracias.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Falta un poquito.",
+      "mal": "Esa cuenta no cuadra."
+    }
+  },
+  {
+    "id": "raton", "nombre": "Tico", "animal": "raton", "orejas": "redondas", "color": "#e4d0c4", "panza": "#fff8f4",
+    "lineas": {
+      "cuenta": "¿Cuánto puse?",
+      "cambio": "¿Me regresas el cambio?",
+      "suma": "Quiero los dos. ¿Cuánto suman?",
+      "alcanza": "¿Me alcanza para esto?",
+      "bien": "¡Gracias! Está rico.",
+      "deMas": "¡Me diste de más!",
+      "falta": "Creo que falta cambio.",
+      "mal": "Vamos a contarlo otra vez."
+    }
+  }
+]

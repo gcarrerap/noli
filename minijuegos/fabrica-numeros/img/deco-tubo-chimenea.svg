@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -14 140 228">
+<title>Tubo de chimenea metálico</title>
+<g id="humo"><circle class="nube" cx="70" cy="6" r="13" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="92" cy="0" r="10" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="50" cy="-2" r="9" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/></g>
+<rect x="66" y="22" width="8" height="26" fill="#4a4060" stroke="#2b2236" stroke-width="4"/>
+<path d="M30 40L70 18l40 22z" fill="#ff6b4a" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<rect x="50" y="48" width="40" height="160" fill="#b5a9c9" stroke="#2b2236" stroke-width="5"/>
+<path d="M60 56v146" stroke="#fff" stroke-opacity=".6" stroke-width="6" stroke-linecap="round"/>
+<rect x="44" y="44" width="52" height="14" rx="5" fill="#4a4060" stroke="#2b2236" stroke-width="5"/>
+<rect x="46" y="92" width="48" height="12" rx="4" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/><rect x="46" y="140" width="48" height="12" rx="4" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/><rect x="46" y="186" width="48" height="12" rx="4" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/><circle cx="58" cy="98" r="2.6" fill="#2b2236"/><circle cx="82" cy="98" r="2.6" fill="#2b2236"/><circle cx="58" cy="146" r="2.6" fill="#2b2236"/><circle cx="82" cy="146" r="2.6" fill="#2b2236"/><circle cx="58" cy="192" r="2.6" fill="#2b2236"/><circle cx="82" cy="192" r="2.6" fill="#2b2236"/>
+</svg>

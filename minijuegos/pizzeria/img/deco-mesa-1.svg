@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 156">
+<title>Mesa con mantel de cuadros</title>
+<path d="M100 96v52M76 150h48" stroke="#2b2236" stroke-width="8" stroke-linecap="round"/>
+<path d="M12 40h176l-10 50H22z" fill="#fff" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<clipPath id="mesa1-mantel"><path d="M12 40h176l-10 50H22z"/></clipPath>
+<g clip-path="url(#mesa1-mantel)" fill="#ff6b4a"><rect x="12" y="40" width="11" height="17"/><rect x="12" y="74" width="11" height="17"/><rect x="34" y="57" width="11" height="17"/><rect x="56" y="40" width="11" height="17"/><rect x="56" y="74" width="11" height="17"/><rect x="78" y="57" width="11" height="17"/><rect x="100" y="40" width="11" height="17"/><rect x="100" y="74" width="11" height="17"/><rect x="122" y="57" width="11" height="17"/><rect x="144" y="40" width="11" height="17"/><rect x="144" y="74" width="11" height="17"/><rect x="166" y="57" width="11" height="17"/><rect x="23" y="57" width="11" height="17"/><rect x="45" y="40" width="11" height="17"/><rect x="45" y="74" width="11" height="17"/><rect x="67" y="57" width="11" height="17"/><rect x="89" y="40" width="11" height="17"/><rect x="89" y="74" width="11" height="17"/><rect x="111" y="57" width="11" height="17"/><rect x="133" y="40" width="11" height="17"/><rect x="133" y="74" width="11" height="17"/><rect x="155" y="57" width="11" height="17"/><rect x="177" y="40" width="11" height="17"/><rect x="177" y="74" width="11" height="17"/></g>
+<path d="M12 40h176l-10 50H22z" fill="none" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<ellipse cx="100" cy="40" rx="88" ry="12" fill="#fff" stroke="#2b2236" stroke-width="5"/>
+<rect x="84" y="14" width="10" height="26" rx="3" fill="#3fb34f" stroke="#2b2236" stroke-width="3.5"/><circle cx="89" cy="16" r="4" fill="#ff6b4a"/>
+<path d="M110 36v-14q4-8 8 0v14" fill="#fff4b8" stroke="#2b2236" stroke-width="3.5"/><path d="M114 14q-3-5 0-9 3 4 0 9z" fill="#ffc43d" stroke="#2b2236" stroke-width="2"/>
+</svg>

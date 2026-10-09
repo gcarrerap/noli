@@ -9,6 +9,15 @@
 /** @returns {object} un atuendo vacío */
 export const atuendoVacio = () => ({ peinado: null, arriba: null, abajo: null, vestido: null, zapatos: null, accesorios: {} });
 
+/** Lo que trae puesto la primera vez (también lo usa el mundo del menú principal si nunca ha jugado la Pasarela) */
+export const ATUENDO_INICIAL = [["p-cola", "cafe"], ["a-camiseta", "rosa"], ["b-shorts", "azul"], ["z-tenis", "blanco"]];
+/** @param {object} idx índices de datos.js */
+export function atuendoInicial(idx) {
+  let a = atuendoVacio();
+  for (const [id, c] of ATUENDO_INICIAL) { const p = idx.prendas.get(id); if (p) a = poner(a, p, c); }
+  return a;
+}
+
 /**
  * Pone una prenda (devuelve un atuendo nuevo). Si ya la traía con el mismo color, se la quita (tocar dos veces = quitar).
  * @param {object} atuendo

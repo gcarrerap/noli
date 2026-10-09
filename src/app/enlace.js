@@ -10,7 +10,7 @@
 //
 // Para que corra en los navegadores de las TVs (Chromium viejo), aquí no se usa ?. ni ?? y las descripciones se
 // crean con createOffer/createAnswer (setLocalDescription() sin argumentos es de Chromium 80 en adelante).
-import { ACCIONES } from "../../kit/protocolo.js";
+import { ACCIONES_CONTROL as ACCIONES } from "../../kit/protocolo.js";
 import { salaVigente, controlVivo, LATIDO_TV_MS, LATIDO_CONTROL_MS, ESPERA_WEBRTC_MS } from "../engine/index.js";
 import { renovarSala, cerrarSala, unirseSala, verSala, mandarSenal, verSenales, mandarAccion, verAcciones, nuevoId } from "../services/index.js";
 

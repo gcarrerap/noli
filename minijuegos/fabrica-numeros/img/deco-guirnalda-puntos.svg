@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 96">
+<title>Guirnalda de pompones de colores</title>
+<path d="M8 12Q150 62 292 12" fill="none" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/>
+<g class="banderin" transform="translate(23.78 17.25)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="25" r="17" fill="#ff6b4a" stroke="#2b2236" stroke-width="4"/><circle cx="-5.9" cy="19.1" r="4.8" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(55.33 25.89)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="22" r="14" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/><circle cx="-4.9" cy="17.1" r="3.9" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(86.89 32.06)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="25" r="17" fill="#3ccf8e" stroke="#2b2236" stroke-width="4"/><circle cx="-5.9" cy="19.1" r="4.8" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(118.44 35.77)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="22" r="14" fill="#4cb3ff" stroke="#2b2236" stroke-width="4"/><circle cx="-4.9" cy="17.1" r="3.9" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(150 37)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="25" r="17" fill="#c86bfa" stroke="#2b2236" stroke-width="4"/><circle cx="-5.9" cy="19.1" r="4.8" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(181.56 35.77)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="22" r="14" fill="#ff7eb6" stroke="#2b2236" stroke-width="4"/><circle cx="-4.9" cy="17.1" r="3.9" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(213.11 32.06)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="25" r="17" fill="#ff6b4a" stroke="#2b2236" stroke-width="4"/><circle cx="-5.9" cy="19.1" r="4.8" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(244.67 25.89)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="22" r="14" fill="#ffc43d" stroke="#2b2236" stroke-width="4"/><circle cx="-4.9" cy="17.1" r="3.9" fill="#fff" opacity=".7"/></g>
+<g class="banderin" transform="translate(276.22 17.25)"><path d="M0 0v8" stroke="#2b2236" stroke-width="3"/><circle cy="25" r="17" fill="#3ccf8e" stroke="#2b2236" stroke-width="4"/><circle cx="-5.9" cy="19.1" r="4.8" fill="#fff" opacity=".7"/></g>
+</svg>

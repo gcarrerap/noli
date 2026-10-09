@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80">
+<title>Cinta de festejo con estrellas</title>
+<g stroke="#2b2236" stroke-width="5" stroke-linejoin="round">
+  <path d="M6 30h52v44H6l14-22z" fill="#c43e2b"/>
+  <path d="M294 30h-52v44h52l-14-22z" fill="#c43e2b"/>
+  <path d="M40 62l18 12V56z" fill="#8a2a1d"/>
+  <path d="M260 62l-18 12V56z" fill="#8a2a1d"/>
+  <rect x="40" y="14" width="220" height="48" rx="6" fill="#ff6b4a"/>
+</g>
+<path d="M52 24h196" stroke="#fff" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>
+<path d="M100 25L104.23 34.18L114.27 35.36L106.85 42.22L108.82 52.14L100 47.2L91.18 52.14L93.15 42.22L85.73 35.36L95.77 34.18z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><path d="M150 19L155.36 30.62L168.07 32.13L158.67 40.82L161.17 53.37L150 47.12L138.83 53.37L141.33 40.82L131.93 32.13L144.64 30.62z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><path d="M200 25L204.23 34.18L214.27 35.36L206.85 42.22L208.82 52.14L200 47.2L191.18 52.14L193.15 42.22L185.73 35.36L195.77 34.18z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+</svg>

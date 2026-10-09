@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 96">
+<title>Banderines triangulares de colores</title>
+<path d="M8 12Q150 64 292 12" fill="none" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/>
+<path class="banderin" transform="translate(28.29 18.9) rotate(17.43)" d="M-17 0h34L0 38z" fill="#ff6b4a" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path class="banderin" transform="translate(68.86 29.51) rotate(11.82)" d="M-17 0h34L0 38z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path class="banderin" transform="translate(109.43 35.88) rotate(5.97)" d="M-17 0h34L0 38z" fill="#3ccf8e" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path class="banderin" transform="translate(150 38) rotate(0)" d="M-17 0h34L0 38z" fill="#4cb3ff" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path class="banderin" transform="translate(190.57 35.88) rotate(-5.97)" d="M-17 0h34L0 38z" fill="#c86bfa" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path class="banderin" transform="translate(231.14 29.51) rotate(-11.82)" d="M-17 0h34L0 38z" fill="#ff7eb6" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path class="banderin" transform="translate(271.71 18.9) rotate(-17.43)" d="M-17 0h34L0 38z" fill="#ff6b4a" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 240 204">
+<title>Horno (las galletas salen por la ventana)</title>
+<rect x="8" y="10" width="224" height="184" rx="22" fill="#ff6b4a" stroke="#2b2236" stroke-width="6"/>
+<rect x="22" y="22" width="196" height="26" rx="8" fill="#c43e2b" stroke="#2b2236" stroke-width="4"/>
+<circle cx="44" cy="35" r="8" fill="#ffc43d" stroke="#2b2236" stroke-width="3"/><circle cx="70" cy="35" r="8" fill="#ffc43d" stroke="#2b2236" stroke-width="3"/>
+<circle id="luz" cx="196" cy="35" r="7" fill="#ff9a3c" stroke="#2b2236" stroke-width="3"/>
+<rect id="ventana" x="26" y="62" width="188" height="104" rx="14" fill="#5a2f22" stroke="#2b2236" stroke-width="5"/>
+<path d="M36 150q30-12 60 0t60 0 52 0" fill="none" stroke="#ff9a3c" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+<path d="M40 74h40" stroke="#fff" stroke-opacity=".35" stroke-width="6" stroke-linecap="round"/>
+<rect x="60" y="172" width="120" height="12" rx="6" fill="#e7dccb" stroke="#2b2236" stroke-width="4"/>
+<rect x="20" y="192" width="24" height="12" rx="3" fill="#4a4060" stroke="#2b2236" stroke-width="4"/><rect x="196" y="192" width="24" height="12" rx="3" fill="#4a4060" stroke="#2b2236" stroke-width="4"/>
+</svg>

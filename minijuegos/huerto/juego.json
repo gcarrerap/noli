@@ -1,0 +1,13 @@
+{
+  "id": "huerto",
+  "titulo": "Huerto en Filas",
+  "descripcion": "Planta en filas y cosecha contando de 2 en 2, de 5 en 5 y de 10 en 10.",
+  "icono": "icono.svg",
+  "color": "#9bd35a",
+  "materia": "matemáticas",
+  "edades": [6, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

@@ -2,9 +2,9 @@
 // (src/ui/juego.js) solo le pide cosas como "modo estudio", "camina hacia aquí" o "desfila", y le pregunta qué zona
 // está cerca. La vista 2D (vista2d.js) tiene las mismas funciones, así el juego no sabe cuál está usando.
 // Ver docs/ARQUITECTURA.md § Vistas y docs/ESCENA-3D.md § Cámara.
-import * as THREE from "../../vendor/three.module.min.js";
-import { crearEscena } from "../escena/escena.js";
-import { crearAvatar } from "../escena/avatar.js";
+import * as THREE from "../../../../kit/3d/vendor/three.module.min.js";
+import { crearEscena } from "../../../../kit/3d/escena.js";
+import { crearAvatar } from "../../../../kit/3d/avatar.js";
 import { crearEstudio } from "../escena/estudio.js";
 import { crearPasarela, ESCENARIO } from "../escena/pasarela.js";
 import { cargarModelo, modeloPara, modeloListo } from "../escena/modelos.js";

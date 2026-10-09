@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-108 -108 216 216">
+<title>Pizza redonda sin cortes (centro 0,0, radio 100)</title>
+<circle id="masa" cx="0" cy="0" r="100" fill="#f2b25c" stroke="#2b2236" stroke-width="6"/>
+<circle cx="0" cy="0" r="92" fill="none" stroke="#c97f2c" stroke-width="3" stroke-dasharray="10 14" stroke-linecap="round"/>
+<circle id="salsa" cx="0" cy="0" r="84" fill="#e8503a" stroke="#2b2236" stroke-width="4"/>
+<path id="queso" d="M76 0L78.78 13.89L71.42 25.99L62.35 36L58.22 48.85L51.42 61.28L38 65.82L24.63 67.66L13.2 74.85L0 80L-13.2 74.85L-24.63 67.66L-38 65.82L-51.42 61.28L-58.22 48.85L-62.35 36L-71.42 25.99L-78.78 13.89L-76 0L-70.91 -12.5L-71.42 -25.99L-69.28 -40L-58.22 -48.85L-46.28 -55.16L-38 -65.82L-27.36 -75.18L-13.2 -74.85L0 -72L13.2 -74.85L27.36 -75.18L38 -65.82L46.28 -55.16L58.22 -48.85L69.28 -40L71.42 -25.99L70.91 -12.5z" fill="#ffd75e"/>
+<g id="ingredientes"/>
+<g id="resaltado" fill="#fff" fill-opacity=".35" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+<g id="cortes" stroke="#2b2236" stroke-width="6" stroke-linecap="round"/>
+</svg>

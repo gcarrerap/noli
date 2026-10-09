@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -8 120 68">
+<title>La abeja regresa al último salto bueno (punteado coral)</title>
+<path d="M6 54Q60 -6 114 54" fill="none" stroke="#2b2236" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 12"/><path d="M6 54Q60 -6 114 54" fill="none" stroke="#ff6b4a" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 12"/><path d="M6 54l14-4-10-10z" fill="#ff6b4a" stroke="#2b2236" stroke-width="3.5" stroke-linejoin="round"/><rect x="30" y="-6" width="60" height="38" rx="19" fill="#fff" stroke="#2b2236" stroke-width="4"/><text id="paso" x="60" y="22" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="28" text-anchor="middle" fill="#2b2236">−5</text>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -6 140 220">
+<title>Chimenea de ladrillos con humo</title>
+<g id="humo"><circle class="nube" cx="70" cy="30" r="17" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="96" cy="18" r="13" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/><circle class="nube" cx="50" cy="16" r="11" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/></g>
+<rect x="38" y="64" width="64" height="144" fill="#d9583c" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M66 64v18M94 64v18M38 82h64M52 82v18M80 82v18M38 100h64M66 100v18M94 100v18M38 118h64M52 118v18M80 118v18M38 136h64M66 136v18M94 136v18M38 154h64M52 154v18M80 154v18M38 172h64M66 172v18M94 172v18M38 190h64M52 190v18M80 190v18M38 208h64" stroke="#8a2a1d" stroke-width="3"/>
+<rect x="30" y="48" width="80" height="18" rx="4" fill="#4a4060" stroke="#2b2236" stroke-width="5"/>
+</svg>

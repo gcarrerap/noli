@@ -56,14 +56,15 @@ minijuegos/pasarela/
 │   ├── progreso.js       puntos de estilo, niveles, desbloqueos, clóset
 │   ├── movimiento.js     caminar, chocar, zonas, rutas
 │   ├── partida.js        la máquina de estados
-│   ├── escena/           Three.js: escena, personaje, formas, materiales, estudio, pasarela, modelos .glb
-│   └── ui/               la interfaz: juego.js (controlador), pantallas, vistas 3D/2D, joystick, voz, íconos, dibujo 2D
+│   ├── escena/           Three.js: estudio, pasarela, modelos .glb (escena, personaje, formas y materiales: kit/3d/)
+│   └── ui/               la interfaz: juego.js (controlador), pantallas, vistas 3D/2D, voz, íconos, dibujo 2D
 ├── modelos/tiara.glb     una prenda hecha en Blender (el ejemplo del pipeline)
-├── vendor/               Three.js r160.1 y su cargador de glTF (MIT)
 ├── herramientas/         probador.html, simular-curva.mjs, blender/tiara.py
 ├── tests/pasarela.test.js
 └── docs/                 esta documentación
 ```
+
+Three.js r160.1 y su cargador de glTF (MIT), el joystick y la escena base están en `kit/3d/` (en la raíz del repo), compartidos con el mundo del menú principal (#25).
 
 ## Documentación
 

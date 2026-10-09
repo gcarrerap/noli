@@ -2,9 +2,9 @@
 // una prenda puede traer "modelo": "modelos/corona-gema.glb" en prendas.json. Aquí se cargan una vez, se copian para
 // cada uso y se pintan: los materiales llamados "principal" toman el color escogido, los "secundario" el secundario,
 // y los demás se quedan como vienen. Cómo hacer uno: docs/ASSETS.md § Prendas con Blender.
-import * as THREE from "../../vendor/three.module.min.js";
-import { GLTFLoader } from "../../vendor/GLTFLoader.js";
-import { material } from "./materiales.js";
+import * as THREE from "../../../../kit/3d/vendor/three.module.min.js";
+import { GLTFLoader } from "../../../../kit/3d/vendor/GLTFLoader.js";
+import { material } from "../../../../kit/3d/materiales.js";
 
 const cargados = new Map(); // id de prenda → escena del glb (original, no se pone en el personaje)
 let loader = null;

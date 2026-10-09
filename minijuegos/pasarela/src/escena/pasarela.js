@@ -1,9 +1,9 @@
 // El escenario de la pasarela: una pasarela larga con focos, la pared del fondo con estrellas y la mesa de los tres
 // jueces (que son personajes como el de Noelia, con su propia ropa). Está lejos del estudio (en z = −30), así la
 // cámara salta de un lugar al otro sin que se vea el cambio. Ver docs/ESCENA-3D.md § La pasarela.
-import * as THREE from "../../vendor/three.module.min.js";
-import { material } from "./materiales.js";
-import { crearAvatar } from "./avatar.js";
+import * as THREE from "../../../../kit/3d/vendor/three.module.min.js";
+import { material } from "../../../../kit/3d/materiales.js";
+import { crearAvatar } from "../../../../kit/3d/avatar.js";
 import { atuendoVacio, poner } from "../atuendo.js";
 
 /** Dónde está el escenario y por dónde camina el personaje */

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
+<title>Sillón (3 de ancho, 1 de largo; vista desde arriba)</title>
+<g class="mueble"><rect x="4" y="4" width="112" height="32" rx="10" fill="#c86bfa" stroke="#2b2236" stroke-width="3.5"/><rect x="4" y="4" width="112" height="11" rx="6" fill="#9a4fd6" stroke="#2b2236" stroke-width="3"/><rect x="4" y="4" width="12" height="32" rx="6" fill="#9a4fd6" stroke="#2b2236" stroke-width="3"/><rect x="104" y="4" width="12" height="32" rx="6" fill="#9a4fd6" stroke="#2b2236" stroke-width="3"/><path d="M60 16v18" stroke="#2b2236" stroke-width="3"/></g>
+</svg>

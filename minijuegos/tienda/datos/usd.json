@@ -1,0 +1,41 @@
+{
+  "_ayuda": "Dólares de Estados Unidos. Los valores están en centavos (100 = 1 dólar). Tamaño, color y etiqueta distinguen cada pieza en la TV. nombreEn es el vocabulario en inglés (penny, nickel, dime, quarter).",
+  "id": "usd",
+  "codigo": "USD",
+  "nombre": "Dólares",
+  "simbolo": "$",
+  "simboloMenor": "¢",
+  "decimales": 2,
+  "menorPorMayor": 100,
+  "mayor": { "uno": "dólar", "muchos": "dólares" },
+  "menor": { "uno": "centavo", "muchos": "centavos" },
+  "cambioMax": 9999,
+  "piezas": [
+    { "id": "penny", "valor": 1, "tipo": "moneda", "nombre": "moneda de 1", "plural": "monedas de 1", "nombreEn": "penny", "etiqueta": "1¢", "color": "#d4894e", "borde": "#8d4e24", "tinta": "#3a2416", "tam": 0.78 },
+    { "id": "nickel", "valor": 5, "tipo": "moneda", "nombre": "moneda de 5", "plural": "monedas de 5", "nombreEn": "nickel", "etiqueta": "5¢", "color": "#c5c8ce", "borde": "#6e7480", "tinta": "#2c3138", "tam": 0.92 },
+    { "id": "dime", "valor": 10, "tipo": "moneda", "nombre": "moneda de 10", "plural": "monedas de 10", "nombreEn": "dime", "etiqueta": "10¢", "color": "#e7eef6", "borde": "#2f6f9a", "tinta": "#16384d", "tam": 1.02 },
+    { "id": "quarter", "valor": 25, "tipo": "moneda", "nombre": "moneda de 25", "plural": "monedas de 25", "nombreEn": "quarter", "etiqueta": "25¢", "color": "#e4e7ee", "borde": "#a8842a", "tinta": "#2b261c", "tam": 1.18, "centro": "#f3e6bc" },
+    { "id": "uno", "valor": 100, "tipo": "billete", "nombre": "billete de 1", "plural": "billetes de 1", "nombreEn": "one dollar", "etiqueta": "$1", "banda": "DOLLAR", "color": "#b7d7a8", "borde": "#2d6a3a", "tinta": "#14321c", "tam": 1 },
+    { "id": "cinco", "valor": 500, "tipo": "billete", "nombre": "billete de 5", "plural": "billetes de 5", "nombreEn": "five dollars", "etiqueta": "$5", "banda": "DOLLARS", "color": "#e4d7a4", "borde": "#6d5a2a", "tinta": "#2e2612", "tam": 1.04 },
+    { "id": "diez", "valor": 1000, "tipo": "billete", "nombre": "billete de 10", "plural": "billetes de 10", "nombreEn": "ten dollars", "etiqueta": "$10", "banda": "DOLLARS", "color": "#f0c2a8", "borde": "#8a4630", "tinta": "#3a2018", "tam": 1.08 },
+    { "id": "veinte", "valor": 2000, "tipo": "billete", "nombre": "billete de 20", "plural": "billetes de 20", "nombreEn": "twenty dollars", "etiqueta": "$20", "banda": "DOLLARS", "color": "#b9d4e4", "borde": "#24556e", "tinta": "#102833", "tam": 1.12 },
+    { "id": "cien", "valor": 10000, "tipo": "billete", "nombre": "billete de 100", "plural": "billetes de 100", "nombreEn": "hundred dollars", "etiqueta": "$100", "banda": "DOLLARS", "color": "#c5cef0", "borde": "#2c3d78", "tinta": "#10182e", "tam": 1.16 }
+  ],
+  "caja": { "penny": 4, "nickel": 1, "dime": 2, "quarter": 3, "uno": 4, "cinco": 1, "diez": 1, "veinte": 4 },
+  "confusiones": [
+    { "de": 25, "como": 10, "motivo": "La de 25 (quarter) vale 25, no 10." },
+    { "de": 10, "como": 1, "motivo": "La de 10 (dime) vale 10, no 1." },
+    { "de": 5, "como": 1, "motivo": "La de 5 (nickel) vale 5, no 1." },
+    { "de": 10, "como": 5, "motivo": "La de 10 vale 10, no 5." },
+    { "de": 100, "como": 10, "motivo": "El billete de 1 dólar vale 100 centavos, no 10." }
+  ],
+  "niveles": [
+    { "n": 1, "nombre": "Monedas de 1 y de 10", "modo": "contar", "piezas": ["penny", "dime"], "min": 6, "max": 50, "minPiezas": 2, "maxPiezas": 8 },
+    { "n": 2, "nombre": "Todas las monedas", "modo": "contar", "piezas": ["penny", "nickel", "dime", "quarter"], "min": 10, "max": 100, "minPiezas": 2, "maxPiezas": 8 },
+    { "n": 3, "nombre": "Monedas y billetes", "modo": "contar", "piezas": ["penny", "nickel", "dime", "quarter", "uno"], "min": 15, "max": 200, "minPiezas": 1, "maxPiezas": 6, "conBillete": true },
+    { "n": 4, "nombre": "El cambio", "modo": "cambio", "billetes": ["uno", "cinco", "diez", "veinte"], "billeteMax": 2000, "precioMin": 25 },
+    { "n": 5, "nombre": "Dos productos", "modo": "dos", "precioMin": 15, "precioMax": 400, "billetes": ["uno", "cinco", "diez", "veinte"] },
+    { "n": 6, "nombre": "Cambio grande", "modo": "cambio", "billetes": ["cinco", "diez", "veinte", "cien"], "billeteMax": 10000, "precioMin": 100 },
+    { "n": 7, "nombre": "¿Me alcanza?", "modo": "alcanza", "piezas": ["penny", "nickel", "dime", "quarter", "uno", "cinco"], "min": 25, "max": 800, "minPiezas": 2, "maxPiezas": 6 }
+  ]
+}

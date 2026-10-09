@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 122">
+<title>Cliente: Oso feliz</title>
+<circle cx="28" cy="30" r="16" fill="#b07a4f" stroke="#2b2236" stroke-width="5"/><circle cx="92" cy="30" r="16" fill="#b07a4f" stroke="#2b2236" stroke-width="5"/><circle cx="28" cy="30" r="7" fill="#ff7eb6"/><circle cx="92" cy="30" r="7" fill="#ff7eb6"/>
+<path d="M12 120q0-34 48-34t48 34z" fill="#8a5a36" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/><path d="M44 90l16 22 16-22z" fill="#fff" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><path d="M50 96h20M54 102h12" stroke="#ff6b4a" stroke-width="3"/>
+<ellipse id="cabeza" cx="60" cy="56" rx="42" ry="36" fill="#b07a4f" stroke="#2b2236" stroke-width="5"/><ellipse cx="60" cy="70" rx="18" ry="12" fill="#fff2df"/>
+<ellipse cx="60" cy="64" rx="6" ry="4.5" fill="#2b2236"/><g id="ojos"><path d="M36 52q8-10 16 0M68 52q8-10 16 0" fill="none" stroke="#2b2236" stroke-width="5" stroke-linecap="round"/></g><g id="boca"><path d="M46 68q14 18 28 0z" fill="#2b2236" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><path d="M54 76q6-4 12 0q-6 4-12 0z" fill="#ff6b4a"/></g><g class="corazones"><path transform="translate(106 18) scale(1.1)" d="M0 6S-10 0-10-6a5 5 0 0 1 10-2 5 5 0 0 1 10 2C10 0 0 6 0 6z" fill="#ff6b4a" stroke="#2b2236" stroke-width="2.5"/><path transform="translate(14 14) scale(0.9)" d="M0 6S-10 0-10-6a5 5 0 0 1 10-2 5 5 0 0 1 10 2C10 0 0 6 0 6z" fill="#ff6b4a" stroke="#2b2236" stroke-width="2.5"/></g>
+</svg>

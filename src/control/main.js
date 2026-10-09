@@ -54,7 +54,7 @@ function mandar(accion, boton) {
 function instalarBotones() {
   for (const b of document.querySelectorAll("[data-accion]")) {
     const accion = b.dataset.accion;
-    const repite = accion !== "ok" && accion !== "atras";
+    const repite = accion !== "ok" && accion !== "atras" && accion !== "brincar"; // un brinco por toque
     let t1 = null, t2 = null;
     const parar = () => { clearTimeout(t1); clearInterval(t2); t1 = t2 = null; b.classList.remove("apretado"); };
     // pointerdown en lugar de click: responde al instante (sin esperar a soltar el dedo)

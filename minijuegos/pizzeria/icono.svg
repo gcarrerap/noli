@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<title>Pizzería Partida</title>
+<path d="M44 56L82 56A38 38 0 1 1 44 18z" fill="#f2b25c" stroke="rgba(0,0,0,.25)" stroke-width="4" stroke-linejoin="round"/>
+<path d="M44 56L73 56A29 29 0 1 1 44 27z" fill="#ffd75e"/>
+<path d="M44 56V27M44 56h29M44 56v29M44 56H15" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+<circle cx="30" cy="44" r="5.5" fill="#c8323a"/><circle cx="58" cy="70" r="5.5" fill="#c8323a"/><circle cx="30" cy="70" r="5" fill="#c8323a"/>
+<path d="M54 46L54 8A38 38 0 0 1 92 46z" fill="#f2b25c" stroke="rgba(0,0,0,.25)" stroke-width="4" stroke-linejoin="round"/>
+<path d="M54 46L54 17A29 29 0 0 1 83 46z" fill="#ffd75e"/>
+<circle cx="68" cy="32" r="5.5" fill="#c8323a"/>
+</svg>

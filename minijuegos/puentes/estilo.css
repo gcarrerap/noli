@@ -1,0 +1,199 @@
+/* Puentes para el Bosque. Estilos propios: el juego no usa los del catálogo. */
+:root{
+  --bg:#e7f6f1; --fg:#2b2236; --muted:#5d6b74; --card:#fff; --line:#c9e4da;
+  --bosque:#1f8a70; --sol:#ffc43d; --verde:#3ccf8e; --azul:#4cb3ff; --coral:#ff6b4a;
+  --bien:#2fbf7f; --star:#ffb400; --off:#e4efe9; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#14241f; --fg:#f3fff9; --muted:#b7cfc6; --card:#1d332c; --line:#2d4a40;
+  --off:#243f36; --foco:#fff; --sombra:0 6px 0 rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, 2.2vmin, 22px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.4vmin, 28px)}
+html,body{height:100%;overflow:hidden}
+body{margin:0;background:
+  radial-gradient(circle at 90% 0%, #d4f3c8 0, transparent 42%),
+  linear-gradient(#f7fffb, var(--bg) 28%);
+  color:var(--fg);font-family:"Nunito",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+:focus{outline:none}
+html.teclado :focus{outline:5px solid var(--foco);outline-offset:2px}
+main{width:100%;max-width:1100px;margin:0 auto;padding:8px 12px 10px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:.3rem;
+  height:100dvh;max-height:100dvh;overflow:hidden}
+html[data-modo="tv"] main{padding:36px}
+/* La casita del catálogo mide 52 px y flota arriba a la izquierda. */
+html.en-catalogo:not([data-modo="tv"]) main{padding-top:calc(env(safe-area-inset-top, 0px) + 66px)}
+.titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.55rem;margin:0;line-height:1.05}
+.sub{font-size:.95rem;color:var(--muted);margin:0}
+.cargando{color:var(--muted);margin:auto}
+.boton{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.35em .8em;font-weight:800;font-size:1rem;
+  box-shadow:var(--sombra);min-height:64px;max-width:100%}
+.boton.grande{font-family:"Fredoka",system-ui,sans-serif;font-size:1.15rem;font-weight:600;border-radius:18px;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.boton.grande small{font-family:"Nunito",sans-serif;font-size:.72rem;font-weight:700;opacity:.85}
+.boton.primario{background:var(--bosque);color:#fff;border-color:transparent}
+.boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
+.boton.hecho{background:var(--azul);color:#fff;border-color:transparent}
+button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default}
+.menu{display:flex;flex-direction:column;gap:.35rem;width:min(420px,100%)}
+.menu.fila{flex-direction:row;flex-wrap:wrap;justify-content:center}
+.menu.chica .boton{flex:1 1 140px;min-height:64px}
+.cab{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--muted);gap:.4rem;font-size:.9rem}
+.puntos{display:flex;gap:4px}
+.puntos i{width:12px;height:12px;border-radius:50%;background:var(--off);display:block}
+.puntos i.lleno{background:var(--bosque)}
+.saltar{min-height:64px;min-width:64px;flex:none;border-radius:16px;background:var(--card);font-weight:800;padding:0 .8em;box-shadow:var(--sombra)}
+.pedido{font-family:"Fredoka",system-ui,sans-serif;font-size:1.2rem;margin:0;line-height:1.15}
+.guia-texto{font-size:1.3rem}
+.zona-nombre{font-weight:800;color:var(--bosque)}
+.medidor{width:100%;min-height:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;position:relative}
+.escena{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;max-height:none;overflow:visible}
+.banco,.hueco{height:100%;min-height:0}
+.banco{flex:none;overflow:hidden}
+.banco svg,.hueco svg{width:100%;height:100%;display:block}
+.hueco{flex:none;position:relative}
+.bicho{position:absolute;bottom:18%;width:54px;height:48px;z-index:2}
+.bicho svg{width:54px;height:48px}
+/* Con bloques, el animal espera detrás: nunca tapa un bloque que hay que contar (#76). */
+.bicho.atras{z-index:1;left:0 !important}
+.marca-fin{position:absolute;bottom:0;width:28px;height:70%;transform:translateX(-50%);z-index:2}
+.marca-fin svg{width:100%;height:100%}
+.riel{width:100%;overflow:hidden;max-height:none}
+.regla-mov{will-change:transform}
+.regla-mov svg{width:100%;height:auto;display:block;max-height:none}
+.brillo-cero.encendido{opacity:1}
+.marca.encendida text{fill:#ff6b4a}
+.marca.encendida path{stroke:#ff6b4a;stroke-width:5px}
+.controles{width:100%;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+.ico-btn{min-width:64px;min-height:64px;border-radius:16px;background:var(--card);box-shadow:var(--sombra);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px 6px;font-weight:800}
+.ico-btn svg{width:36px;height:36px}
+.ico-btn span{font-size:.75rem;line-height:1}
+.ico-btn span.glifo{font-size:2.4rem;line-height:1;min-width:64px;min-height:64px}
+.glifo{font-family:"Fredoka",sans-serif;font-size:2.4rem;line-height:1;min-width:64px;min-height:64px;display:grid;place-items:center}
+.valor{font-family:"Fredoka",sans-serif;font-size:1.8rem;min-width:4.2rem}
+.num-grande .uni{font-size:.55em;font-weight:800}
+.enviar{min-width:120px;min-height:64px;border-radius:18px;background:var(--card);color:var(--muted);
+  font-family:"Fredoka",sans-serif;font-size:1.15rem;font-weight:600;box-shadow:var(--sombra);padding:0 .8em;
+  display:flex;align-items:center;justify-content:center;gap:.3rem}
+.enviar svg{width:32px;height:32px}
+.enviar.listo{background:var(--verde);color:#143024;box-shadow:0 0 0 4px #fff, 0 0 0 8px var(--verde);animation:pulso 1s ease-in-out infinite}
+@keyframes pulso{50%{transform:translateY(-2px)}}
+.opciones{display:flex;gap:8px;width:100%;min-width:0;align-items:stretch;justify-content:center;flex-wrap:wrap}
+.opcion{flex:1 1 72px;min-width:64px;min-height:64px;max-width:100%;border-radius:18px;background:var(--card);box-shadow:var(--sombra);
+  padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;border:3px solid transparent}
+.opcion .num-grande{font-family:"Fredoka",sans-serif;font-size:1.6rem;line-height:1}
+.recorte{width:100%;height:36px;overflow:hidden;display:grid;place-items:center}
+.recorte svg{height:36px;width:auto;max-width:100%}
+.recorte.proporcion{overflow:visible}
+.recorte.proporcion svg{width:100%;height:100%;max-width:none}
+.opcion.elegida{border-color:var(--bosque)}
+.pista{min-height:1.15em;margin:0;font-weight:800;color:var(--azul);font-size:.95rem}
+.aviso{min-height:1.15em;margin:0;font-weight:800;color:var(--coral)}
+.referencia{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:var(--card);border-radius:14px;padding:4px 8px;max-width:100%;min-width:0;width:min(100%,520px)}
+.referencia .dibujo{position:relative;flex:none}
+.referencia .dibujo > svg{width:100%;height:100%;display:block}
+.referencia p{margin:0;font-weight:800;text-align:left;font-size:.85rem;flex:1 1 12rem;min-width:0;text-wrap:pretty}
+.bloques{position:relative;width:min(100%,420px);height:64px;margin:0 auto}
+.hueco .bloques{position:absolute;left:0;width:100%;bottom:14%;height:auto;margin:0;z-index:2}
+.hueco .cubo{height:100%;top:0}
+.hueco .cubo.arriba{top:-38%;z-index:3}
+.regla-bloques{display:flex;justify-content:center;gap:10px;background:var(--card);border-radius:14px;padding:6px 10px;box-shadow:var(--sombra);width:min(100%,420px)}
+.regla-bloques .mini{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.85rem}
+.regla-bloques svg{width:100%;max-width:96px;height:auto;display:block}
+.sombra-hueco{position:absolute;left:0;right:0;bottom:16%;height:24%;z-index:1}
+.sombra-hueco svg{width:100%;height:100%;display:block}
+.comp-leyenda{display:flex;justify-content:space-between;gap:8px;width:min(100%,520px);margin:.15rem auto 0;font-weight:800}
+.comp-cols{display:flex;align-items:stretch;gap:8px;width:min(100%,520px);margin:0 auto}
+.comp-etis{display:flex;flex-direction:column;justify-content:space-between;gap:6px;flex:none}
+.comp-eti{font-weight:800;font-size:.8rem;line-height:1.1;display:flex;align-items:center;justify-content:flex-end;min-height:36px;text-align:right;max-width:7.2rem}
+.comp-lienzo{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.cubo{position:absolute;top:0;height:64px}
+.cubo svg{width:100%;height:100%;display:block}
+.comparar{position:relative;width:min(100%,520px);display:flex;flex-direction:column;gap:6px;margin:0 auto}
+.comp-fila{display:flex;align-items:center;min-height:36px}
+.comp-barra{height:36px;overflow:hidden;flex:none}
+.comp-dif{position:relative;height:36px;flex:none}
+.comp-barra svg,.comp-dif svg{width:100%;height:36px;display:block}
+.comp-punteo{position:absolute;top:0;bottom:0;width:14px;transform:translateX(-50%)}
+.comp-punteo svg{width:100%;height:100%;display:block;transform:rotate(90deg)}
+.falta{display:flex;width:min(100%,420px);height:36px;margin:0 auto}
+.falta svg{width:100%;height:36px;display:block}
+.arbol-escena{display:flex;align-items:flex-end;justify-content:center;gap:20px;padding:0 44px 0 12px;border-bottom:4px solid #7a5a3a}
+.arbol-escena .arbol{display:block;flex:none}
+.arbol-escena .arbol svg{width:100%;height:100%;display:block}
+.tabla-parada{position:relative;display:block;flex:none}
+.tabla-parada > svg{width:100%;height:100%;display:block}
+.tabla-parada small{position:absolute;left:100%;bottom:0;margin-left:4px;font-weight:800;white-space:nowrap}
+.opcion.usada{border-color:var(--bosque)}
+.desfile{display:flex;gap:4px;justify-content:center;align-items:flex-end}
+.desfile .animal{width:64px;height:58px;animation:cruza 1.6s ease-in-out}
+.desfile svg{width:64px;height:58px}
+@keyframes cruza{from{transform:translateX(-12px)}to{transform:translateX(12px)}}
+.splash-art{width:120px;height:80px;margin:0 auto}
+.splash-art svg{width:120px;height:80px}
+.velo{position:fixed;inset:0;background:rgba(43,34,54,.45);display:grid;place-items:center;z-index:5;padding:16px}
+.dialogo{background:var(--card);border-radius:24px;padding:1rem;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:.6rem;width:min(360px,92vw)}
+.dialogo p{font-family:"Fredoka",sans-serif;font-size:1.8rem;margin:0}
+.estrellas{display:inline-flex;gap:.15em}
+.estrellas svg{width:1.2em;height:1.2em}
+.estrellas .on{fill:var(--star)}
+.estrellas .off{fill:var(--off)}
+.estrellas.grande svg{width:2.4rem;height:2.4rem}
+.subio{background:var(--sol);color:#2b2236;border-radius:16px;padding:.4rem .7rem}
+.subio b{font-family:"Fredoka",sans-serif;font-size:1.15rem;display:block}
+.tarjeta-reto{background:var(--card);border-radius:20px;padding:.7rem .9rem;box-shadow:var(--sombra);max-width:32rem}
+.tarjeta-reto b{font-family:"Fredoka",sans-serif;font-size:1.35rem}
+.racha{display:flex;align-items:center;gap:.35rem;font-size:.95rem;margin:0}
+.racha.grande{font-size:1.15rem}
+.ico{width:1.2em;height:1.2em;flex:none}
+.con-ico{display:inline-flex;align-items:center;gap:.3em}
+.semana{display:flex;gap:.35rem;justify-content:center}
+.dia{display:flex;flex-direction:column;align-items:center;gap:.1rem;font-weight:800;color:var(--muted);font-size:.8rem}
+.dia .punto{width:1.6rem;height:1.6rem;border-radius:50%;background:var(--off);display:grid;place-items:center}
+.dia.jugo .punto{background:var(--azul)}
+.dia.reto .punto{background:var(--verde)}
+.dia .punto svg{width:1rem;height:1rem}
+.mapa-zonas{display:flex;gap:6px;width:min(520px,100%);justify-content:center}
+.mapa-zonas .zona-card{flex:1 1 0;min-width:0;background:var(--card);border-radius:14px;padding:4px;box-shadow:var(--sombra)}
+.mapa-zonas svg{width:100%;height:52px}
+.mapa-zonas span{display:block;font-size:.75rem;font-weight:800}
+.mapa{list-style:none;padding:0;margin:0;display:grid;gap:.3rem;width:min(560px,100%);overflow:hidden;min-height:0}
+.nivel{width:100%;display:flex;align-items:center;gap:.5rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:.25rem .6rem;min-height:64px}
+.nivel b.num{font-family:"Fredoka",sans-serif;width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;background:var(--off);flex:none}
+.nivel .nom{flex:1;display:flex;flex-direction:column;font-weight:800}
+.nivel .nom small{font-weight:600;color:var(--muted)}
+.nivel.dominado b.num{background:var(--verde);color:#143024}
+.nivel.abierto b.num{background:var(--azul);color:#fff}
+.nivel.actual{border-color:var(--bosque)}
+.nivel.cerrado{opacity:.55}
+.nota{color:var(--muted);max-width:40rem;margin:0;text-align:left;font-size:.85rem}
+.tabla{border-collapse:collapse;width:min(720px,100%);font-size:.85rem;text-align:left}
+.tabla th,.tabla td{padding:.25rem .35rem;border-bottom:1px solid var(--line)}
+.tabla th{color:var(--muted)}
+.flecha-pista{position:absolute;top:-4px;left:50%;transform:translate(-50%,-70%);width:36px;height:42px;z-index:4;pointer-events:none}
+.flecha-pista svg{width:100%;height:100%;display:block}
+.escena .flecha-pista{top:10px;transform:translate(-50%,0)}
+.referencia .flecha-pista{top:auto;bottom:0;left:50%;transform:translate(-50%,30%)}
+.comp-dif .flecha-pista{top:2px;left:50%;width:28px;height:32px;transform:translate(-50%,0)}
+.comp-dif .flecha-pista svg{width:100%;height:100%}
+.opciones.apunta{padding-top:46px}
+.opciones .flecha-pista{top:2px;width:36px;height:36px;transform:translate(-50%,0)}
+.apunta{position:relative}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .brillo-cero.encendido{opacity:1}
+}
+html[data-modo="tv"] .pedido{font-size:1.55rem}
+html[data-modo="tv"] .mapa-zonas svg{height:72px}
+html[data-modo="tv"] .ico-btn span.glifo{font-size:3rem}
+html[data-modo="tv"] .inicio-fila{flex-direction:row;align-items:center;justify-content:center;gap:1rem}
+
+/* Modo oscuro: el fondo claro fijo de body dejaba las letras blancas sobre blanco (#76).
+   Va al final para ganarle a la regla de body. */
+@media (prefers-color-scheme:dark){
+  body{background:radial-gradient(circle at 90% 0%, #1f4a33 0, transparent 42%), linear-gradient(#0f1d19, var(--bg) 28%)}
+}

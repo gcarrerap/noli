@@ -58,7 +58,7 @@ service cloud.firestore {
       match /acciones/{id} {
         allow read, delete: if request.auth != null;
         allow create: if request.auth != null
-          && request.resource.data.accion in ['arriba', 'abajo', 'izquierda', 'derecha', 'ok', 'atras'];
+          && request.resource.data.accion in ['arriba', 'abajo', 'izquierda', 'derecha', 'ok', 'atras', 'brincar'];
       }
     }
     // ---- La Pata ----

@@ -1,0 +1,13 @@
+{
+  "id": "reloj-dragon",
+  "titulo": "El Reloj del Dragón",
+  "descripcion": "Pon la hora del día del dragón.",
+  "icono": "icono.svg",
+  "color": "#ffc43d",
+  "materia": "matemáticas",
+  "edades": [6, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

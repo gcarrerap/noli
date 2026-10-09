@@ -28,7 +28,10 @@ body{overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-sel
   transition:transform .08s ease, background .08s ease}
 .b.arriba{grid-area:1/2} .b.izquierda{grid-area:2/1} .b.ok{grid-area:2/2} .b.derecha{grid-area:2/3} .b.abajo{grid-area:3/2}
 .b.ok{border-radius:50%;background:var(--accent);color:var(--accent-fg);font-family:var(--display);font-size:2.2rem}
-.b.atras{width:min(88vw, 420px);padding:.55em;font-size:1.5rem;font-family:var(--display);border-radius:999px}
+.fila-b{width:min(88vw, 420px);display:flex;gap:10px}
+.b.atras,.b.brincar{flex:1;padding:.55em;font-size:1.5rem;font-family:var(--display);border-radius:999px}
+.b.brincar{background:var(--sun);display:flex;align-items:center;justify-content:center;gap:.25em}
+.b.brincar.apretado{background:#f0b020}
 .b.apretado,.b.toque{transform:scale(.93)}
 .b.apretado{background:var(--sun)} .b.ok.apretado{background:#e8553a}
 :root:not(.activo) .b{opacity:.55}

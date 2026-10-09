@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 8 240 244">
+<title>Máquina triturando: 1 placa a 10 barras</title>
+<ellipse cx="120" cy="240" rx="104" ry="9" fill="#2b2236" opacity=".12"/>
+<g stroke="#2b2236" stroke-width="5" stroke-linejoin="round">
+  <rect x="58" y="214" width="26" height="22" rx="4" fill="#4a4060"/>
+  <rect x="156" y="214" width="26" height="22" rx="4" fill="#4a4060"/>
+  <path id="tolva" d="M46 22h148l-26 44H72z" fill="#ffc43d"/>
+  <rect id="cuerpo" x="22" y="62" width="196" height="156" rx="20" fill="#c86bfa"/>
+  <path id="luz" d="M188 62a14 14 0 0 1 28 0z" fill="#ff6b4a"/>
+  <path d="M24 62a14 14 0 0 1 28 0z" fill="#e7dccb"/>
+</g>
+<path id="dientes" d="M72 62l12 12 12-12 12 12 12-12 12 12 12-12 12 12 12-12" fill="none" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<rect id="pantalla" x="40" y="84" width="160" height="66" rx="14" fill="#fff" stroke="#2b2236" stroke-width="4"/>
+<g id="cartel"><rect x="52" y="98" width="38" height="38" rx="2" fill="#4cb3ff" stroke="#2b2236" stroke-width="2.5"/><path d="M52 105.6h38M59.6 98v38M52 113.2h38M67.2 98v38M52 120.8h38M74.8 98v38M52 128.4h38M82.4 98v38" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><path d="M98 117h18m-8-9 9 9-9 9" fill="none" stroke="#2b2236" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="128" y="98" width="6" height="38" rx="1.5" fill="#4cb3ff" stroke="#2b2236" stroke-width="2"/><rect x="137" y="98" width="6" height="38" rx="1.5" fill="#4cb3ff" stroke="#2b2236" stroke-width="2"/><rect x="146" y="98" width="6" height="38" rx="1.5" fill="#4cb3ff" stroke="#2b2236" stroke-width="2"/><text x="176" y="128" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="22" text-anchor="middle" fill="#2b2236">×10</text></g>
+<g id="engrane-izq"><path d="M80 166L84.88 159.48L89.57 160.9L90 169.03L92.73 171.27L100.79 170.11L103.1 174.43L97.65 180.49L98 184L104.52 188.88L103.1 193.57L94.97 194L92.73 196.73L93.89 204.79L89.57 207.1L83.51 201.65L80 202L75.12 208.52L70.43 207.1L70 198.97L67.27 196.73L59.21 197.89L56.9 193.57L62.35 187.51L62 184L55.48 179.12L56.9 174.43L65.03 174L67.27 171.27L66.11 163.21L70.43 160.9L76.49 166.35z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><circle cx="80" cy="184" r="7" fill="#2b2236"/></g>
+<g id="engrane-der"><path d="M160 166L164.88 159.48L169.57 160.9L170 169.03L172.73 171.27L180.79 170.11L183.1 174.43L177.65 180.49L178 184L184.52 188.88L183.1 193.57L174.97 194L172.73 196.73L173.89 204.79L169.57 207.1L163.51 201.65L160 202L155.12 208.52L150.43 207.1L150 198.97L147.27 196.73L139.21 197.89L136.9 193.57L142.35 187.51L142 184L135.48 179.12L136.9 174.43L145.03 174L147.27 171.27L146.11 163.21L150.43 160.9L156.49 166.35z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><circle cx="160" cy="184" r="7" fill="#2b2236"/></g>
+<path d="M32 80v40" stroke="#fff" stroke-opacity=".45" stroke-width="6" stroke-linecap="round"/>
+</svg>

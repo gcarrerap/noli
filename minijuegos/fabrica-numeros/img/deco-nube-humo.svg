@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -14 140 228">
+<title>Chimenea con una nube de humo grande</title>
+<g id="humo">
+<g class="nube"><circle cx="70" cy="70" r="30" fill="#f3eefa" stroke="#2b2236" stroke-width="8"/><circle cx="40" cy="82" r="22" fill="#f3eefa" stroke="#2b2236" stroke-width="8"/><circle cx="100" cy="80" r="24" fill="#f3eefa" stroke="#2b2236" stroke-width="8"/><circle cx="58" cy="50" r="22" fill="#f3eefa" stroke="#2b2236" stroke-width="8"/><circle cx="88" cy="46" r="20" fill="#f3eefa" stroke="#2b2236" stroke-width="8"/><circle cx="70" cy="70" r="30" fill="#f3eefa"/><circle cx="40" cy="82" r="22" fill="#f3eefa"/><circle cx="100" cy="80" r="24" fill="#f3eefa"/><circle cx="58" cy="50" r="22" fill="#f3eefa"/><circle cx="88" cy="46" r="20" fill="#f3eefa"/><path d="M44 74a14 14 0 0 1 14-12M84 40a12 12 0 0 1 12 6" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>
+<circle class="nube" cx="104" cy="14" r="11" fill="#f3eefa" stroke="#2b2236" stroke-width="4"/>
+<circle class="nube" cx="122" cy="2" r="7" fill="#f3eefa" stroke="#2b2236" stroke-width="3"/>
+</g>
+<rect x="50" y="124" width="40" height="84" rx="4" fill="#c86bfa" stroke="#2b2236" stroke-width="5"/>
+<path d="M50 160h40M50 184h40" stroke="#2b2236" stroke-width="4"/>
+<path d="M60 134v66" stroke="#fff" stroke-opacity=".5" stroke-width="6" stroke-linecap="round"/>
+<rect x="42" y="112" width="56" height="16" rx="5" fill="#ffc43d" stroke="#2b2236" stroke-width="5"/>
+</svg>

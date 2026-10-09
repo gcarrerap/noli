@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 22 124 112">
+<title>Mascota (perrito) que hace pedidos</title>
+<path d="M30 132q0-36 32-36t32 36z" fill="#e8b57e" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<rect x="44" y="96" width="36" height="9" rx="4" fill="#ff6b4a" stroke="#2b2236" stroke-width="3.5"/><circle cx="62" cy="108" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="3"/>
+<path d="M28 30c-14 0-20 24-14 44 4 10 14 8 18-2z" fill="#a8703f" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M96 30c14 0 20 24 14 44-4 10-14 8-18-2z" fill="#a8703f" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<ellipse id="cabeza" cx="62" cy="60" rx="38" ry="36" fill="#e8b57e" stroke="#2b2236" stroke-width="5"/>
+<ellipse cx="62" cy="74" rx="20" ry="14" fill="#fff2df"/>
+<ellipse cx="62" cy="68" rx="7" ry="5" fill="#2b2236"/>
+<g id="ojos"><circle cx="50" cy="56" r="6.5" fill="#2b2236"/><circle cx="74" cy="56" r="6.5" fill="#2b2236"/><circle cx="52" cy="54" r="2.2" fill="#fff"/><circle cx="76" cy="54" r="2.2" fill="#fff"/></g><g id="boca"><path d="M52 78q5 6 10 0q5 6 10 0" fill="none" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/></g>
+</svg>

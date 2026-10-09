@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200">
+<title>Pasillo del laberinto (se repite a lo ancho)</title>
+<rect x="0" y="0" width="160" height="150" fill="#e9e1f7"/><path d="M0 30h160M0 60h160M0 90h160M0 120h160" stroke="#d3c6ec" stroke-width="3"/><path d="M20 0v30M100 0v30M60 30v30M140 30v30M20 60v30M100 60v30M60 90v30M140 90v30M20 120v30M100 120v30" stroke="#d3c6ec" stroke-width="3"/><rect x="0" y="150" width="160" height="50" fill="#b8aed0"/><path d="M0 150h160" stroke="#2b2236" stroke-width="5"/><path d="M40 170h20M120 186h20" stroke="#9a8fb5" stroke-width="4" stroke-linecap="round"/>
+</svg>

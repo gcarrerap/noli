@@ -1,0 +1,13 @@
+{
+  "id": "fabrica-numeros",
+  "titulo": "Fábrica de Números",
+  "descripcion": "Arma pedidos con placas, barras y cubitos.",
+  "icono": "icono.svg",
+  "color": "#3ccf8e",
+  "materia": "matemáticas",
+  "edades": [7, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

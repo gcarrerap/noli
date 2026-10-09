@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160">
+<title>Pizza rectangular sin cortes (masa x 8–232, y 8–152)</title>
+<rect id="masa" x="8" y="8" width="224" height="144" rx="18" fill="#f2b25c" stroke="#2b2236" stroke-width="6"/>
+<rect x="15" y="15" width="210" height="130" rx="13" fill="none" stroke="#c97f2c" stroke-width="3" stroke-dasharray="10 14" stroke-linecap="round"/>
+<rect id="salsa" x="22" y="22" width="196" height="116" rx="10" fill="#e8503a" stroke="#2b2236" stroke-width="4"/>
+<rect id="queso" x="28" y="28" width="184" height="104" rx="8" fill="#ffd75e"/>
+<g id="ingredientes"/>
+<g id="resaltado" fill="#fff" fill-opacity=".35" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+<g id="cortes" stroke="#2b2236" stroke-width="6" stroke-linecap="round"/>
+</svg>

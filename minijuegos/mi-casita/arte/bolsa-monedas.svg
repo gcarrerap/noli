@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 120 136">
+<title>Bolsa de monedas de la visita (texto #cantidad)</title>
+<path d="M40 40c-24 14-34 38-30 62 4 22 26 30 50 30s46-8 50-30c4-24-6-48-30-62z" fill="#d9b48a" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M44 40l-10-22c10 6 18 2 26-4 8 6 16 10 26 4l-10 22z" fill="#d9b48a" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M38 42q22 8 44 0" fill="none" stroke="#ff6b4a" stroke-width="7" stroke-linecap="round"/>
+<path d="M78 44q14 6 12 18" fill="none" stroke="#ff6b4a" stroke-width="5" stroke-linecap="round"/>
+<path d="M22 84q4-18 14-28" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="6" stroke-linecap="round"/>
+<path d="M30 116q30 10 60 0" fill="none" stroke="#b38a5e" stroke-width="4" stroke-linecap="round"/>
+<g id="monedas-asomando">
+<circle cx="50" cy="32" r="11" fill="#e0b44c" stroke="#8a6a20" stroke-width="3.5"/><circle cx="68" cy="28" r="12" fill="#e4e7ee" stroke="#a8842a" stroke-width="3.5"/>
+</g>
+<rect x="34" y="72" width="52" height="34" rx="10" fill="#fff" stroke="#2b2236" stroke-width="4"/>
+<text id="cantidad" x="60" y="98" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle" fill="#2b2236">20</text>
+</svg>
