@@ -1,0 +1,155 @@
+/* Pizzería Partida. Estilos propios: el juego no usa los del catálogo. */
+:root{
+  --bg:#fff6f2; --fg:#2b2236; --muted:#76698a; --card:#fff; --line:#f3d2cc;
+  --tomate:#e8505b; --sol:#ffc43d; --verde:#3ccf8e; --azul:#4cb3ff;
+  --bien:#2fbf7f; --star:#ffb400; --off:#f0e2dc; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#241820; --fg:#fff5f4; --muted:#d3b8c0; --card:#34242c; --line:#4a3340;
+  --off:#4a3340; --foco:#fff; --sombra:0 6px 0 rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, 2.2vmin, 22px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.4vmin, 30px)}
+html,body{height:100%;overflow:hidden}
+body{margin:0;background:
+  radial-gradient(circle at 80% 0%, #ffe1d6 0, transparent 42%),
+  linear-gradient(#fff, var(--bg) 30%);
+  color:var(--fg);font-family:"Nunito",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+:focus{outline:none}
+html.teclado :focus{outline:5px solid var(--foco);outline-offset:2px}
+main{width:100%;max-width:1100px;margin:0 auto;padding:10px 14px 12px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:.35rem;
+  height:100dvh;max-height:100dvh;overflow:hidden}
+html[data-modo="tv"] main{padding:5vh 6vw 4vh}
+.titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.7rem;margin:0;line-height:1.05}
+.sub{font-size:.95rem;color:var(--muted);margin:0}
+.cargando{color:var(--muted);margin:auto}
+.boton{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.4em .9em;font-weight:800;font-size:1rem;
+  box-shadow:var(--sombra);min-height:64px;max-width:100%}
+.boton.grande{font-family:"Fredoka",system-ui,sans-serif;font-size:1.2rem;font-weight:600;border-radius:18px;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.boton.grande small{font-family:"Nunito",sans-serif;font-size:.72rem;font-weight:700;opacity:.85}
+.boton.primario{background:var(--verde);color:#143024;border-color:transparent}
+.boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
+.boton.hecho{background:var(--azul);color:#fff;border-color:transparent}
+button:disabled{opacity:.38;filter:grayscale(.4);box-shadow:none}
+.menu{display:flex;flex-direction:column;gap:.4rem;width:min(420px,100%)}
+.menu.fila{flex-direction:row;flex-wrap:wrap;justify-content:center}
+.menu.chica .boton{flex:1 1 140px;min-height:64px}
+.inicio-layout{width:100%;display:flex;flex-direction:column;gap:.4rem;align-items:center;min-height:0}
+.local{width:min(420px,100%);background:var(--card);border-radius:20px;padding:6px 8px;box-shadow:var(--sombra)}
+.local-letrero{min-height:36px;display:grid;place-items:center;font-family:"Fredoka",sans-serif;color:var(--tomate)}
+.local-letrero svg,.local-mesa svg,.local-horno svg{width:100%;height:48px;display:block}
+.local-sala{display:flex;gap:8px;align-items:end;justify-content:center}
+.local-mesa{flex:1;min-height:48px}
+.local-horno{flex:1}
+.local-horno svg{height:64px}
+.propinas{display:flex;align-items:center;justify-content:center;gap:.35rem;margin:0;font-weight:800}
+.moneda{width:28px;height:28px;display:inline-grid}
+.moneda svg{width:28px;height:28px}
+.dominio{color:var(--muted);font-size:.85rem}
+.dominio.ok{color:var(--bien);font-weight:800}
+.barra{height:10px;background:var(--off);border-radius:999px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--verde)}
+.racha{display:flex;align-items:center;gap:.35rem;font-size:.95rem;margin:0}
+.racha.grande{font-size:1.2rem}
+.ico{width:1.2em;height:1.2em;flex:none}
+.con-ico{display:inline-flex;align-items:center;gap:.3em}
+.cab{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--muted);gap:.4rem;font-size:.9rem}
+.puntos{display:flex;gap:4px}
+.puntos i{width:12px;height:12px;border-radius:50%;background:var(--off);display:block}
+.puntos i.lleno{background:var(--verde)}
+.saltar{min-height:64px;min-width:64px;border-radius:16px;background:var(--card);font-weight:800;padding:0 .8em;box-shadow:var(--sombra)}
+.comanda{width:100%;display:flex;gap:.6rem;align-items:center;text-align:left}
+.cliente{width:72px;height:74px;flex:none}
+.cliente svg{width:72px;height:74px;display:block}
+.cliente.grande{width:96px;height:98px}
+.cliente.grande svg{width:96px;height:98px}
+.pedido{font-family:"Fredoka",system-ui,sans-serif;font-size:1.25rem;margin:0;line-height:1.15}
+.nota-reloj{margin:.15rem 0 0;color:var(--muted);font-size:.78rem;font-weight:700}
+.zona{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+.opciones{display:flex;gap:8px;width:100%;min-width:0;align-items:stretch;justify-content:center}
+.opcion{flex:1 1 0;min-width:0;min-height:64px;border-radius:18px;background:var(--card);box-shadow:var(--sombra);
+  padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;border:3px solid transparent}
+.opcion.senala,.opcion.revelada{border-color:var(--tomate)}
+.apunta{position:absolute;top:0;left:50%;transform:translate(-50%,-70%);width:22px;height:26px}
+.pizza{width:100%;display:block}
+.pizza svg{width:100%;height:auto;max-height:22vh;display:block}
+.pizza.grande svg{max-height:24vh}
+.pila{width:64px;height:64px;display:block}
+.pila svg{width:64px;height:64px}
+.galleta svg{width:100%;max-height:18vh}
+.nom{font-weight:800;font-size:.85rem;line-height:1.1}
+.en{display:none;font-size:.72rem;color:var(--muted);font-style:italic}
+.con-ingles .en{display:block}
+.num{font-family:"Fredoka",sans-serif;font-size:14px;font-weight:700;fill:#2b2236;stroke:#fff;stroke-width:3px;paint-order:stroke;text-anchor:middle;dominant-baseline:middle}
+.prende{opacity:0;animation:prende .25s linear forwards}
+@keyframes prende{to{opacity:1}}
+.pista{min-height:1.2em;margin:0;font-weight:800;color:var(--azul);font-size:.95rem}
+.aviso{min-height:1.2em;margin:0;font-weight:800;color:var(--tomate)}
+.decora,.bandeja,.cuantos{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:0}
+.rebanadas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.reb{width:64px;height:64px;border-radius:50%;background:var(--off);font-family:"Fredoka",sans-serif;font-size:1.4rem;box-shadow:var(--sombra)}
+.reb.puesta{background:var(--sol);box-shadow:0 0 0 3px var(--tomate)}
+.enviar{min-width:140px;min-height:64px;border-radius:18px;background:var(--card);color:var(--muted);
+  font-family:"Fredoka",sans-serif;font-size:1.25rem;font-weight:600;box-shadow:var(--sombra);padding:0 1em}
+.enviar.listo{background:var(--verde);color:#143024;box-shadow:0 0 0 4px #fff, 0 0 0 8px var(--verde);animation:pulso 1s ease-in-out infinite}
+@keyframes pulso{50%{transform:translateY(-2px)}}
+.parrilla{display:grid;gap:4px;width:min(100%,240px);background:#dfe6ee;border:5px solid #2b2236;border-radius:16px;padding:6px}
+.parrilla img{width:100%;height:auto;display:block}
+.parrilla.mini{width:auto;border-width:3px;padding:3px;background:transparent}
+.pasos{width:100%;display:flex;flex-direction:column;gap:6px}
+.step{display:flex;align-items:center;justify-content:center;gap:6px;min-height:64px;background:var(--card);border-radius:18px;padding:4px 8px;box-shadow:var(--sombra)}
+.step .etiq{width:6rem;text-align:right;font-weight:800}
+.step b{min-width:1.4rem;font-family:"Fredoka",sans-serif;font-size:1.5rem}
+.step button{width:64px;height:64px;border-radius:16px;background:var(--off);font-family:"Fredoka",sans-serif;font-size:2rem;flex:none}
+.fila-cuenta{display:flex;align-items:center;gap:8px;justify-content:center}
+.fila-cuenta b{font-family:"Fredoka",sans-serif;font-size:1.3rem;min-width:1.6rem}
+.opciones.numeros{flex-wrap:wrap}
+.opciones.numeros .boton{flex:1 1 90px}
+.velo{position:fixed;inset:0;background:rgba(43,34,54,.45);display:grid;place-items:center;z-index:5;padding:16px}
+.dialogo{background:var(--card);border-radius:24px;padding:1rem;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:.6rem;width:min(360px,92vw)}
+.dialogo p{font-family:"Fredoka",sans-serif;font-size:1.8rem;margin:0}
+.estrellas{display:inline-flex;gap:.15em}
+.estrellas svg{width:1.2em;height:1.2em}
+.estrellas .on{fill:var(--star)}
+.estrellas .off{fill:var(--off)}
+.estrellas.grande svg{width:2.6rem;height:2.6rem}
+.subio{background:var(--sol);color:#2b2236;border-radius:16px;padding:.5rem .8rem}
+.subio b{font-family:"Fredoka",sans-serif;font-size:1.2rem;display:block}
+.tarjeta-reto{background:var(--card);border-radius:20px;padding:.8rem 1rem;box-shadow:var(--sombra);max-width:32rem}
+.tarjeta-reto b{font-family:"Fredoka",sans-serif;font-size:1.4rem}
+.semana{display:flex;gap:.35rem;justify-content:center}
+.dia{display:flex;flex-direction:column;align-items:center;gap:.1rem;font-weight:800;color:var(--muted);font-size:.8rem}
+.dia .punto{width:1.6rem;height:1.6rem;border-radius:50%;background:var(--off);display:grid;place-items:center}
+.dia.jugo .punto{background:var(--azul)}
+.dia.reto .punto{background:var(--verde)}
+.dia .punto svg{width:1rem;height:1rem}
+.mapa{list-style:none;padding:0;margin:0;display:grid;gap:.35rem;width:min(560px,100%);overflow:auto;min-height:0}
+.nivel{width:100%;display:flex;align-items:center;gap:.6rem;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:.35rem .7rem;min-height:64px}
+.nivel b.num{font-family:"Fredoka",sans-serif;width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;background:var(--off);flex:none}
+.nivel .nom{flex:1;display:flex;flex-direction:column;font-weight:800}
+.nivel .nom small{font-weight:600;color:var(--muted)}
+.nivel.dominado b.num{background:var(--verde);color:#143024}
+.nivel.abierto b.num{background:var(--azul);color:#fff}
+.nivel.actual{border-color:var(--verde)}
+.nivel.cerrado{opacity:.55}
+.nota{color:var(--muted);max-width:40rem;margin:0;text-align:left;font-size:.9rem}
+.tabla{border-collapse:collapse;width:min(720px,100%);font-size:.9rem;text-align:left}
+.tabla th,.tabla td{padding:.3rem .4rem;border-bottom:1px solid var(--line)}
+.tabla th{color:var(--muted)}
+.guia-texto{font-size:1.35rem}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .prende{opacity:1}
+}
+html[data-modo="tv"] .inicio-layout{flex-direction:row;align-items:center;justify-content:center}
+html[data-modo="tv"] .local{width:min(460px,42vw)}
+html[data-modo="tv"] .pedido{font-size:1.7rem}
+html[data-modo="tv"] .pizza svg{max-height:34vh}
+html[data-modo="tv"] .juego-ancho{flex-direction:row}
+html[data-modo="tv"] .pasos{flex-direction:row}
+html[data-modo="tv"] .mapa{overflow:hidden}

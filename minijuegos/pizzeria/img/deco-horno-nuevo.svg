@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -2 240 222">
+<title>Horno de leña nuevo (decoración)</title>
+<path d="M14 210V110a106 96 0 0 1 212 0v100z" fill="#d9583c" stroke="#2b2236" stroke-width="6" stroke-linejoin="round"/>
+<path d="M40 80h20" stroke="#8a2a1d" stroke-width="2.5"/><path d="M150 90h20" stroke="#8a2a1d" stroke-width="2.5"/><path d="M60 150h20" stroke="#8a2a1d" stroke-width="2.5"/><path d="M170 160h20" stroke="#8a2a1d" stroke-width="2.5"/><path d="M30 190h20" stroke="#8a2a1d" stroke-width="2.5"/><path d="M190 120h20" stroke="#8a2a1d" stroke-width="2.5"/>
+<rect x="96" y="2" width="48" height="30" rx="4" fill="#4a4060" stroke="#2b2236" stroke-width="5"/>
+<path d="M60 186v-46a60 56 0 0 1 120 0v46z" fill="#3a1f18" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<g class="fuego"><path d="M82 186c-6-16 6-22 4-34 12 8 14 18 12 22 4-8 10-12 8-24 14 12 18 26 12 36z" fill="#ff9a3c" stroke="#2b2236" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M116 186c-4-10 4-14 4-22 8 6 10 14 8 22z" fill="#ffc43d"/>
+<path d="M138 186c-4-12 6-16 4-26 10 8 14 18 10 26z" fill="#ff9a3c" stroke="#2b2236" stroke-width="3.5" stroke-linejoin="round"/></g>
+<rect x="6" y="196" width="228" height="20" rx="6" fill="#e7dccb" stroke="#2b2236" stroke-width="5"/>
+<path d="M62 136a58 52 0 0 1 116 0" fill="none" stroke="#ffc43d" stroke-width="6" stroke-linecap="round"/>
+</svg>

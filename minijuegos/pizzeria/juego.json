@@ -1,0 +1,13 @@
+{
+  "id": "pizzeria",
+  "titulo": "Pizzería Partida",
+  "descripcion": "Corta, decora y arma la comida en partes iguales.",
+  "icono": "icono.svg",
+  "color": "#e8505b",
+  "materia": "matemáticas",
+  "edades": [6, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 0 208 192">
+<title>Comanda: papel del pedido (dibujo y texto los pone el código)</title>
+<path d="M10 6h196v170l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8l-7 8-7-8z" fill="#fffdf6" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<rect x="10" y="6" width="196" height="30" fill="#ff6b4a" stroke="#2b2236" stroke-width="5"/>
+<text id="titulo" x="108" y="29" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="20" text-anchor="middle" fill="#fff">Pedido</text>
+<rect id="dibujo" x="38" y="48" width="140" height="92" rx="10" fill="none" stroke="#e7dccb" stroke-width="3" stroke-dasharray="8 6"/>
+<path d="M28 156h160" stroke="#e7dccb" stroke-width="3" stroke-linecap="round"/>
+<circle cx="194" cy="21" r="5" fill="#fff"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 122">
+<title>Cliente: Oso esperando su pedido</title>
+<circle cx="28" cy="30" r="16" fill="#b07a4f" stroke="#2b2236" stroke-width="5"/><circle cx="92" cy="30" r="16" fill="#b07a4f" stroke="#2b2236" stroke-width="5"/><circle cx="28" cy="30" r="7" fill="#ff7eb6"/><circle cx="92" cy="30" r="7" fill="#ff7eb6"/>
+<path d="M12 120q0-34 48-34t48 34z" fill="#8a5a36" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/><path d="M44 90l16 22 16-22z" fill="#fff" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><path d="M50 96h20M54 102h12" stroke="#ff6b4a" stroke-width="3"/>
+<ellipse id="cabeza" cx="60" cy="56" rx="42" ry="36" fill="#b07a4f" stroke="#2b2236" stroke-width="5"/><ellipse cx="60" cy="70" rx="18" ry="12" fill="#fff2df"/>
+<ellipse cx="60" cy="64" rx="6" ry="4.5" fill="#2b2236"/><g id="ojos"><circle cx="44" cy="50" r="7" fill="#2b2236"/><circle cx="76" cy="50" r="7" fill="#2b2236"/><circle cx="46" cy="48" r="2.5" fill="#fff"/><circle cx="78" cy="48" r="2.5" fill="#fff"/></g><g id="boca"><path d="M50 72q10 6 20 0" fill="none" stroke="#2b2236" stroke-width="4.5" stroke-linecap="round"/></g>
+</svg>
