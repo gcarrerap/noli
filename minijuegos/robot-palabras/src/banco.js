@@ -147,6 +147,15 @@ export function pasadoDe(base) {
   return PASADO_DE[base] || "";
 }
 
+const GERUNDIO_DE = {
+  jump: "jumping", run: "running", eat: "eating", sit: "sitting",
+  swim: "swimming", sing: "singing", spin: "spinning", get: "getting",
+};
+
+export function gerundioDe(base) {
+  return GERUNDIO_DE[base] || "";
+}
+
 function pasado(base, forma, dibujo, sonido) {
   return { id: forma, base, pasado: forma, dibujo, sonido: sonido || null, clase: sonido ? "ed" : "irregular" };
 }

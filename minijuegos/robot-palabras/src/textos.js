@@ -132,6 +132,18 @@ export function vozDePista(palabra, categoria) {
   return { texto, voz: [{ lang: "en", texto: palabra }, { lang: "es", texto: cola }] };
 }
 
+export function seRevela(errores) {
+  return (errores || 0) >= 1;
+}
+
+export function hintDeTaller(palabra, categoria, revelar) {
+  if (!revelar) {
+    const texto = categoria === "verb" ? "Es moverse." : categoria === "adjective" ? "Es cómo es." : "Es una pieza.";
+    return todoEs(texto);
+  }
+  return vozDePista(palabra, categoria);
+}
+
 export function hintDePuerta(puerta, revelar) {
   const est = puerta?.estructura;
   if (est === "ayer") {

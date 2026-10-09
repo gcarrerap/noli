@@ -7,7 +7,7 @@ import {
   PLURALES_S, PLURALES_ES, PLURALES_IRR,
   PASADOS_ED, PASADOS_IRR, ORACIONES,
   TERCERA, tambienCorrecta, formasPasado, formasPasadoIrregular,
-  conArticulo, terceraDe, pasadoDe,
+  conArticulo, terceraDe, pasadoDe, gerundioDe,
 } from "./banco.js";
 
 export const ESTRUCTURAS = {
@@ -71,9 +71,10 @@ export function crearTaller(nivel, rnd, usadas, fallos) {
     if (quiere) {
       item = tomar(AMBIGUA, rnd, usadas, fallos);
       marco = categoria === "verb" ? "can" : "a";
-    } else if (categoria === "verb") item = tomar(VERBOS, rnd, usadas, fallos);
+    }     else if (categoria === "verb") item = tomar(VERBOS, rnd, usadas, fallos);
     else item = tomar(SUSTANTIVOS, rnd, usadas, fallos);
   }
+  if (categoria === "noun" && item.id === "fish") marco = "a";
 
   const estructura = marco === "a" ? "marco-a" : marco === "can" ? "marco-can" : "suelta";
   const lectura = marco === "a" ? ["a", item.id] : marco === "can" ? ["I", "can", item.id] : [item.id];
@@ -153,9 +154,11 @@ function armarLaberinto(nivel, estructura, item, lectura, hueco, formas, rnd, ex
   };
 }
 
+const SE_VEN = new Set(["tooth", "foot", "fish"]);
+
 export function puertaPlural(item, nivel, rnd = Math.random) {
-  const irregular = item.clase === "irregular";
-  const estructura = irregular && nivel >= 4 ? "two-can" : "two-see";
+  const corre = item.clase === "irregular" && nivel >= 4 && !SE_VEN.has(item.base);
+  const estructura = corre ? "two-can" : "two-see";
   const lectura = estructura === "two-can"
     ? ["Two", item.plural, "can", "run"]
     : ["I", "see", "two", item.plural];
@@ -174,11 +177,10 @@ export function puertaPasado(item, nivel, rnd = Math.random) {
 }
 
 export function puertaRobot(item, rnd = Math.random) {
-  const pasado = pasadoDe(item.base);
   const formas = [
     opcion(item.verbo, item.dibujo, 1),
     opcion(item.base, item.dibujo, 1),
-    opcion(pasado, item.dibujo, 1),
+    opcion(gerundioDe(item.base), item.dibujo, 1),
   ];
   return armarLaberinto(7, "el-salta", { ...item, pasado: item.verbo, clase: "s" }, ["The", "robot", item.verbo], 2, formas, rnd, {
     premio: null,
@@ -271,6 +273,8 @@ export function problemas(puerta) {
       if (puerta.marco !== "a" && puerta.marco !== "can") errs.push("ambigua");
       if (puerta.marco === "a" && puerta.categoria !== "noun") errs.push("marco");
       if (puerta.marco === "can" && puerta.categoria !== "verb") errs.push("marco");
+    } else if (puerta.palabra === "fish") {
+      if (puerta.marco !== "a" || puerta.categoria !== "noun") errs.push("fish-suelto");
     } else if (puerta.marco) errs.push("marco-de-mas");
     if (nivel < 2 && puerta.categoria === "adjective") errs.push("adjetivo");
     if (puerta.cajas.length !== (nivel < 2 ? 2 : 3)) errs.push("cajas");
@@ -316,9 +320,17 @@ export function fraseCompleta(puerta) {
 export function buenasDe(puerta) {
   if (!puerta || puerta.tipo !== "laberinto") return [];
   const buena = puerta.respuesta;
+  const pasado = puerta.estructura === "el-salta" ? pasadoDe(puerta.base) : "";
   return (puerta.opciones || [])
-    .filter((o) => o.palabra === buena || tambienCorrecta(buena, o.palabra))
+    .filter((o) => o.palabra === buena || tambienCorrecta(buena, o.palabra) || (pasado && o.palabra === pasado))
     .map((o) => o.palabra);
+}
+
+export function focoTrasFicha(fichas, puestas) {
+  const usadas = new Set((puestas || []).map((f) => (f && typeof f === "object" ? f.i : -1)));
+  const any = (fichas || []).findIndex((_, i) => !usadas.has(i));
+  if (any >= 0) return `ficha-${any}`;
+  return "probar";
 }
 
 export function focoSiguienteFicha(fichas, puestas, meta) {

@@ -5,11 +5,11 @@ import { rngConSemilla } from "../src/rng.js";
 import { buscar } from "../../spelling/src/palabras.js";
 import {
   AMBIGUAS, PLURALES_ES, PLURALES_S, PLURALES_IRR, PASADOS_ED, PASADOS_IRR, ORACIONES,
-  tieneGrabacion, dibujosUsados, pideEs, tambienCorrecta, TERCERA, terceraDe, pasadoDe, SUSTANTIVOS,
+  tieneGrabacion, dibujosUsados, pideEs, tambienCorrecta, TERCERA, terceraDe, pasadoDe, gerundioDe, SUSTANTIVOS,
 } from "../src/banco.js";
 import {
   generarTurno, crearTaller, problemas, efectoOracion, probarBrilla, quitarUltima,
-  puertaPlural, puertaPasado, puertaRobot, fraseConPausa, buenasDe, focoSiguienteFicha,
+  puertaPlural, puertaPasado, puertaRobot, fraseConPausa, buenasDe, focoSiguienteFicha, focoTrasFicha,
 } from "../src/puertas.js";
 import { anulaPrimera, pasoPista, pista, FLECHA_S, COMPLETA_S } from "../src/pista.js";
 import {
@@ -24,7 +24,7 @@ import {
 import { retoDelDia, RETO } from "../src/reto.js";
 import { ORDEN, aspecto, sumarPieza } from "../src/piezas.js";
 import { limpiarHabla, hablarSistema, calentarVoces, usarVoces, elegirVoz } from "../src/voz.js";
-import { textoRacha, NIVELES, UI, hintDePuerta, vozDePista, textoGuia } from "../src/textos.js";
+import { textoRacha, NIVELES, UI, hintDePuerta, hintDeTaller, seRevela, vozDePista, textoGuia } from "../src/textos.js";
 
 function secuencia(nums) {
   let i = 0;
@@ -177,7 +177,8 @@ test("el paso completo a los 40 s no cuenta como a la primera", () => {
   assert.equal(pasoPista(2, 20, 0), "flecha");
   assert.equal(pasoPista(2, 40, 0), "completo");
   assert.equal(pista({ nivel: 1, palabra: "head", categoria: "noun" }).texto, "Head es una pieza.");
-  assert.equal(pista({ nivel: 2, segundos: 0 }).texto, "Escucha otra vez.");
+  assert.equal(pista({ nivel: 2, segundos: 0 }).texto, "Elige la palabra.");
+  assert.equal(pista({ nivel: 2, segundos: 20 }).texto, "Elige la palabra.");
   assert.equal(pista({ nivel: 3, segundos: 40, palabra: "jump", categoria: "verb" }).anula, true);
 });
 
@@ -253,9 +254,11 @@ test("la guía: mirar avanza solo, actuar no, y Saltar no recibe el foco", () =>
   assert.equal(aplicarGuia(relojNuevo(3, 0), { tipo: "caja", categoria: "noun" }, 5000, null).hecho, "avanzo");
   assert.equal(aplicarGuia(relojNuevo(4, 0), { tipo: "caja", categoria: "verb" }, 5000, null).hecho, "avanzo");
   assert.equal(aplicarGuia(relojNuevo(1, 0), { tipo: "toque" }, 300, null).hecho, "bloqueo");
-  assert.equal(aplicarGuia(relojNuevo(1, 0), { tipo: "ok" }, BLOQUEO_MS[1], null).hecho, "avanzo");
+  assert.equal(aplicarGuia(relojNuevo(1, 0), { tipo: "ok" }, BLOQUEO_MS[1], null).hecho, "bloqueo");
+  assert.equal(aplicarGuia(relojNuevo(1, 0), { tipo: "ok" }, BLOQUEO_MS[1], { epoch: 1, termino: true }).hecho, "avanzo");
   assert.equal(aplicarGuia(relojNuevo(2, 0), { tipo: "ok" }, 30, null).hecho, "bloqueo");
-  assert.equal(aplicarGuia(relojNuevo(2, 0), { tipo: "ok" }, BLOQUEO_MS[2], null).hecho, "avanzo");
+  assert.equal(aplicarGuia(relojNuevo(2, 0), { tipo: "ok" }, BLOQUEO_MS[2], null).hecho, "bloqueo");
+  assert.equal(aplicarGuia(relojNuevo(2, 0), { tipo: "ok" }, BLOQUEO_MS[2], { epoch: 1, termino: true }).hecho, "avanzo");
   assert.equal(aplicarGuia(relojNuevo(3, 0), { tipo: "caja", categoria: "noun" }, BLOQUEO_MS[3] - 1, null).hecho, "bloqueo");
   assert.equal(aplicarGuia(relojNuevo(5, 0), { tipo: "ok" }, BLOQUEO_MS[5] - 1, null).hecho, "bloqueo");
   assert.equal(aplicarGuia(relojNuevo(5, 0), { tipo: "ok" }, 5000, null).hecho, "fin");
@@ -452,14 +455,34 @@ test("el trago de 400 ms y el bloqueo del paso se solapan", () => {
   assert.equal(mira.bloqueoHasta, 2000 + (BLOQUEO_MS[1] - 10));
   assert.equal(sueltaEn(mira), 2000 + (BLOQUEO_MS[1] - 10));
   assert.equal(aplicarGuia(mira, { tipo: "ok" }, 2000 + TRAGAR_MS, null).hecho, "bloqueo");
-  assert.equal(aplicarGuia(mira, { tipo: "ok" }, 2000 + BLOQUEO_MS[1] - 10, null).hecho, "avanzo");
+  assert.equal(aplicarGuia(mira, { tipo: "ok" }, 2000 + BLOQUEO_MS[1] - 10, null).hecho, "bloqueo");
+  assert.equal(aplicarGuia(mira, { tipo: "ok" }, 2000 + BLOQUEO_MS[1] - 10, { epoch: mira.vozEpoch, termino: true }).hecho, "avanzo");
 
   let ya = pausarReloj(relojNuevo(1, 0), BLOQUEO_MS[1] + 50);
   ya = seguirReloj(ya, 5000);
   assert.equal(ya.bloqueoHasta, 5000);
   assert.equal(sueltaEn(ya), 5000 + TRAGAR_MS);
   assert.equal(aplicarGuia(ya, { tipo: "toque" }, 5000 + 300, null).hecho, "ignorar");
-  assert.equal(aplicarGuia(ya, { tipo: "ok" }, 5000 + TRAGAR_MS, null).hecho, "avanzo");
+  assert.equal(aplicarGuia(ya, { tipo: "ok" }, 5000 + TRAGAR_MS, null).hecho, "bloqueo");
+  assert.equal(aplicarGuia(ya, { tipo: "ok" }, 5000 + TRAGAR_MS, { epoch: ya.vozEpoch, termino: true }).hecho, "avanzo");
+  assert.equal(aplicarGuia(ya, { tipo: "ok" }, 5000 + TOPE_VOZ_MS, null).hecho, "avanzo");
+});
+
+test("un paso para mirar espera una voz de 2.5 s, con tiempos de época", () => {
+  const t = 1.7e12;
+  assert.notEqual((t + 2500) | 0, t + 2500);
+  for (const paso of [1, 2, 5]) {
+    const r = relojNuevo(paso, t);
+    const hablando = { epoch: r.vozEpoch, termino: false };
+    const acaba = paso >= 5 ? "fin" : "avanzo";
+    assert.equal(aplicarGuia(r, { tipo: "ok" }, t + BLOQUEO_MS[paso], hablando).hecho, "bloqueo", paso);
+    assert.equal(aplicarGuia(r, { tipo: "toque" }, t + 2500, hablando).hecho, "bloqueo", paso);
+    assert.equal(aplicarGuia(r, { tipo: "ok" }, t + 999, { epoch: r.vozEpoch, termino: true }).hecho, "bloqueo", paso);
+    assert.equal(aplicarGuia(r, { tipo: "ok" }, t + 2500, { epoch: r.vozEpoch, termino: true }).hecho, acaba, paso);
+    assert.equal(aplicarGuia(r, { tipo: "ok" }, t + TOPE_VOZ_MS, hablando).hecho, acaba, paso);
+    assert.equal(aplicarGuia(r, { tipo: "ok" }, t + BLOQUEO_MS[paso], { epoch: r.vozEpoch, falla: true }).hecho, acaba, paso);
+  }
+  assert.equal(aplicarGuia(relojNuevo(3, t), { tipo: "ok" }, t + 5000, { epoch: 1, termino: false }).hecho, "no");
 });
 
 test("cada puerta del banco tiene una sola respuesta, con formas reales de la misma palabra", () => {
@@ -507,10 +530,40 @@ test("cada puerta del banco tiene una sola respuesta, con formas reales de la mi
   assert.deepEqual(hintDePuerta(jumped, true).voz.map((t) => t.lang), ["es", "en"]);
   const robot = puertaRobot(ORACIONES[0], () => 0);
   assert.equal(hintDePuerta(robot, false).texto, "Un robot: le pones -s.");
+  assert.equal(hintDePuerta(robot, false).texto.includes(robot.respuesta), false);
   assert.equal(hintDePuerta(robot, true).texto.includes(robot.respuesta), true);
+  assert.equal(seRevela(0), false);
+  assert.equal(seRevela(1), true);
+  assert.equal(hintDeTaller("head", "noun", false).texto, "Es una pieza.");
+  assert.equal(hintDeTaller("head", "noun", false).texto.includes("head"), false);
+  assert.equal(hintDeTaller("jump", "verb", true).texto, "Jump es moverse.");
   const fish = puertaPlural(PLURALES_IRR.find((p) => p.base === "fish"), 4, () => 0);
+  assert.equal(fish.estructura, "two-see");
+  assert.match(fish.lectura.join(" "), /^I see two /);
   assert.equal(fish.opciones.some((o) => o.palabra === "fishes"), false);
   assert.equal(buenasDe(fish).length, 1);
+  for (const base of ["tooth", "foot", "fish"]) {
+    const p = puertaPlural(PLURALES_IRR.find((x) => x.base === base), 4, () => 0);
+    assert.equal(p.estructura, "two-see", base);
+    assert.match(p.lectura.join(" "), /^I see two /, base);
+    assert.equal(/can run/.test(p.lectura.join(" ")), false, base);
+  }
+  assert.equal(puertaPlural(PLURALES_IRR.find((p) => p.base === "sheep"), 4, () => 0).estructura, "two-can");
+  const usadasFish = new Set([...SUSTANTIVOS.map((s) => s.id).filter((id) => id !== "fish"), ...AMBIGUAS]);
+  const suelta = crearTaller(2, secuencia([0.1, 0.5, 0]), usadasFish, new Set());
+  assert.equal(suelta.palabra, "fish");
+  assert.equal(suelta.marco, "a");
+  assert.deepEqual(suelta.lectura, ["a", "fish"]);
+  assert.deepEqual(problemas(suelta), []);
+  assert.ok(problemas({ ...suelta, marco: null, estructura: "suelta", lectura: ["fish"] }).includes("fish-suelto"));
+  const run = puertaRobot(ORACIONES.find((o) => o.base === "run"), () => 0);
+  assert.deepEqual(run.familia.slice().sort(), ["run", "running", "runs"]);
+  assert.equal(run.familia.includes("ran"), false);
+  assert.equal(gerundioDe("run"), "running");
+  assert.equal(buenasDe(run).length, 1);
+  const conPasado = { ...run, opciones: [...run.opciones, { palabra: pasadoDe("run") }] };
+  assert.equal(buenasDe(conPasado).length, 2);
+  assert.ok(buenasDe(conPasado).includes("ran"));
   assert.equal(SUSTANTIVOS.some((s) => s.id === "watch"), false);
   assert.equal(AMBIGUAS.includes("watch"), true);
   for (const item of [...PASADOS_ED, ...PASADOS_IRR]) {
@@ -530,6 +583,13 @@ test("cada puerta del banco tiene una sola respuesta, con formas reales de la mi
   const fichas = [{ palabra: "The" }, { palabra: "tiny" }, { palabra: "robot" }, { palabra: "jumps" }];
   assert.equal(focoSiguienteFicha(fichas, [], ["The", "tiny", "robot", "jumps"]), "ficha-0");
   assert.equal(focoSiguienteFicha(fichas, [{ i: 0, palabra: "The" }], ["The", "tiny", "robot", "jumps"]), "ficha-1");
+  const revueltas = [{ palabra: "runs" }, { palabra: "The" }, { palabra: "red" }, { palabra: "robot" }, { palabra: "run" }];
+  const meta = ["The", "red", "robot", "runs"];
+  assert.equal(focoSiguienteFicha(revueltas, [], meta), "ficha-1");
+  assert.equal(focoTrasFicha(revueltas, []), "ficha-0");
+  assert.equal(focoTrasFicha(revueltas, [{ i: 0, palabra: "runs" }]), "ficha-1");
+  assert.equal(focoSiguienteFicha(revueltas, [{ i: 1, palabra: "The" }], meta), "ficha-2");
+  assert.equal(focoTrasFicha(revueltas, [{ i: 1, palabra: "The" }]), "ficha-0");
   assert.equal(toqueEnVelo({ tv: false, enDialogo: false }), "seguir");
   assert.equal(toqueEnVelo({ tv: true, enDialogo: false }), "nada");
   assert.equal(toqueEnVelo({ tv: false, enDialogo: true }), "nada");

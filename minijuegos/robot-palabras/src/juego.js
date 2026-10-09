@@ -12,12 +12,12 @@ import {
   guardarGuia, ponerVoz, fechaLocal, cumplirReto, lineaRacha,
 } from "./progreso.js";
 import {
-  efectoOracion, probarBrilla, generarTurno, fraseConPausa, fraseCompleta, focoSiguienteFicha,
+  efectoOracion, probarBrilla, generarTurno, fraseConPausa, fraseCompleta, focoSiguienteFicha, focoTrasFicha,
 } from "./puertas.js";
 import { RETO, retoDelDia } from "./reto.js";
 import { responder, ignoraEntrada, toqueEnVelo, alTerminarPremio } from "./salida.js";
 import { clic, listo, abrir, desbloquear as desbloquearSonido } from "./sonido.js";
-import { SALIR, CAJAS, NIVELES, UI, FRASES, PIEZAS, hintDePuerta, vozDePista } from "./textos.js";
+import { SALIR, CAJAS, NIVELES, UI, FRASES, PIEZAS, hintDePuerta, hintDeTaller, seRevela, vozDePista } from "./textos.js";
 import {
   callar, decirEs, decirIngles, decirPalabra, decirPalabraLuego, decirTrozos, desbloquear as desbloquearVoz,
 } from "./voz.js";
@@ -147,13 +147,17 @@ function flechaHtml(aqui) {
   return `<span class="flecha" aria-hidden="true">${cache["flecha-pista"] || ""}</span>`;
 }
 
+let pintando = false;
+
 function mostrar(html, nombre, focoId) {
   pantalla = nombre;
   $main.className = "p-" + nombre;
+  pintando = true;
   $main.innerHTML = html;
   const el = focoId && $main.querySelector(`[data-foco-id="${focoId}"]`);
   if (el) el.focus({ preventScroll: true });
   else focoInicial($main);
+  pintando = false;
 }
 
 function limpiarAnim() {
@@ -406,7 +410,7 @@ function infoPista() {
   const paso = pasoPista(p.nivel, segundos, partida.errores);
   const anula = anulaPrimera(p.nivel, segundos, partida.errores);
   if (p.tipo === "laberinto" || p.tipo === "oracion") {
-    const revelar = (partida.errores || 0) > 0;
+    const revelar = (partida.errores || 0) >= 2;
     const h = paso === "completo" ? hintDePuerta(p, revelar) : { texto: UI.elige, voz: [{ lang: "es", texto: UI.elige }] };
     return { paso, texto: h.texto, voz: h.voz, flecha: paso === "corto" ? null : destinoDe(p), anula };
   }
@@ -491,7 +495,7 @@ function elegirFoco(p, previo) {
   const brilla = p.tipo === "oracion" && probarBrilla(partida.puestas, p);
   if (brilla) return "probar";
   if (p.tipo === "oracion") {
-    const sig = focoSiguienteFicha(p.fichas, partida.puestas, p.meta);
+    const sig = focoTrasFicha(p.fichas, partida.puestas);
     if (previo && previo.startsWith("ficha-")) {
       const i = Number(previo.slice(6));
       if (!partida.puestas.some((f) => f.i === i)) return previo;
@@ -686,7 +690,7 @@ function responderCaja(cat) {
   clic();
   if (cat === p.categoria) acertar();
   else {
-    const h = vozDePista(p.palabra, p.categoria);
+    const h = hintDeTaller(p.palabra, p.categoria, seRevela(partida.errores));
     fallar(p.palabra, h.texto, null, h.voz);
   }
 }
@@ -697,7 +701,7 @@ function responderOpcion(pal) {
   clic();
   if (pal === p.respuesta) acertar();
   else {
-    const h = hintDePuerta(p, true);
+    const h = hintDePuerta(p, seRevela(partida.errores));
     fallar(p.respuesta, h.texto, null, h.voz);
   }
 }
@@ -969,6 +973,15 @@ function tocar(act, el) {
   if (act === "quitar") { quitarFicha(); return; }
   if (act === "probar") { probarFrase(); return; }
 }
+
+$main.addEventListener("focusin", (ev) => {
+  const caja = ev.target.closest?.("[data-act='caja']");
+  if (!caja || pintando || ctx.dialogo || caja.disabled) return;
+  const teclado = document.documentElement.classList.contains("teclado") || esTv();
+  if (!teclado || pr.voz === false) return;
+  const pista = CAJAS[caja.dataset.cat]?.pista;
+  if (pista) decirEs(pista, { activo: true });
+});
 
 $main.addEventListener("pointerdown", () => {
   document.documentElement.classList.remove("teclado");

@@ -116,6 +116,8 @@ export function aplicarGuia(reloj, entrada, ahora, voz) {
   }
   if (ahora < sueltaEn(reloj)) return { reloj, hecho: "bloqueo" };
   if (esMirar(reloj.paso) && (entrada.tipo === "ok" || entrada.tipo === "toque" || entrada.tipo === "caja")) {
+    const vozLista = vozCuenta(reloj, voz) || vozFallo(reloj, voz) || ahora >= reloj.inicio + TOPE_VOZ_MS;
+    if (!vozLista) return { reloj, hecho: "bloqueo" };
     return avanzar(reloj, ahora);
   }
   if (entrada.tipo === "caja" && accionCorrecta(reloj.paso, entrada.categoria)) return avanzar(reloj, ahora);
