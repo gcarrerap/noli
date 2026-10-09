@@ -7,11 +7,11 @@ import {
   anguloMinutero, anguloHorario, digital, entreNumeros, misma, esDoceEnPunto,
   moverMinutos, moverHora, lecturaRayitas, lecturaCambiada, lecturaPasada,
   candidatosLectura, gradosTranscurridos, sectorPath, minutosDesdeAngulo, arrastre,
-  cuentaPrimera, hora12, VUELTAS_MAX, GAG_MS, atrasEnEspera,
+  cuentaPrimera, hora12, VUELTAS_MAX, GAG_MS, atrasEnEspera, toqueEnPantalla, alCerrarEspera,
 } from "../src/reloj.js";
 import {
   fraseMenosCuarto, horaMenosCuarto, decirHora, etiquetaIngles, frasePoner, vozPoner, fraseCuanto,
-  fraseExito, EXITOS,
+  fraseExito, lineaDeAcierto, EXITOS,
 } from "../src/frases.js";
 import { MOMENTOS, NIVELES, ALBUM, planDia, escenaDe, POR_TURNO } from "../src/niveles.js";
 import { pista } from "../src/pista.js";
@@ -226,12 +226,29 @@ test("el acierto varía y el chiste no dice a destiempo", () => {
   assert.equal(new Set(EXITOS).size, EXITOS.length);
   assert.equal(fraseExito(0), EXITOS[0]);
   assert.equal(fraseExito(EXITOS.length), EXITOS[0]);
+  assert.equal(lineaDeAcierto(0, 0), EXITOS[0]);
+  assert.notEqual(lineaDeAcierto(0, 1), lineaDeAcierto(0, 0));
+  assert.equal(lineaDeAcierto(0, 1), EXITOS[1]);
   assert.equal(EXITOS.some((t) => /destiempo/.test(t)), false);
   assert.equal(MOMENTOS.some((m) => /destiempo/.test(m.chiste)), false);
   assert.equal(atrasEnEspera("gag"), "salir");
   assert.equal(atrasEnEspera("bien"), "salir");
   assert.equal(atrasEnEspera("manos"), "seguir");
   assert.equal(GAG_MS <= 1500, true);
+});
+
+test("Seguir y Salir responden durante el chiste y durante el acierto", () => {
+  for (const fase of ["gag", "bien"]) {
+    assert.equal(toqueEnPantalla({ fase, act: "seguir", dialog: true }), "seguir");
+    assert.equal(toqueEnPantalla({ fase, act: "salir-si", dialog: true }), "salir");
+    assert.equal(toqueEnPantalla({ fase, act: "listo", dialog: false }), "nada");
+    assert.equal(toqueEnPantalla({ fase, act: "seguir", dialog: false }), "nada");
+  }
+  assert.equal(toqueEnPantalla({ fase: "", act: "listo", dialog: false }), "listo");
+  assert.equal(alCerrarEspera("gag", 0).hacer, "manos");
+  assert.equal(alCerrarEspera("bien", 0).hacer, "siguiente");
+  assert.deepEqual(alCerrarEspera("gag", 400), { hacer: "esperar", ms: 400 });
+  assert.equal(alCerrarEspera("gag", GAG_MS).ms <= 1500, true);
 });
 
 test("tocar el reloj no usa relojFocus sin declararla", () => {

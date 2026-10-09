@@ -96,6 +96,11 @@ export function fraseExito(i) {
   return EXITOS[k];
 }
 
+// La primera escena de cada turno no repite siempre la misma frase: suma los turnos ya jugados.
+export function lineaDeAcierto(escena, turnos) {
+  return fraseExito((escena | 0) + (turnos | 0));
+}
+
 export const OPCIONES_CUANTO = [
   { id: "cuarto", texto: "un cuarto" },
   { id: "media", texto: "media hora" },

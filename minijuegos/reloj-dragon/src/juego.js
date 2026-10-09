@@ -6,6 +6,7 @@ import { clic, listo as sonidoListo, campanada, desbloquear } from "./sonido.js"
 import {
   anguloHorario, anguloMinutero, digital, sectorPath, moverMinutos, moverHora,
   misma, arrastre, cuentaPrimera, hora12, GAG_MS, atrasEnEspera,
+  toqueEnPantalla, alCerrarEspera,
 } from "./reloj.js";
 import { NIVELES, ALBUM, MOMENTOS, planDia, POR_TURNO } from "./niveles.js";
 import { pista } from "./pista.js";
@@ -18,7 +19,7 @@ import {
   textoRacha, semana, resumen, fechaLocal, VENTANA, PARA_SUBIR,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
-import { fraseExito } from "./frases.js";
+import { lineaDeAcierto } from "./frases.js";
 
 const $main = document.getElementById("juego");
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -542,7 +543,7 @@ function pintarJuego(focoId) {
   const poner = e.tipo === "poner";
   const coincide = poner && !fase && misma(t, e);
   const dragon = fase === "gag" ? "dragon-pijama" : fase === "bien" ? "dragon-feliz" : "dragon";
-  const frase = fase === "gag" ? e.chiste : fase === "manos" ? "Así era." : fase === "bien" ? (partida.linea || fraseExito(partida.i)) : e.frase;
+  const frase = fase === "gag" ? e.chiste : fase === "manos" ? "Así era." : fase === "bien" ? (partida.linea || lineaDeAcierto(partida.i, 0)) : e.frase;
   const ingles = pr.ingles && e.ingles && !fase ? e.ingles : "";
   const momento = MOMENTOS.find((m) => m.id === e.momento);
   $main.dataset.luzMano = fase === "manos" || fase === "bien" ? "horario" : (p.luz === "horario" ? "horario" : p.luz === "minutero" ? "minutero" : "");
@@ -677,8 +678,16 @@ function empezarGag() {
   partida.fase = "gag";
   partida.intento = 2;
   partida.trasError = true;
+  partida.faseHasta = performance.now() + GAG_MS;
   pintarJuego(partida.escena.tipo === "poner" ? "hora" : "reloj");
-  luego(() => { if (partida?.fase === "gag") ensenarManos(); }, GAG_MS);
+  programarEspera();
+}
+
+function programarEspera() {
+  if (!partida || overlay) return;
+  const queda = Math.max(0, (partida.faseHasta || 0) - performance.now());
+  if (partida.fase === "gag") luego(() => { if (partida?.fase === "gag" && !overlay) ensenarManos(); }, queda);
+  else if (partida.fase === "bien") luego(() => { if (partida?.fase === "bien" && !overlay) avanzar(); }, queda);
 }
 
 function ensenarManos() {
@@ -735,11 +744,12 @@ function reintentar() {
 
 function exito() {
   partida.fase = "bien";
-  partida.linea = fraseExito(partida.i);
+  partida.linea = lineaDeAcierto(partida.i, nivelDe(pr, partida.n).turnos || 0);
   partida.vista = { h: partida.escena.h, m: partida.escena.m };
+  partida.faseHasta = performance.now() + (reducido() ? 350 : 800);
   campanada();
   pintarJuego("reloj");
-  luego(() => { if (partida?.fase === "bien") avanzar(); }, reducido() ? 350 : 800);
+  programarEspera();
 }
 
 function avanzar() {
@@ -766,7 +776,10 @@ function saltarFase() {
 
 function preguntarSalir() {
   if (overlay) return;
-  if (partida && atrasEnEspera(partida.fase) === "salir") cortar();
+  if (partida && atrasEnEspera(partida.fase) === "salir") {
+    partida.queda = Math.max(0, (partida.faseHasta || 0) - performance.now());
+    cortar();
+  }
   focoSalir = document.activeElement?.dataset?.focoId || "";
   overlay = true;
   const velo = document.createElement("div");
@@ -786,8 +799,13 @@ function cerrarSalir() {
   const el = (focoSalir && $main.querySelector(`[data-foco-id="${focoSalir}"]`)) || $main.querySelector("[data-foco]");
   el?.focus({ preventScroll: true });
   focoSalir = "";
-  if (partida?.fase === "gag") luego(() => { if (partida?.fase === "gag" && !overlay) ensenarManos(); }, GAG_MS);
-  if (partida?.fase === "bien") luego(() => { if (partida?.fase === "bien" && !overlay) avanzar(); }, reducido() ? 350 : 800);
+  const plan = alCerrarEspera(partida?.fase, partida?.queda);
+  if (plan.hacer === "manos") ensenarManos();
+  else if (plan.hacer === "siguiente") avanzar();
+  else if (plan.hacer === "esperar" && partida) {
+    partida.faseHasta = performance.now() + plan.ms;
+    programarEspera();
+  }
 }
 
 // ---------- Teclas ----------
@@ -858,17 +876,19 @@ const IR = {
 
 $main.addEventListener("click", (ev) => {
   if (tragar) { tragar = false; return; }
+  const t = ev.target.closest("[data-act], [data-ctrl]");
+  const act = t?.dataset?.act || "";
+  const decision = toqueEnPantalla({ fase: partida?.fase || "", act, dialog: overlay });
+  if (decision === "seguir") { cerrarSalir(); return; }
+  if (decision === "salir") { callar(); Noli.salir(); return; }
+  if (decision === "nada") return;
   if (guia && esExplicacion(guia.paso)) {
-    const act = ev.target.closest("[data-act]")?.dataset?.act;
     if (act !== "saltar" && act !== "oir") {
       seguirExplicacion();
       return;
     }
   }
-  const t = ev.target.closest("[data-act], [data-ctrl]");
   if (!t || !$main.contains(t)) return;
-  if (partida?.fase) return;
-  const act = t.dataset.act;
   if (act === "paso") {
     const dir = +t.dataset.dir;
     t.closest("[data-foco]")?.focus({ preventScroll: true });
@@ -902,8 +922,6 @@ $main.addEventListener("click", (ev) => {
   }
   if (act === "saltar") { terminarGuia(); return; }
   if (act === "elegir") { elegirOpcion(+t.dataset.i); return; }
-  if (act === "seguir") { cerrarSalir(); return; }
-  if (act === "salir-si") { callar(); Noli.salir(); return; }
   if (act === "ir" && IR[t.dataset.ir]) IR[t.dataset.ir](t.dataset);
   else if (!act && t.dataset.ctrl && guia) {
     t.focus({ preventScroll: true });

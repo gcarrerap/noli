@@ -13,6 +13,24 @@ export function atrasEnEspera(fase) {
   return "";
 }
 
+// Con «¿Salir?» abierto, Seguir y Salir funcionan aunque el chiste o el acierto sigan.
+export function toqueEnPantalla({ fase = "", act = "", dialog = false } = {}) {
+  if (dialog && act === "seguir") return "seguir";
+  if (dialog && act === "salir-si") return "salir";
+  if (dialog || fase) return "nada";
+  return act || "otro";
+}
+
+// Al cerrar el diálogo no se vuelve a contar el chiste entero: sigue lo que quedaba,
+// y si ya se acabó pasa a las manecillas o a la escena siguiente.
+export function alCerrarEspera(fase, queda) {
+  const ms = Math.max(0, Number(queda) || 0);
+  if (ms > 0) return { hacer: "esperar", ms };
+  if (fase === "gag") return { hacer: "manos", ms: 0 };
+  if (fase === "bien") return { hacer: "siguiente", ms: 0 };
+  return { hacer: "", ms: 0 };
+}
+
 export function hora12(h) {
   return ((h % 12) + 12) % 12 || 12;
 }
