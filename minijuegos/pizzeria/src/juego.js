@@ -5,7 +5,7 @@ import { clic, listo as sonidoListo, feliz as sonidoFeliz, desbloquear } from ".
 import { patron, lineasSvg, rebanadasDe, svgPila } from "./cortes.js";
 import { svgFigura, nombreFigura } from "./figuras.js";
 import { esCorrecto } from "./pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia } from "./guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia, reanudarPasoGuia } from "./guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, textoPista, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import { abiertos, recienAbierto } from "./deco.js";
 import { ajustar, opcionesCuantos, bandejaLista, focoTrasContador, BANDEJA_MAX } from "./bandeja.js";
@@ -14,7 +14,7 @@ import {
   fechaLocal, semana, resumen, marcarGuia, textoRacha, VENTANA, nuevo as progresoNuevo,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
-import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo } from "./salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo, ignoraTrasCierre } from "./salida.js";
 
 const $main = document.getElementById("juego");
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -38,6 +38,7 @@ let focoAntes = null;
 let focosGuardados = null;
 let pasoAparecio = 0;
 let vozSigue = false;
+let cerroSalir = 0;
 let vozGen = 0;
 let ordenDesde = 0;
 let ordenTrasGuia = false;
@@ -872,7 +873,6 @@ function abrirSalir() {
 function cerrarSalir(ySalir) {
   const velo = $main.querySelector(".salir-velo");
   if (velo) velo.remove();
-  saliendo = false;
   if (focosGuardados) {
     for (const item of focosGuardados) {
       if (item.el.isConnected) item.el.setAttribute("data-foco", item.valor == null ? "" : item.valor);
@@ -885,6 +885,9 @@ function cerrarSalir(ySalir) {
     revelado: !!(partida && partida.revelado),
     guia: esGuia(),
   });
+  cerroSalir = Date.now();
+  if (esGuia() && que !== "salir") pasoAparecio = reanudarPasoGuia({ ahora: cerroSalir, vozSigue }).desde;
+  saliendo = false;
   if (que === "salir") { Noli.salir(); return; }
   if (que === "avanzar") { avanzar(); return; }
   if (partida && partida.revelado && partida.espera) luego(avanzar, partida.espera);
@@ -924,6 +927,7 @@ $main.addEventListener("click", (ev) => {
     else if (efecto.accion === "salir") cerrarSalir(true);
     return;
   }
+  if (ignoraTrasCierre({ ahora: Date.now(), cerro: cerroSalir })) return;
   if (esGuia()) {
     const efecto = toqueDuranteGuia(partida.paso, { dialogoAbierto: false, ir });
     if (efecto.accion === "nada") return;
@@ -960,6 +964,7 @@ Noli.alEntrar((accion) => {
     else abrirSalir();
     return true;
   }
+  if (!saliendo && accion === "ok" && ignoraTrasCierre({ ahora: Date.now(), cerro: cerroSalir })) return true;
   if (saliendo) {
     if (moverFoco(accion, $main)) return true;
     if (accion === "ok") {

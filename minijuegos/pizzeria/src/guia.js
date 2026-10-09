@@ -57,6 +57,16 @@ export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}
   return !!vozSigue;
 }
 
+// «¿Salir?» pausa el paso. Al pulsar Seguir, el reloj y la espera de la voz
+// empiezan de cero: el tiempo con el diálogo abierto no adelanta el paso.
+export function reanudarPasoGuia({ ahora = 0, vozSigue = false } = {}) {
+  return {
+    desde: ahora,
+    auto: siguienteAutoGuia({ transcurrido: 0, vozSigue }),
+    bloqueada: guiaBloqueada({ ahora, aparecio: ahora, vozSigue }),
+  };
+}
+
 // Un paso que solo se mira no se va a los 2 s si la frase sigue.
 // Espera a que termine, con el mismo tope de 3 s. Si no hay voz, se queda 2 s.
 export function siguienteAutoGuia({ transcurrido = 0, vozSigue = false } = {}) {

@@ -6,7 +6,7 @@ import { analizar, sonIguales } from "../src/area.js";
 import { medir, lineasSvg, patron, opcionesCorte } from "../src/cortes.js";
 import { ladosDe, opcionesForma, crearFigura, reiniciarIds } from "../src/figuras.js";
 import { crearPedido, esCorrecto, POR_TURNO } from "../src/pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, siguienteAutoGuia, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, siguienteAutoGuia, reanudarPasoGuia, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, textoPista, IDLE_COMPLETA_MS } from "../src/pista.js";
 import { abiertos, recienAbierto, sumarPropinas, PROPINA, ADORNOS } from "../src/deco.js";
 import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista, focoTrasContador } from "../src/bandeja.js";
@@ -15,7 +15,7 @@ import {
   marcarGuia, textoRacha, racha, cumplirReto, VENTANA, PARA_SUBIR,
 } from "../src/progreso.js";
 import { retoDelDia, META_GIGANTE } from "../src/reto.js";
-import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo } from "../src/salida.js";
+import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo, ignoraTrasCierre, TRAS_DIALOGO_MS } from "../src/salida.js";
 
 const banco = JSON.parse(fs.readFileSync(new URL("../datos/cortes.json", import.meta.url), "utf8"));
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
@@ -381,6 +381,100 @@ test("un paso que solo se mira espera a la voz y no pasa de 3 s", () => {
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.match(juego, /siguienteAutoGuia/);
   assert.equal(guiaBloqueada({ ahora: 1500, aparecio: 0, vozSigue: true }), true);
+});
+
+test("tras cerrar ¿Salir? un toque o un OK de los siguientes 400 ms no cae debajo", () => {
+  assert.equal(TRAS_DIALOGO_MS, 400);
+  const cerro = 5000;
+  for (const dt of [90, 200, 300, 399]) {
+    assert.equal(ignoraTrasCierre({ ahora: cerro + dt, cerro }), true);
+  }
+  assert.equal(ignoraTrasCierre({ ahora: cerro + 400, cerro }), false);
+  assert.equal(ignoraTrasCierre({ ahora: cerro, cerro: 0 }), false);
+  function aplicar(accion, dt) {
+    if (ignoraTrasCierre({ ahora: cerro + dt, cerro })) return "nada";
+    return accion;
+  }
+  assert.equal(aplicar("servir", 200), "nada");
+  assert.equal(aplicar("rebanada", 300), "nada");
+  assert.equal(aplicar("opcion", 90), "nada");
+  assert.equal(aplicar("ok", 300), "nada");
+  assert.equal(aplicar("servir", 400), "servir");
+  assert.equal(aplicar("ok", 400), "ok");
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const click = juego.slice(juego.indexOf('$main.addEventListener("click"'));
+  assert.ok(click.indexOf("ignoraTrasCierre") > 0);
+  assert.ok(click.indexOf("ignoraTrasCierre") < click.indexOf("if (esGuia())"));
+  assert.match(juego, /accion === "ok" && ignoraTrasCierre/);
+});
+
+test("¿Salir? pausa la guía y Seguir empieza otra vez el paso y la voz", () => {
+  assert.equal(siguienteAutoGuia({ transcurrido: 2500, vozSigue: false }).avanzar, true);
+  for (const paso of [0, 1]) {
+    const re = reanudarPasoGuia({ ahora: 3000, vozSigue: false });
+    assert.equal(re.auto.avanzar, false);
+    assert.equal(re.auto.espera, GUIA_TOQUE_MS);
+    assert.equal(re.bloqueada, true);
+    assert.equal(guiaBloqueada({ ahora: 3000 + 300, aparecio: re.desde, vozSigue: false }), true);
+    assert.notEqual(siguientePasoGuia(paso, { tipo: "tiempo" }), paso);
+  }
+  const hablando = reanudarPasoGuia({ ahora: 2600, vozSigue: true });
+  assert.equal(hablando.auto.avanzar, false);
+  assert.equal(hablando.auto.espera, GUIA_TOPE_MS);
+  assert.equal(hablando.bloqueada, true);
+
+  function simular({ abiertoEn, cerradoEn, vozHasta }) {
+    let paso = 0;
+    let aparecio = 0;
+    let t = 0;
+    let dialog = false;
+    for (let guard = 0; paso < 1 && guard < 20; guard++) {
+      if (!dialog && abiertoEn > t) {
+        const antes = siguienteAutoGuia({ transcurrido: abiertoEn - aparecio, vozSigue: abiertoEn < vozHasta });
+        if (antes.avanzar) {
+          paso = 1;
+          t = abiertoEn;
+          break;
+        }
+        dialog = true;
+        t = abiertoEn;
+      }
+      if (dialog) {
+        const re = reanudarPasoGuia({ ahora: cerradoEn, vozSigue: cerradoEn < vozHasta });
+        if (re.auto.avanzar) {
+          paso = 1;
+          t = cerradoEn;
+          break;
+        }
+        aparecio = re.desde;
+        dialog = false;
+        t = cerradoEn;
+      }
+      const vozSigue = t < vozHasta;
+      const d = siguienteAutoGuia({ transcurrido: t - aparecio, vozSigue });
+      if (d.avanzar) {
+        paso = siguientePasoGuia(paso, { tipo: "tiempo" });
+        break;
+      }
+      let siguiente = t + d.espera;
+      if (vozSigue && vozHasta > t && vozHasta < siguiente) siguiente = vozHasta;
+      if (abiertoEn > t && abiertoEn < siguiente) {
+        t = abiertoEn;
+        continue;
+      }
+      t = siguiente;
+    }
+    return { paso, t, aparecio };
+  }
+
+  const quieto = simular({ abiertoEn: 100, cerradoEn: 2500, vozHasta: 0 });
+  assert.deepEqual({ paso: quieto.paso, t: quieto.t, aparecio: quieto.aparecio }, { paso: 1, t: 4500, aparecio: 2500 });
+  const conVoz = simular({ abiertoEn: 200, cerradoEn: 2600, vozHasta: 9000 });
+  assert.deepEqual({ paso: conVoz.paso, t: conVoz.t, aparecio: conVoz.aparecio }, { paso: 1, t: 5600, aparecio: 2600 });
+  const vozCorta = simular({ abiertoEn: 100, cerradoEn: 2000, vozHasta: 3200 });
+  assert.deepEqual({ paso: vozCorta.paso, t: vozCorta.t, aparecio: vozCorta.aparecio }, { paso: 1, t: 4000, aparecio: 2000 });
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /reanudarPasoGuia/);
 });
 
 test("en el teléfono el fondo de ¿Salir? es Seguir y en la tele no", () => {
