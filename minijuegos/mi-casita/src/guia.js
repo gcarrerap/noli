@@ -51,6 +51,18 @@ export function esperaMuestra(msVoz) {
   return Math.min(GUIA_PAUSA_MAX_MS, Math.max(GUIA_TOQUE_MS, v));
 }
 
+/**
+ * Cuánto tarda en irse solo un paso que se mira.
+ * "ok": la frase sonó `ms` (nunca menos de 2 s ni más de 3 s).
+ * "hablando": sigue la voz, con el tope de 3 s.
+ * "falla": error, sin voces o no empezó. Son 2 s, y `ms` no cuenta.
+ */
+export function demoraMuestra(estado, ms) {
+  if (estado === "ok") return esperaMuestra(ms);
+  if (estado === "hablando") return GUIA_PAUSA_MAX_MS;
+  return GUIA_TOQUE_MS;
+}
+
 /** Tras cerrar «¿Salir?», un segundo toque no llega a lo de abajo. */
 export const TRAS_DIALOGO_MS = 400;
 

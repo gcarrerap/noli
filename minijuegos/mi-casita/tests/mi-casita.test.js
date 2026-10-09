@@ -24,7 +24,7 @@ const { abiertos, recienAbiertos, bolsaDe } = await import("../src/desbloqueo.js
 const { pistaPagar, monedasQueSirven, pistaLugar, FLECHA_MS, COMPLETA_MS } = await import("../src/pista.js");
 const {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, monedasDeGuia,
-  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, okDeGuia, pausaDePaso, esperaMuestra,
+  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, okDeGuia, pausaDePaso, esperaMuestra, demoraMuestra,
   relojConSalir, esperasAlSalir, entradaTrasCierre, TRAS_DIALOGO_MS,
   GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS, PASOS,
 } = await import("../src/guia.js");
@@ -35,9 +35,9 @@ const {
 } = await import("../src/visita.js");
 const { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } = await import("../src/progreso.js");
 const { fraseMedida, fraseGiro, fraseTrasGiro, fraseFaltan, fraseToca, fraseBrilla, textoMover } = await import("../src/frases.js");
-const { paraVoz } = await import("../src/voz.js");
+const { paraVoz, decir } = await import("../src/voz.js");
 const {
-  resolverAtras, dosAtras, resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla, FASES_CON_GUARDIA,
+  resolverAtras, dosAtras, resolverToque, teclaConDialogo, teclaConBarra, toqueEnVelo, atrasEnPantalla, FASES_CON_GUARDIA,
 } = await import("../src/salida.js");
 const { piezaSvg } = await import("../src/monedas.js");
 
@@ -427,6 +427,67 @@ test("un paso que solo se mira espera a la voz, como mucho 3 s", () => {
   assert.equal(pausaDePaso(0), GUIA_PAUSA_MS);
 });
 
+function motorVoz(parcial) {
+  const s = {
+    speaking: false,
+    pending: false,
+    cancel() { this.speaking = false; this.pending = false; },
+    getVoices() { return [{ lang: "es-MX" }]; },
+    speak() {},
+    ...parcial,
+  };
+  function Utterance(texto) { this.text = texto; }
+  return { sintesis: s, Utterance };
+}
+
+test("si la voz falla, no hay voces o no empieza, el paso espera 2 s", () => {
+  assert.equal(demoraMuestra("ok", 100), 2000);
+  assert.equal(demoraMuestra("ok", 2600), 2600);
+  assert.equal(demoraMuestra("ok", 9000), 3000);
+  assert.equal(demoraMuestra("hablando", 0), 3000);
+  assert.equal(demoraMuestra("falla", 30), 2000);
+  const seguir = esperasAlSalir({ seguir: true, msVoz: 0 });
+  assert.equal(seguir.muestra, demoraMuestra("falla", 40));
+
+  const oir = (opciones) => {
+    let estado = "";
+    decir("Cuesta 6.", "es-MX", () => { estado = "ok"; }, {
+      ...opciones,
+      alFallar: () => { estado = "falla"; },
+    });
+    return estado;
+  };
+
+  const error = motorVoz({
+    speak(u) { u.onerror({ error: "not-allowed" }); },
+  });
+  assert.equal(oir(error), "falla");
+  assert.equal(demoraMuestra("falla", 0), 2000);
+
+  let hablo = false;
+  const vacio = motorVoz({
+    getVoices() { return []; },
+    speak() { hablo = true; },
+  });
+  assert.equal(oir(vacio), "falla");
+  assert.equal(hablo, false);
+
+  const mudo = motorVoz({
+    speak() { /* no llama a onend ni a onerror */ },
+  });
+  assert.equal(oir(mudo), "falla");
+  assert.equal(mudo.sintesis.speaking, false);
+
+  const larga = motorVoz({
+    speak(u) {
+      this.speaking = true;
+      u.onstart();
+      u.onend();
+    },
+  });
+  assert.equal(oir(larga), "ok");
+});
+
 test("«¿Salir?» pausa la guía y Seguir la empieza otra vez", () => {
   assert.equal(TRAS_DIALOGO_MS, 400);
   assert.equal(relojConSalir(true), "pausa");
@@ -450,6 +511,9 @@ test("«¿Salir?» pausa la guía y Seguir la empieza otra vez", () => {
   assert.equal(entradaTrasCierre(400, "ok"), "sigue");
   assert.equal(entradaTrasCierre(0, "atras"), "sigue");
   assert.equal(entradaTrasCierre(Number.NaN, "ok"), "ignora");
+  assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: false }), "seguir");
+  assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: true }), "nada");
+  assert.equal(toqueEnVelo({ modo: "tv", enDialogo: false }), "nada");
 });
 
 test("girar solo cambia largo y ancho, y el área no cambia", () => {
@@ -469,16 +533,21 @@ test("girar solo cambia largo y ancho, y el área no cambia", () => {
   assert.notDeepEqual([formaDe(alf, 1).w, formaDe(alf, 1).h], [6, 1]);
 });
 
-test("con la barra abierta las flechas se quedan dentro", () => {
-  let v = abrirBarra({ ...visitaNueva(HOY, { penny: 1 }, "recamara"), x: 0, y: 0, rot: 0, mueble: "alfombra6" });
+test("la flecha mueve el foco en la barra solo si hay botón; si no, mueve el mueble", () => {
+  let v = abrirBarra({ ...visitaNueva(HOY, { penny: 1 }, "recamara"), x: 1, y: 1, rot: 0, mueble: "alfombra6" });
   assert.equal(v.barra, true);
-  assert.equal(teclaConBarra("arriba"), "foco");
-  assert.equal(teclaConBarra("abajo"), "foco");
-  assert.equal(teclaConBarra("izquierda"), "foco");
-  assert.equal(teclaConBarra("derecha"), "foco");
+  assert.equal(teclaConBarra("derecha", true), "foco");
+  assert.equal(teclaConBarra("izquierda", true), "foco");
+  assert.equal(teclaConBarra("arriba", false), "mover");
+  assert.equal(teclaConBarra("derecha", false), "mover");
+  assert.equal(teclaConBarra("abajo", false), "mover");
+  assert.equal(teclaConBarra("izquierda", false), "mover");
   assert.equal(teclaConBarra("atras"), "cerrar");
   assert.equal(teclaConBarra("girar"), "girar");
   assert.equal(teclaConBarra("ok"), "juego");
+  v = moverPieza(cerrarBarra(v), cuarto("recamara"), "abajo", porId.alfombra6);
+  assert.equal(v.barra, false);
+  assert.equal(v.y, 2);
   v = girarPieza(v);
   assert.equal(v.barra, false);
   assert.equal(v.rot, 1);

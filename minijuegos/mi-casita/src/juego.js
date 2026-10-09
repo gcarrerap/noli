@@ -8,7 +8,7 @@ import { abiertos, recienAbiertos, bolsaDe } from "./desbloqueo.js";
 import { pistaPagar, monedasQueSirven, pistaLugar } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, focoDeGuia,
-  guiaAvanzaConToque, guiaPagarActivo, okDeGuia, esperaMuestra, relojConSalir, entradaTrasCierre,
+  guiaAvanzaConToque, guiaPagarActivo, okDeGuia, demoraMuestra, relojConSalir, entradaTrasCierre,
   GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS,
 } from "./guia.js";
 import {
@@ -20,7 +20,7 @@ import { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } from "./progreso.js"
 import { fraseMedida, fraseGiro, fraseTrasGiro, fraseFaltan, fraseBrilla, textoMover, rellenar } from "./frases.js";
 import { decir, paraVoz, callar } from "./voz.js";
 import { desbloquear, clic, brillo, dejar as sonidoDejar } from "./sonido.js";
-import { resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla } from "./salida.js";
+import { resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla, toqueEnVelo } from "./salida.js";
 
 const $main = document.getElementById("juego");
 try { if (/[?&]modo=tv\b/.test(location.search)) document.documentElement.dataset.modo = "tv"; } catch { /* sin location */ }
@@ -63,13 +63,14 @@ const piezas = () => (monedas[monedaId] || monedas.usd)?.piezas || [];
 const cuartoPor = (id) => cuartos.find((c) => c.id === id) || cuartos[0];
 const guardar = () => Noli.guardar(pr);
 
-function hablar(texto, alTerminar) {
+function hablar(texto, alTerminar, alFallar) {
   if (!pr.voz || !texto || texto === dicho) {
-    if (alTerminar) alTerminar();
+    if (alFallar) alFallar();
+    else if (alTerminar) alTerminar();
     return;
   }
   dicho = texto;
-  decir(texto, "es-MX", alTerminar);
+  decir(texto, "es-MX", alTerminar, { alFallar });
 }
 
 function pausaGuiaActiva() {
@@ -95,14 +96,18 @@ function empezarPausaPaso(linea) {
   const habla = !!(pr.voz && paraVoz(linea));
   guiaPausaHasta = t0 + (habla ? GUIA_PAUSA_MAX_MS : GUIA_PAUSA_MS);
   dicho = "";
-  hablar(linea, () => {
+  const cerrar = (estado, ms) => {
     if (token !== pausaToken) return;
     const ahora = Date.now();
-    guiaPausaHasta = Math.min(t0 + GUIA_PAUSA_MAX_MS, Math.max(t0 + GUIA_PAUSA_MS, ahora));
-    if (pantalla === "guia" && guia && guiaAvanzaConToque(guia.paso)) {
-      programarMuestra(t0 + esperaMuestra(ahora - t0) - ahora);
+    if (estado === "ok") {
+      guiaPausaHasta = Math.min(t0 + GUIA_PAUSA_MAX_MS, Math.max(t0 + GUIA_PAUSA_MS, ahora));
+    } else {
+      guiaPausaHasta = t0 + GUIA_PAUSA_MS;
     }
-  });
+    if (pantalla !== "guia" || !guia || !guiaAvanzaConToque(guia.paso)) return;
+    programarMuestra(t0 + demoraMuestra(estado, ms) - ahora);
+  };
+  hablar(linea, () => cerrar("ok", Date.now() - t0), () => cerrar("falla", 0));
 }
 
 function idx() {
@@ -833,6 +838,11 @@ function cerrarDialogo() {
 $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   if (salir) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    if (!enDialogo && toqueEnVelo({ modo: modo(), enDialogo }) === "seguir") {
+      cerrarDialogo();
+      return;
+    }
     if (t && $main.contains(t) && !t.disabled && (t.dataset.act === "seguir" || t.dataset.act === "salir")) {
       actuar(t.dataset.act, t.dataset);
     }
@@ -879,8 +889,16 @@ Noli.alEntrar((accion) => {
   if (accion === "ok" && bloqueoTrasDialogo("ok")) return true;
   const enLugar = pantalla === "acomodar" || (pantalla === "guia" && guia && guia.paso === "cuadro");
   const barraAbierta = !!(pr.visita && pr.visita.barra && pantalla === "acomodar" && esTv());
-  if (barraAbierta && esFlecha(accion) && teclaConBarra(accion) === "foco") {
-    moverFoco(accion, $main.querySelector(".barra") || $main);
+  if (barraAbierta && esFlecha(accion)) {
+    const barra = $main.querySelector(".barra");
+    const antes = document.activeElement;
+    const estaba = !!(barra && barra.contains(antes));
+    moverFoco(accion, barra || $main);
+    const ahora = document.activeElement;
+    const movio = estaba && !!(barra && barra.contains(ahora)) && ahora !== antes;
+    if (teclaConBarra(accion, movio) === "foco") return true;
+    pr.visita = cerrarBarra(pr.visita);
+    actuar("mov", { dir: accion });
     return true;
   }
   if (enLugar && !barraAbierta && esFlecha(accion)) {

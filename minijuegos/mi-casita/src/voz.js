@@ -13,23 +13,55 @@ export function callar() {
   try { if (s && (s.speaking || s.pending)) s.cancel(); } catch { /* sin voz */ }
 }
 
-export function decir(texto, lang, onend) {
-  const limpio = paraVoz(texto);
-  const fin = () => { if (typeof onend === "function") onend(); };
-  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
-  const U = typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null;
-  if (!s || !U || !limpio) { fin(); return false; }
+function vocesDe(s) {
   try {
-    if (s.speaking) s.cancel();
+    if (!s || typeof s.getVoices !== "function") return null;
+    const v = s.getVoices();
+    return Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Intenta decir el texto. `alTerminar` solo corre si la frase sonó.
+ * `opciones.alFallar` corre si hay error, si no hay voces o si no empieza:
+ * eso no cuenta como frase dicha. Se puede pasar un `sintesis` de prueba.
+ * Devuelve true si quedó hablando.
+ */
+export function decir(texto, lang, alTerminar, opciones = {}) {
+  const limpio = paraVoz(texto);
+  const alFallar = typeof opciones.alFallar === "function" ? opciones.alFallar : null;
+  const terminar = () => { if (typeof alTerminar === "function") alTerminar(); };
+  const fallar = () => { if (alFallar) alFallar(); else terminar(); };
+  const s = opciones.sintesis || (typeof window !== "undefined" ? window.speechSynthesis : null);
+  const U = opciones.Utterance || (typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null);
+  if (!limpio || !s || !U) { fallar(); return false; }
+  const voces = vocesDe(s);
+  if (voces && voces.length === 0) { fallar(); return false; }
+  let cerrado = false;
+  let empezo = false;
+  const unaVez = (fn) => {
+    if (cerrado) return;
+    cerrado = true;
+    fn();
+  };
+  try {
+    if (s.speaking || s.pending) s.cancel();
     const u = new U(limpio);
     u.lang = lang || "es-MX";
     u.rate = 0.92;
-    u.onend = fin;
-    u.onerror = fin;
+    u.onstart = () => { empezo = true; };
+    u.onend = () => { if (empezo) unaVez(terminar); else unaVez(fallar); };
+    u.onerror = () => unaVez(fallar);
     s.speak(u);
-    return true;
   } catch {
-    fin();
+    unaVez(fallar);
     return false;
   }
+  if (!cerrado && !empezo && !s.speaking && !s.pending) {
+    unaVez(fallar);
+    return false;
+  }
+  return !cerrado;
 }
