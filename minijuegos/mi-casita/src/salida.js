@@ -43,17 +43,24 @@ export function teclaConDialogo(accion, actFoco) {
 }
 
 /**
- * Con la barra de la TV abierta, las flechas que no cambian de botón
- * cierran la barra y vuelven a mover el mueble. Atrás y Girar también.
+ * Con la barra de la TV abierta, una flecha mueve el foco solo si hay
+ * otro botón de la barra en esa dirección. Si no, cierra la barra y
+ * mueve el mueble. Atrás cierra la barra. Girar gira y vuelve a mover.
  * Devuelve "foco", "mover", "cerrar", "girar" o "juego".
  */
-export function teclaConBarra(accion, focoSeMovio) {
+export function teclaConBarra(accion, focoSeMovio = false) {
   if (accion === "atras") return "cerrar";
   if (accion === "girar") return "girar";
   if (accion === "arriba" || accion === "abajo" || accion === "izquierda" || accion === "derecha") {
     return focoSeMovio ? "foco" : "mover";
   }
   return "juego";
+}
+
+/** En el teléfono, tocar lo oscuro detrás de «¿Salir?» es Seguir. En la TV no. */
+export function toqueEnVelo({ modo = "tactil", enDialogo = false } = {}) {
+  if (modo === "tv" || enDialogo) return "nada";
+  return "seguir";
 }
 
 /** Atrás abre «¿Salir?» también en el resultado y al cerrar la visita. */

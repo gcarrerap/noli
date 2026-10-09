@@ -25,6 +25,19 @@ export function formaDe(mueble, rot = 0) {
   return { w, h, archivo: mueble.archivo, giro: swap ? 90 : 0, i };
 }
 
+/**
+ * Lado de cada cuadro del cuarto, en px.
+ * Bajo 400 px se queda en 44. Si hay sitio, crece sin salirse:
+ * 6 columnas, el borde de 6 px y el relleno de 24 px caben en el ancho.
+ * Nunca pasa de 62, para que a 412 px no haya scroll de lado.
+ */
+export function tamCuadro(ancho) {
+  const n = Number(ancho) || 0;
+  if (n < 400) return 44;
+  const c = Math.floor((n - 24 - 6) / 6);
+  return Math.max(44, Math.min(62, c));
+}
+
 export function dentro(cuarto, x, y, w, h) {
   return !!cuarto && x >= 0 && y >= 0 && x + w <= cuarto.cols && y + h <= cuarto.filas;
 }

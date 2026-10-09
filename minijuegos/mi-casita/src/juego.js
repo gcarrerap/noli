@@ -8,7 +8,9 @@ import { abiertos, recienAbiertos, bolsaDe } from "./desbloqueo.js";
 import { pistaPagar, monedasQueSirven, pistaLugar } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, focoDeGuia,
-  guiaAvanzaConToque, guiaPagarActivo, okDeGuia, GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS,
+  guiaAvanzaConToque, guiaPagarActivo, okDeGuia, demoraMuestra, relojConSalir, entradaTrasCierre,
+  esperasAlSalir,
+  GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS,
 } from "./guia.js";
 import {
   visitaNueva, debeCobrar, alAgregar, alQuitar, alPagar, elegirMueble, moverPieza,
@@ -16,10 +18,10 @@ import {
   algunoAlcanza, cerrarVisita, avisoDePago,
 } from "./visita.js";
 import { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } from "./progreso.js";
-import { fraseMedida, fraseGiro, fraseFaltan, fraseBrilla, textoMover, rellenar } from "./frases.js";
-import { decir, paraVoz } from "./voz.js";
+import { fraseMedida, fraseGiro, fraseTrasGiro, fraseFaltan, fraseBrilla, textoMover, rellenar } from "./frases.js";
+import { decir, paraVoz, callar } from "./voz.js";
 import { desbloquear, clic, brillo, dejar as sonidoDejar } from "./sonido.js";
-import { resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla } from "./salida.js";
+import { resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla, toqueEnVelo } from "./salida.js";
 
 const $main = document.getElementById("juego");
 try { if (/[?&]modo=tv\b/.test(location.search)) document.documentElement.dataset.modo = "tv"; } catch { /* sin location */ }
@@ -55,23 +57,31 @@ let guiaPausaHasta = 0;
 let compraPausaHasta = 0;
 let pasoConPausa = "";
 let pausaToken = 0;
+let dialogCerroEn = -1e15;
+/** El cierre del paso ya había pasado cuando se abrió «¿Salir?». */
+let bloqueoListo = false;
 
 const porId = () => Object.fromEntries(muebles.map((m) => [m.id, m]));
 const piezas = () => (monedas[monedaId] || monedas.usd)?.piezas || [];
 const cuartoPor = (id) => cuartos.find((c) => c.id === id) || cuartos[0];
 const guardar = () => Noli.guardar(pr);
 
-function hablar(texto, alTerminar) {
+function hablar(texto, alTerminar, alFallar) {
   if (!pr.voz || !texto || texto === dicho) {
-    if (alTerminar) alTerminar();
+    if (alFallar) alFallar();
+    else if (alTerminar) alTerminar();
     return;
   }
   dicho = texto;
-  decir(texto, "es-MX", alTerminar);
+  decir(texto, "es-MX", alTerminar, { alFallar });
 }
 
 function pausaGuiaActiva() {
   return Date.now() < guiaPausaHasta;
+}
+
+function bloqueoTrasDialogo(tipo) {
+  return entradaTrasCierre(Date.now() - dialogCerroEn, tipo) === "ignora";
 }
 
 function compraPausaActiva() {
@@ -86,13 +96,30 @@ function esFlecha(accion) {
 function empezarPausaPaso(linea) {
   const token = ++pausaToken;
   const t0 = Date.now();
+  const listo = bloqueoListo;
+  bloqueoListo = false;
   const habla = !!(pr.voz && paraVoz(linea));
-  guiaPausaHasta = t0 + (habla ? GUIA_PAUSA_MAX_MS : GUIA_PAUSA_MS);
+  if (listo) {
+    const re = esperasAlSalir({ seguir: true, bloqueoListo: true, msVoz: 0 });
+    guiaPausaHasta = t0 + re.pausa;
+  } else {
+    guiaPausaHasta = t0 + (habla ? GUIA_PAUSA_MAX_MS : GUIA_PAUSA_MS);
+  }
   dicho = "";
-  hablar(linea, () => {
+  const cerrar = (estado, ms) => {
     if (token !== pausaToken) return;
-    guiaPausaHasta = Math.min(t0 + GUIA_PAUSA_MAX_MS, Math.max(t0 + GUIA_PAUSA_MS, Date.now()));
-  });
+    const ahora = Date.now();
+    if (!listo) {
+      if (estado === "ok") {
+        guiaPausaHasta = Math.min(t0 + GUIA_PAUSA_MAX_MS, Math.max(t0 + GUIA_PAUSA_MS, ahora));
+      } else {
+        guiaPausaHasta = t0 + GUIA_PAUSA_MS;
+      }
+    }
+    if (pantalla !== "guia" || !guia || !guiaAvanzaConToque(guia.paso)) return;
+    programarMuestra(t0 + demoraMuestra(estado, ms) - ahora);
+  };
+  hablar(linea, () => cerrar("ok", Date.now() - t0), () => cerrar("falla", 0));
 }
 
 function idx() {
@@ -331,20 +358,21 @@ function htmlAcomodar(linea) {
   const lugar = guia ? { texto: "" } : pistaLugar({
     cuarto: c, puestos: pr.puestos, x: toma.x, y: toma.y, mueble: m, rot: v.rot, textos, catalogo: porId(),
   });
-  const giroTxt = guia ? "" : fraseGiro(
-    formaDe(m, (v.rot || 0) - 1).w, formaDe(m, (v.rot || 0) - 1).h, toma.w, toma.h, textos,
+  const rot = guia ? 0 : (v.rot || 0);
+  const giroTxt = guia ? "" : fraseTrasGiro(
+    rot, formaDe(m, rot - 1).w, formaDe(m, rot - 1).h, toma.w, toma.h, textos,
   );
   const barraAbierta = !guia && esTv() && !!(v && v.barra);
   const focoRejilla = guia ? "cuadro" : (esTv() && !barraAbierta ? "cuadricula" : "");
   return `
     ${cabecera(guia ? "" : `<button type="button" class="boton" ${focoAttr("terminar")} data-act="terminar">${esc(textos.terminar)}</button>`)}
     <p class="pista">${esc(linea || lugar.texto || "")}</p>
+    ${giroTxt ? `<p class="medida giro">${esc(giroTxt)}</p>` : ""}
     <div class="lado">
       ${htmlCuarto(c, toma, focoRejilla)}
-      <div>
+      <div class="controles">
         ${flechasHtml()}
         <p class="medida">${esc(fraseMedida(toma.w, toma.h, textos))}</p>
-        ${giroTxt ? `<p class="medida">${esc(giroTxt)}</p>` : ""}
         ${pistaMovimiento(barraAbierta)}
         ${guia ? "" : barraHtml(puede)}
       </div>
@@ -481,15 +509,20 @@ function avanzarMuestra(tipo) {
   pintarGuia();
 }
 
-function programarMuestra() {
+function programarMuestra(ms) {
   limpiarRelojGuia();
   if (pantalla !== "guia" || !guia || salir || !guiaAvanzaConToque(guia.paso)) return;
   const paso = guia.paso;
+  let espera = ms;
+  if (espera == null) {
+    const linea = vozGuia(paso, modo(), textos);
+    espera = pr.voz && paraVoz(linea) ? GUIA_PAUSA_MAX_MS : GUIA_TOQUE_MS;
+  }
   relojGuia = setTimeout(() => {
     relojGuia = 0;
     if (salir || pantalla !== "guia" || !guia || guia.paso !== paso) return;
     avanzarMuestra("tiempo");
-  }, GUIA_TOQUE_MS);
+  }, Math.max(0, espera));
 }
 
 function pintar(forzar) {
@@ -568,7 +601,7 @@ function asegurarGuiaLugar() {
 
 function actuar(act, ds) {
   const via = resolverToque(act, cobrando ? "cobrando" : pantalla, salir);
-  if (via === "seguir") { salir = false; pintar(); return; }
+  if (via === "seguir") { cerrarDialogo(); return; }
   if (via === "salir") { salir = false; guardar(); Noli.salir(); return; }
   if (via === "nada") return;
   if (act === "saltar" || act === "fin-guia") { terminarGuia(); return; }
@@ -747,6 +780,7 @@ function terminarGuia() {
   limpiarRelojGuia();
   guia = null;
   pasoConPausa = "";
+  bloqueoListo = false;
   pausaToken += 1;
   guiaPausaHasta = 0;
   compraPausaHasta = Date.now() + GUIA_COMPRA_MS;
@@ -799,17 +833,38 @@ function abrirSalir() {
   if (salir) return;
   salir = true;
   clearTimeout(relojPista);
+  if (pantalla === "guia" && guia && relojConSalir(true) === "pausa") {
+    bloqueoListo = !pausaGuiaActiva();
+    pausaToken += 1;
+    limpiarRelojGuia();
+    callar();
+  } else {
+    bloqueoListo = false;
+  }
   pintar("seguir");
+}
+
+function cerrarDialogo() {
+  salir = false;
+  dialogCerroEn = Date.now();
+  if (pantalla === "guia" && guia && relojConSalir(false, true) === "reinicio") pasoConPausa = "";
+  pintar();
 }
 
 $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
   if (salir) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    if (!enDialogo && toqueEnVelo({ modo: modo(), enDialogo }) === "seguir") {
+      cerrarDialogo();
+      return;
+    }
     if (t && $main.contains(t) && !t.disabled && (t.dataset.act === "seguir" || t.dataset.act === "salir")) {
       actuar(t.dataset.act, t.dataset);
     }
     return;
   }
+  if (bloqueoTrasDialogo("toque")) return;
   if (pantalla === "guia" && guia && pausaGuiaActiva()) {
     if (t && t.dataset.act === "saltar") actuar("saltar", t.dataset);
     return;
@@ -828,14 +883,14 @@ $main.addEventListener("click", (ev) => {
 Noli.alEntrar((accion) => {
   document.documentElement.classList.add("teclado");
   if (accion === "atras") {
-    if (!salir && pantalla === "acomodar" && esTv() && pr.visita?.barra && teclaConBarra("atras", false) === "cerrar") {
+    if (!salir && pantalla === "acomodar" && esTv() && pr.visita?.barra && teclaConBarra("atras") === "cerrar") {
       pr.visita = cerrarBarra(pr.visita);
       guardar();
       pintar("cuadricula");
       return true;
     }
     const donde = pantalla === "fin" || (pantalla === "guia" && guia && guia.paso === "fin") ? "fin" : pantalla;
-    if (atrasEnPantalla(donde, salir) === "cerrar") { salir = false; pintar(); return true; }
+    if (atrasEnPantalla(donde, salir) === "cerrar") { cerrarDialogo(); return true; }
     abrirSalir();
     return true;
   }
@@ -847,12 +902,16 @@ Noli.alEntrar((accion) => {
     if ((que === "seguir" || que === "salir") && e && !e.disabled) e.click();
     return true;
   }
+  if (accion === "ok" && bloqueoTrasDialogo("ok")) return true;
   const enLugar = pantalla === "acomodar" || (pantalla === "guia" && guia && guia.paso === "cuadro");
   const barraAbierta = !!(pr.visita && pr.visita.barra && pantalla === "acomodar" && esTv());
   if (barraAbierta && esFlecha(accion)) {
+    const barra = $main.querySelector(".barra");
     const antes = document.activeElement;
-    moverFoco(accion, $main);
-    const movio = document.activeElement !== antes;
+    const estaba = !!(barra && barra.contains(antes));
+    moverFoco(accion, barra || $main);
+    const ahora = document.activeElement;
+    const movio = estaba && !!(barra && barra.contains(ahora)) && ahora !== antes;
     if (teclaConBarra(accion, movio) === "foco") return true;
     pr.visita = cerrarBarra(pr.visita);
     actuar("mov", { dir: accion });

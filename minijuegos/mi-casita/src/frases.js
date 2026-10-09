@@ -47,6 +47,12 @@ export function fraseGiro(w0, h0, w1, h1, textos) {
   return "";
 }
 
+/** Esa frase solo aparece después de girar. En la posición inicial, rot 0, no se dice. */
+export function fraseTrasGiro(rot, w0, h0, w1, h1, textos) {
+  if ((rot | 0) === 0) return "";
+  return fraseGiro(w0, h0, w1, h1, textos);
+}
+
 /** En la TV, la pista de mover se esconde mientras la barra está abierta. */
 export function textoMover(modo, barraAbierta, textos) {
   if (modo === "tv" && barraAbierta) return "";

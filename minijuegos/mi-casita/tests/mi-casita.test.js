@@ -19,12 +19,13 @@ const usd = JSON.parse(fs.readFileSync(path.join(raiz, "../tienda/datos/usd.json
 const mxn = JSON.parse(fs.readFileSync(path.join(raiz, "../tienda/datos/mxn.json"), "utf8"));
 
 const { pagarExacto, puedePagar, sumaBolsa, restarBolsa } = await import("../src/dinero.js");
-const { cabe, choques, formaDe, mover, ponerEn, aceptaSeis, girarAyuda, dentro } = await import("../src/casa.js");
+const { cabe, choques, formaDe, mover, ponerEn, aceptaSeis, girarAyuda, dentro, tamCuadro } = await import("../src/casa.js");
 const { abiertos, recienAbiertos, bolsaDe } = await import("../src/desbloqueo.js");
 const { pistaPagar, monedasQueSirven, pistaLugar, FLECHA_MS, COMPLETA_MS } = await import("../src/pista.js");
 const {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, monedasDeGuia,
-  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, okDeGuia, pausaDePaso,
+  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, okDeGuia, pausaDePaso, esperaMuestra, demoraMuestra,
+  relojConSalir, esperasAlSalir, entradaTrasCierre, entradaSolapada, TRAS_DIALOGO_MS,
   GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS, PASOS,
 } = await import("../src/guia.js");
 const {
@@ -33,10 +34,10 @@ const {
   girarPieza, abrirBarra, cerrarBarra,
 } = await import("../src/visita.js");
 const { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } = await import("../src/progreso.js");
-const { fraseMedida, fraseGiro, fraseFaltan, fraseToca, fraseBrilla, textoMover } = await import("../src/frases.js");
-const { paraVoz } = await import("../src/voz.js");
+const { fraseMedida, fraseGiro, fraseTrasGiro, fraseFaltan, fraseToca, fraseBrilla, textoMover } = await import("../src/frases.js");
+const { paraVoz, decir, elegirVoz, prepararVoces } = await import("../src/voz.js");
 const {
-  resolverAtras, dosAtras, resolverToque, teclaConDialogo, teclaConBarra, atrasEnPantalla, FASES_CON_GUARDIA,
+  resolverAtras, dosAtras, resolverToque, teclaConDialogo, teclaConBarra, toqueEnVelo, atrasEnPantalla, FASES_CON_GUARDIA,
 } = await import("../src/salida.js");
 const { piezaSvg } = await import("../src/monedas.js");
 
@@ -196,6 +197,9 @@ test("la alfombra de 6 acepta 2 por 3 y 1 por 6, sin signo de por", () => {
   assert.equal(fraseMedida(2, 3, textos), "3 cuadros de largo, 2 de ancho");
   assert.equal(fraseGiro(2, 3, 3, 2, textos), "2 de largo y 3 de ancho es igual que 3 de largo y 2 de ancho.");
   assert.equal(fraseGiro(6, 1, 1, 6, textos), "");
+  assert.equal(fraseTrasGiro(0, 2, 3, 3, 2, textos), "");
+  assert.equal(fraseTrasGiro(1, 2, 3, 3, 2, textos), textos.mismo);
+  assert.equal(fraseTrasGiro(2, 3, 2, 2, 3, textos), textos.mismo);
   const texto = JSON.stringify(textos) + fraseMedida(3, 2, textos) + textos.pedido;
   assert.equal(texto.includes("×"), false);
   assert.equal(texto.includes("Measurement"), false);
@@ -375,6 +379,14 @@ test("la guía: mostrar, acción, Pagar, foco, Atrás y el modo", () => {
   assert.match(css, /\.cab \.boton\s*\{[^}]*min-height:\s*64px/);
   assert.match(css, /html\[data-modo="tv"\] \.boton\.grande\s*\{[^}]*min-height:\s*64px/);
   assert.match(css, /button:disabled/);
+  assert.match(css, /\.rejilla\s*\{[^}]*--cuadro:\s*44px/);
+  assert.match(css, /html\[data-modo="tv"\] \.rejilla\s*\{\s*--cuadro:\s*48px/);
+  assert.match(css, /min\(62px,\s*calc\(\(100cqi - 6px\) \/ 6\)\)/);
+  assert.equal(tamCuadro(360), 44);
+  assert.equal(tamCuadro(399), 44);
+  assert.equal(tamCuadro(412), 62);
+  assert.ok(6 * tamCuadro(412) + 6 + 24 <= 412);
+  assert.ok(tamCuadro(412) > tamCuadro(360));
 
   assert.equal(GUIA_PAUSA_MS, 1000);
   assert.equal(GUIA_PAUSA_MAX_MS, 3000);
@@ -404,6 +416,194 @@ test("la guía: mostrar, acción, Pagar, foco, Atrás y el modo", () => {
   assert.equal(spam.paso, "escoger");
 });
 
+test("un paso que solo se mira espera a la voz, como mucho 3 s", () => {
+  assert.equal(esperaMuestra(0), GUIA_TOQUE_MS);
+  assert.equal(esperaMuestra(400), 2000);
+  assert.equal(esperaMuestra(2000), 2000);
+  assert.equal(esperaMuestra(2600), 2600);
+  assert.equal(esperaMuestra(9000), GUIA_PAUSA_MAX_MS);
+  assert.equal(esperaMuestra(Number.NaN), 2000);
+  assert.equal(pausaDePaso(2600), 2600);
+  assert.equal(pausaDePaso(0), GUIA_PAUSA_MS);
+});
+
+function motorVoz(parcial) {
+  const s = {
+    speaking: false,
+    pending: false,
+    cancel() { this.speaking = false; this.pending = false; },
+    getVoices() { return [{ lang: "es-MX" }]; },
+    speak() {},
+    ...parcial,
+  };
+  function Utterance(texto) { this.text = texto; }
+  return { sintesis: s, Utterance };
+}
+
+test("si la voz falla o no empieza, el paso espera 2 s", () => {
+  assert.equal(demoraMuestra("ok", 100), 2000);
+  assert.equal(demoraMuestra("ok", 2600), 2600);
+  assert.equal(demoraMuestra("ok", 9000), 3000);
+  assert.equal(demoraMuestra("hablando", 0), 3000);
+  assert.equal(demoraMuestra("falla", 30), 2000);
+  const seguir = esperasAlSalir({ seguir: true, msVoz: 0 });
+  assert.equal(seguir.muestra, demoraMuestra("falla", 40));
+
+  const oir = (opciones) => {
+    let estado = "";
+    decir("Cuesta 6.", "es-MX", () => { estado = "ok"; }, {
+      ...opciones,
+      alFallar: () => { estado = "falla"; },
+    });
+    return estado;
+  };
+
+  const error = motorVoz({
+    speak(u) { u.onerror({ error: "not-allowed" }); },
+  });
+  assert.equal(oir(error), "falla");
+  assert.equal(demoraMuestra("falla", 0), 2000);
+
+  let hablo = false;
+  const vacio = motorVoz({
+    getVoices() { return []; },
+    speak() { hablo = true; },
+  });
+  assert.equal(oir(vacio), "falla");
+  assert.equal(hablo, true);
+  assert.equal(demoraMuestra("falla", 0), 2000);
+
+  const mudo = motorVoz({
+    speak() { /* no llama a onend ni a onerror */ },
+  });
+  assert.equal(oir(mudo), "falla");
+  assert.equal(mudo.sintesis.speaking, false);
+
+  const larga = motorVoz({
+    speak(u) {
+      this.speaking = true;
+      u.onstart();
+      u.onend();
+    },
+  });
+  assert.equal(oir(larga), "ok");
+});
+
+test("getVoices vacío no calla: speak dispara onend y la frase se dijo", () => {
+  let dicha = "";
+  let lang = "";
+  let voice = "sin-mirar";
+  const vacio = motorVoz({
+    getVoices() { return []; },
+    speak(u) {
+      dicha = u.text;
+      lang = u.lang;
+      voice = u.voice;
+      this.speaking = true;
+      u.onstart();
+      u.onend();
+    },
+  });
+  let estado = "";
+  decir("Cuesta 6.", "es-MX", () => { estado = "ok"; }, {
+    ...vacio,
+    alFallar: () => { estado = "falla"; },
+  });
+  assert.equal(estado, "ok");
+  assert.equal(dicha, "Cuesta 6.");
+  assert.equal(lang, "es");
+  assert.equal(voice, undefined);
+  assert.equal(demoraMuestra("ok", 0), 2000);
+  assert.equal(demoraMuestra("ok", 2600), 2600);
+  assert.equal(demoraMuestra("ok", 9000), 3000);
+});
+
+test("voiceschanged elige la voz en español", () => {
+  assert.equal(elegirVoz([]), null);
+  assert.equal(elegirVoz([{ lang: "en-US", name: "ingles" }]), null);
+  assert.equal(elegirVoz([{ lang: "es-ES", name: "es" }, { lang: "es-MX", name: "mx" }]).name, "mx");
+  const voces = [];
+  let handler = null;
+  let lecturas = 0;
+  let ultima = null;
+  const sintesis = {
+    speaking: false,
+    pending: false,
+    getVoices() { lecturas += 1; return voces.slice(); },
+    cancel() {},
+    speak(u) {
+      ultima = u;
+      this.speaking = true;
+      u.onstart();
+      u.onend();
+    },
+    addEventListener(tipo, fn) { if (tipo === "voiceschanged") handler = fn; },
+  };
+  prepararVoces(sintesis);
+  assert.equal(lecturas >= 1, true);
+  assert.equal(typeof handler, "function");
+  voces.push({ lang: "en-US", name: "ingles" }, { lang: "es-ES", name: "españa" }, { lang: "es-MX", name: "mexico" });
+  handler();
+  let estado = "";
+  decir("Hola", "es-MX", () => { estado = "ok"; }, {
+    sintesis,
+    Utterance: function (texto) { this.text = texto; },
+    alFallar: () => { estado = "falla"; },
+  });
+  assert.equal(estado, "ok");
+  assert.equal(ultima && ultima.text, "Hola");
+  assert.equal(ultima.voice && ultima.voice.name, "mexico");
+  assert.match(String(ultima.lang), /^es-MX/i);
+});
+
+test("«¿Salir?» pausa la guía y Seguir la empieza otra vez", () => {
+  assert.equal(TRAS_DIALOGO_MS, 400);
+  assert.equal(relojConSalir(true), "pausa");
+  assert.equal(relojConSalir(false, true), "reinicio");
+  assert.equal(relojConSalir(false), "sigue");
+  const antes = esperasAlSalir({ msVoz: 2600 });
+  const abierto = esperasAlSalir({ abierto: true, msVoz: 2600 });
+  const seguir = esperasAlSalir({ seguir: true, msVoz: 2600 });
+  assert.equal(abierto.muestra, null);
+  assert.equal(abierto.pausa, null);
+  assert.equal(seguir.muestra, antes.muestra);
+  assert.equal(seguir.muestra, 2600);
+  assert.equal(seguir.pausa, antes.pausa);
+  assert.equal(seguir.pausa, 2600);
+  assert.equal(seguir.ignoraMs, 400);
+  assert.equal(esperasAlSalir({ seguir: true, msVoz: 0 }).muestra, 2000);
+  assert.equal(esperasAlSalir({ seguir: true, msVoz: 9000 }).muestra, 3000);
+  assert.equal(entradaTrasCierre(0, "toque"), "ignora");
+  assert.equal(entradaTrasCierre(399, "ok"), "ignora");
+  assert.equal(entradaTrasCierre(400, "toque"), "sigue");
+  assert.equal(entradaTrasCierre(400, "ok"), "sigue");
+  assert.equal(entradaTrasCierre(0, "atras"), "sigue");
+  assert.equal(entradaTrasCierre(Number.NaN, "ok"), "ignora");
+  assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: false }), "seguir");
+  assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: true }), "nada");
+  assert.equal(toqueEnVelo({ modo: "tv", enDialogo: false }), "nada");
+});
+
+test("tras Seguir, el cierre del paso no se suma a los 400 ms si ya había pasado", () => {
+  assert.equal(entradaSolapada({ ms: 399, tipo: "toque", bloqueoListo: true }), "ignora");
+  assert.equal(entradaSolapada({ ms: 399, tipo: "ok", bloqueoListo: true }), "ignora");
+  assert.equal(entradaSolapada({ ms: 500, tipo: "toque", bloqueoListo: true }), "sigue");
+  assert.equal(entradaSolapada({ ms: 500, tipo: "ok", bloqueoListo: true }), "sigue");
+  assert.equal(entradaSolapada({ ms: 0, tipo: "atras", bloqueoListo: true }), "sigue");
+  const re = esperasAlSalir({ seguir: true, msVoz: 2600, bloqueoListo: true });
+  assert.equal(re.pausa, 0);
+  assert.equal(re.ignoraMs, 400);
+  assert.equal(re.muestra, 2600);
+  assert.equal(esperasAlSalir({ seguir: true, msVoz: 0, bloqueoListo: true }).muestra, 2000);
+  assert.equal(entradaSolapada({ ms: 500, bloqueoListo: false, msVoz: 0 }), "ignora");
+  assert.equal(entradaSolapada({ ms: 1000, bloqueoListo: false, msVoz: 0 }), "sigue");
+  assert.equal(entradaSolapada({ ms: 1399, bloqueoListo: false, msVoz: 0 }), "sigue");
+  assert.equal(entradaSolapada({ ms: 500, bloqueoListo: false, msVoz: 2600 }), "ignora");
+  assert.equal(entradaSolapada({ ms: 2600, bloqueoListo: false, msVoz: 2600 }), "sigue");
+  const juegoSrc = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juegoSrc, /bloqueoListo/);
+});
+
 test("girar solo cambia largo y ancho, y el área no cambia", () => {
   for (const m of muebles) {
     const a0 = formaDe(m, 0);
@@ -421,14 +621,21 @@ test("girar solo cambia largo y ancho, y el área no cambia", () => {
   assert.notDeepEqual([formaDe(alf, 1).w, formaDe(alf, 1).h], [6, 1]);
 });
 
-test("la barra de la TV vuelve a mover el mueble", () => {
-  let v = abrirBarra({ ...visitaNueva(HOY, { penny: 1 }, "recamara"), x: 0, y: 0, rot: 0, mueble: "alfombra6" });
+test("la flecha mueve el foco en la barra solo si hay botón; si no, mueve el mueble", () => {
+  let v = abrirBarra({ ...visitaNueva(HOY, { penny: 1 }, "recamara"), x: 1, y: 1, rot: 0, mueble: "alfombra6" });
   assert.equal(v.barra, true);
-  assert.equal(teclaConBarra("arriba", true), "foco");
+  assert.equal(teclaConBarra("derecha", true), "foco");
+  assert.equal(teclaConBarra("izquierda", true), "foco");
+  assert.equal(teclaConBarra("arriba", false), "mover");
+  assert.equal(teclaConBarra("derecha", false), "mover");
   assert.equal(teclaConBarra("abajo", false), "mover");
-  assert.equal(teclaConBarra("atras", false), "cerrar");
-  assert.equal(teclaConBarra("girar", false), "girar");
-  assert.equal(teclaConBarra("ok", false), "juego");
+  assert.equal(teclaConBarra("izquierda", false), "mover");
+  assert.equal(teclaConBarra("atras"), "cerrar");
+  assert.equal(teclaConBarra("girar"), "girar");
+  assert.equal(teclaConBarra("ok"), "juego");
+  v = moverPieza(cerrarBarra(v), cuarto("recamara"), "abajo", porId.alfombra6);
+  assert.equal(v.barra, false);
+  assert.equal(v.y, 2);
   v = girarPieza(v);
   assert.equal(v.barra, false);
   assert.equal(v.rot, 1);
