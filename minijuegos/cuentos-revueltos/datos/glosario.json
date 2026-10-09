@@ -1,7 +1,8 @@
 {
   "a": {
     "es": "un",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "again": {
     "es": "otra vez",
@@ -9,15 +10,18 @@
   },
   "ahead": {
     "es": "adelante",
-    "dibujo": "flecha-pista.svg"
+    "dibujo": "flecha-pista.svg",
+    "funcion": true
   },
   "an": {
     "es": "un",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "and": {
     "es": "y",
-    "dibujo": "cruce.svg"
+    "dibujo": "cruce.svg",
+    "funcion": true
   },
   "asleep": {
     "es": "dormida",
@@ -25,7 +29,7 @@
   },
   "at": {
     "es": "en",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-at.svg"
   },
   "ate": {
     "es": "comió",
@@ -89,11 +93,11 @@
   },
   "brick": {
     "es": "ladrillo",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-brick.svg"
   },
   "bricks": {
     "es": "ladrillos",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-bricks.svg"
   },
   "broke": {
     "es": "se rompió",
@@ -113,7 +117,7 @@
   },
   "builds": {
     "es": "construye",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-builds.svg"
   },
   "cake": {
     "es": "pastel",
@@ -169,11 +173,13 @@
   },
   "did": {
     "es": "hizo",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "does": {
     "es": "hace",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "door": {
     "es": "puerta",
@@ -237,11 +243,12 @@
   },
   "for": {
     "es": "para",
-    "dibujo": "dibujos/dibujo-basket.svg"
+    "dibujo": "dibujos/dibujo-basket.svg",
+    "funcion": true
   },
   "get": {
     "es": "entrar",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-get.svg"
   },
   "gets": {
     "es": "se mete",
@@ -297,19 +304,22 @@
   },
   "he": {
     "es": "él",
-    "dibujo": "cara-jack.svg"
+    "dibujo": "cara-jack.svg",
+    "funcion": true
   },
   "her": {
     "es": "su",
-    "dibujo": "cara-caperucita.svg"
+    "dibujo": "cara-caperucita.svg",
+    "funcion": true
   },
   "him": {
     "es": "él",
-    "dibujo": "cara-jack.svg"
+    "dibujo": "cara-jack.svg",
+    "funcion": true
   },
   "home": {
     "es": "casa",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-home.svg"
   },
   "hot": {
     "es": "caliente",
@@ -317,7 +327,7 @@
   },
   "house": {
     "es": "casa",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-house.svg"
   },
   "huffed": {
     "es": "sopló",
@@ -333,19 +343,21 @@
   },
   "in": {
     "es": "en",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-in.svg"
   },
   "inside": {
     "es": "adentro",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-inside.svg"
   },
   "is": {
     "es": "es",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "it": {
     "es": "eso",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "jack": {
     "es": "Jack",
@@ -385,23 +397,28 @@
   },
   "no": {
     "es": "no",
-    "dibujo": "tarjeta-perdida.svg"
+    "dibujo": "tarjeta-perdida.svg",
+    "funcion": true
   },
   "not": {
     "es": "no",
-    "dibujo": "tarjeta-perdida.svg"
+    "dibujo": "tarjeta-perdida.svg",
+    "funcion": true
   },
   "now": {
     "es": "ahora",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "on": {
     "es": "en",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "one": {
     "es": "un",
-    "dibujo": "cara-cerdito-1.svg"
+    "dibujo": "cara-cerdito-1.svg",
+    "funcion": true
   },
   "page": {
     "es": "página",
@@ -449,7 +466,7 @@
   },
   "safe": {
     "es": "a salvo",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-safe.svg"
   },
   "scared": {
     "es": "asustada",
@@ -465,7 +482,8 @@
   },
   "she": {
     "es": "ella",
-    "dibujo": "cara-caperucita.svg"
+    "dibujo": "cara-caperucita.svg",
+    "funcion": true
   },
   "shivered": {
     "es": "tembló",
@@ -485,11 +503,13 @@
   },
   "so": {
     "es": "tan",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "some": {
     "es": "unos",
-    "dibujo": "dibujos/dibujo-cake.svg"
+    "dibujo": "dibujos/dibujo-cake.svg",
+    "funcion": true
   },
   "soup": {
     "es": "sopa",
@@ -513,7 +533,7 @@
   },
   "strong": {
     "es": "fuerte",
-    "dibujo": "escena-casa-ladrillos.svg"
+    "dibujo": "dibujos/dibujo-strong.svg"
   },
   "takes": {
     "es": "toma",
@@ -525,7 +545,8 @@
   },
   "the": {
     "es": "el",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "there": {
     "es": "allí",
@@ -533,7 +554,8 @@
   },
   "they": {
     "es": "ellos",
-    "dibujo": "cara-cerdito-1.svg"
+    "dibujo": "cara-cerdito-1.svg",
+    "funcion": true
   },
   "three": {
     "es": "tres",
@@ -541,7 +563,8 @@
   },
   "to": {
     "es": "a",
-    "dibujo": "flecha-pista.svg"
+    "dibujo": "flecha-pista.svg",
+    "funcion": true
   },
   "tries": {
     "es": "prueba",
@@ -553,7 +576,8 @@
   },
   "very": {
     "es": "muy",
-    "dibujo": "dibujos/dibujo-giant.svg"
+    "dibujo": "dibujos/dibujo-giant.svg",
+    "funcion": true
   },
   "waits": {
     "es": "espera",
@@ -577,11 +601,13 @@
   },
   "were": {
     "es": "estaban",
-    "dibujo": "libro-abierto.svg"
+    "dibujo": "libro-abierto.svg",
+    "funcion": true
   },
   "what": {
     "es": "qué",
-    "dibujo": "tarjeta-perdida.svg"
+    "dibujo": "tarjeta-perdida.svg",
+    "funcion": true
   },
   "who": {
     "es": "quién",
@@ -593,7 +619,8 @@
   },
   "with": {
     "es": "con",
-    "dibujo": "cruce.svg"
+    "dibujo": "cruce.svg",
+    "funcion": true
   },
   "wolf": {
     "es": "lobo",

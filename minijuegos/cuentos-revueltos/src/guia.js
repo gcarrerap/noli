@@ -5,6 +5,8 @@ import { relojNuevo, relojPausar, relojReiniciar, relojMs } from "./reloj.js";
 import { TRAS_DIALOGO_MS, hastaIgnorar, hastaLibre } from "./salida.js";
 
 export const BLOQUEO_PASO_MS = 1500;
+/** Los pasos que solo se miran ignoran toques y OK durante 1 s. */
+export const BLOQUEO_MIRAR_MS = 1000;
 export const AUTO_MIRAR_MS = 2000;
 export const TOPE_VOZ_MS = 3000;
 export const TRAS_GUIA_MS = 1000;
@@ -33,7 +35,7 @@ export function esMirar(paso) {
 export function textoPaso(paso, tv, listoOn) {
   if (paso === 0) return "¡El lobo revolvió el cuento!";
   if (paso === 1) return "Ponlo en orden.";
-  if (paso === 2) return tv ? "Pon esta primero. Pulsa OK." : "Pon esta primero.";
+  if (paso === 2) return tv ? "Pon esta primera. Pulsa OK." : "Pon esta primera.";
   if (paso === 3) {
     const base = "Ponla en el 1.";
     if (!listoOn) return base;
@@ -54,9 +56,9 @@ export function focoGuia(paso, listoOn) {
   return "hueco-0";
 }
 
-// Saltar no entra en las flechas durante un paso de acción, ni recibe el foco solo.
-export function saltarEnFlechas(paso) {
-  return esMirar(paso);
+// Saltar no entra en las flechas en ningún paso. Sigue pudiéndose tocar.
+export function saltarEnFlechas() {
+  return false;
 }
 
 export function listoGuiaActivo(estado) {
@@ -73,13 +75,19 @@ function tablero(paso) {
   return { mazo: [...MAZO_GUIA], huecos: [null, null, null], tomada: null };
 }
 
+function bloqueoDe(paso, ahora) {
+  const base = Number(ahora);
+  const t = Number.isFinite(base) ? base : 0;
+  return t + (esMirar(paso) ? BLOQUEO_MIRAR_MS : BLOQUEO_PASO_MS);
+}
+
 export function guiaNueva(ahora) {
   const tab = tablero(0);
   return {
     paso: 0,
     reloj: relojNuevo(ahora),
     voz: { activa: true, termino: false, fallo: false },
-    bloqueoHasta: ahora + BLOQUEO_PASO_MS,
+    bloqueoHasta: bloqueoDe(0, ahora),
     ignorarHasta: 0,
     dialogo: false,
     ...tab,
@@ -95,7 +103,7 @@ function entrar(estado, paso, ahora, tab) {
     paso,
     reloj: relojNuevo(ahora),
     voz: { activa: true, termino: false, fallo: false },
-    bloqueoHasta: ahora + BLOQUEO_PASO_MS,
+    bloqueoHasta: bloqueoDe(paso, ahora),
     dialogo: false,
     ...tab,
   };
@@ -106,10 +114,11 @@ function bloqueado(estado, ahora) {
   return ahora < hastaLibre(estado.bloqueoHasta, estado.ignorarHasta);
 }
 
-// Un toque o OK en un paso para mirar avanza enseguida.
-// El diálogo y los 400 ms de después siguen cerrados.
+// Un paso para mirar también tiene su candado de 1 s.
+// El diálogo y los 400 ms de después siguen cerrados. No se suman al candado.
 function mirarCerrado(estado, ahora) {
-  return estado.fin || estado.dialogo || ahora < estado.ignorarHasta;
+  if (estado.fin || estado.dialogo) return true;
+  return ahora < hastaLibre(estado.bloqueoHasta, estado.ignorarHasta);
 }
 
 // Un error o una voz que no arranca no es «ya terminó».

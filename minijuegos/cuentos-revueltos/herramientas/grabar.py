@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Graba los audios de Cuentos Revueltos con Piper (lessac, en-US).
+"""Graba los audios de Cuentos Revueltos con Piper (en_US-ljspeech, dominio público).
 
 Cada archivo lleva 0,45 s de silencio al inicio: las TVs se comen el arranque.
 Uso:
-    python3 minijuegos/cuentos-revueltos/herramientas/grabar.py --voz /ruta/en-us-lessac-medium.onnx
+    python3 minijuegos/cuentos-revueltos/herramientas/grabar.py --voz /ruta/en_US-ljspeech-medium.onnx --todo
 """
 import argparse, io, json, subprocess, sys, wave
 from pathlib import Path

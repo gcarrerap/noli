@@ -176,23 +176,42 @@ export function decirGrabacion(url, opts = {}) {
   const { respaldo, alDuracion, alTiempo, alTerminar, alFallar } = opts;
   const fin = () => { if (mio === turno) alTerminar?.(); };
   const fallar = (m) => { if (mio === turno) alFallar?.(m); };
-  const a = elemento();
-  if (!a) {
+  let usoVoz = false;
+  const porVoz = () => {
+    if (mio !== turno || usoVoz) return;
+    usoVoz = true;
     if (!respaldo) { fallar("sin-audio"); return false; }
-    return hablarTexto(respaldo, "en", { alTerminar: fin, alFallar: fallar, vivo: vivoDe(mio) });
-  }
+    const t0 = Date.now();
+    const despues = opts.despues || ((fn, ms) => setTimeout(fn, ms));
+    const cancelar = opts.cancelar || ((id) => clearTimeout(id));
+    let reloj = null;
+    const parar = () => { if (reloj != null) { cancelar(reloj); reloj = null; } };
+    const tick = () => {
+      if (mio !== turno) { parar(); return; }
+      alTiempo?.(Date.now() - t0);
+      reloj = despues(tick, 90);
+    };
+    reloj = despues(tick, 90);
+    return hablarTexto(respaldo, "en", {
+      alTerminar: () => { parar(); fin(); },
+      alFallar: (m) => { parar(); fallar(m); },
+      vivo: vivoDe(mio),
+      sintesis: opts.sintesis,
+      Utterance: opts.Utterance,
+      despues,
+      cancelar,
+      vigiliaMs: opts.vigiliaMs,
+    });
+  };
+  const a = elemento();
+  if (!a) return porVoz();
   a.onloadedmetadata = () => {
     if (mio !== turno) return;
     const ms = Number.isFinite(a.duration) ? a.duration * 1000 : 0;
     alDuracion?.(ms);
   };
-  a.ontimeupdate = () => { if (mio === turno) alTiempo?.(a.currentTime * 1000); };
-  a.onended = fin;
-  const porVoz = () => {
-    if (mio !== turno) return;
-    if (!respaldo) { fallar("sin-audio"); return; }
-    hablarTexto(respaldo, "en", { alTerminar: fin, alFallar: fallar, vivo: vivoDe(mio) });
-  };
+  a.ontimeupdate = () => { if (mio === turno && !usoVoz) alTiempo?.(a.currentTime * 1000); };
+  a.onended = () => { if (!usoVoz) fin(); };
   a.onerror = porVoz;
   try {
     a.src = url;

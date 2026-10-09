@@ -184,9 +184,9 @@
           "pista": "Mira el final que elegiste.",
           "segun": "come",
           "opciones": [
-            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg" },
-            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg" },
-            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" }
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg", "es": "Se quedó con hambre." },
+            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg", "es": "Sopa." },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg", "es": "Un pastel." }
           ]
         },
         {

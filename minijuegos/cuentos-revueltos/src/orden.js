@@ -30,14 +30,16 @@ export function tomar(estado, id) {
   return estado;
 }
 
+// Soltar siempre devuelve la tarjeta al montón, también si salió de un hueco.
 export function soltar(estado) {
   if (!estado?.tomada) return estado;
-  if (estado.origen?.tipo === "hueco" && estado.huecos[estado.origen.i] == null) {
-    const huecos = estado.huecos.slice();
-    huecos[estado.origen.i] = estado.tomada;
-    return { ...estado, huecos, tomada: null, origen: null };
-  }
   return { ...estado, mazo: [...estado.mazo, estado.tomada], tomada: null, origen: null };
+}
+
+// Huecos llenos primero y después el montón: el mismo orden que el resaltado.
+export function idsEnLectura(estado) {
+  if (!estado) return [];
+  return [...(estado.huecos || []).filter(Boolean), ...(estado.mazo || [])];
 }
 
 export function poner(estado, slot) {

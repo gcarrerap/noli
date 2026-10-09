@@ -9,7 +9,7 @@
       "escena": "escena-casa-paja.svg",
       "personaje": "personaje-cerdito-1.svg",
       "oraciones": ["One pig builds with straw.", "It is a yellow house."],
-      "pista": "La casa de paja va primero."
+      "pista": "La casa de paja va primera."
     },
     {
       "id": "palos",
@@ -137,9 +137,9 @@
           "pista": "Mira el final que elegiste.",
           "segun": "come",
           "opciones": [
-            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg" },
-            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" },
-            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" }
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg", "es": "Se quedó con hambre." },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg", "es": "Una zanahoria." },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg", "es": "Un pastel." }
           ]
         },
         {

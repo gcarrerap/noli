@@ -1,5 +1,4 @@
-// Pistas: en el nivel 1 el paso completo desde el principio.
-// Desde el 2: frase, flecha a los 20 s, paso completo a los 40 s o tras un error.
+// La pista dice cómo se hace. La respuesta no aparece hasta un intento fallido.
 // «En español» es el último escalón, y solo en las preguntas.
 
 export const FLECHA_MS = 20000;
@@ -14,9 +13,10 @@ export function esPregunta(tipo) {
 
 export function fasePista({ nivel, tipo, ms, errores }) {
   const pregunta = esPregunta(tipo);
-  const n = nivel | 0;
-  const e = errores | 0;
-  const t = ms | 0;
+  const n = Number(nivel) || 0;
+  const e = Number(errores) || 0;
+  const tiempo = Number(ms);
+  const t = Number.isFinite(tiempo) ? tiempo : 0;
   if (n <= 1) {
     if (pregunta && e >= 1) return "espanol";
     return "completa";
@@ -29,9 +29,10 @@ export function fasePista({ nivel, tipo, ms, errores }) {
 
 // El paso completo por tiempo o por error no cuenta como primer intento, salvo en el nivel 1.
 export function marcaPasoCompleto({ nivel, fase, ms, errores }) {
-  if ((nivel | 0) <= 1) return false;
+  if ((Number(nivel) || 0) <= 1) return false;
   if (fase !== "completa" && fase !== "espanol") return false;
-  return (ms | 0) >= COMPLETA_MS || (errores | 0) >= 1;
+  const t = Number(ms) || 0;
+  return t >= COMPLETA_MS || (Number(errores) || 0) >= 1;
 }
 
 export function textoCorto(tipo) {
@@ -41,6 +42,7 @@ export function textoCorto(tipo) {
   if (tipo === "porque") return "Mira por qué.";
   if (tipo === "cambio") return "Mira qué cambió.";
   if (tipo === "pagina") return "Mira los dibujos.";
+  if (tipo === "cruce") return "Elige un final.";
   return "";
 }
 

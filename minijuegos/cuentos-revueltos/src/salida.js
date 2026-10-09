@@ -24,6 +24,12 @@ export function hastaIgnorar(ahora, ms = TRAS_DIALOGO_MS) {
 
 // El candado de 400 ms y el candado del paso corren a la vez.
 // Se sale cuando pasa el más largo. No se suman.
+/** En el teléfono, tocar lo oscuro de «¿Salir?» es Seguir. En la tele, no. */
+export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
+  if (tv || enDialogo) return "nada";
+  return "seguir";
+}
+
 export function hastaLibre(bloqueoHasta, ignorarHasta) {
   const paso = Number.isFinite(bloqueoHasta) ? bloqueoHasta : 0;
   const dialogo = Number.isFinite(ignorarHasta) ? ignorarHasta : 0;

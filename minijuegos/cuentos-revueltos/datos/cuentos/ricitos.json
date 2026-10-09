@@ -162,9 +162,9 @@
           "pista": "Mira el final que elegiste.",
           "segun": "come",
           "opciones": [
-            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg" },
-            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" },
-            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" }
+            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg", "es": "Sopa." },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg", "es": "Un pastel." },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg", "es": "Una zanahoria." }
           ]
         },
         {

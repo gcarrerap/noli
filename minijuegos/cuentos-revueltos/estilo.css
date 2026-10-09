@@ -20,7 +20,7 @@ body {
   min-height: 100dvh;
   background: var(--bg);
   color: var(--fg);
-  font-family: "Nunito", system-ui, sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", "Arial Rounded MT Bold", system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
@@ -44,7 +44,7 @@ main {
   overflow-x: hidden;
 }
 .titulo {
-  font-family: "Fredoka", system-ui, sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", "Arial Rounded MT Bold", system-ui, sans-serif;
   font-weight: 700;
   font-size: 1.25rem;
   line-height: 1.1;
@@ -85,7 +85,7 @@ main {
   gap: 6px;
 }
 .boton .svg { width: 36px; height: 36px; }
-.boton.grande { width: 100%; font-family: "Fredoka", system-ui, sans-serif; font-size: 1.15rem; }
+.boton.grande { width: 100%; font-family: "Trebuchet MS", "Segoe UI", "Arial Rounded MT Bold", system-ui, sans-serif; font-size: 1.15rem; }
 .boton.primario, .listo.brilla { background: var(--verde); }
 .boton.reto { background: var(--sol); }
 .boton.coach { width: 100%; font-size: 1.35rem; background: var(--sol); text-align: center; }
@@ -109,6 +109,8 @@ main {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
+.rejilla.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rejilla.n5, .rejilla.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tarjeta, .hueco, .opcion {
   min-width: 0;
   min-height: 64px;
@@ -130,31 +132,66 @@ main {
 .zona-texto, .oracion, .etiq {
   width: 100%;
   min-width: 0;
-  font-size: .78rem;
-  line-height: 1.2;
+  font-size: .95rem;
+  line-height: 1.25;
   text-align: center;
   overflow-wrap: anywhere;
 }
 .linea { margin: 0; }
-.palabra {
-  display: inline;
-  padding: 0 .08em;
-  border-radius: 6px;
-  font-weight: 800;
-  min-height: 0;
+.palabra { border-radius: 6px; font-weight: 800; }
+button.palabra {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 64px;
+  padding: 0 .28em;
+  font-size: 1.15rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+.rejilla.n5 button.palabra,
+.rejilla.n6 button.palabra {
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 .12em;
+  font-size: .95rem;
+}
+.rejilla.n5 button.palabra::before,
+.rejilla.n6 button.palabra::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, -50%);
 }
 .palabra.habla { background: var(--sol); }
+.no-aqui { margin: 0; font-size: .72rem; font-weight: 800; color: var(--coral); text-align: center; }
+.tarjeta.mal { outline: 3px solid var(--coral); }
+.tarjeta.sin-dibujo .pista, .tarjeta.sin-dibujo .insignia { display: none; }
+.mano { background: var(--sol); border-radius: 14px; padding: .35em .7em; }
 .num {
   position: absolute;
   top: 4px;
   left: 6px;
-  font-family: "Fredoka", system-ui, sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", "Arial Rounded MT Bold", system-ui, sans-serif;
   font-weight: 700;
 }
 .flecha { position: absolute; top: -6px; right: 4px; width: 28px; height: 36px; pointer-events: none; }
 .con-flecha { outline: 4px solid var(--sol); }
 .hueco { background: transparent; box-shadow: none; }
+.hueco > .svg { height: 72px; }
 .huecos .dibujo { height: 48px; }
+.huecos.n6 > button.hueco { height: 72px; max-height: 80px; overflow: hidden; }
+.huecos.n6 > button.hueco > .svg { height: 64px; }
+.huecos.n6 .dibujo { height: 36px; }
+.huecos.n6 .zona-texto { font-size: .68rem; line-height: 1.1; }
+.rejilla.n6 { gap: 4px; }
+.rejilla.n6 .dibujo { height: 40px; }
+.p-jugar { gap: 4px; padding-bottom: 8px; }
 .estante { width: min(100%, 520px); height: 168px; min-width: 0; position: relative; }
 .estante > .svg { position: absolute; inset: 0; height: 100%; }
 .libros {
@@ -178,7 +215,7 @@ main {
   gap: 2px;
 }
 .libro .svg { width: 100%; height: 88px; }
-.libro .nombre { font-size: .72rem; font-weight: 800; line-height: 1.1; max-height: 2.2em; overflow: hidden; }
+.libro .nombre { font-size: .68rem; font-weight: 800; line-height: 1.15; max-height: none; overflow: visible; }
 .estrellas { display: inline-flex; gap: 2px; }
 .estrellas svg { width: 16px; height: 16px; }
 .estrellas .on { fill: #ffb400; }
@@ -219,9 +256,17 @@ html[data-modo="tv"] .rejilla.n4 { grid-template-columns: repeat(4, minmax(0, 1f
 html[data-modo="tv"] .rejilla.n5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 html[data-modo="tv"] .rejilla.n6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 html[data-modo="tv"] .menu { display: grid; grid-template-columns: 1fr 1fr; }
-html[data-modo="tv"] .dibujo { height: 48px; }
-html[data-modo="tv"] .hueco { max-height: 64px; overflow: hidden; }
-html[data-modo="tv"] .zona-texto, html[data-modo="tv"] .oracion { font-size: .72rem; }
+html[data-modo="tv"] .dibujo { height: 88px; }
+html[data-modo="tv"] .hueco { max-height: none; overflow: visible; }
+html[data-modo="tv"] .hueco > .svg { height: 84px; }
+html[data-modo="tv"] .huecos.n6 > .hueco,
+html[data-modo="tv"] .huecos.n6 > .hueco.lleno { max-height: none; overflow: visible; }
+html[data-modo="tv"] .huecos .dibujo,
+html[data-modo="tv"] .rejilla.n6 .dibujo,
+html[data-modo="tv"] .huecos.n6 .dibujo { height: 72px; }
+html[data-modo="tv"] .zona-texto,
+html[data-modo="tv"] .oracion,
+html[data-modo="tv"] .huecos.n6 .zona-texto { font-size: 1rem; line-height: 1.25; }
 html[data-modo="tv"] .lobo, html[data-modo="tv"] .paginas { height: 120px; }
 html[data-modo="tv"] .estante { width: min(100%, 640px); height: 150px; }
 html[data-modo="tv"] .libro .svg { height: 64px; }

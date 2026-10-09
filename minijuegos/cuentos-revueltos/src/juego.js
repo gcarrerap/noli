@@ -11,7 +11,7 @@ import {
   paginaDe, prepararTareas, conRepaso, bancoPalabras, acierto, respuestaDe, tareasCalificables,
 } from "./cuentos.js";
 import {
-  ordenNuevo, tomar, soltar, poner, estaCompleto, siguienteTarjeta, cuentaPrimeraOrden,
+  ordenNuevo, tomar, soltar, poner, estaCompleto, siguienteTarjeta, cuentaPrimeraOrden, idsEnLectura,
 } from "./orden.js";
 import {
   fasePista, marcaPasoCompleto, textoCorto, esPregunta, cuentaPrimeraPregunta, itemLimpio, fraseListo,
@@ -26,7 +26,7 @@ import {
   guiaNueva, reducirGuia, debeAutoAvanzar, vozPaso, listoGuiaActivo, focoGuia, saltarEnFlechas, esMirar,
   bloqueoTrasGuia,
 } from "./guia.js";
-import { zonaPermitida, debeIgnorar, hastaIgnorar, hastaLibre } from "./salida.js";
+import { zonaPermitida, debeIgnorar, hastaIgnorar, hastaLibre, toqueEnVelo } from "./salida.js";
 import { relojPausar, relojReanudar, relojMs } from "./reloj.js";
 
 const $main = document.getElementById("juego");
@@ -60,6 +60,10 @@ let listoSono = false;
 let lecToken = 0;
 let nSvg = 0;
 let pulso = 0;
+const pendientesSvg = new Set();
+let repintarSvg = 0;
+const precargadas = new Set();
+const FEEDBACK_MS = 1000;
 
 const esTv = () => Noli.modo === "tv" || document.documentElement.dataset.modo === "tv";
 const hoy = () => fechaLocal();
@@ -101,9 +105,13 @@ Noli.alEntrar((accion) => {
 });
 
 $main?.addEventListener("click", (e) => {
+  if (dialogo && !e.target.closest(".dialogo") && e.target.closest(".velo")) {
+    if (toqueEnVelo({ tv: esTv(), enDialogo: false }) === "seguir") cerrarSalida();
+    return;
+  }
   const btn = e.target.closest("[data-act]");
   if (!btn) {
-    if (pantalla === "guia" && guia && esMirar(guia.paso) && !dialogo && !debeIgnorar(Date.now(), ignorarHasta)) {
+    if (pantalla === "guia" && guia && esMirar(guia.paso) && !dialogo) {
       const antes = guia.paso;
       guia = reducirGuia(guia, { tipo: "toque", ahora: Date.now() });
       if (guia.paso !== antes || guia.fin) trasGuia(true);
@@ -161,6 +169,11 @@ function cerrarSalida() {
   if (sesion?.item?.reloj) sesion.item.reloj = relojReanudar(sesion.item.reloj, ahora);
   ignorarHasta = hastaIgnorar(ahora);
   pintar(false);
+  if (pantalla === "jugar" && !sesion?.feedback) narrarTarea();
+  else if (pantalla === "releer") {
+    const p = cuentoActual()?.paginas?.[sesion?.releer];
+    if (p && !leeSolo(pr, sesion?.cuentoId)) leerFrases(p.oraciones || [], 0);
+  }
 }
 
 function salirDelJuego() {
@@ -175,23 +188,51 @@ function salirDelJuego() {
 function mostrar(html, nombre, focoId, robar) {
   pantalla = nombre;
   if (!$main) return;
+  const previo = document.activeElement?.getAttribute?.("data-foco-id") || "";
   $main.className = "p-" + nombre;
   $main.innerHTML = html;
   if (esTv()) document.documentElement.classList.add("teclado");
   aplicarArte($main);
-  if (robar === false) return;
-  const el = focoId && $main.querySelector(`[data-foco-id="${focoId}"]`);
-  if (el) el.focus({ preventScroll: true });
+  const buscar = (id) => (id ? $main.querySelector(`[data-foco-id="${id}"]`) : null);
+  if (robar === false) {
+    const mismo = buscar(previo);
+    if (mismo && !mismo.disabled) {
+      mismo.focus({ preventScroll: true });
+      return;
+    }
+  }
+  const el = buscar(focoId);
+  if (el && !el.disabled) el.focus({ preventScroll: true });
   else focoInicial(dialogo ? ($main.querySelector(".dialogo") || $main) : $main);
+}
+
+function pedirSvg(nombre) {
+  if (!nombre || cache[nombre] != null || pendientesSvg.has(nombre)) return;
+  pendientesSvg.add(nombre);
+  fetch(archivo(`../arte/${nombre}`))
+    .then((r) => (r.ok ? r.text() : ""))
+    .then((t) => { cache[nombre] = t || ""; })
+    .catch(() => { cache[nombre] = ""; })
+    .finally(() => {
+      pendientesSvg.delete(nombre);
+      if (repintarSvg) return;
+      repintarSvg = setTimeout(() => {
+        repintarSvg = 0;
+        if (cargado && $main) pintar(false);
+      }, 40);
+    });
 }
 
 function aplicarArte(raiz) {
   for (const n of raiz.querySelectorAll("[data-svg]")) {
-    const txt = cache[n.dataset.svg];
+    const nombre = n.dataset.svg;
+    const txt = cache[nombre];
+    if (txt == null) { pedirSvg(nombre); continue; }
     if (!txt) continue;
     nSvg += 1;
     const suf = "-" + nSvg;
     n.innerHTML = txt
+      .replace(/<title>[\s\S]*?<\/title>/gi, "")
       .replace(/\bid="([^"]+)"/g, (_, id) => `id="${id}${suf}"`)
       .replace(/url\(#([^)]+)\)/g, (_, id) => `url(#${id}${suf})`);
     if (n.dataset.numero != null) {
@@ -213,12 +254,14 @@ function estrellasHtml(n) {
 function palabrasHtml(oracion, { foco, frase }) {
   const partes = String(oracion ?? "").split(/(\s+)/);
   let i = 0;
+  const tv = esTv();
   return partes.map((parte) => {
     if (!parte) return "";
     if (!parte.trim()) return esc(parte);
     const clave = clavePalabra(parte);
     const idx = i;
     i += 1;
+    if (tv) return `<span class="palabra" data-frase="${frase}" data-i="${idx}">${esc(parte)}</span>`;
     const focoAttr = foco ? ` tabindex="0" data-foco data-foco-id="w-${frase}-${idx}"` : "";
     return `<button type="button" class="palabra" data-act="palabra" data-clave="${esc(clave)}" data-frase="${frase}" data-i="${idx}"${focoAttr}>${esc(parte)}</button>`;
   }).join("");
@@ -248,8 +291,9 @@ function htmlDialogo() {
 function htmlAyuda() {
   if (!ayuda) return "";
   const dato = glosario[ayuda] || { es: ayuda, dibujo: "libro-abierto.svg" };
+  const dibujo = dato.funcion || !dato.dibujo ? "" : `<div class="dibujo grande">${svg(dato.dibujo)}</div>`;
   return `<div class="velo ayuda"><div class="dialogo" role="dialog" aria-label="${esc(dato.es)}">
-    <div class="dibujo grande">${svg(dato.dibujo)}</div>
+    ${dibujo}
     <p class="coach">${esc(dato.es)}</p>
     <button type="button" class="boton grande primario" data-foco="inicial" data-foco-id="cerrar-ayuda" data-act="cerrar-ayuda">${svg("boton-listo.svg")}<span>${esc(TEXTOS.listo)}</span></button>
   </div></div>`;
@@ -556,8 +600,20 @@ function entrarTarea(hablar) {
   if (hablar) narrarTarea();
 }
 
+function respuestaEspanol(t) {
+  if (!t) return "";
+  if (t.tipo === "palabra") return t.preguntaEs || t.pista || "";
+  if (t.tipo === "cambio") {
+    const id = respuestaDe(t, sesion?.come);
+    const op = (t.opciones || []).find((o) => o.id === id);
+    return op?.es || "";
+  }
+  return t.pista || "";
+}
+
 function textoPista(t, fase) {
   if (!t) return "";
+  if (t.tipo === "cruce") return `${TEXTOS.cruce} ${TEXTOS.noCuenta}`;
   if (t.tipo === "ordenar") {
     if (fase === "completa" || fase === "espanol") {
       const sig = siguienteTarjeta(sesion.orden);
@@ -566,15 +622,15 @@ function textoPista(t, fase) {
     }
     return textoCorto("ordenar");
   }
-  if (fase === "espanol" && t.preguntaEs) return t.preguntaEs;
-  if (fase === "completa" || fase === "espanol") return t.pista || t.preguntaEs || textoCorto(t.tipo);
+  if (fase === "espanol") return respuestaEspanol(t) || textoCorto(t.tipo);
+  if (fase === "completa") return t.pista || textoCorto(t.tipo);
   return textoCorto(t.tipo);
 }
 
 function frasesTarea(t) {
   if (!t) return [];
   if (t.tipo === "ordenar") {
-    const ids = sesion.orden?.mazo || [];
+    const ids = idsEnLectura(sesion.orden);
     const c = cuentoActual();
     const out = [];
     for (const id of ids) {
@@ -593,15 +649,26 @@ function narrarTarea() {
   if (!t || dialogo) return;
   const frases = frasesTarea(t);
   const token = ++lecToken;
+  let empezo = false;
   const ingles = () => {
-    if (token !== lecToken) return;
+    if (empezo || token !== lecToken) return;
+    empezo = true;
     if (sesion?.modo === "cuento" && leeSolo(pr, sesion.cuentoId)) return;
     if (frases.length) leerFrases(frases, 0);
   };
   if (!pr.voz) { ingles(); return; }
   const texto = textoPista(t, faseDeAhora());
-  decirEs(texto, ingles, () => {
-    setTimeout(() => { if (token === lecToken) ingles(); }, duracionSiFalla(texto));
+  const tope = setTimeout(() => {
+    if (token !== lecToken || empezo) return;
+    callar();
+    ingles();
+  }, 3000);
+  decirEs(texto, () => { clearTimeout(tope); ingles(); }, () => {
+    setTimeout(() => {
+      if (token !== lecToken || empezo) return;
+      clearTimeout(tope);
+      ingles();
+    }, Math.min(3000, duracionSiFalla(texto)));
   });
 }
 
@@ -619,23 +686,42 @@ function oirIngles() {
   if (frases.length) leerFrases(frases, 0);
 }
 
+function prefetchFrase(frase) {
+  if (!frase || precargadas.has(frase) || typeof Audio === "undefined") return;
+  precargadas.add(frase);
+  try {
+    const a = new Audio(`audio/f/${slugFrase(frase)}.mp3`);
+    a.preload = "auto";
+  } catch { /* sigue sin precarga */ }
+}
+
+function limpiarHabla() {
+  $main?.querySelectorAll(".palabra.habla").forEach((b) => b.classList.remove("habla"));
+}
+
 function leerFrases(frases, desde) {
   const token = ++lecToken;
   const correr = (i) => {
     if (token !== lecToken) return;
     if (!frases || i >= frases.length) return;
     const frase = frases[i];
+    limpiarHabla();
+    if (frases[i + 1]) prefetchFrase(frases[i + 1]);
     const palabras = palabrasDe(frase);
     let tiempos = tiemposPalabra(palabras, duracionSiFalla(frase));
     const marcar = (ms, lista) => {
       if (token !== lecToken) return;
       const idx = indiceHablado(lista, ms);
+      $main?.querySelectorAll(".palabra.habla").forEach((b) => {
+        if (b.dataset.frase !== String(i)) b.classList.remove("habla");
+      });
       $main?.querySelectorAll(`.palabra[data-frase="${i}"]`).forEach((b) => {
         b.classList.toggle("habla", Number(b.dataset.i) === idx);
       });
     };
     const seguir = () => {
       if (token !== lecToken) return;
+      limpiarHabla();
       const n = pasoLectura(frases, i, "fin");
       if (n.seguir) correr(n.indice);
     };
@@ -674,7 +760,17 @@ function senal() {
   return siguienteTarjeta(sesion.orden);
 }
 
-function pintarJugar(robar) {
+function focoOrden() {
+  if (sesion.orden?.tomada) {
+    const sig = siguienteTarjeta(sesion.orden);
+    const vacio = sesion.orden.huecos.findIndex((h) => !h);
+    const slot = sig ? sig.slot : vacio;
+    return slot >= 0 ? `hueco-${slot}` : "soltar";
+  }
+  return `tarjeta-${(sesion.orden?.mazo || [])[0] || "0"}`;
+}
+
+function pintarJugar(robar, focoForzado) {
   const t = tareaActual();
   if (!t) return;
   const fase = faseDeAhora();
@@ -682,17 +778,21 @@ function pintarJugar(robar) {
   const completo = t.tipo === "ordenar" && estaCompleto(sesion.orden);
   if (completo && !listoSono) { listoSono = true; tonoListo(); }
   if (!completo) listoSono = false;
-  const pista = textoPista(t, fase);
-  const extra = completo ? ` ${fraseListo(esTv()).texto}` : "";
+  let pista = textoPista(t, fase);
+  if (completo && Number(nivelActual()) <= 1) pista = esTv() ? TEXTOS.brillaTv : TEXTOS.brillaToca;
+  else if (completo) pista = `${pista} ${fraseListo(esTv()).texto}`.trim();
   let cuerpo = "";
   if (t.tipo === "ordenar") cuerpo = htmlOrden(t, fase);
   else if (t.tipo === "cruce") cuerpo = htmlCruce(t);
   else cuerpo = htmlPregunta(t, fase);
-  const foco = completo ? "listo" : (t.tipo === "ordenar" ? `tarjeta-${(sesion.orden?.mazo || [])[0] || "0"}` : `op-${t.opciones?.[0]?.id || "0"}`);
+  const foco = focoForzado || (completo ? "listo" : (t.tipo === "ordenar" ? focoOrden() : `op-${t.opciones?.[0]?.id || "0"}`));
+  const avance = sesion.modo === "reto"
+    ? `${sesion.i + 1} ${TEXTOS.de} ${sesion.tareas.length}`
+    : `${TEXTOS.capitulo} ${sesion.cap + 1} · ${sesion.i + 1} ${TEXTOS.de} ${sesion.tareas.length}`;
   capas(`
     ${htmlCab(tituloJuego())}
-    <p class="avance">${esc(TEXTOS.capitulo)} ${sesion.modo === "reto" ? "" : sesion.cap + 1} ${esc(TEXTOS.de)} ${sesion.tareas.length}</p>
-    <p class="pista">${esc(pista + extra)}</p>
+    <p class="avance">${esc(avance)}</p>
+    <p class="pista">${esc(pista)}</p>
     ${cuerpo}
   `, "jugar", foco, robar);
 }
@@ -705,20 +805,22 @@ function htmlOrden(t, fase) {
   const carta = (id, enHueco, slot) => {
     const p = paginaDe(c, id);
     const oraciones = p?.oraciones || [];
-    const flecha = sig && sig.id === id && !enHueco && sesion.orden.tomada !== id;
+    const flecha = sig && sig.id === id && sesion.orden.tomada !== id;
+    const mal = enHueco && fase !== "corta" && sesion.orden.meta[slot] !== id;
     const lineas = oraciones.map((o) => {
       const html = `<p class="linea">${palabrasHtml(o, { foco: false, frase })}</p>`;
       frase += 1;
       return html;
     }).join("");
-    const dibujo = mostrarDibujo ? (p?.escena || "tarjeta-sin-dibujo.svg") : "tarjeta-sin-dibujo.svg";
-    return `<div class="tarjeta${flecha ? " con-flecha" : ""}">
+    const dibujo = mostrarDibujo ? `<span class="dibujo">${svg(p?.escena || "tarjeta-sin-dibujo.svg")}</span>` : "";
+    return `<div class="tarjeta${flecha ? " con-flecha" : ""}${mal ? " mal" : ""}${mostrarDibujo ? "" : " sin-dibujo"}">
       <button type="button" class="cuerpo" data-act="tomar" data-id="${esc(id)}" tabindex="0" data-foco data-foco-id="tarjeta-${esc(id)}" aria-label="${esc(id)}">
-        <span class="dibujo">${svg(dibujo)}</span>
+        ${dibujo}
         ${enHueco ? `<span class="num">${slot + 1}</span>` : ""}
         ${flecha ? `<span class="flecha">${svg("flecha-pista.svg")}</span>` : ""}
       </button>
       <div class="zona-texto">${lineas}</div>
+      ${mal ? `<p class="no-aqui">${esc(TEXTOS.noAqui)}</p>` : ""}
     </div>`;
   };
   const n = sesion.orden.huecos.length;
@@ -733,13 +835,19 @@ function htmlOrden(t, fase) {
     return `<div class="hueco lleno">${carta(id, true, slot)}</div>`;
   }).join("");
   const mazo = sesion.orden.mazo.map((id) => carta(id, false, -1)).join("");
-  const mano = sesion.orden.tomada
+  const tomada = sesion.orden.tomada;
+  const textoMano = tomada ? (paginaDe(c, tomada)?.oraciones || []).join(" ") : "";
+  const mano = tomada
+    ? `<p class="mano">${esc(TEXTOS.mano)}: ${esc(textoMano)}</p>`
+    : "";
+  const soltarBtn = tomada
     ? `<button type="button" class="boton" data-act="soltar" tabindex="0" data-foco data-foco-id="soltar">${svg("boton-soltar.svg")}<span>${esc(TEXTOS.soltar)}</span></button>`
     : "";
   return `<div class="rejilla n${n}">${mazo}</div>
+    ${mano}
     <div class="rejilla huecos n${n}">${huecos}</div>
     <div class="acciones">
-      ${mano}
+      ${soltarBtn}
       <button type="button" class="boton listo${estaCompleto(sesion.orden) ? " brilla" : ""}" data-act="listo" ${estaCompleto(sesion.orden) ? 'tabindex="0" data-foco data-foco-id="listo"' : "disabled"}>${svg("boton-listo.svg")}<span>${esc(TEXTOS.listo)}</span></button>
     </div>`;
 }
@@ -790,7 +898,7 @@ function actoJuego(act, btn) {
   if (act === "seguir") return seguirPantalla();
   if (act === "anterior") return paginaAnterior();
   if (act === "releer") return abrirReleer(btn.dataset.id || cuentoActual()?.id);
-  if (act === "espanol") return decirEs(tareaActual()?.preguntaEs || sesion?.feedback?.espanol || "");
+  if (act === "espanol") return decirEs(sesion?.feedback?.espanol || respuestaEspanol(tareaActual()) || "");
   if (!sesion) return;
   if (act === "tomar") return alTomar(btn.dataset.id);
   if (act === "poner") return alPoner(Number(btn.dataset.slot));
@@ -806,7 +914,7 @@ function actoJuego(act, btn) {
 function alTomar(id) {
   if (!sesion?.orden || pantalla !== "jugar") return;
   sesion.orden = tomar(sesion.orden, id);
-  pintarJugar(false);
+  pintarJugar(true, focoOrden());
 }
 
 function alPoner(slot) {
@@ -853,12 +961,13 @@ function alElegir(id) {
     const idCuento = dueno(t.palabra);
     if (idCuento) pr = anotarTarea(pr, idCuento, { ok: false, palabra: t.palabra }, hoy());
   }
+  const resp = respuestaEspanol(t);
   cerrarItem({
     ok,
     primera,
     dibujo: op?.dibujo || "",
-    texto: ok ? TEXTOS.bien : TEXTOS.era,
-    espanol: !ok && esPregunta(t.tipo) ? (t.preguntaEs || "") : "",
+    texto: ok ? TEXTOS.bien : `${TEXTOS.era} ${resp}`.trim(),
+    espanol: !ok && esPregunta(t.tipo) ? resp : "",
     frases: frasesTarea(t),
     anotar: sesion.modo === "cuento",
   });
@@ -874,7 +983,7 @@ function alCruce(id) {
     primera: false,
     cruce: true,
     dibujo: op.dibujo || "cruce.svg",
-    texto: op.titulo || TEXTOS.cruce,
+    texto: TEXTOS.noCuenta,
     frases: [op.titulo].filter(Boolean),
     anotar: false,
   });
@@ -913,6 +1022,8 @@ function cerrarItem(info) {
   if (info.ok && !info.cruce) bien();
   callar();
   lecToken += 1;
+  bloqueoGeneral = Date.now() + FEEDBACK_MS;
+  if (!info.ok && info.espanol && pr?.voz) decirEs(`${TEXTOS.era} ${info.espanol}`);
   pintarFeedback();
 }
 
@@ -1039,9 +1150,13 @@ function abrirAyuda(clave) {
   callar();
   lecToken += 1;
   const dato = glosario[clave] || { es: clave };
-  decirGrabacion(`audio/w/${clave}.mp3`, { respaldo: clave });
-  decirEs(dato.es);
   pintar(true);
+  const luego = () => decirEs(dato.es);
+  decirGrabacion(`audio/w/${clave}.mp3`, {
+    respaldo: clave,
+    alTerminar: luego,
+    alFallar: luego,
+  });
 }
 
 // ---------- Arranque ----------
@@ -1073,14 +1188,9 @@ Noli.datos.then((datos) => {
   return json("../datos/indice.json").then((indice) => Promise.all([
     json("../datos/glosario.json"),
     Promise.all((indice.orden || []).map((id) => json(`../datos/cuentos/${id}.json`))),
-    json("../datos/arte.json"),
-  ])).then(([glo, lista, artes]) => {
+  ])).then(([glo, lista]) => {
     glosario = glo || {};
     cuentos = lista || [];
-    return Promise.all((artes || []).map((ruta) => fetch(archivo(`../arte/${ruta}`))
-      .then((r) => r.text())
-      .then((t) => { cache[ruta] = t; })
-      .catch(() => { cache[ruta] = ""; })));
   });
 }).then(() => {
   cargado = true;
