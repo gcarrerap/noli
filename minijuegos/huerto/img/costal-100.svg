@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 10 100 104">
+<title>Costal de 100 semillas (opcional, con la placa azul de 100 de Fábrica)</title>
+<path d="M30 30c-16 14-22 40-18 58 4 16 22 22 38 22s34-6 38-22c4-18-2-44-18-58z" fill="#e8d3a8" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M32 30l-6-14h48l-6 14z" fill="#e8d3a8" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M30 30h40" stroke="#1d8a5a" stroke-width="7" stroke-linecap="round"/>
+<path d="M36 18q2-8 6-2M54 16q4-8 8 0" fill="none" stroke="#3ccf8e" stroke-width="4" stroke-linecap="round"/>
+<rect x="20" y="44" width="60" height="32" rx="8" fill="#fff" stroke="#2b2236" stroke-width="4"/>
+<text id="cantidad" x="50" y="70" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="26" text-anchor="middle" fill="#2b2236">100</text>
+<rect x="38" y="80" width="24" height="24" rx="2" fill="#4cb3ff" stroke="rgba(0,0,0,.25)"/><path d="M42.8 80v24M38 84.8h24M47.6 80v24M38 89.6h24M52.4 80v24M38 94.4h24M57.2 80v24M38 99.2h24" stroke="rgba(0,0,0,.18)"/>
+</svg>

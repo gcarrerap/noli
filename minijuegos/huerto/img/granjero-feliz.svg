@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 124 134">
+<title>Granjero feliz</title>
+<path d="M22 132q0-38 40-38t40 38z" fill="#4cb3ff" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M44 98v34M80 98v34" stroke="#2b2236" stroke-width="4"/><circle cx="48" cy="112" r="3.5" fill="#ffc43d" stroke="#2b2236" stroke-width="2"/><circle cx="76" cy="112" r="3.5" fill="#ffc43d" stroke="#2b2236" stroke-width="2"/>
+<ellipse id="cabeza" cx="62" cy="62" rx="32" ry="32" fill="#f2c39a" stroke="#2b2236" stroke-width="5"/>
+<path d="M34 76q28 26 56 0q-4 18-28 18t-28-18z" fill="#c9853f" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<ellipse cx="62" cy="36" rx="58" ry="10" fill="#f2d16b" stroke="#2b2236" stroke-width="5"/>
+<path d="M30 36q0-26 32-26t32 26z" fill="#f2d16b" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path d="M32 30h60" stroke="#ff6b4a" stroke-width="7"/>
+<circle cx="62" cy="66" r="5" fill="#e09a74"/>
+<g id="ojos"><path d="M44 56q6-8 12 0M68 56q6-8 12 0" fill="none" stroke="#2b2236" stroke-width="5" stroke-linecap="round"/></g><g id="boca"><path d="M50 72q12 14 24 0z" fill="#2b2236"/><path d="M56 78q6 6 12 0z" fill="#ff6b4a"/></g>
+</svg>
