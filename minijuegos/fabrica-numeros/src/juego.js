@@ -401,7 +401,7 @@ function calcularPista() {
   const nivel = p.nivel || partida.n || 1;
   const objetivo = objetivoPista(p);
   if (objetivo == null) return null;
-  const paso = siguientePaso(partida.estado, objetivo);
+  const paso = siguientePaso(partida.estado, objetivo, modoJuego());
   const ms = Date.now() - (partida.idleDesde || Date.now());
   const fase = fasePista({
     nivel, primerDelNivel: !!partida.primerDelNivel, ms, fallo: (partida.intento || 1) > 1,
@@ -659,9 +659,10 @@ function usarMaquina() {
   if (b) return iniciarCanje("pegar", b);
   if (partida.ultima && puedeTriturar(partida.estado, partida.ultima)) return iniciarCanje("triturar", partida.ultima);
   const obj = objetivoPista(partida.pedido);
-  const paso = obj == null ? null : siguientePaso(partida.estado, obj);
-  if (paso && !puedeHablarDeCanje(partida.estado, partida.pedido)) aviso("Ahora no hace falta. " + paso.texto);
-  else if (paso) aviso(paso.texto);
+  const paso = obj == null ? null : siguientePaso(partida.estado, obj, modoJuego());
+  const dicho = paso ? textoEnPantalla(paso.texto, modoJuego()) : "";
+  if (paso && !puedeHablarDeCanje(partida.estado, partida.pedido)) aviso("Ahora no hace falta. " + dicho);
+  else if (paso) aviso(dicho);
   else aviso("Ahora no hace falta.");
 }
 

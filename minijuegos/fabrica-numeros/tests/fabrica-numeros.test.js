@@ -476,8 +476,10 @@ test("siguientePaso nombra la primera banda que no coincide, de grande a chica",
   assert.equal(siguientePaso(desdeNumero(80), 86).texto, "Pon 6 cubitos");
   assert.equal(siguientePaso(desdeNumero(90), 86).texto, "Quita 1 barra");
   assert.equal(siguientePaso(desdeNumero(86), 86).texto, "Toca Enviar");
+  assert.equal(siguientePaso(desdeNumero(86), 86, "tv").texto, "Pulsa OK");
   assert.equal(siguientePaso(desdeNumero(86), 86).listo, true);
   assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 10 }, 10).texto, "¡10 cubitos! Toca la máquina o sube otra vez.");
+  assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 10 }, 10, "tv").texto, "¡10 cubitos! Pulsa OK en la máquina o sube otra vez.");
   assert.equal(siguientePaso({ mil: 0, c: 0, d: 1, u: 0 }, 1).texto, "Quita 1 barra");
   assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 0 }, 1000).texto, "Pon el mil");
 });
@@ -568,9 +570,12 @@ test("la guía no avanza sin las piezas y Enviar no responde antes del final", (
   const diez = avisoDiez("u", "tactil");
   assert.equal(diez.pantalla, "¡10 cubitos! Toca la máquina o toca + otra vez.");
   assert.equal(diez.voz, "¡10 cubitos! Toca la máquina o sube otra vez.");
-  assert.equal(avisoDiez("d", "tv").pantalla, "¡10 barras! Toca la máquina o toca ▲ otra vez.");
+  assert.equal(avisoDiez("d", "tv").pantalla, "¡10 barras! Pulsa OK en la máquina o pulsa ▲ otra vez.");
+  assert.equal(avisoDiez("u", "tv").voz, "¡10 cubitos! Pulsa OK en la máquina o sube otra vez.");
+  assert.equal(avisoDiez("u", "tv").pantalla, "¡10 cubitos! Pulsa OK en la máquina o pulsa ▲ otra vez.");
   assert.equal(/[▲+]/.test(avisoDiez("u", "tv").voz), false);
-  assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tv"), "Toca la máquina o toca ▲ otra vez.");
+  assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tv"), "Pulsa OK en la máquina o pulsa ▲ otra vez.");
+  assert.equal(textoEnPantalla("Toca Enviar", "tv"), "Pulsa OK");
   assert.equal(textoEnPantalla("Toca la máquina o sube otra vez.", "tactil"), "Toca la máquina o toca + otra vez.");
   assert.equal(repetirAvisoDiez({ fase: "completa", paso: { canje: "pegar" } }), false);
   assert.equal(repetirAvisoDiez({ fase: "corta", paso: { canje: "pegar" } }), true);
@@ -579,6 +584,43 @@ test("la guía no avanza sin las piezas y Enviar no responde antes del final", (
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.match(juego, /esperaVozGuia/);
   assert.doesNotMatch(juego, /GUIA_TOQUE_MS/);
+});
+
+test("en la tele ninguna pista ni ninguna voz dice Toca", () => {
+  const lineas = [];
+  const anotar = (nombre, linea) => lineas.push([nombre, String(linea)]);
+  for (let paso = 0; paso <= 4; paso++) {
+    anotar("guía " + paso, textoDeGuia(paso, "tv"));
+    anotar("voz guía " + paso, vozDeGuia(paso, "tv"));
+    assert.equal(/[▲+]/.test(vozDeGuia(paso, "tv")), false, "voz " + paso);
+  }
+  for (const banda of ["c", "d", "u"]) {
+    const aviso = avisoDiez(banda, "tv");
+    anotar("aviso " + banda, aviso.pantalla);
+    anotar("voz diez " + banda, aviso.voz);
+    assert.equal(/[▲+]/.test(aviso.voz), false, banda);
+  }
+  for (let n = 1; n <= 8; n++) anotar("corta " + n, pistaCorta(n, "tv"));
+  const estados = [];
+  for (const mil of [0, 1]) {
+    for (const c of [0, 10]) {
+      for (const d of [0, 9, 10]) {
+        for (const u of [0, 3, 10]) estados.push({ mil, c, d, u });
+      }
+    }
+  }
+  for (const estado of estados) {
+    for (const meta of [0, 1, 10, 23, 86, 100, 305, 1000]) {
+      const paso = siguientePaso(estado, meta, "tv");
+      anotar("paso", paso.texto);
+      anotar("pantalla", textoEnPantalla(paso.texto, "tv"));
+    }
+  }
+  anotar("listo", textoEnPantalla("Toca Enviar", "tv"));
+  anotar("diez teléfono", textoEnPantalla("¡10 cubitos! Toca la máquina o sube otra vez.", "tv"));
+  for (const [nombre, linea] of lineas) {
+    assert.equal(linea.includes("Toca"), false, `${nombre}: ${linea}`);
+  }
 });
 
 test("¿Salir? pausa la guía y el toque de después no la salta", () => {
