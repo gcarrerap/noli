@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Estrellitas (no tocan la orilla) -->
+  <rect width="64" height="64" fill="{p}"/>
+  <g fill="{t}">
+    <path d="M18 6L21 13.5L29 14L23 19L25 27L18 22.5L11 27L13 19L7 14L15 13.5Z"/>
+    <path d="M46 36L49 43.5L57 44L51 49L53 57L46 52.5L39 57L41 49L35 44L43 43.5Z"/>
+    <circle cx="48" cy="14" r="2"/><circle cx="14" cy="46" r="2"/>
+  </g>
+</svg>

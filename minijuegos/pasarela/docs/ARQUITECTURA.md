@@ -33,8 +33,8 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 
 | Archivo | Responsabilidad |
 |---|---|
-| `src/datos.js` | `prendasDeZona` (las prendas de un mueble: sus categorías y, si dice `lugares`, solo esas), `revisarDatos` (encuentra errores al editar los JSON a mano: formas, anclas, colores, etiquetas, niveles…) e `indexar` (mapas por id y por categoría). |
-| `src/atuendo.js` | El atuendo puesto: `poner` (vestido ↔ arriba/abajo, un accesorio por lugar, tocar dos veces quita), `quitar`, `puestas`, `fraseIngles`, `limpiar` (lo guardado de versiones viejas). |
+| `src/datos.js` | `prendasDeZona` (las prendas de un mueble: sus categorías y, si dice `lugares`, solo esas), `revisarDatos` (encuentra errores al editar los JSON a mano: formas, anclas, colores, etiquetas, niveles…) e `indexar` (mapas por id y por categoría, patrones y estampados), `aceptaPatron` y `arteDe` (el arte SVG/PNG que hay que leer aparte). |
+| `src/atuendo.js` | El atuendo puesto: `poner` (vestido ↔ arriba/abajo, un accesorio por lugar, tocar dos veces quita), `ponerPatron`/`patronPuesto` (#79), `quitar`, `puestas`, `fraseIngles` (*a pink zebra print T-shirt*), `limpiar` (lo guardado de versiones viejas). |
 | `src/puntuacion.js` | `encaje`, `componentes`, `comentar`, `calificar`. Fórmulas en [JUEGO.md](JUEGO.md). |
 | `src/espanol.js` | Concordancia: el/la/los/las, un/una, perfecto/perfecta/perfectos. |
 | `src/progreso.js` | Puntos de estilo, `nivelDe`, `abiertos`, `registrarPasarela`, lo "nuevo", `escogerTema`, `leerProgreso`. |
@@ -42,8 +42,9 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `src/partida.js` | La máquina de estados (`TRANSICIONES`, `siguiente`) y el reloj. |
 | `kit/3d/escena.js` | Renderer, cámara, luces, el ciclo de cuadros, medir FPS y bajar la calidad, pausar, liberar memoria. **Compartido** con el mundo del menú principal (#25). |
 | `kit/3d/avatar.js` | El personaje de partes, sus anclas, vestir, posturas y animaciones (incluida `brinco`, que usa el mundo). Compartido. |
-| `kit/3d/formas.js` | Pieza de `prendas.json` → malla de Three.js (con geometrías compartidas) y `reflejar` (espejo). Compartido. |
-| `kit/3d/materiales.js` | Materiales caricatura por color, compartidos. Compartido. |
+| `kit/3d/formas.js` | Pieza de `prendas.json` → malla de Three.js (con geometrías compartidas, UV escaladas para los patrones y la forma `calca`) y `reflejar` (espejo). Compartido. |
+| `kit/3d/materiales.js` | Materiales caricatura por color (y con textura), compartidos. Compartido. |
+| `kit/3d/texturas.js`, `pintar.js` | Patrones y estampados: SVG con marcadores de color → `CanvasTexture` cacheada; `pintar.js` (sin Three.js) cambia los colores y lo usa también el 2D. Ver [ESCENA-3D.md](ESCENA-3D.md#texturas-patrones-y-estampados-texturasjs-79). Compartido. |
 | `kit/3d/movimiento.js` | Ángulos, `seguirRuta`, `direccionDeTeclas` (las flechas). `src/movimiento.js` los vuelve a exportar. Compartido. |
 | `kit/3d/webgl.js` | `hayWebGL()` sin bajar Three.js. Compartido. |
 | `src/escena/estudio.js`, `pasarela.js` | Los dos lugares. |
@@ -52,7 +53,7 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `src/ui/juego.js` | El controlador: estado, eventos, entrada, guardar, créditos. |
 | `src/ui/pantallas.js` | HTML de cada pantalla. No cambia nada. |
 | `src/ui/dibujo2d.js` | La muñeca en SVG (modo sencillo, miniaturas, clóset). |
-| `kit/3d/joystick.js`, `src/ui/voz.js`, `iconos.js`, `cargar.js` | Joystick táctil (compartido), voz en inglés, íconos SVG, leer los JSON. |
+| `kit/3d/joystick.js`, `src/ui/voz.js`, `iconos.js`, `cargar.js` | Joystick táctil (compartido), voz en inglés, íconos SVG, leer los JSON y el arte de `patrones/` y `estampados/`. |
 
 ## La partida (máquina de estados)
 

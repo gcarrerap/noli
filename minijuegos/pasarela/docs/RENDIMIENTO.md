@@ -11,7 +11,7 @@ Meta del issue: **≥ 30 fps en el teléfono, la LG (webOS) y la Samsung (Tizen)
 | Estudio completo en pantalla | < 30 000 triángulos, < 150 dibujos por cuadro | **≈ 11 000 triángulos, 88–103 dibujos** | `?fps` |
 | Pasarela en pantalla | < 50 000 triángulos, < 300 dibujos | **≈ 40 000 triángulos, 252 dibujos** (4 personajes vestidos y 23 focos) | `?fps` |
 | Modelo `.glb` | < 2 000 triángulos, < 200 KB | tiara: 376 triángulos, 24 KB | Prueba automática |
-| Texturas | ≤ 1024 px | Una sola de 64×64 (el piso) | — |
+| Texturas | ≤ 1024 px | El piso (64×64); patrones de 128×128 (64 KB de video cada uno) y estampados de 256×256, solo los que estén puestos, una vez por patrón y color (caché en `kit/3d/texturas.js`) | `?fps`; ESCENA-3D.md § Texturas |
 | Descarga | — | Three.js 670 KB (167 KB comprimido), cargador glTF 140 KB (≈ 30 KB comprimido), el juego 210 KB (63 KB comprimido) | — |
 
 "Dibujos" = llamadas de dibujo por cuadro (`renderer.info.render.calls`); en las TVs suelen pesar más que los triángulos. Bajan solos porque solo se dibuja el lugar donde está la cámara (el estudio o la pasarela, no los dos: así el estudio pasó de 309 a 88 dibujos).

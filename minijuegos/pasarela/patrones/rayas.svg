@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Rayas: baldosa de 64×64 que empalma por las cuatro orillas. {p} = color de la prenda, {t} = tinta que contrasta -->
+  <rect width="64" height="64" fill="{p}"/>
+  <rect y="8" width="64" height="14" fill="{t}" opacity=".85"/>
+  <rect y="40" width="64" height="14" fill="{t}" opacity=".85"/>
+</svg>

@@ -198,3 +198,34 @@ blender --background --python minijuegos/pasarela/herramientas/blender/tiara.py
 - **Color nuevo** (`colores.json`): `id`, `es`, `en`, `hex`. Ábrelo en un nivel y agrégalo a los `colores` de las prendas que lo acepten.
 - **Etiqueta nueva**: en `config.json → etiquetas`, y úsala en prendas y temas.
 - **Niveles** (`desbloqueos.json`): después de moverlos, corre `node minijuegos/pasarela/herramientas/simular-curva.mjs` para ver cuántas pasarelas toma cada nivel ([JUEGO.md](JUEGO.md#la-curva)).
+
+## F. Patrones y estampados (#79)
+
+### Un patrón nuevo (cebra, cuadros…)
+
+1. Dibuja una **baldosa de 64×64** en `patrones/<id>.svg` (a mano en un editor de texto, en Inkscape o en Figma; guardar como SVG simple, sin texto ni imágenes adentro).
+   - Primero `<rect width="64" height="64" fill="{p}"/>` (el color de la prenda).
+   - Encima, el dibujo con `fill="{t}"` (tinta que contrasta), `{m}` (tono intermedio) o `{s}` (el secundario de la prenda). Ver los marcadores en ESCENA-3D.md § Texturas.
+   - **Tiene que empalmar:** lo que sale por la orilla derecha entra por la izquierda, y lo de abajo por arriba. Lo más fácil: que nada toque las orillas (puntos, corazones, estrellas, manchas) o que lo que sí las toque sea igual en las dos (rayas que cruzan completas, cuadros cuyas líneas caen en 0 y 64).
+2. Agrégalo a `datos/patrones.json`: `id`, `es`, `en` (como se dice en inglés antes de la prenda: *zebra print*, *polka dot*, *striped*), `archivo`, `etiquetas` (se suman a las de la prenda para la jueza del tema: la cebra cuenta como `rock`) y `escala` (1 = baldosa de 12 cm; más grande = dibujo más grande).
+3. Ábrelo en un nivel: `"patrones": ["<id>"]` en `desbloqueos.json` (sin pasar de 3 cosas por nivel).
+4. Míralo en el probador (`herramientas/probador.html`, menú **Patrón**): se aplica a toda la ropa puesta que lo acepte. Prueba un color claro y uno oscuro, y una prenda delgada (leggings) y una ancha (falda de tutú).
+5. `npm test` revisa que el SVG exista, sea de 64×64, empiece con el fondo `{p}` y no cargue nada de fuera.
+
+**Qué prendas aceptan patrón:** las de `config.json → categoriasConPatron` (arriba, abajo, vestido y zapatos), menos las que digan `"patrones": false`; los accesorios, solo si dicen `"patrones": true` (sombrero, gorra, gorro, bolsa, mochila, bufanda, diadema). Peinados, maquillaje, joyas y prendas de Blender, nunca.
+
+### Un estampado (calcomanía) nuevo
+
+1. Dibújalo en `estampados/<id>.svg`: 64×64, **fondo transparente**, con borde oscuro para que se vea sobre cualquier color. Puede usar colores fijos o los marcadores (`{p}`, `{t}`, `{c}`). También sirve un **PNG** con fondo transparente (por ejemplo, un dibujo de Noelia fotografiado y recortado; no cambia de color).
+2. Agrégalo a `datos/estampados.json`: `id`, `es`, `en`, `archivo`, `etiquetas`. Ábrelo en un nivel (`"estampados"`).
+3. Para una **prenda estampada** (como `a-camiseta-osito`): copia la prenda base y agrega una pieza `calca` sobre el pecho, con radios **2 o 3 mm más** que la tela de esa altura:
+
+```json
+{"f": "calca", "a": "torso", "y": [0.34, 0.14], "r": [0.171, 0.171], "z": 0.74, "ancho": 0.17, "estampado": "osito"}
+```
+
+   Usa el mismo `z` que la tela (el torso es ovalado). Para el dibujo 2D agrega `"estampado2d": {"estampado": "osito", "x": 100, "y": 158, "tam": 38}` (centro y tamaño en el viewBox 200×360 de la muñeca).
+4. Revísala en el probador de frente y de lado: si la calcomanía se hunde en la tela, sube los radios 1 mm; si flota, bájalos.
+
+**Licencias:** cada patrón y estampado va en LICENCIAS.md. Los que hay son originales para Noli; no copiar personajes ni logos (ningún oso famoso: el osito es nuestro).
+

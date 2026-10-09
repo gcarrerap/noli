@@ -89,6 +89,7 @@ Cada prenda de `prendas.json` es una lista de **piezas**. Una pieza es una forma
 | `plano` | `tam: [ancho, alto]` | elipse de doble cara (alas de hada) |
 | `octaedro` | `r` | gema (siempre con brillo) |
 | `anillo` | `radio`, `n`, `pieza` (otra forma sin ancla), `arco: [inicio, largo]`, `desfase` | `n` copias de `pieza` en un círculo horizontal; ángulo 0 = al frente |
+| `calca` | `y: [arriba, abajo]`, `r: [arriba, abajo]` (un poco más que la tela), `ancho` (m), `estampado` (id de `estampados.json`), `lado: "frente" \| "espalda"`, `z` | pedazo de `CylinderGeometry` con el estampado (§ Texturas) |
 
 Campos de cualquier pieza: `pos: [x, y, z]`, `rot: [x, y, z]` (grados, orden XYZ), `esc: [x, y, z]` (se multiplica), `col` (`"p"` = el color que escoge Noelia, `"s"` = el `secundario` de la prenda, un id de `colores.json` o `#hex`), `opacidad` (0–1), `espejo: true`.
 
@@ -97,6 +98,32 @@ Campos de cualquier pieza: `pos: [x, y, z]`, `rot: [x, y, z]` (grados, orden XYZ
 **Geometrías compartidas:** `geo(clave)` guarda cada geometría por sus medidas; las esferas chicas usan menos caras (8 segmentos si r < 0.04, 12 si r < 0.1, 18 si no).
 
 **Orden de dibujo y transparencias:** las piezas transparentes no escriben profundidad; si una se ve "a través" de otra, subir un poco su radio o quitarle opacidad.
+
+## Texturas: patrones y estampados (`texturas.js`, #79)
+
+La ropa era de un solo color por pieza. Desde #79 una prenda puede llevar un **patrón** (cebra, puntos, cuadros… se repite por toda la tela) y una **calcomanía** (un osito en el pecho).
+
+**De dónde salen.** Cada patrón es un SVG de 64×64 en `patrones/` que empalma por las cuatro orillas; cada estampado, un SVG de 64×64 con fondo transparente en `estampados/` (o un PNG). Los SVG llevan **marcadores de color** que `pintarSVG` (`kit/3d/pintar.js`, sin Three.js para que lo use también el dibujo 2D) cambia antes de dibujar:
+
+| Marcador | Color |
+|---|---|
+| `{p}` | el que escogió Noelia para la prenda |
+| `{s}` | el `secundario` de la prenda |
+| `{t}` | tinta: casi negro sobre colores claros, blanco sobre oscuros (`tinta()`, luminosidad > 0.55) |
+| `{m}` | la mitad entre `{p}` y `{t}` (sombras, centros de las manchas de leopardo) |
+| `{c}` | el color de la calcomanía (si no hay, `{t}`) |
+
+Así una cebra rosa sale rosa con rayas oscuras, y una cebra negra, negra con rayas blancas, con el mismo archivo.
+
+**Cómo se dibujan.** `texturaSVG(svg, { repetir, tam, fondo })` crea un `<canvas>` (128 px para patrones, 256 para estampados), lo llena con el color de fondo (para que no se vea blanco mientras carga), carga el SVG como `data:image/svg+xml` en un `Image` y lo pinta cuando carga (`needsUpdate`). Es una `CanvasTexture` en sRGB; los patrones usan `RepeatWrapping`. **Caché:** por (repetir, tamaño, SVG ya pintado): la misma cebra rosa se dibuja una sola vez aunque la traigan las 4 modelos de la pasarela. `liberarTexturas()` las suelta al salir (`escena.liberar`). `texturaPixeles` es para los dibujos de Noelia (#81): `NearestFilter` y sin *mipmaps*, para que se vean pixelados. Sin `document` (pruebas con Node) todo devuelve `null` y la ropa sale lisa.
+
+**Que la baldosa mida lo mismo en todas las formas.** Cada geometría de Three.js trae coordenadas UV de 0 a 1, pero estiradas a lo que mida la forma: en una manga delgada una baldosa sería chiquita y en una falda, enorme. `formas.js → geoUV` clona la geometría y escala sus UV para que **1 unidad = una baldosa de 12 cm × `escala`** del patrón: un tubo mide π(r₀+r₁) de vuelta por su alto, una esfera parcial 2πr·(φ/360) por πr·(θ/180), una caja max(ancho, fondo) por alto, etc. El patrón solo va en las piezas de color `"p"` (las que escoge Noelia); los detalles de color `"s"` o fijo (botones, suelas) siguen lisos, y una pieza puede decir `"sinPatron": true`. Los octaedros (gemas) nunca.
+
+**Calcomanías.** La forma `calca` es un pedazo de cilindro abierto (10 segmentos) centrado al frente (o atrás con `lado: "espalda"`), del `ancho` pedido (máximo 0.9π de vuelta), un poco por fuera de la tela. Su material lleva la textura con `alphaTest` 0.5 (sin transparencias que ordenar) y `polygonOffset` para que no parpadee contra la tela. Sin textura, la pieza es un grupo vacío.
+
+**Materiales.** `material(hex, { mapa, recorte })`: con `mapa`, el color del material es blanco (la textura ya trae los colores); la caché de materiales incluye el `uuid` de la textura.
+
+**Memoria.** Una textura de 128×128 son 64 KB de video; un atuendo con 4 prendas con patrón distinto, ~260 KB más los estampados (256 KB cada uno). En la pasarela hay 4 modelos, pero se repiten patrones y colores. Ver RENDIMIENTO.md.
 
 ## El estudio (`estudio.js`)
 

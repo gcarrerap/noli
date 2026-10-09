@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Estrella con destellos (original, para Noli) -->
+  <path d="M32 5L39.5 22.5L58 24L44 36.5L48.5 55L32 45L15.5 55L20 36.5L6 24L24.5 22.5Z" fill="#ffd23f" stroke="#2b2236" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M27 24L32 13L35 21" fill="none" stroke="#fff6c2" stroke-width="2.4" stroke-linecap="round"/>
+  <g fill="#fff" stroke="#2b2236" stroke-width="1.2"><path d="M55 6l1.5 3.5 3.5 1.5-3.5 1.5L55 16l-1.5-3.5L50 11l3.5-1.5z"/><path d="M8 44l1.2 2.8 2.8 1.2-2.8 1.2L8 52l-1.2-2.8L4 48l2.8-1.2z"/></g>
+</svg>

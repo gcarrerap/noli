@@ -119,3 +119,14 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 **Decisión.** Al llegar al final de la pasarela aparece "¡Escoge tu pose!" con las abiertas (`datos/poses.json`). Puede hacer varias seguidas; "¡Listo!" o 25 s sin escoger terminan. Las poses **no cambian la calificación**: son para lucirse, y no castigan a quien no sabe cuál escoger. Empieza con 3 y las demás se abren con los niveles.
 
 **Consecuencias.** El desfile dura lo que ella quiera. En la TV se escoge con flechas y OK.
+
+## ADR 14 — Patrones como SVG con marcadores de color, pintados una vez en un canvas (#79)
+
+**Contexto.** Se pidió ropa con patrones (cebra, leopardo) y estampados (un osito). Opciones: (a) imágenes PNG por cada patrón y color; (b) *shaders* que dibujen el patrón; (c) SVG con marcadores de color convertidos a textura en el aparato.
+
+**Decisión.** (c). Cada patrón es un SVG chico con `{p}`, `{t}`, `{m}`, `{s}`; se pinta con los colores de la prenda y se dibuja una vez en un canvas de 128 px (caché por SVG ya pintado). Las UV de cada forma se escalan para que la baldosa mida lo mismo (12 cm × escala) en una manga y en una falda. Las calcomanías son una forma más (`calca`) con `alphaTest`. El patrón se escoge junto al color (`{ id, color, patron }`), no como prenda aparte, porque el Taller de diseño (#80) necesita combinar cualquier molde con cualquier patrón.
+
+**Por qué no (a):** 8 patrones × 15 colores = 120 imágenes, y cada patrón nuevo serían 15 archivos. **Por qué no (b):** un *shader* por patrón es difícil de editar para papá y de dibujar para Noelia, y no sirve para el modo 2D. Con (c) el mismo SVG va en el 3D, en el 2D (`<pattern>`) y en los botones del panel.
+
+**Consecuencias.** Un patrón nuevo es un SVG de 64×64 y un renglón de JSON (ASSETS.md § F). La primera vez que aparece un patrón tarda un cuadro en pintarse (sale del color de fondo mientras carga). Memoria: 64 KB por patrón y color en uso. Sin `document` (pruebas) la ropa sale lisa: las pruebas revisan la lógica y el arte, y el aspecto se revisa en el navegador.
+

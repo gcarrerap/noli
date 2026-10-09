@@ -13,6 +13,7 @@
     { "id": "accesorio", "es": "Accesorios",        "en": "Accessories" },
     { "id": "maquillaje", "es": "Maquillaje",       "en": "Makeup" }
   ],
+  "categoriasConPatron": ["arriba", "abajo", "vestido", "zapatos"],
   "lugares": ["cabeza", "cara", "cuello", "abrigo", "orejas", "muneca", "mano", "espalda", "mejillas", "ojos", "labios", "pintura"],
   "etiquetas": ["playa", "verano", "fiesta", "elegante", "frio", "princesa", "deportivo", "escuela", "casual", "pijama",
     "aventura", "flores", "rock", "magia", "brillo"],

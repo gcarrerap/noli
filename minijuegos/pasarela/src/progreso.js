@@ -47,18 +47,16 @@ export function nivelDe(puntos, niveles) {
   return { i, nombre: niveles[i].nombre, siguiente: sig ? { nombre: sig.nombre, puntos: sig.puntos, faltan: sig.puntos - puntos } : null };
 }
 
+/** Lo que puede abrir un nivel (las llaves de desbloqueos.json) */
+export const QUE_ABRE = ["prendas", "colores", "temas", "poses", "patrones", "estampados"];
+
 /**
  * Lo abierto hasta el nivel i (inclusive).
- * @returns {{ prendas: Set<string>, colores: Set<string>, temas: Set<string>, poses: Set<string> }}
+ * @returns {{ prendas: Set<string>, colores: Set<string>, temas: Set<string>, poses: Set<string>, patrones: Set<string>, estampados: Set<string> }}
  */
 export function abiertosHasta(i, niveles) {
-  const r = { prendas: new Set(), colores: new Set(), temas: new Set(), poses: new Set() };
-  for (const n of niveles.slice(0, i + 1)) {
-    for (const x of n.prendas || []) r.prendas.add(x);
-    for (const x of n.colores || []) r.colores.add(x);
-    for (const x of n.temas || []) r.temas.add(x);
-    for (const x of n.poses || []) r.poses.add(x);
-  }
+  const r = Object.fromEntries(QUE_ABRE.map((k) => [k, new Set()]));
+  for (const n of niveles.slice(0, i + 1)) for (const k of QUE_ABRE) for (const x of n[k] || []) r[k].add(x);
   return r;
 }
 
@@ -80,19 +78,14 @@ export function nivelDePrenda(id, niveles) {
  * @param {{ tema: string, atuendo: object, jueces: {estrellas}[], puntos: number }} pasarela
  * @param {number} ahora ms
  * @param {object} idx
- * @returns {{ progreso: object, subio: boolean, nivel: object, nuevos: { prendas: string[], colores: string[], temas: string[], poses: string[] } }}
+ * @returns {{ progreso: object, subio: boolean, nivel: object, nuevos: Record<string, string[]> }} nuevos: una lista por cada llave de QUE_ABRE
  */
 export function registrarPasarela(progreso, pasarela, ahora, idx) {
   const antes = nivelDe(progreso.puntos, idx.niveles);
   const puntos = progreso.puntos + pasarela.puntos;
   const despues = nivelDe(puntos, idx.niveles);
-  const nuevos = { prendas: [], colores: [], temas: [], poses: [] };
-  for (const n of idx.niveles.slice(antes.i + 1, despues.i + 1)) {
-    nuevos.prendas.push(...(n.prendas || []));
-    nuevos.colores.push(...(n.colores || []));
-    nuevos.temas.push(...(n.temas || []));
-    nuevos.poses.push(...(n.poses || []));
-  }
+  const nuevos = Object.fromEntries(QUE_ABRE.map((k) => [k, []]));
+  for (const n of idx.niveles.slice(antes.i + 1, despues.i + 1)) for (const k of QUE_ABRE) nuevos[k].push(...(n[k] || []));
   const foto = { fecha: ahora, tema: pasarela.tema, atuendo: pasarela.atuendo, estrellas: pasarela.jueces.map((j) => j.estrellas), puntos: pasarela.puntos };
   const max = idx.config.maxAtuendosGuardados || 12;
   return {

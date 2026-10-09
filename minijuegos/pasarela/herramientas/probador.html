@@ -36,6 +36,7 @@ import { cargarDatos } from "../src/ui/cargar.js";
 import { crearEscena } from "../../../kit/3d/escena.js";
 import { crearAvatar, POSES_3D } from "../../../kit/3d/avatar.js";
 import { atuendoVacio, poner } from "../src/atuendo.js";
+import { aceptaPatron } from "../src/datos.js";
 import { cargarModelo, modeloPara } from "../src/escena/modelos.js";
 
 const { idx, errores } = await cargarDatos("../datos/");
@@ -49,7 +50,9 @@ esc.camara.position.set(0, 1.0, 2.7); esc.camara.lookAt(0, 0.8, 0);
 
 const q = new URLSearchParams(location.search);
 let atuendo = atuendoVacio();
-for (const id of (q.get("prendas") || "p-cola").split(",")) { const p = idx.prendas.get(id); if (p) atuendo = poner(atuendo, p, p.colores[0]); }
+// ?prendas=a-camiseta-osito,b-falda&patron=cebra  (el patrón va en toda la ropa que lo acepte)
+let patron = q.get("patron") || "";
+for (const id of (q.get("prendas") || "p-cola").split(",")) { const p = idx.prendas.get(id); if (p) atuendo = poner(atuendo, p, p.colores[0], aceptaPatron(p, idx.config) && patron || null); }
 
 const POSES = ["quieto", "caminar", "desfilar", ...POSES_3D]; // POSES_3D: las de la pasarela (datos/poses.json)
 let pose = q.get("pose") || "quieto";
@@ -74,16 +77,25 @@ function dibujar() {
       const sel = cat.id === "accesorio" ? (atuendo.accesorios[p.lugar] || {}).id === p.id : actual && actual.id === p.id;
       return `<option value="${p.id}"${sel ? " selected" : ""}>${p.es} (${p.id})</option>`; }).join("")}</select></label>`;
   }).join("") + `<label>Color<select id="color">${[...idx.colores.values()].map((x) => `<option value="${x.id}">${x.es}</option>`).join("")}</select></label>
+  <label>Patrón<select id="patron"><option value="">— lisa —</option>${[...idx.patrones.values()].map((x) => `<option value="${x.id}"${x.id === patron ? " selected" : ""}>${x.es}</option>`).join("")}</select></label>
   <label>Piel<select id="piel">${idx.config.tonosPiel.map((t, i) => `<option value="${t}">Tono ${i + 1}</option>`).join("")}</select></label>`;
   for (const s of c.querySelectorAll("select[data-cat]")) s.onchange = () => {
     const p = idx.prendas.get(s.value);
     if (!p) { const cat = s.dataset.cat; if (cat !== "accesorio") atuendo = { ...atuendo, [cat]: null }; }
-    else { const col = document.getElementById("color").value; atuendo = poner(atuendo, p, p.colores.includes(col) ? col : p.colores[0]); }
+    else { const col = document.getElementById("color").value; atuendo = poner(atuendo, p, p.colores.includes(col) ? col : p.colores[0], aceptaPatron(p, idx.config) && patron || null); }
     dibujar();
   };
   document.getElementById("color").onchange = (e) => {
     const col = e.target.value; const a2 = { ...atuendo, accesorios: { ...atuendo.accesorios } };
     for (const k of ["peinado", "arriba", "abajo", "vestido", "zapatos"]) if (a2[k] && idx.prendas.get(a2[k].id).colores.includes(col)) a2[k] = { ...a2[k], color: col };
+    atuendo = a2; vestir();
+  };
+  // Patrón: a toda la ropa puesta que lo acepte (para revisar cómo se ve en cada forma)
+  document.getElementById("patron").onchange = (e) => {
+    patron = e.target.value; const a2 = { ...atuendo, accesorios: { ...atuendo.accesorios } };
+    const cambiar = (x) => { if (!x || !aceptaPatron(idx.prendas.get(x.id), idx.config)) return x; const n = { id: x.id, color: x.color }; if (patron) n.patron = patron; return n; };
+    for (const k of ["arriba", "abajo", "vestido", "zapatos"]) a2[k] = cambiar(a2[k]);
+    for (const l of Object.keys(a2.accesorios)) a2.accesorios[l] = cambiar(a2.accesorios[l]);
     atuendo = a2; vestir();
   };
   document.getElementById("piel").onchange = (e) => av.ponerPiel(e.target.value);

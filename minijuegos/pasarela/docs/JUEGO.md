@@ -121,30 +121,30 @@ Siempre hay uno **positivo** por juez (nunca se regaña) y, si hay algo que mejo
 
 ## Puntos de estilo, niveles y desbloqueos
 
-Los puntos de cada pasarela (3 a 15) se **suman** y **nunca se pierden ni se gastan**. Cada nivel de `datos/desbloqueos.json` abre **poco: de 1 a 3 cosas** (prendas, colores para todas las prendas que los acepten, temas y poses de la pasarela), y los niveles se van espaciando (#26: antes cada nivel abría hasta 11 prendas y se ganaba ropa en casi cada pasarela):
+Los puntos de cada pasarela (3 a 15) se **suman** y **nunca se pierden ni se gastan**. Cada nivel de `datos/desbloqueos.json` abre **poco: de 1 a 3 cosas** (prendas, colores para todas las prendas que los acepten, temas, poses de la pasarela, patrones y estampados), y los niveles se van espaciando (#26: antes cada nivel abría hasta 11 prendas y se ganaba ropa en casi cada pasarela):
 
 | Nivel | Puntos | Abre |
 |---|---|---|
-| Principiante | 0 | El clóset inicial: 14 prendas (2 peinados, 3 de arriba, 3 de abajo, 1 vestido, 2 zapatos, 3 accesorios), 7 colores, 5 temas y 3 poses |
+| Principiante | 0 | El clóset inicial: 14 prendas (2 peinados, 3 de arriba, 3 de abajo, 1 vestido, 2 zapatos, 3 accesorios), 7 colores, 5 temas, 3 poses, patrones rayas y puntos, estampados osito y corazón |
 | Aprendiz | 16 | suéter, gorra, color verde |
-| Con estilo | 33 | pantalón de mezclilla, pose dar una vuelta |
+| Con estilo | 33 | pantalón de mezclilla, pose dar una vuelta, patrón corazones |
 | Curiosa | 51 | chamarra de invierno, gorro de invierno, tema Invierno en la nieve |
 | Creativa | 71 | botas de nieve, pantalón de nieve, color celeste |
-| Coqueta | 93 | rubor, labial |
+| Coqueta | 93 | rubor, labial, camiseta del osito |
 | Chispa | 116 | traje de baño, sombrero de playa, pose corazón |
-| Original | 140 | coletas, reloj |
+| Original | 140 | coletas, reloj, patrón cuadros |
 | Brillante | 166 | pantuflas de conejo, pecas, color morado |
-| Atrevida | 194 | vestido de fiesta, aretes de perla |
+| Atrevida | 194 | vestido de fiesta, aretes de perla, patrón flores |
 | Divertida | 223 | blusa de princesa, corona, tema Princesa del castillo |
 | Elegante | 253 | zapatillas de fiesta, sombra de ojos, pose baile de brazos |
 | Glamorosa | 285 | dos chongos, pulsera, color lila |
-| Artista | 319 | sudadera, bufanda |
+| Artista | 319 | sudadera, bufanda, blusa del corazón |
 | Diseñadora | 354 | trenza larga, flor en el pelo, tema Primavera en el jardín |
 | Modelo | 390 | falda larga, brillitos, pose baile de lado a lado |
-| Fotogénica | 428 | vestido de princesa, aretes de estrella |
+| Fotogénica | 428 | vestido de princesa, aretes de estrella, patrón estrellas |
 | Fashionista | 468 | camisa de botones, collar de perlas, color naranja |
 | Estrella | 509 | falda de tutú, corazón pintado, pose reverencia |
-| Estrella brillante | 551 | leggings, reloj deportivo |
+| Estrella brillante | 551 | leggings, reloj deportivo, sudadera de estrella |
 | Superestrella | 595 | botas, arracadas, tema Campamento en el bosque |
 | Celebridad | 641 | rizos, bolsa, pose saltar |
 | Ícono | 688 | pijama de una pieza, collar de corazón, color turquesa |
@@ -155,6 +155,8 @@ Los puntos de cada pasarela (3 a 15) se **suman** y **nunca se pierden ni se gas
 | Maestra del estilo | 945 | vestido de gala, tema Noche de gala, pose baile del robot |
 | Gran diseñadora | 1001 | vestido de hada, alas de hada, color dorado |
 | Reina de la pasarela | 1059 | tiara de estrellas, tema Hada del bosque, pose pensativa |
+| Maestra de estampados | 1118 | vestido de arcoíris, patrón cebra, estampado arcoíris |
+| Reina del diseño | 1178 | patrón leopardo, estampado estrella |
 
 Al subir de nivel sale la pantalla de desbloqueo. Lo nuevo se marca **"¡Nuevo!"** en el panel (y un punto en los colores; "¡Nueva!" en las poses) hasta que se ve: al cerrar el panel de ese mueble (o al terminar de posar) queda como visto. Lo del clóset inicial nunca sale como nuevo. Las prendas bloqueadas se ven en gris con candado y dicen en qué nivel se abren y con cuántos puntos.
 
@@ -218,6 +220,19 @@ Al llegar al final de la pasarela aparece **"¡Escoge tu pose!"** con las poses 
 | Baile del robot | Robot dance | baile (con ritmo) |
 | Pensativa | Thinking | pose |
 
+## Patrones y estampados (#79)
+
+Al escoger una prenda en el panel, debajo de los colores (círculos) salen los **patrones** (cuadritos): *lisa* y los abiertos, cada uno ya pintado con el color escogido. Tocar un patrón se lo pone a la prenda (si no la traía puesta, se la pone); tocar el que ya tiene la regresa a lisa. Cambiar de color conserva el patrón. Abajo dice cuántos faltan por abrir. Los patrones abiertos brillan con un punto hasta que se ven.
+
+- **Qué prendas:** la ropa (arriba, abajo, vestidos, zapatos) y los accesorios de tela (sombrero, gorra, gorro, bolsa, mochila, bufanda, diadema). El patrón va en la tela del color principal; botones, suelas y detalles siguen de su color.
+- **Inglés:** el patrón va entre el color y la prenda, como en inglés: *a pink zebra print T-shirt* = camiseta rosa de cebra. La bocina lo dice completo.
+- **Jueces:** las etiquetas del patrón se suman a las de la prenda (cebra y leopardo: `rock`; cuadros: `escuela`, `aventura`, `frio`; flores: `flores`, `verano`…). Una camiseta negra de cebra le gusta más a Estela en *Estrella de rock* que una lisa. Para Colorina cuenta el color de la prenda, no el del patrón.
+- **Estampados:** las prendas con calcomanía (camiseta del osito, blusa del corazón, sudadera de estrella, vestido de arcoíris) son prendas aparte que se abren con los niveles; su estampado se queda aunque cambie el color o el patrón. Los estampados sueltos (los que abre un nivel) son para el Taller de diseño (#80).
+
+![Patrones en el teléfono (360 y 412 px) y en la TV](img/patrones.jpg)
+
+Cada pieza del atuendo guarda su patrón: `{ id: "a-camiseta", color: "rosa", patron: "cebra" }` (ver § Qué se guarda).
+
 ## Maquillaje y joyería
 
 Además de la ropa hay **maquillaje** (categoría `maquillaje`: rubor, labial, sombra de ojos, pestañas largas, pecas, brillitos, corazón y estrella pintados) y **joyería** (accesorios de orejas, cuello y muñeca: aretes de perla, arracadas, aretes de estrella, collar de perlas, collar de corazón, reloj, reloj deportivo, pulsera). Van **uno por lugar** (`config.json → lugares`): mejillas, ojos, labios y pintura en la cara; orejas, cuello, muñeca, y los de antes (cabeza, cara, abrigo, mano, espalda). Para los jueces cuentan como **detalles** (igual que los accesorios). En el estudio están en dos muebles nuevos: el **tocador de maquillaje** (derecha) y la **joyería** (izquierda).
@@ -233,10 +248,10 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
   v: 1,                    // versión del formato; leerProgreso() convierte o descarta lo que no entienda
   puntos: 41,              // puntos de estilo acumulados
   pasarelas: 4,            // pasarelas con tema
-  vistos: ["a-camiseta", "c:rosa", "t:playa", "o:vuelta", …],   // lo que ya no brilla como nuevo (prendas, "c:" colores, "t:" temas, "o:" poses)
+  vistos: ["a-camiseta", "c:rosa", "t:playa", "o:vuelta", "pt:cebra", …],   // lo que ya no brilla como nuevo (prendas, "c:" colores, "t:" temas, "o:" poses, "pt:" patrones)
   atuendos: [              // el clóset: los últimos config.maxAtuendosGuardados (12), el más nuevo primero
     { fecha: 1760000000000, tema: "playa", estrellas: [5, 5, 5], puntos: 15,
-      atuendo: { peinado: { id: "p-cola", color: "cafe" }, arriba: {…}, abajo: {…}, vestido: null, zapatos: {…},
+      atuendo: { peinado: { id: "p-cola", color: "cafe" }, arriba: { id: "a-camiseta", color: "rosa", patron: "cebra" }, abajo: {…}, vestido: null, zapatos: {…},   // patron: opcional
                  accesorios: { cara: { id: "x-lentes", color: "rosa" }, labios: { id: "m-labial", color: "rojo" } } } }   // accesorios y maquillaje, por lugar
   ],
   piel: 0,                 // índice en config.tonosPiel
@@ -247,4 +262,4 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
 
 **Lo que NO se guarda aquí:** créditos (el catálogo), la preferencia 3D/2D (`localStorage["noli.pasarela.vista"]`, solo de ese aparato), el nivel (sale de los puntos), lo abierto (sale del nivel).
 
-Si se cambian los datos (se borra una prenda, se renombra un tema), `leerProgreso` y `limpiar` quitan del clóset lo que ya no existe sin tronar. Si se cambia el formato, subir `v` y convertir en `leerProgreso`.
+Si se cambian los datos (se borra una prenda, se renombra un tema, se quita un patrón), `leerProgreso` y `limpiar` quitan del clóset lo que ya no existe sin tronar (una prenda con un patrón que ya no existe, o que ya no acepta patrón, queda lisa). El campo `patron` es opcional, así que los atuendos guardados antes de #79 siguen sirviendo sin cambiar `v`. Si se cambia el formato, subir `v` y convertir en `leerProgreso`.

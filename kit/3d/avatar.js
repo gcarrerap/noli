@@ -11,6 +11,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { material } from "./materiales.js";
 import { crearPieza, reflejar } from "./formas.js";
+import { pintarSVG, texturaSVG, texturaImagen, texturaPixeles } from "./texturas.js";
 
 const RAD = Math.PI / 180;
 
@@ -93,7 +94,7 @@ export function crearAvatar(op) {
     const lista = [];
     for (const k of ["peinado", "arriba", "abajo", "vestido", "zapatos"]) if (atuendo[k]) lista.push(atuendo[k]);
     for (const p of Object.values(atuendo.accesorios || {})) if (p) lista.push(p);
-    for (const { id, color } of lista) {
+    for (const { id, color, patron } of lista) {
       const prenda = idx.prendas.get(id);
       if (!prenda) continue;
       const colorDe = (col) => {
@@ -107,9 +108,10 @@ export function crearAvatar(op) {
         if (obj) { const an = prenda.ancla || "cabeza"; a[an].add(obj); puestas.push({ obj, ancla: an }); }
         continue;
       }
+      const extras = texturasDe(prenda, patron, colorDe, idx);
       for (const pz of prenda.piezas) {
         for (const q of pz.espejo ? [pz, reflejar(pz)] : [pz]) {
-          const obj = crearPieza(q, colorDe, prenda);
+          const obj = crearPieza(q, colorDe, prenda, extras);
           a[q.a].add(obj);
           puestas.push({ obj, ancla: q.a });
         }
@@ -165,6 +167,28 @@ export const POSES_3D = ["cintura", "saludo", "estrella", "vuelta", "corazon", "
   "baile-salto", "beso", "robot", "pensar"];
 // Bailes: se mueven con ritmo, así que su postura se pone directo en cada cuadro
 const BAILES = new Set(["baile-brazos", "baile-lado", "baile-salto", "robot"]);
+
+/**
+ * Las texturas de una prenda puesta: su patrón (si escogió uno) y sus estampados. idx.patrones / idx.estampados traen
+ * el SVG (o la url de un PNG, o los pixeles de un dibujo) de cada uno; ver kit/3d/texturas.js.
+ * @returns {{ patron: object|null, baldosa: number, estampado: (id: string) => object|null }}
+ */
+function texturasDe(prenda, patronId, colorDe, idx) {
+  const col = { p: colorDe("p"), s: colorDe("s") };
+  const pat = patronId && idx.patrones && idx.patrones.get(patronId);
+  return {
+    patron: pat && pat.svg ? texturaSVG(pintarSVG(pat.svg, col), { repetir: true, tam: 128, fondo: col.p }) : null,
+    baldosa: 0.12 * ((pat && pat.escala) || 1),
+    estampado: (eid) => {
+      const e = idx.estampados && idx.estampados.get(eid);
+      if (!e) return null;
+      if (e.svg) return texturaSVG(pintarSVG(e.svg, col));
+      if (e.url) return texturaImagen(e.url);
+      if (e.pixeles) return texturaPixeles(e.id + "|" + e.pixeles.clave, e.pixeles.lado, e.pixeles.colores);
+      return null;
+    },
+  };
+}
 
 // Articulaciones que en el ciclo de caminar se ponen directo (sin suavizar), para que el paso no se vea "lento"
 const CICLO = { "musloI.x": 1, "musloD.x": 1, "piernaI.x": 1, "piernaD.x": 1, "brazoI.x": 1, "brazoD.x": 1, "cuerpo.y": 1 };

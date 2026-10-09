@@ -3,10 +3,12 @@
 // el botón, lo atiende src/ui/juego.js). Sin emojis (#5): los íconos son SVG (iconos.js).
 import { icono, estrellas, ICONOS } from "./iconos.js";
 import { miniPrenda, dibujarMuneca } from "./dibujo2d.js";
-import { colorPuesto, fraseIngles } from "../atuendo.js";
+import { colorPuesto, patronPuesto, fraseIngles } from "../atuendo.js";
 import { coloresDe, nivelDePrenda, esNuevo } from "../progreso.js";
 import { reloj } from "../partida.js";
-import { prendasDeZona } from "../datos.js";
+import { concuerda } from "../espanol.js";
+import { prendasDeZona, aceptaPatron } from "../datos.js";
+import { pintarSVG } from "../../../../kit/3d/pintar.js";
 
 /** Ícono de una zona: el suyo (zonas.json → icono), el de su acción o el de su categoría */
 export const iconoZona = (z) => z.icono || (z.accion === "espejo" ? "espejo" : z.accion === "pasarela" ? "pasarela" : z.categorias[0]);
@@ -101,10 +103,12 @@ export function aviso(z, { libre, tv }) {
 }
 
 /** Panel con la ropa de una zona (un perchero) */
-export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar }) {
+export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar, colorElegido = null, patronElegido = null }) {
   const prendas = prendasDeZona(zona, idx);
   const actual = sel && idx.prendas.get(sel);
-  const colorSel = actual ? colorPuesto(atuendo, actual) || coloresDe(actual, ab)[0] : null;
+  const colorSel = actual ? colorPuesto(atuendo, actual) || (colorElegido && coloresDe(actual, ab).includes(colorElegido) && colorElegido) || coloresDe(actual, ab)[0] : null;
+  const puestaSel = actual && colorPuesto(atuendo, actual);
+  const patronSel = actual ? (puestaSel ? patronPuesto(atuendo, actual) : patronElegido) : null;
   // Con las flechas, el foco empieza en la prenda escogida (o en la primera abierta)
   const primera = sel || (prendas.find((p) => ab.prendas.has(p.id)) || {}).id;
   const tarjetas = prendas.map((p) => {
@@ -116,19 +120,22 @@ export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar }) {
         <span class="nombre">${esc(p.es)}</span><small>Nivel ${esc(n ? n.nombre : "")} · ${n ? n.puntos : 0} pts</small></button>`;
     }
     const color = puesta || (p.id === sel && colorSel) || coloresDe(p, ab)[0];
+    const patron = puesta ? patronPuesto(atuendo, p) : p.id === sel ? patronSel : null;
     return `<button class="prenda${puesta ? " puesta" : ""}${p.id === sel ? " sel" : ""}" data-accion="prenda" data-prenda="${p.id}" data-foco${p.id === primera ? '="inicial"' : ""}
         aria-pressed="${!!puesta}" aria-label="${esc(p.es)}, en inglés ${esc(p.en)}">
-      <span class="mini-caja">${miniPrenda(p, color, idx)}${puesta ? `<i class="check">${icono("palomita")}</i>` : ""}${esNuevo(progreso, p.id) ? '<i class="badge">¡Nuevo!</i>' : ""}</span>
+      <span class="mini-caja">${miniPrenda(p, color, idx, patron)}${puesta ? `<i class="check">${icono("palomita")}</i>` : ""}${esNuevo(progreso, p.id) ? '<i class="badge">¡Nuevo!</i>' : ""}</span>
       <span class="nombre">${esc(p.es)}</span><small lang="en">${esc(p.en)}</small></button>`;
   }).join("");
   let colores = "";
   if (actual && ab.prendas.has(actual.id)) {
     const cs = coloresDe(actual, ab);
     const c = idx.colores.get(colorSel);
+    const pa = patronSel && idx.patrones.get(patronSel);
     colores = `<div class="colores" role="group" aria-label="Colores">
       ${cs.map((cid) => { const cc = idx.colores.get(cid); return `<button class="color${cid === colorSel ? " sel" : ""}" data-accion="color" data-color="${cid}" data-foco style="--c:${cc.hex}" aria-label="${esc(cc.es)}, en inglés ${esc(cc.en)}" title="${esc(cc.es)} · ${esc(cc.en)}">${esNuevo(progreso, "c:" + cid) ? '<i class="punto-nuevo"></i>' : ""}</button>`; }).join("")}
     </div>
-    <p class="ingles"><span lang="en"><b>${esc(c ? c.en : "")} ${esc(actual.en)}</b></span> = ${esc(actual.es)} ${esc(c ? c.es : "")}
+    ${patrones({ prenda: actual, idx, ab, progreso, hex: c ? c.hex : "#cccccc", sel: patronSel })}
+    <p class="ingles"><span lang="en"><b>${esc(c ? c.en : "")} ${pa ? esc(pa.en) + " " : ""}${esc(actual.en)}</b></span> = ${esc(actual.es)} ${esc(c ? colorConcuerda(c.es, actual) : "")}${pa ? " de " + esc(pa.es) : ""}
       ${voz ? `<button class="redondo chico" data-accion="decir" data-foco aria-label="Escuchar en inglés">${icono("bocina")}</button>` : ""}</p>`;
   }
   return `<div class="panel-cab"><h2>${icono(iconoZona(zona))}${esc(zona.nombre)}</h2>
@@ -138,6 +145,26 @@ export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar }) {
     <div class="prendas">${tarjetas}</div>
     ${colores}
     <p class="nota">Toca una prenda para ponértela; tócala otra vez para quitártela.${girar ? " Arrastra al personaje para girarlo." : ""}</p>`;
+}
+
+/** El color concuerda con la prenda si termina en "o": "camiseta blanca", "shorts blancos"; "rosa" y "azul" no cambian */
+const colorConcuerda = (color, p) => (/o$/.test(color) ? concuerda(color, p) : color);
+
+/**
+ * Los patrones para la prenda escogida (si los acepta): "lisa" y los abiertos, cada uno pintado con el color
+ * escogido. Los que faltan se cuentan abajo (sin candados uno por uno: el panel ya es largo en el teléfono).
+ */
+function patrones({ prenda, idx, ab, progreso, hex, sel }) {
+  if (!idx.patrones || !idx.patrones.size || !aceptaPatron(prenda, idx.config)) return "";
+  const lista = [...idx.patrones.values()].filter((x) => ab.patrones.has(x.id) && x.svg);
+  const faltan = idx.patrones.size - lista.length;
+  const muestra = (x) => (x ? pintarSVG(x.svg, { p: hex }) : `<svg viewBox="0 0 64 64"><rect width="64" height="64" fill="${hex}"/></svg>`);
+  const b = (x) => {
+    const id = x ? x.id : "", es = x ? x.es : "lisa", en = x ? x.en : "plain", on = (sel || "") === id;
+    return `<button class="patron${on ? " sel" : ""}" data-accion="patron" data-patron="${id}" data-foco aria-pressed="${on}" aria-label="${esc(es)}, en inglés ${esc(en)}" title="${esc(es)} · ${esc(en)}">${muestra(x)}${x && esNuevo(progreso, "pt:" + x.id) ? '<i class="punto-nuevo"></i>' : ""}</button>`;
+  };
+  return `<div class="patrones" role="group" aria-label="Patrones">${b(null)}${lista.map(b).join("")}</div>
+    ${faltan ? `<p class="nota chica">${faltan} ${faltan === 1 ? "patrón más se abre" : "patrones más se abren"} subiendo de nivel.</p>` : ""}`;
 }
 
 /** Desfile: texto encima mientras camina */
@@ -187,6 +214,8 @@ export function desbloqueo({ nivel, nuevos, idx }) {
     ${prendas.length ? `<h2>Ropa nueva</h2><div class="nuevas">${prendas.map((p) => `<figure>${miniPrenda(p, p.colores[0], idx)}<figcaption>${esc(p.es)}<small lang="en">${esc(p.en)}</small></figcaption></figure>`).join("")}</div>` : ""}
     ${nuevos.colores.length ? `<h2>Colores nuevos</h2><div class="nuevos-colores">${nuevos.colores.map((c) => { const cc = idx.colores.get(c); return `<span><i style="--c:${cc.hex}"></i>${esc(cc.es)} <small lang="en">${esc(cc.en)}</small></span>`; }).join("")}</div>` : ""}
     ${(nuevos.poses || []).length ? `<h2>${nuevos.poses.length === 1 ? "Pose nueva" : "Poses nuevas"}</h2><div class="nuevos-temas">${nuevos.poses.map((o) => { const oo = idx.poses.get(o); return `<span>${icono(oo.baile ? "musica" : "estrella")}${esc(oo.es)} <small lang="en">${esc(oo.en)}</small></span>`; }).join("")}</div>` : ""}
+    ${(nuevos.patrones || []).length ? `<h2>${nuevos.patrones.length === 1 ? "Patrón nuevo" : "Patrones nuevos"}</h2><div class="nuevos-patrones">${nuevos.patrones.map((x) => { const pa = idx.patrones.get(x); return pa ? `<span>${pa.svg ? pintarSVG(pa.svg, { p: "#ff7eb6" }) : ""}${esc(pa.es)} <small lang="en">${esc(pa.en)}</small></span>` : ""; }).join("")}</div>` : ""}
+    ${(nuevos.estampados || []).length ? `<h2>${nuevos.estampados.length === 1 ? "Estampado nuevo" : "Estampados nuevos"}</h2><div class="nuevos-patrones">${nuevos.estampados.map((x) => { const e = idx.estampados.get(x); return e ? `<span class="estampado">${e.svg ? pintarSVG(e.svg, { p: "#ffffff" }) : e.url ? `<img src="${e.url}" alt="">` : ""}${esc(e.es)} <small lang="en">${esc(e.en)}</small></span>` : ""; }).join("")}</div><p class="nota">Para ponerlos en tu ropa: el Taller de diseño.</p>` : ""}
     ${nuevos.temas.length ? `<h2>Tema nuevo</h2><div class="nuevos-temas">${nuevos.temas.map((t) => { const tt = idx.temas.get(t); return `<span>${icono(tt.icono)}${esc(tt.nombre)}</span>`; }).join("")}</div>` : ""}
     <div class="menu">${boton("continuar", "¡Genial!", { clase: "grande primario", inicial: true })}</div>
   </section>`;

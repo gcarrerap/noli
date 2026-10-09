@@ -18,14 +18,18 @@ const cache = new Map();
 /**
  * Material para un color (cacheado).
  * @param {string} hex "#ff7eb6"
- * @param {{ brillo?: boolean, opacidad?: number, dobleCara?: boolean, emisivo?: number }} [op]
+ * @param {{ brillo?: boolean, opacidad?: number, dobleCara?: boolean, emisivo?: number, mapa?: THREE.Texture, recorte?: boolean }} [op]
+ *   mapa: textura (patrón o estampado; ya trae sus colores, así que el color del material queda blanco);
+ *   recorte: lo transparente de la textura no se dibuja (estampados), sin ordenar transparencias
  * @returns {THREE.Material}
  */
 export function material(hex, op = {}) {
-  const clave = [hex, op.brillo ? 1 : 0, op.opacidad || 1, op.dobleCara ? 1 : 0, op.emisivo || 0].join("|");
+  const clave = [hex, op.brillo ? 1 : 0, op.opacidad || 1, op.dobleCara ? 1 : 0, op.emisivo || 0, op.mapa ? op.mapa.uuid : "", op.recorte ? 1 : 0].join("|");
   let m = cache.get(clave);
   if (m) return m;
-  const base = { color: new THREE.Color(hex), side: op.dobleCara ? THREE.DoubleSide : THREE.FrontSide };
+  const base = { color: new THREE.Color(op.mapa ? "#ffffff" : hex), side: op.dobleCara ? THREE.DoubleSide : THREE.FrontSide };
+  if (op.mapa) base.map = op.mapa;
+  if (op.recorte) Object.assign(base, { alphaTest: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   if (op.opacidad && op.opacidad < 1) Object.assign(base, { transparent: true, opacity: op.opacidad, depthWrite: false });
   if (op.brillo) m = new THREE.MeshPhongMaterial({ ...base, shininess: 90, specular: new THREE.Color("#ffffff") });
   else m = new THREE.MeshToonMaterial({ ...base, gradientMap: tonos() });
