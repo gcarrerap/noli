@@ -6,12 +6,13 @@ import { TEXTOS, capital } from "./textos.js";
 import { SEMILLAS, semillaNueva } from "./semillas.js";
 import {
   NIVELES, POR_TEMPORADA, MAX_FILAS, MAX_POR_FILA, coincide, infoPar, limitar, opcionesSalto,
+  columnasParejas,
 } from "./niveles.js";
 import { pista, marcaPasoCompleto } from "./pista.js";
 import {
   GUIA, GUIA_VOZ_MAX_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
   topeGuia, efectoAtrasGuia, lineaGuia, cadenaFocoGuia, focoAlCerrarSalir,
-  relojPasoMostrar, entradaTrasCerrar,
+  relojPasoMostrar, esperaTrasVoz, entradaTrasCerrar, toqueEnVelo,
 } from "./guia.js";
 import {
   cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
@@ -45,9 +46,10 @@ let relojGuia = 0;
 let vozPasoGen = 0;
 let cerradoEn = null;
 
-function hablar(texto, alTerminar) {
+function hablar(texto, opts) {
   if (!vozOn()) return false;
-  return decir(texto, { activo: true, alTerminar });
+  const o = opts && typeof opts === "object" ? opts : {};
+  return decir(texto, { activo: true, alTerminar: o.alTerminar, alFallar: o.alFallar });
 }
 
 function vozSigue() {
@@ -209,7 +211,7 @@ function htmlMonton(cantidad, semilla) {
 
 function htmlPares(cantidad, semilla) {
   const inf = infoPar(cantidad);
-  let s = `<div class="resultado-par"><div class="parejas">`;
+  let s = `<div class="resultado-par"><div class="parejas" style="--par-cols:${columnasParejas(inf.parejas)}">`;
   for (let i = 0; i < inf.parejas; i++) {
     s += `<div class="par"><img class="lazo" alt="" src="img/pareja.svg"><img class="planta a" alt="" src="img/planta-${semilla}.svg"><img class="planta b" alt="" src="img/planta-${semilla}.svg"></div>`;
   }
@@ -396,16 +398,52 @@ function avanzarPedidoSiSigue() {
   aceptarPedido();
 }
 
+function ahoraMs() {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+// Aplica el reloj del paso que solo se muestra. Un error no lo adelanta.
+function aplicarEspera(evento, t0, gen) {
+  if (gen !== vozPasoGen) return;
+  if (!partida || partida.modo !== "guia" || partida.saliendo || !guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
+    clearTimeout(relojGuia);
+    relojGuia = 0;
+    return;
+  }
+  const plan = esperaTrasVoz({ evento, transcurrido: ahoraMs() - t0 });
+  clearTimeout(relojGuia);
+  relojGuia = 0;
+  if (plan.avanzar) {
+    avanzarPedidoSiSigue();
+    return;
+  }
+  if (!plan.correr) return;
+  relojGuia = setTimeout(() => {
+    relojGuia = 0;
+    if (gen !== vozPasoGen) return;
+    avanzarPedidoSiSigue();
+  }, plan.espera);
+}
+
 // El paso que solo se muestra vuelve a esperar la voz desde cero.
 function rearmarPasoMostrar() {
   if (!partida || partida.modo !== "guia" || partida.saliendo) return;
   if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
   const gen = ++vozPasoGen;
-  const hablo = hablar(textoGuia("pedido", esTv()).leer, () => {
-    if (gen !== vozPasoGen) return;
-    avanzarPedidoSiSigue();
+  const t0 = ahoraMs();
+  let fallo = false;
+  const hablo = hablar(textoGuia("pedido", esTv()).leer, {
+    alTerminar: () => {
+      if (fallo) return;
+      aplicarEspera("fin", t0, gen);
+    },
+    alFallar: () => {
+      fallo = true;
+      aplicarEspera("error", t0, gen);
+    },
   });
-  programarToqueGuia(hablo ? GUIA_VOZ_MAX_MS : 0);
+  if (fallo) return;
+  aplicarEspera(hablo ? "sigue" : "sin-voces", t0, gen);
 }
 
 function programarToqueGuia(msVoz) {
@@ -877,6 +915,14 @@ $main.addEventListener("pointerup", (ev) => {
 
 $main.addEventListener("click", (ev) => {
   if (!(partida && partida.saliendo) && guardiaTrasSalir("toque")) return;
+  if (partida && partida.saliendo) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    const enVelo = !!ev.target.closest(".velo");
+    if (enVelo && toqueEnVelo({ tv: esTv(), enDialogo }) === "seguir") {
+      seguirJugando();
+      return;
+    }
+  }
   const t = ev.target.closest("[data-act]");
   if (!t || !$main.contains(t) || t.disabled) return;
   const act = t.dataset.act;

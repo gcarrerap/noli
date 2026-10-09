@@ -49,7 +49,8 @@ export function textoGuia(paso, tv) {
 }
 
 // El paso 1 se va con un toque, con OK, o solo cuando termina la voz.
-// Sin voz sigue a los 2 s. Con voz espera a que acabe, y nunca más de 3 s.
+// Nunca se va solo antes de 2 s. Si la voz sigue, el tope es 3 s.
+// Si la voz falla, no hay voces o no arranca, se queda los 2 s.
 // Los de contar solo cuando el número ya es el del ejemplo.
 export function guiaAvanzaConToque(paso) {
   return paso === "pedido";
@@ -74,6 +75,21 @@ export function relojPasoMostrar({ dialog = false, transcurrido = 0, vozSigue = 
   const meta = esperaAutoGuia(vozSigue ? GUIA_VOZ_MAX_MS : 0);
   if (pasado >= meta) return { avanzar: true, espera: 0, correr: false };
   return { avanzar: false, espera: meta - pasado, correr: true };
+}
+
+/**
+ * Reloj tras hablar. "sigue": la frase todavía suena (tope 3 s).
+ * "fin", "error" o "sin-voces": no se adelanta sola antes de los 2 s.
+ */
+export function esperaTrasVoz({ evento = "sigue", transcurrido = 0 } = {}) {
+  const sigue = evento === "sigue";
+  return relojPasoMostrar({ transcurrido, vozSigue: sigue });
+}
+
+/** En el teléfono, tocar lo oscuro de «¿Salir?» es Seguir. En la tele, no. */
+export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
+  if (tv || enDialogo) return "nada";
+  return "seguir";
 }
 
 /** Toque u OK justo después de Seguir. Atrás y las flechas siguen. */

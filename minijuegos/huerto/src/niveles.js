@@ -60,6 +60,17 @@ export function infoPar(n) {
   };
 }
 
+// Parejas por fila para que la última fila no se quede con una sola.
+export function columnasParejas(n) {
+  const k = Math.max(0, n | 0);
+  if (k <= 1) return 1;
+  if (k <= 5) return k;
+  for (let cols = 5; cols >= 2; cols--) {
+    if (k % cols !== 1) return cols;
+  }
+  return 5;
+}
+
 export function esPar(n) {
   return n % 2 === 0;
 }

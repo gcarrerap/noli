@@ -101,6 +101,7 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .abeja-mini{position:absolute;width:36px;height:27px;left:0;top:-22px;pointer-events:none;overflow:hidden}
 
 .parejas{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;width:100%;max-width:100%}
+.resultado-par .parejas{display:grid;grid-template-columns:repeat(var(--par-cols, 5), 58px);width:max-content;max-width:100%;justify-content:center}
 .par{position:relative;width:84px;height:44px;flex:none}
 .par.sola{width:44px}
 .par .lazo{position:absolute;inset:0;width:100%;height:100%}
