@@ -34,7 +34,7 @@
 import * as THREE from "../../../kit/3d/vendor/three.module.min.js";
 import { cargarDatos } from "../src/ui/cargar.js";
 import { crearEscena } from "../../../kit/3d/escena.js";
-import { crearAvatar } from "../../../kit/3d/avatar.js";
+import { crearAvatar, POSES_3D } from "../../../kit/3d/avatar.js";
 import { atuendoVacio, poner } from "../src/atuendo.js";
 import { cargarModelo, modeloPara } from "../src/escena/modelos.js";
 
@@ -51,7 +51,7 @@ const q = new URLSearchParams(location.search);
 let atuendo = atuendoVacio();
 for (const id of (q.get("prendas") || "p-cola").split(",")) { const p = idx.prendas.get(id); if (p) atuendo = poner(atuendo, p, p.colores[0]); }
 
-const POSES = ["quieto", "caminar", "desfilar", "cintura", "saludo", "estrella"];
+const POSES = ["quieto", "caminar", "desfilar", ...POSES_3D]; // POSES_3D: las de la pasarela (datos/poses.json)
 let pose = q.get("pose") || "quieto";
 document.getElementById("pose").textContent = "Postura: " + pose;
 document.getElementById("pose").onclick = (e) => { pose = POSES[(POSES.indexOf(pose) + 1) % POSES.length]; e.target.textContent = "Postura: " + pose; };

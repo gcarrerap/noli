@@ -1,10 +1,10 @@
 // Datos de la Pasarela (los JSON de datos/): revisarlos e indexarlos. Lógica pura: no lee archivos ni la red
 // (eso lo hace src/ui/cargar.js en el navegador y las pruebas con fs). Ver docs/ARQUITECTURA.md.
 
-/** Formas con las que se arma una prenda (src/escena/formas.js las dibuja). */
+/** Formas con las que se arma una prenda (kit/3d/formas.js las dibuja). */
 export const FORMAS = ["tubo", "esfera", "caja", "capsula", "toro", "cono", "disco", "plano", "octaedro", "anillo"];
 
-/** Partes del cuerpo a las que se pega una pieza (src/escena/avatar.js). I = izquierda del personaje, D = derecha. */
+/** Partes del cuerpo a las que se pega una pieza (kit/3d/avatar.js). I = izquierda del personaje, D = derecha. */
 export const ANCLAS = ["cadera", "torso", "cuello", "cabeza", "brazoI", "brazoD", "antebrazoI", "antebrazoD", "manoI", "manoD",
   "musloI", "musloD", "piernaI", "piernaD", "pieI", "pieD"];
 

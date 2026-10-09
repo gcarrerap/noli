@@ -355,7 +355,7 @@ test("#26: cada zona enseña solo lo suyo y todo tiene una zona", () => {
 });
 
 test("#26: las poses existen en el personaje 3D y en el modo sencillo", async () => {
-  const { POSES_3D } = await import("../src/escena/avatar.js");
+  const { POSES_3D } = await import("../../../kit/3d/avatar.js");
   const css = fs.readFileSync(path.join(raiz, "estilo.css"), "utf8");
   for (const o of D.poses.poses) {
     assert.ok(POSES_3D.includes(o.id), `${o.id} en avatar.js`);

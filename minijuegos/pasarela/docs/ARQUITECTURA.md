@@ -33,7 +33,7 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 
 | Archivo | Responsabilidad |
 |---|---|
-| `src/datos.js` | `revisarDatos` (encuentra errores al editar los JSON a mano: formas, anclas, colores, etiquetas, niveles…) e `indexar` (mapas por id y por categoría). |
+| `src/datos.js` | `prendasDeZona` (las prendas de un mueble: sus categorías y, si dice `lugares`, solo esas), `revisarDatos` (encuentra errores al editar los JSON a mano: formas, anclas, colores, etiquetas, niveles…) e `indexar` (mapas por id y por categoría). |
 | `src/atuendo.js` | El atuendo puesto: `poner` (vestido ↔ arriba/abajo, un accesorio por lugar, tocar dos veces quita), `quitar`, `puestas`, `fraseIngles`, `limpiar` (lo guardado de versiones viejas). |
 | `src/puntuacion.js` | `encaje`, `componentes`, `comentar`, `calificar`. Fórmulas en [JUEGO.md](JUEGO.md). |
 | `src/espanol.js` | Concordancia: el/la/los/las, un/una, perfecto/perfecta/perfectos. |
@@ -57,7 +57,7 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 ## La partida (máquina de estados)
 
 ```
- inicio ──jugar──▶ cobrando ──cobrado──▶ tema ──listo──▶ estudio ──pasarela / tiempo──▶ pasarela ──fin──▶ calificacion
+ inicio ──jugar──▶ cobrando ──cobrado──▶ tema ──listo──▶ estudio ──pasarela / tiempo──▶ pasarela ──llego──▶ posando ──fin──▶ calificacion
    │ ▲                 │                                    │                                                │
    │ │           sin-creditos                             salir (pregunta)                                continuar
    │ │                 ▼                                    │                                     ┌──────────┴─────────┐
@@ -78,7 +78,8 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `tema` | el tema, su frase y el tiempo | | Marca el tema como visto. |
 | `estudio` | hud (tema, reloj, mapa, pasarela) | `modo("estudio")`: caminar | Reloj de `config.tiempoEstudio` (150 s); al llegar a 0 → pasarela sola ("¡Se acabó el tiempo!"). |
 | `libre` | hud (sin reloj, con salir) | `modo("estudio")` | Igual, sin tema, sin reloj y sin cobrar; la puerta del escenario sale al inicio. |
-| `pasarela` | texto "¡Noelia en la pasarela!" | `desfilar()` | Al terminar: `calificar`, `registrarPasarela`, `Noli.guardar`, `Noli.terminar({ estrellas })`. |
+| `pasarela` | texto "¡Noelia en la pasarela!" | `desfilar()` | Al llegar al final → `posando`. |
+| `posando` | "¡Escoge tu pose!" (abajo o a la derecha) | `posar(id)` con cada toque | Varias seguidas; "¡Listo!" o 25 s sin escoger → `terminarDesfile()`, calificar, guardar. Atrás no sale. Las poses abiertas dejan de ser "nuevas". |
 | `calificacion` | jueces, consejo, frase en inglés, puntos | | |
 | `desbloqueo` | lo que se abrió | | Solo si subió de nivel. |
 | `closet` | los últimos atuendos | | "Ponérmelo" → `libre` con ese atuendo. |
@@ -97,7 +98,11 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `irA(zona)` → promesa | Camina sola (ruta por el centro) y voltea al mueble | Inmediato |
 | `irAPunto(x, z)`, `alPiso(px, py)` | Tocar el piso para caminar | — |
 | `espejo()` | Da una vuelta frente a la cámara | Gira la muñeca |
-| `desfilar()` → promesa | Camina la pasarela, pose final, aplauso de jueces | Animación CSS |
+| `enfocar(parte)` | Qué parte del cuerpo enseña el probador (`ENFOQUES`, ESCENA-3D.md § Enfocar) | — |
+| `girar(grados)` | Gira al personaje en el probador | — |
+| `desfilar()` → promesa | Camina la pasarela; se cumple al llegar al final | Animación CSS |
+| `posar(id)` | Hace una pose o baile de `datos/poses.json` | Animación CSS de esa pose |
+| `terminarDesfile()` → promesa | Los jueces aplauden | Una pausa |
 | `letreros()` | Posición en pantalla de cada mueble | vacío |
 | `cercana`, `fps`, `info`, `calidad`, `liberar()` | | |
 | `botones` | — | `true`: la interfaz pone las zonas como botones |
@@ -116,8 +121,9 @@ Todo pasa por `juego.js → manejar(accion)` (lo que manda el kit) y por clics e
 2. **Panel de ropa abierto:** flechas entre prendas y colores, OK escoge, Atrás cierra el panel.
 3. **Una pantalla** (inicio, tema, calificación…): flechas y OK; Atrás sale del juego solo desde el inicio (devuelve `false` y el kit sale); en el clóset y en "faltan" regresa al inicio.
 4. **Desfilando o cobrando:** se ignora (Atrás no sale a la mitad del desfile).
-5. **En el estudio (3D):** flechas = caminar; OK = abrir el mueble cercano o el menú "¿A dónde vamos?"; Atrás = salir (con pregunta si es una pasarela).
-6. **En el estudio (2D):** flechas entre los botones de las zonas y del hud.
+5. **Posando:** flechas y OK entre las poses y "¡Listo!"; Atrás no hace nada.
+6. **En el estudio (3D):** flechas = caminar; OK = abrir el mueble cercano o el menú "¿A dónde vamos?"; Atrás = salir (con pregunta si es una pasarela).
+7. **En el estudio (2D):** flechas entre los botones de las zonas y del hud.
 
 **Caminar con flechas.** El kit da un `keydown` por cada repetición de la tecla. Cada flecha "empuja" un ratito: 450 ms la primera vez (cubre la espera antes de que el control empiece a repetir) y 200 ms más con cada repetición (`config.movimiento.impulsoTeclaMs`). Con el teclado o el control de la TV además se escucha `keyup` para parar justo al soltar. El teléfono usado como control remoto no manda `keyup`, pero sí repite, así que funciona con el impulso. Dos flechas a la vez = diagonal. La cámara nunca gira: arriba siempre es "hacia el fondo".
 

@@ -247,10 +247,11 @@ function abrirZona(z) {
     // Sin avisos ni letreros mientras se da la vuelta: taparían al personaje
     S.vista.espejo();
     $("aviso").innerHTML = ""; $("letreros").hidden = true;
+    if (S.joy) S.joy.mostrar(false);
     clearTimeout(S.espejoTimer);
     S.espejoTimer = setTimeout(() => {
       if (!EN_ESTUDIO.includes(S.estado) || S.zona) return;
-      $("letreros").hidden = !!S.vista.botones; alCambiarZona(S.vista.cercana);
+      $("letreros").hidden = !!S.vista.botones; if (S.joy) S.joy.mostrar(true); alCambiarZona(S.vista.cercana);
     }, reducir ? 900 : 1900);
     return;
   }
