@@ -13,6 +13,10 @@ function llenar(plantilla, vars) {
   return String(plantilla || "").replace(/\{(\w+)\}/g, (_, k) => (vars[k] == null ? "" : String(vars[k])));
 }
 
+function acuerdoPartes(n) {
+  return (n | 0) === 1 ? "parte" : "partes";
+}
+
 function fraseFraccion(n, d, textos) {
   if (n === 1 && d === 2) return textos.fraccion["2"];
   if (n === 2 && d === 4) return textos.fraccion["2"];
@@ -20,7 +24,7 @@ function fraseFraccion(n, d, textos) {
   if (n === 1 && d === 4) return textos.fraccion["4"];
   if (n === 3 && d === 4) return textos.tresCuartos;
   if (n === 2 && d === 3) return textos.dosTercios;
-  return llenar(textos.dePartes, { n, d });
+  return llenar(textos.dePartes, { n, d, partes: acuerdoPartes(d) });
 }
 
 function pedidoBase(nivel, tipo, extra) {
@@ -59,9 +63,10 @@ function pedidoForma(rnd, textos, facil) {
 function pedidoCorta(rnd, banco, textos, { partes, facil, pregunta = null, preferirForma = null, forzarParalelos = false }) {
   const { opciones, correcta } = opcionesCorte(banco, rnd, { partes, facil, forzarParalelos, preferirForma });
   const palabra = textos.fraccion[String(partes)];
-  const texto = pregunta || (partes === 2 || partes === 3 || partes === 4
-    ? llenar(textos.cortaPalabra, { palabra, n: partes })
-    : llenar(textos.cortaIguales, { n: partes }));
+  const trozos = acuerdoPartes(partes);
+  const texto = pregunta || (partes === 4
+    ? llenar(textos.cortaPalabra, { palabra, n: partes, partes: trozos })
+    : llenar(textos.cortaIguales, { n: partes, partes: trozos }));
   return pedidoBase(partes === 2 ? 2 : partes === 4 ? 3 : 4, "corta", {
     partes, opciones: opciones.map((p) => p.id), correcta, texto, leer: texto,
   });
@@ -137,12 +142,12 @@ function pedidoDecora(rnd, banco, textos, bien, facil) {
   const temprano = bien < 4;
   const bolsa = temprano && bien === 0 ? [[4, 2], [3, 1], [4, 1]] : TAREAS_DECORA;
   const [d, n] = uno(rnd, bolsa);
-  const cuanto = temprano ? llenar(textos.dePartes, { n, d }) : fraseFraccion(n, d, textos);
+  const cuanto = temprano ? llenar(textos.dePartes, { n, d, partes: acuerdoPartes(d) }) : fraseFraccion(n, d, textos);
   const ing = ingrediente(rnd, textos);
   const iguales = (banco.patrones || []).filter((p) => !p.guia && p.iguales && p.partes === d);
   const base = iguales[Math.floor(rnd() * iguales.length)] || patron(banco, d === 3 ? "redonda-tercios" : d === 2 ? "redonda-mitad" : "redonda-cuartos");
   const texto = llenar(textos.pon, { ing: ing.nombre, cuanto });
-  const pista = llenar(textos.ponPartes, { ing: ing.nombre, n });
+  const pista = llenar(textos.ponPartes, { ing: ing.nombre, n, partes: acuerdoPartes(n) });
   return pedidoBase(6, "decora", {
     partes: d, cuantas: n, ingrediente: ing.id, ingNombre: ing.nombre,
     patron: base.id, forma: base.forma, texto, leer: texto, pista,

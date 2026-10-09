@@ -34,7 +34,7 @@ export function hablaSegura(texto) {
 
 export function fasePista({ nivel, tipo, ms = 0, fallo = false }) {
   if (tipo === "forma" || (nivel | 0) <= 1) return "completa";
-  if (tipo === "decora" || tipo === "bandeja" || tipo === "cuantos") return "completa";
+  if (tipo === "cuantos") return "completa";
   if (tipo === "entero" || tipo === "mayor") return "frase";
   if (fallo || ms >= IDLE_COMPLETA_MS) return "completa";
   if (ms >= IDLE_ENCIMA_MS) return "encima";
@@ -47,16 +47,22 @@ export function debeBrillar(tipo, coincide) {
 
 export function cuentaParaDominio({ nivel, tipo, vioCompleta }) {
   if (tipo === "forma" || (nivel | 0) <= 1) return true;
-  if (tipo === "decora" || tipo === "bandeja" || tipo === "cuantos" || tipo === "entero" || tipo === "mayor") return true;
+  if (tipo === "cuantos" || tipo === "entero" || tipo === "mayor") return true;
   return !vioCompleta;
 }
 
-export function textoPista(pedido, fase, textos) {
+export function textoPista(pedido, fase, textos, modo = "tactil") {
   const t = textos || {};
   if (!pedido) return "";
   if (pedido.tipo === "forma") return pedido.pide === "esquinas" ? t.pistaEsquinas : t.pistaLados;
-  if (pedido.tipo === "decora") return pedido.pista || "";
-  if (pedido.tipo === "bandeja") return pedido.pista || "";
+  if (pedido.tipo === "decora") {
+    if (fase === "completa") return pedido.pista || "";
+    return modo === "tv" ? (t.pistaDecoraTv || "Pulsa OK en una rebanada") : (t.pistaDecora || "Toca una rebanada");
+  }
+  if (pedido.tipo === "bandeja") {
+    if (fase === "completa") return pedido.pista || "";
+    return textoContador(modo);
+  }
   if (pedido.tipo === "cuantos") return t.cuantos || "";
   if (pedido.tipo === "entero") return t.pistaEntero || "";
   if (pedido.tipo === "mayor") return t.pistaMayor || "";

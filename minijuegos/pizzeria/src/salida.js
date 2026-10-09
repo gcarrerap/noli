@@ -10,6 +10,6 @@ export function resolverAtras(dialogoAbierto) {
 // "preguntar" abre el diálogo. "progreso" e "inicio" cambian de pantalla.
 export function accionAtras(pantalla) {
   if (pantalla === "papas") return "progreso";
-  if (pantalla === "inicio" || pantalla === "pedido" || pantalla === "guia") return "preguntar";
+  if (pantalla === "inicio" || pantalla === "pedido" || pantalla === "guia" || pantalla === "fin" || pantalla === "finReto") return "preguntar";
   return "inicio";
 }

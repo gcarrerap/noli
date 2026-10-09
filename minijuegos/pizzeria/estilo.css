@@ -92,7 +92,7 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .aviso{min-height:1.2em;margin:0;font-weight:800;color:var(--tomate)}
 .decora,.bandeja,.cuantos{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:0}
 .rebanadas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
-.reb{width:64px;height:64px;border-radius:50%;background:var(--off);font-family:"Fredoka",sans-serif;font-size:1.4rem;box-shadow:var(--sombra)}
+.reb{position:relative;width:64px;height:64px;border-radius:50%;background:var(--off);font-family:"Fredoka",sans-serif;font-size:1.4rem;box-shadow:var(--sombra)}
 .reb.puesta{background:var(--sol);box-shadow:0 0 0 3px var(--tomate)}
 .enviar{min-width:140px;min-height:64px;border-radius:18px;background:var(--card);color:var(--muted);
   font-family:"Fredoka",sans-serif;font-size:1.25rem;font-weight:600;box-shadow:var(--sombra);padding:0 1em}
@@ -107,7 +107,7 @@ html[data-modo="tv"] .parrilla.mini{--celda:32px}
 .step{display:flex;align-items:center;justify-content:center;gap:6px;min-height:64px;background:var(--card);border-radius:18px;padding:4px 8px;box-shadow:var(--sombra)}
 .step .etiq{width:6rem;text-align:right;font-weight:800}
 .step b{min-width:1.4rem;font-family:"Fredoka",sans-serif;font-size:1.5rem}
-.step button{width:64px;height:64px;border-radius:16px;background:var(--off);font-family:"Fredoka",sans-serif;font-size:2rem;flex:none}
+.step button{position:relative;width:64px;height:64px;border-radius:16px;background:var(--off);font-family:"Fredoka",sans-serif;font-size:2rem;flex:none}
 .fila-cuenta{display:flex;align-items:center;gap:8px;justify-content:center}
 .fila-cuenta b{font-family:"Fredoka",sans-serif;font-size:1.3rem;min-width:1.6rem}
 .opciones.numeros{flex-wrap:wrap}

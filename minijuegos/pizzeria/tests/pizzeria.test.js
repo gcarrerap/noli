@@ -6,8 +6,8 @@ import { analizar, sonIguales } from "../src/area.js";
 import { medir, lineasSvg, patron, opcionesCorte } from "../src/cortes.js";
 import { ladosDe, opcionesForma, crearFigura, reiniciarIds } from "../src/figuras.js";
 import { crearPedido, esCorrecto, POR_TURNO } from "../src/pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, GUIA_TOQUE_MS } from "../src/guia.js";
-import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_COMPLETA_MS } from "../src/pista.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, GUIA_TOQUE_MS } from "../src/guia.js";
+import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, textoPista, IDLE_COMPLETA_MS } from "../src/pista.js";
 import { abiertos, recienAbierto, sumarPropinas, PROPINA, ADORNOS } from "../src/deco.js";
 import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista, focoTrasContador } from "../src/bandeja.js";
 import {
@@ -111,6 +111,39 @@ test("las fracciones van en palabras y no se dice vértices", () => {
   }
 });
 
+test("mitades y tercios se piden en partes iguales, y 1 parte va en singular", () => {
+  const r2 = rngConSemilla("corta-2");
+  for (let i = 0; i < 8; i++) {
+    const p = crearPedido(2, r2, banco, textos);
+    assert.equal(p.texto, "Corta en 2 partes iguales.");
+    assert.equal(p.leer, p.texto);
+  }
+  const r4 = rngConSemilla("corta-3");
+  let tercios = 0;
+  for (let i = 0; i < 24; i++) {
+    const p = crearPedido(4, r4, banco, textos);
+    if (p.tipo !== "corta") continue;
+    assert.equal(p.texto, "Corta en 3 partes iguales.");
+    tercios++;
+  }
+  assert.ok(tercios > 0);
+  let singular = 0;
+  const r6 = rngConSemilla("pista-una");
+  for (let bien = 0; bien < 8; bien++) {
+    for (let i = 0; i < 12; i++) {
+      const p = crearPedido(6, r6, banco, textos, { bien });
+      assert.equal(/1 partes/.test(`${p.texto} ${p.pista}`), false, p.pista);
+      if (p.cuantas === 1) {
+        singular++;
+        assert.match(p.pista, /1 parte$/);
+      } else {
+        assert.match(p.pista, new RegExp(`${p.cuantas} partes$`));
+      }
+    }
+  }
+  assert.ok(singular > 0);
+});
+
 test("en el nivel 6, 2 de 4 partes va antes que la mitad", () => {
   const r = rngConSemilla("decora");
   for (let i = 0; i < 20; i++) {
@@ -195,10 +228,10 @@ test("el brillo solo cabe en decora y bandeja", () => {
   assert.equal(hablaSegura("Filas + ▲"), "Filas");
 });
 
-test("la guía: mirar avanza solo, la acción no, y servir espera su paso", () => {
+test("la guía: mirar avanza solo, servir espera su paso y el foco cae en la pizza igual", () => {
   assert.equal(GUIA_TOQUE_MS, 2000);
   assert.equal(guiaAvanzaConToque(0), true);
-  assert.equal(guiaAvanzaConToque(1), false);
+  assert.equal(guiaAvanzaConToque(1), true);
   assert.equal(guiaAvanzaConToque(2), true);
   assert.equal(guiaAvanzaConToque(3), false);
   assert.equal(textoDeGuia(0, textos), "Corta en 2 partes iguales.");
@@ -209,22 +242,26 @@ test("la guía: mirar avanza solo, la acción no, y servir espera su paso", () =
   assert.equal(vozDeGuia(3, textos, "tv"), "Pulsa OK para servir.");
   assert.equal(/[▲▼+−½¼]/.test([0, 1, 2, 3].map((p) => vozDeGuia(p, textos, "tv")).join(" ")), false);
   assert.doesNotMatch(textoDeGuia(3, textos, "tv"), /Toca/);
-  for (const paso of [0, 1, 2, 3]) {
+  for (const paso of [0, 1, 2]) {
     assert.equal(focoDeGuia(paso), "pedido-guia");
     assert.notEqual(focoDeGuia(paso), "saltar");
-    assert.equal(guiaServirActivo(paso), paso === 3);
   }
+  assert.equal(focoDeGuia(3), "buena");
+  assert.notEqual(focoDeGuia(3), "saltar");
+  assert.notEqual(focoDeGuia(3), "pedido-guia");
+  for (const paso of [0, 1, 2, 3]) assert.equal(guiaServirActivo(paso), paso === 3);
   assert.equal(siguientePasoGuia(0, { tipo: "toque", opcion: "mala" }), 1);
   assert.equal(siguientePasoGuia(0, { tipo: "toque", opcion: "buena" }), 1);
   assert.equal(siguientePasoGuia(0, { tipo: "ok" }), 1);
   assert.equal(siguientePasoGuia(0, { tipo: "tiempo" }), 1);
-  assert.equal(siguientePasoGuia(2, { tipo: "ok" }), 3);
-  let paso = 1;
-  for (let i = 0; i < 6; i++) paso = siguientePasoGuia(paso, { tipo: "ok", repetido: i > 0 });
-  assert.equal(paso, 1);
-  assert.equal(siguientePasoGuia(1, { tipo: "activar", opcion: "buena" }), 1);
+  assert.equal(siguientePasoGuia(1, { tipo: "toque" }), 2);
+  assert.equal(siguientePasoGuia(1, { tipo: "ok" }), 2);
+  assert.equal(siguientePasoGuia(1, { tipo: "tiempo" }), 2);
+  assert.equal(siguientePasoGuia(1, { tipo: "activar", opcion: "buena" }), 2);
   assert.equal(siguientePasoGuia(1, { tipo: "activar", opcion: "mala" }), 2);
-  paso = 3;
+  assert.equal(siguientePasoGuia(1, { tipo: "ok", repetido: true }), 1);
+  assert.equal(siguientePasoGuia(2, { tipo: "ok" }), 3);
+  let paso = 3;
   for (let i = 0; i < 4; i++) paso = siguientePasoGuia(paso, { tipo: "ok" });
   assert.equal(paso, 3);
   assert.equal(siguientePasoGuia(3, { tipo: "activar", opcion: "mala" }), 3);
@@ -238,6 +275,34 @@ test("la guía: mirar avanza solo, la acción no, y servir espera su paso", () =
   assert.equal(pistaVisible("¿Son del mismo tamaño?", { resuelto: true }), "");
   assert.equal(pistaVisible("¿Son del mismo tamaño?", { revelado: true }), "");
   assert.equal(pistaVisible("¿Son del mismo tamaño?", {}), "¿Son del mismo tamaño?");
+});
+
+test("con ¿Salir? abierto, Seguir y Salir no avanzan ningún paso de la guía", () => {
+  for (const paso of [0, 1, 2, 3]) {
+    const seguir = toqueDuranteGuia(paso, { dialogoAbierto: true, ir: "seguir-juego" });
+    assert.equal(seguir.accion, "seguir");
+    assert.equal(seguir.paso, paso);
+    const salir = toqueDuranteGuia(paso, { dialogoAbierto: true, ir: "salir-juego" });
+    assert.equal(salir.accion, "salir");
+    assert.equal(salir.paso, paso);
+    const fondo = toqueDuranteGuia(paso, { dialogoAbierto: true });
+    assert.equal(fondo.accion, "nada");
+    assert.equal(fondo.paso, paso);
+    const pizza = toqueDuranteGuia(paso, { dialogoAbierto: true, ir: "guia" });
+    assert.equal(pizza.accion, "nada");
+    assert.equal(pizza.paso, paso);
+  }
+  assert.equal(toqueDuranteGuia(0, { ir: "saltar-guia" }).accion, "saltar");
+  assert.equal(toqueDuranteGuia(1, {}).accion, "avanzar");
+  assert.equal(toqueDuranteGuia(1, {}).paso, 2);
+  assert.equal(toqueDuranteGuia(3, {}).accion, "jugar");
+  assert.equal(toqueDuranteGuia(3, {}).paso, 3);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const click = juego.slice(juego.indexOf('$main.addEventListener("click"'));
+  const corte = click.indexOf("Noli.alEntrar");
+  const cuerpo = corte > 0 ? click.slice(0, corte) : click;
+  assert.match(cuerpo, /toqueDuranteGuia/);
+  assert.ok(cuerpo.indexOf("if (saliendo)") < cuerpo.indexOf("if (esGuia())"));
 });
 
 test("sube con 8 de los últimos 10 y la propina es fija", () => {
@@ -286,11 +351,17 @@ test("el reto del día es determinista y la pizza gigante pide 8 y 5", () => {
   assert.equal(a.problemas.length, 8);
   assert.deepEqual(a.problemas.map((p) => p.texto), b.problemas.map((p) => p.texto));
   const c = retoDelDia("2026-10-09", 3, banco, textos);
-  assert.equal(c.tipo, "exigente");
-  assert.equal(c.problemas.length, 6);
-  assert.ok(c.problemas.every((p) => p.tipo === "doble" && p.pasos.length === 2));
+  const d = retoDelDia("2026-10-09", 3, banco, textos);
+  assert.equal(c.tipo, "gigante");
+  assert.equal(c.nombre, "Pizza gigante");
+  assert.equal(c.cuantos, 8);
+  assert.equal(c.necesita, 5);
+  assert.equal(c.problemas.length, 8);
+  assert.deepEqual(c.problemas.map((p) => p.texto), d.problemas.map((p) => p.texto));
+  assert.ok(c.problemas.every((p) => p.tipo !== "doble" && p.tipo !== "exigente"));
   assert.equal(a.segundos, undefined);
   assert.equal(c.tiempo, undefined);
+  assert.equal(/exigente/i.test(fs.readFileSync(new URL("../src/reto.js", import.meta.url), "utf8")), false);
 });
 
 test("la racha no regaña y atrás abre salir, también en la guía", () => {
@@ -306,6 +377,9 @@ test("la racha no regaña y atrás abre salir, también en la guía", () => {
   assert.equal(accionAtras("inicio"), "preguntar");
   assert.equal(accionAtras("guia"), "preguntar");
   assert.notEqual(accionAtras("guia"), "saltar-guia");
+  assert.equal(accionAtras("fin"), "preguntar");
+  assert.equal(accionAtras("finReto"), "preguntar");
+  assert.notEqual(accionAtras("fin"), "inicio");
   assert.equal(accionAtras("papas"), "progreso");
   assert.equal(marcarGuia(nuevo()).guiaHecha, true);
 });
@@ -316,11 +390,19 @@ test("las pistas crecen y contar no usa símbolos", () => {
   assert.equal(fasePista({ nivel: 3, tipo: "corta", ms: 20000 }), "encima");
   assert.equal(fasePista({ nivel: 3, tipo: "corta", ms: 40000 }), "completa");
   assert.equal(fasePista({ nivel: 3, tipo: "corta", ms: 0, fallo: true }), "completa");
-  assert.equal(fasePista({ nivel: 6, tipo: "decora" }), "completa");
-  assert.equal(fasePista({ nivel: 7, tipo: "bandeja" }), "completa");
+  assert.equal(fasePista({ nivel: 6, tipo: "decora", ms: 0 }), "frase");
+  assert.equal(fasePista({ nivel: 6, tipo: "decora", ms: 20000 }), "encima");
+  assert.equal(fasePista({ nivel: 6, tipo: "decora", ms: 40000 }), "completa");
+  assert.equal(fasePista({ nivel: 6, tipo: "decora", ms: 0, fallo: true }), "completa");
+  assert.equal(fasePista({ nivel: 7, tipo: "bandeja", ms: 0 }), "frase");
+  assert.equal(fasePista({ nivel: 7, tipo: "bandeja", ms: 20000 }), "encima");
+  assert.equal(fasePista({ nivel: 7, tipo: "bandeja", ms: 40000 }), "completa");
+  assert.equal(fasePista({ nivel: 7, tipo: "bandeja", ms: 0, fallo: true }), "completa");
   assert.equal(cuentaParaDominio({ nivel: 3, tipo: "corta", vioCompleta: true }), false);
   assert.equal(cuentaParaDominio({ nivel: 1, tipo: "forma", vioCompleta: true }), true);
-  assert.equal(cuentaParaDominio({ nivel: 6, tipo: "decora", vioCompleta: true }), true);
+  assert.equal(cuentaParaDominio({ nivel: 6, tipo: "decora", vioCompleta: true }), false);
+  assert.equal(cuentaParaDominio({ nivel: 6, tipo: "decora", vioCompleta: false }), true);
+  assert.equal(cuentaParaDominio({ nivel: 7, tipo: "bandeja", vioCompleta: false }), true);
   assert.equal(IDLE_COMPLETA_MS, 40000);
   const fase40 = fasePista({ nivel: 4, tipo: "corta", ms: IDLE_COMPLETA_MS, fallo: false });
   assert.equal(fase40, "completa");
@@ -328,7 +410,14 @@ test("las pistas crecen y contar no usa símbolos", () => {
   assert.equal(cuentaParaDominio({ nivel: 2, tipo: "corta", vioCompleta: true }), false);
   assert.equal(cuentaParaDominio({ nivel: 5, tipo: "corta", vioCompleta: true }), false);
   assert.equal(cuentaParaDominio({ nivel: 4, tipo: "corta", vioCompleta: false }), true);
-  assert.equal(cuentaParaDominio({ nivel: 7, tipo: "bandeja", vioCompleta: true }), true);
+  assert.equal(cuentaParaDominio({ nivel: 7, tipo: "bandeja", vioCompleta: true }), false);
+  const deco = crearPedido(6, rngConSemilla("pista-deco"), banco, textos, { bien: 0 });
+  assert.equal(textoPista(deco, "frase", textos, "tactil"), "Toca una rebanada");
+  assert.equal(textoPista(deco, "encima", textos, "tv"), "Pulsa OK en una rebanada");
+  assert.equal(textoPista(deco, "completa", textos, "tv"), deco.pista);
+  const ban = crearPedido(7, rngConSemilla("pista-ban"), banco, textos);
+  assert.equal(textoPista(ban, "frase", textos, "tv"), "Pulsa ▲");
+  assert.equal(textoPista(ban, "completa", textos, "tactil"), ban.pista);
 });
 
 test("responder bien y mal", () => {
