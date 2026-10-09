@@ -1,0 +1,20 @@
+{
+  "_ayuda": "Paleta de la Pasarela. id: lo que usan prendas.json y temas.json. es/en: nombre que ve y escucha Noelia. hex: color en la escena 3D y en el dibujo 2D. Qué colores se abren en cada nivel: desbloqueos.json.",
+  "colores": [
+    { "id": "rosa",     "es": "rosa",     "en": "pink",       "hex": "#ff7eb6" },
+    { "id": "rojo",     "es": "rojo",     "en": "red",        "hex": "#ef4343" },
+    { "id": "naranja",  "es": "naranja",  "en": "orange",     "hex": "#ff9a3c" },
+    { "id": "amarillo", "es": "amarillo", "en": "yellow",     "hex": "#ffd23f" },
+    { "id": "verde",    "es": "verde",    "en": "green",      "hex": "#3cbf7e" },
+    { "id": "turquesa", "es": "turquesa", "en": "turquoise",  "hex": "#2ec4c4" },
+    { "id": "azul",     "es": "azul",     "en": "blue",       "hex": "#4c7dff" },
+    { "id": "celeste",  "es": "celeste",  "en": "light blue", "hex": "#8fd3ff" },
+    { "id": "morado",   "es": "morado",   "en": "purple",     "hex": "#8f5cf0" },
+    { "id": "lila",     "es": "lila",     "en": "lilac",      "hex": "#d3a6ff" },
+    { "id": "blanco",   "es": "blanco",   "en": "white",      "hex": "#f7f3ee" },
+    { "id": "negro",    "es": "negro",    "en": "black",      "hex": "#2b2236" },
+    { "id": "cafe",     "es": "café",     "en": "brown",      "hex": "#8a5a3b" },
+    { "id": "dorado",   "es": "dorado",   "en": "gold",       "hex": "#e3b12a" },
+    { "id": "plateado", "es": "plateado", "en": "silver",     "hex": "#c3c7d3" }
+  ]
+}

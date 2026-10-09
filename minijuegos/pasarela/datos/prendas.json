@@ -1,0 +1,430 @@
+{
+  "_ayuda": "Ropa de la Pasarela. Cada prenda se arma con piezas (formas sencillas) pegadas a una parte del cuerpo (ancla). Cómo agregar una: docs/ASSETS.md. Formas, anclas y medidas del cuerpo: docs/ESCENA-3D.md. genero/plural: para los comentarios en español (el/la/los/las). en: nombre en inglés; enPlural: true si en inglés va sin 'a' (shorts, sneakers). etiquetas: con qué temas va (config.json). colores: los que puede tener (los que se ven dependen del nivel, desbloqueos.json). secundario: color fijo de los detalles (id de colores.json o #hex). lugar: solo accesorios. dibujo2d: figura del modo sencillo (src/ui/dibujo2d.js).",
+  "prendas": [
+    { "id": "p-melena", "categoria": "peinado", "es": "melena corta", "genero": "f", "en": "short hair", "enPlural": true,
+      "etiquetas": ["casual", "escuela", "deportivo"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste"], "dibujo2d": "melena",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.228, "theta": [0, 72], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.234, "phi": [175, 190], "theta": [0, 118], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, 0.0], "r": 0.232, "phi": [55, 70], "theta": [28, 30], "col": "p" }
+      ] },
+    { "id": "p-cola", "categoria": "peinado", "es": "cola de caballo", "genero": "f", "en": "ponytail",
+      "etiquetas": ["deportivo", "escuela", "casual", "playa"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste"], "secundario": "rosa", "dibujo2d": "cola",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.228, "theta": [0, 80], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.232, "phi": [180, 180], "theta": [0, 100], "col": "p" },
+        { "f": "capsula", "a": "cabeza", "pos": [0, 0.13, -0.29], "r": 0.065, "largo": 0.24, "rot": [20, 0, 0], "col": "p" },
+        { "f": "toro", "a": "cabeza", "pos": [0, 0.28, -0.24], "r": 0.05, "grosor": 0.018, "rot": [70, 0, 0], "col": "s" }
+      ] },
+    { "id": "p-coletas", "categoria": "peinado", "es": "coletas", "genero": "f", "plural": true, "en": "pigtails", "enPlural": true,
+      "etiquetas": ["escuela", "pijama", "casual"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste"], "secundario": "rojo", "dibujo2d": "coletas",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.228, "theta": [0, 80], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.232, "phi": [180, 180], "theta": [0, 100], "col": "p" },
+        { "f": "capsula", "a": "cabeza", "pos": [0.25, 0.1, -0.05], "r": 0.055, "largo": 0.2, "rot": [0, 0, 22], "col": "p", "espejo": true },
+        { "f": "esfera", "a": "cabeza", "pos": [0.215, 0.22, -0.05], "r": 0.035, "col": "s", "espejo": true }
+      ] },
+    { "id": "p-chongos", "categoria": "peinado", "es": "dos chongos", "genero": "m", "plural": true, "en": "space buns", "enPlural": true,
+      "etiquetas": ["fiesta", "rock", "casual"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste", "turquesa"], "dibujo2d": "chongos",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.228, "theta": [0, 80], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.232, "phi": [180, 180], "theta": [0, 100], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0.14, 0.37, -0.04], "r": 0.085, "col": "p", "espejo": true }
+      ] },
+    { "id": "p-trenza", "categoria": "peinado", "es": "trenza larga", "genero": "f", "en": "long braid",
+      "etiquetas": ["aventura", "flores", "princesa", "escuela"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste"], "secundario": "verde", "dibujo2d": "trenza",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.228, "theta": [0, 82], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.233, "phi": [180, 180], "theta": [0, 105], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.05, -0.25], "r": 0.065, "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, -0.05, -0.26], "r": 0.06, "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, -0.15, -0.26], "r": 0.056, "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, -0.25, -0.25], "r": 0.05, "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, -0.33, -0.24], "r": 0.03, "col": "s" }
+      ] },
+    { "id": "p-rizos", "categoria": "peinado", "es": "rizos", "genero": "m", "plural": true, "en": "curly hair", "enPlural": true,
+      "etiquetas": ["fiesta", "playa", "verano", "magia"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste"], "dibujo2d": "rizos",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.21, -0.01], "r": 0.232, "theta": [0, 75], "col": "p" },
+        { "f": "anillo", "a": "cabeza", "pos": [0, 0.1, -0.02], "radio": 0.215, "n": 9, "arco": [65, 230], "pieza": { "f": "esfera", "r": 0.085, "col": "p" } },
+        { "f": "anillo", "a": "cabeza", "pos": [0, 0.27, -0.01], "radio": 0.19, "n": 9, "arco": [50, 260], "pieza": { "f": "esfera", "r": 0.075, "col": "p" } }
+      ] },
+    { "id": "p-bailarina", "categoria": "peinado", "es": "chongo de bailarina", "genero": "m", "en": "ballerina bun",
+      "etiquetas": ["elegante", "princesa"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado"], "secundario": "plateado", "dibujo2d": "bailarina",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.226, "theta": [0, 84], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.229, "phi": [180, 180], "theta": [0, 122], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.39, -0.1], "r": 0.095, "col": "p" },
+        { "f": "toro", "a": "cabeza", "pos": [0, 0.37, -0.085], "r": 0.085, "grosor": 0.014, "rot": [65, 0, 0], "col": "s" }
+      ] },
+    { "id": "p-suelto", "categoria": "peinado", "es": "pelo largo suelto", "genero": "m", "en": "long hair", "enPlural": true,
+      "etiquetas": ["princesa", "magia", "elegante", "playa"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste", "lila"], "dibujo2d": "suelto",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, -0.005], "r": 0.228, "theta": [0, 78], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.19, -0.01], "r": 0.234, "phi": [180, 180], "theta": [0, 118], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, -0.12, -0.11], "r": 0.22, "esc": [1.08, 1.5, 0.55], "phi": [180, 180], "col": "p" },
+        { "f": "capsula", "a": "cabeza", "pos": [0.2, -0.04, 0.02], "r": 0.05, "largo": 0.3, "rot": [0, 0, 6], "col": "p", "espejo": true }
+      ] },
+
+    { "id": "a-camiseta", "categoria": "arriba", "es": "camiseta", "genero": "f", "en": "T-shirt",
+      "etiquetas": ["casual", "escuela", "deportivo", "playa"], "colores": ["blanco", "rosa", "azul", "amarillo", "rojo", "verde", "celeste", "morado", "negro", "naranja"], "dibujo2d": "camiseta",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.42, -0.05], "r": [0.168, 0.168], "z": 0.74, "tapa": "arriba", "col": "p" },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.11], "r": [0.062, 0.058], "col": "p", "espejo": true }
+      ] },
+    { "id": "a-tirantes", "categoria": "arriba", "es": "blusa de tirantes", "genero": "f", "en": "tank top",
+      "etiquetas": ["verano", "playa", "deportivo"], "colores": ["blanco", "rosa", "amarillo", "celeste", "turquesa", "naranja", "lila", "verde"], "dibujo2d": "tirantes",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.34, -0.05], "r": [0.164, 0.168], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.37, 0], "tam": [0.04, 0.07, 0.25], "col": "p", "espejo": true }
+      ] },
+    { "id": "a-sueter", "categoria": "arriba", "es": "suéter", "genero": "m", "en": "sweater",
+      "etiquetas": ["frio", "escuela", "casual"], "colores": ["rojo", "azul", "verde", "morado", "rosa", "amarillo", "blanco", "cafe", "turquesa"], "secundario": "blanco", "dibujo2d": "sueter",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.43, -0.07], "r": [0.172, 0.172], "z": 0.76, "tapa": "arriba", "col": "p" },
+        { "f": "toro", "a": "torso", "pos": [0, 0.43, 0], "r": 0.068, "grosor": 0.026, "rot": [90, 0, 0], "col": "p" },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.064, 0.058], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.058, 0.054], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "torso", "y": [0.2, 0.15], "r": [0.174, 0.174], "z": 0.76, "col": "s" }
+      ] },
+    { "id": "a-chamarra", "categoria": "arriba", "es": "chamarra de invierno", "genero": "f", "en": "winter jacket",
+      "etiquetas": ["frio", "aventura"], "colores": ["rojo", "azul", "rosa", "morado", "amarillo", "verde", "blanco", "negro", "turquesa", "plateado"], "secundario": "blanco", "dibujo2d": "chamarra",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.43, -0.1], "r": [0.19, 0.195], "z": 0.8, "tapa": "arriba", "col": "p" },
+        { "f": "toro", "a": "torso", "pos": [0, 0.43, 0], "r": 0.085, "grosor": 0.045, "rot": [90, 0, 0], "col": "s" },
+        { "f": "tubo", "a": "brazoI", "y": [0.04, -0.2], "r": [0.075, 0.07], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.07, 0.066], "col": "p", "espejo": true },
+        { "f": "toro", "a": "antebrazoI", "pos": [0, -0.16, 0], "r": 0.062, "grosor": 0.02, "rot": [90, 0, 0], "col": "s", "espejo": true },
+        { "f": "caja", "a": "torso", "pos": [0, 0.16, 0.152], "tam": [0.02, 0.5, 0.012], "col": "s" }
+      ] },
+    { "id": "a-sudadera", "categoria": "arriba", "es": "sudadera", "genero": "f", "en": "hoodie",
+      "etiquetas": ["deportivo", "frio", "casual"], "colores": ["rosa", "lila", "celeste", "azul", "verde", "morado", "negro", "amarillo", "rojo", "turquesa"], "secundario": "blanco", "dibujo2d": "sudadera",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.43, -0.08], "r": [0.176, 0.178], "z": 0.78, "tapa": "arriba", "col": "p" },
+        { "f": "esfera", "a": "torso", "pos": [0, 0.46, -0.1], "r": 0.13, "esc": [1.25, 0.75, 0.85], "col": "p" },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.066, 0.06], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.06, 0.056], "col": "p", "espejo": true },
+        { "f": "caja", "a": "torso", "pos": [0, 0.06, 0.135], "tam": [0.2, 0.1, 0.02], "col": "p" },
+        { "f": "capsula", "a": "torso", "pos": [0.04, 0.34, 0.135], "r": 0.008, "largo": 0.1, "col": "s", "espejo": true }
+      ] },
+    { "id": "a-camisa", "categoria": "arriba", "es": "camisa de botones", "genero": "f", "en": "button-up shirt",
+      "etiquetas": ["escuela", "elegante"], "colores": ["blanco", "celeste", "rosa", "lila", "amarillo", "azul", "verde"], "secundario": "blanco", "dibujo2d": "camisa",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.42, -0.05], "r": [0.168, 0.168], "z": 0.74, "tapa": "arriba", "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.05, 0.415, 0.08], "tam": [0.09, 0.025, 0.06], "rot": [0, 0, -20], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.06, 0.056], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.056, 0.052], "col": "p", "espejo": true },
+        { "f": "esfera", "a": "torso", "pos": [0, 0.33, 0.128], "r": 0.012, "col": "s" },
+        { "f": "esfera", "a": "torso", "pos": [0, 0.22, 0.13], "r": 0.012, "col": "s" },
+        { "f": "esfera", "a": "torso", "pos": [0, 0.11, 0.13], "r": 0.012, "col": "s" }
+      ] },
+    { "id": "a-abombada", "categoria": "arriba", "es": "blusa de princesa", "genero": "f", "en": "puffy blouse",
+      "etiquetas": ["princesa", "elegante", "fiesta"], "colores": ["rosa", "lila", "blanco", "celeste", "amarillo", "dorado", "morado"], "secundario": "dorado", "dibujo2d": "abombada",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.4, -0.05], "r": [0.166, 0.166], "z": 0.74, "tapa": "arriba", "col": "p" },
+        { "f": "esfera", "a": "brazoI", "pos": [0.01, -0.05, 0], "r": 0.095, "col": "p", "espejo": true },
+        { "f": "toro", "a": "torso", "pos": [0, 0.4, 0], "r": 0.11, "grosor": 0.018, "rot": [90, 0, 0], "esc": [1, 0.75, 1], "col": "s" }
+      ] },
+    { "id": "a-chaqueta", "categoria": "arriba", "es": "chaqueta de cuero", "genero": "f", "en": "leather jacket",
+      "etiquetas": ["rock"], "colores": ["negro", "cafe", "rojo", "morado", "rosa", "plateado"], "secundario": "plateado", "dibujo2d": "chaqueta",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.43, -0.07], "r": [0.18, 0.18], "z": 0.78, "tapa": "arriba", "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.06, 0.33, 0.14], "tam": [0.07, 0.16, 0.02], "rot": [0, 0, -18], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.066, 0.06], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.06, 0.056], "col": "p", "espejo": true },
+        { "f": "caja", "a": "torso", "pos": [0.03, 0.13, 0.143], "tam": [0.012, 0.36, 0.01], "col": "s" },
+        { "f": "octaedro", "a": "torso", "pos": [-0.09, 0.3, 0.15], "r": 0.02, "col": "s" }
+      ] },
+    { "id": "a-pijama", "categoria": "arriba", "es": "camisa de pijama", "genero": "f", "en": "pajama top",
+      "etiquetas": ["pijama"], "colores": ["celeste", "rosa", "lila", "amarillo", "verde", "morado", "azul"], "secundario": "blanco", "dibujo2d": "pijama-arriba",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.42, -0.07], "r": [0.172, 0.172], "z": 0.76, "tapa": "arriba", "col": "p" },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.064, 0.06], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.06, 0.056], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [-0.13, -0.16], "r": [0.061, 0.061], "col": "s", "espejo": true },
+        { "f": "esfera", "a": "torso", "pos": [0.07, 0.25, 0.125], "r": 0.022, "col": "s" },
+        { "f": "esfera", "a": "torso", "pos": [-0.06, 0.12, 0.13], "r": 0.022, "col": "s" },
+        { "f": "esfera", "a": "torso", "pos": [-0.02, 0.3, 0.128], "r": 0.016, "col": "s" }
+      ] },
+    { "id": "a-brillos", "categoria": "arriba", "es": "top de brillos", "genero": "m", "en": "sparkly top",
+      "etiquetas": ["fiesta", "brillo", "rock"], "colores": ["plateado", "dorado", "rosa", "morado", "turquesa", "lila", "negro"], "secundario": "blanco", "brillo": true, "dibujo2d": "brillos",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.36, 0.06], "r": [0.164, 0.166], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.38, 0], "tam": [0.035, 0.06, 0.25], "col": "p", "espejo": true },
+        { "f": "octaedro", "a": "torso", "pos": [0.06, 0.28, 0.125], "r": 0.016, "col": "s" },
+        { "f": "octaedro", "a": "torso", "pos": [-0.05, 0.2, 0.128], "r": 0.016, "col": "s" },
+        { "f": "octaedro", "a": "torso", "pos": [0.02, 0.12, 0.128], "r": 0.016, "col": "s" }
+      ] },
+
+    { "id": "b-shorts", "categoria": "abajo", "es": "shorts", "genero": "m", "plural": true, "en": "shorts", "enPlural": true,
+      "etiquetas": ["verano", "playa", "deportivo", "casual"], "colores": ["azul", "rosa", "blanco", "negro", "amarillo", "verde", "rojo", "celeste", "cafe", "morado"], "dibujo2d": "shorts",
+      "piezas": [
+        { "f": "tubo", "a": "cadera", "y": [0.03, -0.11], "r": [0.168, 0.172], "z": 0.78, "col": "p" },
+        { "f": "tubo", "a": "musloI", "y": [0.02, -0.15], "r": [0.088, 0.085], "col": "p", "espejo": true }
+      ] },
+    { "id": "b-falda", "categoria": "abajo", "es": "falda corta", "genero": "f", "en": "skirt",
+      "etiquetas": ["escuela", "fiesta", "casual", "verano"], "colores": ["rosa", "azul", "rojo", "negro", "morado", "amarillo", "blanco", "verde", "lila", "turquesa"], "dibujo2d": "falda",
+      "piezas": [
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.24], "r": [0.17, 0.28], "z": 0.86, "col": "p" }
+      ] },
+    { "id": "b-pantalon", "categoria": "abajo", "es": "pantalón de mezclilla", "genero": "m", "en": "jeans", "enPlural": true,
+      "etiquetas": ["casual", "escuela", "aventura", "rock"], "colores": ["azul", "celeste", "negro", "blanco", "rosa", "morado"], "secundario": "dorado", "dibujo2d": "pantalon",
+      "piezas": [
+        { "f": "esfera", "a": "piernaI", "pos": [0, 0, 0], "r": 0.072, "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.03, -0.1], "r": [0.168, 0.172], "z": 0.78, "col": "p" },
+        { "f": "tubo", "a": "musloI", "y": [0.02, -0.35], "r": [0.088, 0.072], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": [0.01, -0.27], "r": [0.068, 0.066], "col": "p", "espejo": true },
+        { "f": "esfera", "a": "cadera", "pos": [0, 0.01, 0.13], "r": 0.012, "col": "s" }
+      ] },
+    { "id": "b-leggings", "categoria": "abajo", "es": "leggings", "genero": "m", "plural": true, "en": "leggings", "enPlural": true,
+      "etiquetas": ["deportivo", "casual"], "colores": ["negro", "rosa", "morado", "azul", "turquesa", "lila", "celeste"], "secundario": "blanco", "dibujo2d": "leggings",
+      "piezas": [
+        { "f": "esfera", "a": "piernaI", "pos": [0, 0, 0], "r": 0.066, "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.03, -0.1], "r": [0.164, 0.168], "z": 0.76, "col": "p" },
+        { "f": "tubo", "a": "musloI", "y": [0.02, -0.35], "r": [0.08, 0.066], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": [0.01, -0.24], "r": [0.061, 0.058], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "musloI", "y": [0.0, -0.3], "r": [0.081, 0.068], "z": 0.25, "col": "s", "pos": [0.06, 0, 0], "espejo": true }
+      ] },
+    { "id": "b-nieve", "categoria": "abajo", "es": "pantalón de nieve", "genero": "m", "en": "snow pants", "enPlural": true,
+      "etiquetas": ["frio", "aventura"], "colores": ["azul", "negro", "rojo", "morado", "rosa", "blanco", "plateado"], "dibujo2d": "nieve",
+      "piezas": [
+        { "f": "esfera", "a": "piernaI", "pos": [0, 0, 0], "r": 0.088, "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.06, -0.12], "r": [0.185, 0.19], "z": 0.82, "col": "p" },
+        { "f": "tubo", "a": "musloI", "y": [0.02, -0.35], "r": [0.1, 0.088], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": [0.01, -0.22], "r": [0.084, 0.084], "col": "p", "espejo": true }
+      ] },
+    { "id": "b-tutu", "categoria": "abajo", "es": "falda de tutú", "genero": "f", "en": "tutu",
+      "etiquetas": ["fiesta", "princesa", "magia"], "colores": ["rosa", "lila", "blanco", "celeste", "morado", "turquesa", "dorado"], "secundario": "blanco", "dibujo2d": "tutu",
+      "piezas": [
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.06], "r": [0.17, 0.172], "z": 0.8, "col": "p" },
+        { "f": "tubo", "a": "cadera", "y": [-0.0, -0.15], "r": [0.2, 0.37], "z": 0.92, "col": "p", "opacidad": 0.85 },
+        { "f": "tubo", "a": "cadera", "y": [-0.03, -0.12], "r": [0.21, 0.4], "z": 0.92, "col": "s", "opacidad": 0.55 }
+      ] },
+    { "id": "b-falda-larga", "categoria": "abajo", "es": "falda larga", "genero": "f", "en": "long skirt",
+      "etiquetas": ["flores", "elegante", "princesa"], "colores": ["verde", "rosa", "lila", "azul", "amarillo", "blanco", "naranja", "rojo", "negro"], "secundario": "blanco", "dibujo2d": "falda-larga",
+      "piezas": [
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.62], "r": [0.17, 0.36], "z": 0.88, "col": "p" },
+        { "f": "tubo", "a": "cadera", "y": [-0.52, -0.56], "r": [0.335, 0.348], "z": 0.88, "col": "s" }
+      ] },
+    { "id": "b-pijama", "categoria": "abajo", "es": "pantalón de pijama", "genero": "m", "en": "pajama pants", "enPlural": true,
+      "etiquetas": ["pijama"], "colores": ["celeste", "rosa", "lila", "amarillo", "verde", "morado", "azul"], "secundario": "blanco", "dibujo2d": "pijama-abajo",
+      "piezas": [
+        { "f": "esfera", "a": "piernaI", "pos": [0, 0, 0], "r": 0.085, "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.03, -0.1], "r": [0.17, 0.174], "z": 0.78, "col": "p" },
+        { "f": "tubo", "a": "musloI", "y": [0.02, -0.35], "r": [0.095, 0.085], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": [0.01, -0.25], "r": [0.08, 0.082], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": [-0.21, -0.25], "r": [0.083, 0.083], "col": "s", "espejo": true }
+      ] },
+
+    { "id": "v-verano", "categoria": "vestido", "es": "vestido de verano", "genero": "m", "en": "sundress",
+      "etiquetas": ["verano", "playa", "flores"], "colores": ["amarillo", "rosa", "celeste", "blanco", "verde", "naranja", "lila", "turquesa"], "secundario": "blanco", "dibujo2d": "v-verano",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.35, -0.04], "r": [0.164, 0.168], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.37, 0], "tam": [0.03, 0.06, 0.25], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.27], "r": [0.172, 0.31], "z": 0.88, "col": "p" },
+        { "f": "anillo", "a": "cadera", "pos": [0, -0.2, 0], "radio": 0.28, "n": 9, "esc": [1, 1, 0.88], "pieza": { "f": "esfera", "r": 0.02, "col": "s" } }
+      ] },
+    { "id": "v-banio", "categoria": "vestido", "es": "traje de baño", "genero": "m", "en": "swimsuit",
+      "etiquetas": ["playa", "verano", "deportivo"], "colores": ["turquesa", "rosa", "azul", "rojo", "amarillo", "morado", "verde", "naranja"], "secundario": "blanco", "dibujo2d": "banio",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.34, -0.03], "r": [0.164, 0.166], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.37, 0], "tam": [0.03, 0.06, 0.25], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.09], "r": [0.166, 0.16], "z": 0.78, "col": "p" },
+        { "f": "tubo", "a": "cadera", "y": [-0.08, -0.12], "r": [0.2, 0.25], "z": 0.85, "col": "s" }
+      ] },
+    { "id": "v-fiesta", "categoria": "vestido", "es": "vestido de fiesta", "genero": "m", "en": "party dress",
+      "etiquetas": ["fiesta", "brillo", "elegante"], "colores": ["rosa", "morado", "rojo", "celeste", "dorado", "lila", "turquesa", "amarillo"], "secundario": "dorado", "dibujo2d": "v-fiesta",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.37, -0.04], "r": [0.165, 0.168], "z": 0.74, "col": "p" },
+        { "f": "esfera", "a": "brazoI", "pos": [0.0, -0.02, 0], "r": 0.07, "esc": [1, 0.8, 1], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.06, 0.02], "r": [0.171, 0.171], "z": 0.76, "col": "s" },
+        { "f": "tubo", "a": "cadera", "y": [0.03, -0.3], "r": [0.172, 0.36], "z": 0.9, "col": "p" },
+        { "f": "octaedro", "a": "cadera", "pos": [0.1, 0.04, 0.12], "r": 0.03, "col": "s" }
+      ] },
+    { "id": "v-princesa", "categoria": "vestido", "es": "vestido de princesa", "genero": "m", "en": "ball gown",
+      "etiquetas": ["princesa", "elegante", "brillo"], "colores": ["rosa", "celeste", "lila", "amarillo", "blanco", "dorado", "morado"], "secundario": "dorado", "dibujo2d": "v-princesa",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.37, -0.04], "r": [0.165, 0.165], "z": 0.74, "col": "p" },
+        { "f": "esfera", "a": "brazoI", "pos": [0.01, -0.04, 0], "r": 0.095, "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.74], "r": [0.172, 0.5], "z": 0.95, "tapa": "abajo", "col": "p" },
+        { "f": "tubo", "a": "cadera", "y": [-0.64, -0.7], "r": [0.465, 0.49], "z": 0.95, "col": "s" },
+        { "f": "toro", "a": "torso", "pos": [0, 0.37, 0], "r": 0.15, "grosor": 0.014, "rot": [90, 0, 0], "esc": [1, 0.74, 1], "col": "s" }
+      ] },
+    { "id": "v-gala", "categoria": "vestido", "es": "vestido de gala", "genero": "m", "en": "evening gown",
+      "etiquetas": ["elegante", "brillo"], "colores": ["negro", "rojo", "morado", "dorado", "plateado", "azul", "turquesa"], "secundario": "plateado", "brillo": true, "dibujo2d": "v-gala",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.36, -0.04], "r": [0.164, 0.166], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [-0.085, 0.37, 0], "tam": [0.04, 0.07, 0.25], "col": "p" },
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.74], "r": [0.17, 0.3], "z": 0.9, "tapa": "abajo", "col": "p" },
+        { "f": "anillo", "a": "torso", "pos": [0, 0.33, 0], "radio": 0.163, "n": 12, "esc": [1, 1, 0.74], "pieza": { "f": "octaedro", "r": 0.012, "col": "s" } }
+      ] },
+    { "id": "v-mameluco", "categoria": "vestido", "es": "pijama de una pieza", "genero": "f", "en": "onesie",
+      "etiquetas": ["pijama", "frio"], "colores": ["rosa", "celeste", "amarillo", "lila", "verde", "morado", "blanco", "cafe"], "secundario": "blanco", "dibujo2d": "mameluco",
+      "piezas": [
+        { "f": "esfera", "a": "piernaI", "pos": [0, 0, 0], "r": 0.086, "col": "p", "espejo": true },
+        { "f": "tubo", "a": "torso", "y": [0.43, -0.08], "r": [0.18, 0.18], "z": 0.8, "tapa": "arriba", "col": "p" },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.068, 0.062], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.062, 0.058], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.03, -0.12], "r": [0.18, 0.18], "z": 0.8, "col": "p" },
+        { "f": "tubo", "a": "musloI", "y": [0.02, -0.35], "r": [0.098, 0.088], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": [0.01, -0.26], "r": [0.084, 0.08], "col": "p", "espejo": true },
+        { "f": "caja", "a": "torso", "pos": [0, 0.2, 0.15], "tam": [0.14, 0.2, 0.01], "col": "s" },
+        { "f": "esfera", "a": "torso", "pos": [0, 0.49, -0.1], "r": 0.13, "esc": [1.3, 0.75, 0.85], "col": "p" }
+      ] },
+    { "id": "v-hada", "categoria": "vestido", "es": "vestido de hada", "genero": "m", "en": "fairy dress",
+      "etiquetas": ["magia", "flores", "princesa"], "colores": ["verde", "lila", "turquesa", "rosa", "celeste", "dorado"], "secundario": "lila", "brillo": true, "dibujo2d": "v-hada",
+      "piezas": [
+        { "f": "tubo", "a": "torso", "y": [0.36, -0.04], "r": [0.164, 0.166], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.37, 0], "tam": [0.03, 0.06, 0.25], "col": "p", "espejo": true },
+        { "f": "tubo", "a": "cadera", "y": [0.04, -0.12], "r": [0.172, 0.24], "z": 0.88, "col": "p" },
+        { "f": "anillo", "a": "cadera", "pos": [0, -0.2, 0], "radio": 0.24, "n": 10, "esc": [1, 1, 0.9], "pieza": { "f": "cono", "r": 0.07, "alto": 0.2, "rot": [180, 0, 0], "col": "p" } },
+        { "f": "anillo", "a": "cadera", "pos": [0, -0.16, 0], "radio": 0.25, "n": 10, "desfase": 18, "esc": [1, 1, 0.9], "pieza": { "f": "cono", "r": 0.06, "alto": 0.16, "rot": [180, 0, 0], "col": "s" } }
+      ] },
+
+    { "id": "z-tenis", "categoria": "zapatos", "es": "tenis", "genero": "m", "plural": true, "en": "sneakers", "enPlural": true,
+      "etiquetas": ["deportivo", "escuela", "casual"], "colores": ["blanco", "rosa", "azul", "negro", "rojo", "verde", "morado", "amarillo", "turquesa"], "secundario": "blanco", "dibujo2d": "tenis",
+      "piezas": [
+        { "f": "caja", "a": "pieI", "pos": [0, -0.06, 0.045], "tam": [0.13, 0.11, 0.25], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, -0.12, 0.05], "tam": [0.14, 0.035, 0.27], "col": "s", "espejo": true }
+      ] },
+    { "id": "z-sandalias", "categoria": "zapatos", "es": "sandalias", "genero": "f", "plural": true, "en": "sandals", "enPlural": true,
+      "etiquetas": ["playa", "verano", "flores"], "colores": ["cafe", "rosa", "blanco", "amarillo", "turquesa", "naranja", "dorado"], "dibujo2d": "sandalias",
+      "piezas": [
+        { "f": "caja", "a": "pieI", "pos": [0, -0.125, 0.05], "tam": [0.13, 0.03, 0.25], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, -0.07, 0.08], "tam": [0.125, 0.025, 0.05], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, -0.04, -0.03], "tam": [0.125, 0.025, 0.05], "col": "p", "espejo": true }
+      ] },
+    { "id": "z-botas-nieve", "categoria": "zapatos", "es": "botas de nieve", "genero": "f", "plural": true, "en": "snow boots", "enPlural": true,
+      "etiquetas": ["frio", "aventura"], "colores": ["rosa", "cafe", "negro", "rojo", "morado", "azul", "blanco", "plateado"], "secundario": "blanco", "dibujo2d": "botas-nieve",
+      "piezas": [
+        { "f": "tubo", "a": "piernaI", "y": [-0.12, -0.31], "r": [0.085, 0.085], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, -0.065, 0.04], "tam": [0.15, 0.13, 0.27], "col": "p", "espejo": true },
+        { "f": "toro", "a": "piernaI", "pos": [0, -0.12, 0], "r": 0.085, "grosor": 0.03, "rot": [90, 0, 0], "col": "s", "espejo": true }
+      ] },
+    { "id": "z-pantuflas", "categoria": "zapatos", "es": "pantuflas de conejo", "genero": "f", "plural": true, "en": "bunny slippers", "enPlural": true,
+      "etiquetas": ["pijama"], "colores": ["rosa", "blanco", "lila", "celeste", "amarillo"], "secundario": "rosa", "dibujo2d": "pantuflas",
+      "piezas": [
+        { "f": "esfera", "a": "pieI", "pos": [0, -0.07, 0.05], "r": 0.1, "esc": [0.8, 0.65, 1.4], "col": "p", "espejo": true },
+        { "f": "capsula", "a": "pieI", "pos": [0.03, 0.0, 0.12], "r": 0.022, "largo": 0.08, "rot": [-20, 0, -15], "col": "p", "espejo": true },
+        { "f": "capsula", "a": "pieI", "pos": [-0.03, 0.0, 0.12], "r": 0.022, "largo": 0.08, "rot": [-20, 0, 15], "col": "p", "espejo": true },
+        { "f": "esfera", "a": "pieI", "pos": [0, -0.06, 0.185], "r": 0.016, "col": "s", "espejo": true }
+      ] },
+    { "id": "z-zapatillas", "categoria": "zapatos", "es": "zapatillas de fiesta", "genero": "f", "plural": true, "en": "party shoes", "enPlural": true,
+      "etiquetas": ["fiesta", "elegante", "princesa", "brillo"], "colores": ["rosa", "dorado", "plateado", "rojo", "negro", "lila", "blanco", "celeste"], "secundario": "blanco", "brillo": true, "dibujo2d": "zapatillas",
+      "piezas": [
+        { "f": "caja", "a": "pieI", "pos": [0, -0.075, 0.05], "tam": [0.125, 0.09, 0.24], "col": "p", "espejo": true },
+        { "f": "octaedro", "a": "pieI", "pos": [0, -0.04, 0.16], "r": 0.025, "col": "s", "espejo": true }
+      ] },
+    { "id": "z-botas", "categoria": "zapatos", "es": "botas", "genero": "f", "plural": true, "en": "boots", "enPlural": true,
+      "etiquetas": ["rock", "aventura", "escuela"], "colores": ["negro", "cafe", "rojo", "blanco", "morado", "rosa"], "secundario": "plateado", "dibujo2d": "botas",
+      "piezas": [
+        { "f": "tubo", "a": "piernaI", "y": [-0.04, -0.31], "r": [0.07, 0.072], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, -0.06, 0.045], "tam": [0.135, 0.12, 0.25], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, -0.125, 0.045], "tam": [0.14, 0.03, 0.26], "col": "negro", "espejo": true },
+        { "f": "esfera", "a": "piernaI", "pos": [0.072, -0.2, 0], "r": 0.012, "col": "s", "espejo": true }
+      ] },
+    { "id": "z-ballet", "categoria": "zapatos", "es": "zapatos de ballet", "genero": "m", "plural": true, "en": "ballet flats", "enPlural": true,
+      "etiquetas": ["princesa", "elegante", "magia"], "colores": ["rosa", "blanco", "lila", "dorado", "plateado", "negro", "celeste"], "secundario": "rosa", "dibujo2d": "ballet",
+      "piezas": [
+        { "f": "caja", "a": "pieI", "pos": [0, -0.09, 0.05], "tam": [0.122, 0.07, 0.235], "col": "p", "espejo": true },
+        { "f": "toro", "a": "piernaI", "pos": [0, -0.25, 0], "r": 0.058, "grosor": 0.009, "rot": [90, 0, 0], "col": "s", "espejo": true },
+        { "f": "toro", "a": "piernaI", "pos": [0, -0.2, 0], "r": 0.058, "grosor": 0.009, "rot": [90, 0, 0], "col": "s", "espejo": true }
+      ] },
+
+    { "id": "x-lentes", "categoria": "accesorio", "lugar": "cara", "es": "lentes de sol", "genero": "m", "plural": true, "en": "sunglasses", "enPlural": true,
+      "etiquetas": ["playa", "verano", "rock"], "colores": ["rosa", "negro", "rojo", "amarillo", "blanco", "turquesa", "dorado", "morado"], "secundario": "#2b2236", "dibujo2d": "lentes",
+      "piezas": [
+        { "f": "disco", "a": "cabeza", "pos": [0.08, 0.2, 0.2], "r": 0.058, "alto": 0.012, "rot": [90, 0, 0], "col": "s", "espejo": true },
+        { "f": "toro", "a": "cabeza", "pos": [0.08, 0.2, 0.207], "r": 0.058, "grosor": 0.011, "col": "p", "espejo": true },
+        { "f": "caja", "a": "cabeza", "pos": [0, 0.21, 0.212], "tam": [0.05, 0.014, 0.012], "col": "p" }
+      ] },
+    { "id": "x-diadema", "categoria": "accesorio", "lugar": "cabeza", "es": "diadema", "genero": "f", "en": "headband",
+      "etiquetas": ["escuela", "casual", "fiesta"], "colores": ["rosa", "rojo", "azul", "amarillo", "blanco", "morado", "negro", "turquesa", "dorado"], "dibujo2d": "diadema",
+      "piezas": [
+        { "f": "toro", "a": "cabeza", "pos": [0, 0.2, 0.03], "r": 0.238, "grosor": 0.02, "arco": 180, "rot": [-12, 0, 0], "col": "p" }
+      ] },
+    { "id": "x-mochila", "categoria": "accesorio", "lugar": "espalda", "es": "mochila", "genero": "f", "en": "backpack",
+      "etiquetas": ["escuela", "aventura"], "colores": ["rojo", "azul", "rosa", "morado", "amarillo", "verde", "negro", "turquesa", "naranja"], "secundario": "amarillo", "dibujo2d": "mochila",
+      "piezas": [
+        { "f": "caja", "a": "torso", "pos": [0, 0.22, -0.19], "tam": [0.25, 0.28, 0.12], "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0, 0.15, -0.255], "tam": [0.18, 0.11, 0.03], "col": "s" },
+        { "f": "toro", "a": "torso", "pos": [0.08, 0.3, -0.04], "r": 0.12, "grosor": 0.014, "rot": [0, 90, 0], "arco": 180, "col": "p", "espejo": true }
+      ] },
+    { "id": "x-sombrero", "categoria": "accesorio", "lugar": "cabeza", "es": "sombrero de playa", "genero": "m", "en": "sun hat",
+      "etiquetas": ["playa", "verano", "flores"], "colores": ["amarillo", "blanco", "rosa", "celeste", "cafe", "turquesa", "lila"], "secundario": "rosa", "dibujo2d": "sombrero",
+      "piezas": [
+        { "f": "disco", "a": "cabeza", "pos": [0, 0.33, 0], "r": 0.4, "alto": 0.02, "rot": [-6, 0, 0], "col": "p" },
+        { "f": "tubo", "a": "cabeza", "y": [0.47, 0.33], "r": [0.18, 0.21], "tapa": "arriba", "col": "p" },
+        { "f": "tubo", "a": "cabeza", "y": [0.39, 0.35], "r": [0.207, 0.212], "col": "s" }
+      ] },
+    { "id": "x-gorra", "categoria": "accesorio", "lugar": "cabeza", "es": "gorra", "genero": "f", "en": "cap",
+      "etiquetas": ["deportivo", "playa", "casual"], "colores": ["rojo", "azul", "negro", "blanco", "rosa", "verde", "amarillo", "morado"], "secundario": "blanco", "dibujo2d": "gorra",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.215, 0], "r": 0.238, "theta": [0, 64], "col": "p" },
+        { "f": "disco", "a": "cabeza", "pos": [0, 0.315, 0.2], "r": 0.15, "alto": 0.016, "esc": [1, 1, 0.75], "rot": [-10, 0, 0], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.453, 0], "r": 0.022, "col": "s" }
+      ] },
+    { "id": "x-gorro", "categoria": "accesorio", "lugar": "cabeza", "es": "gorro de invierno", "genero": "m", "en": "beanie",
+      "etiquetas": ["frio", "aventura"], "colores": ["rojo", "azul", "rosa", "morado", "verde", "amarillo", "blanco", "turquesa", "naranja"], "secundario": "blanco", "dibujo2d": "gorro",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.2, 0], "r": 0.24, "theta": [0, 74], "col": "p" },
+        { "f": "tubo", "a": "cabeza", "y": [0.3, 0.24], "r": [0.233, 0.233], "col": "s" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.46, 0], "r": 0.065, "col": "s" }
+      ] },
+    { "id": "x-corona", "categoria": "accesorio", "lugar": "cabeza", "es": "corona", "genero": "f", "en": "crown",
+      "etiquetas": ["princesa", "brillo", "elegante"], "colores": ["dorado", "plateado", "rosa", "lila", "celeste"], "secundario": "rojo", "brillo": true, "dibujo2d": "corona",
+      "piezas": [
+        { "f": "tubo", "a": "cabeza", "y": [0.47, 0.39], "r": [0.12, 0.11], "col": "p" },
+        { "f": "anillo", "a": "cabeza", "pos": [0, 0.5, 0], "radio": 0.115, "n": 6, "pieza": { "f": "cono", "r": 0.028, "alto": 0.07, "col": "p" } },
+        { "f": "octaedro", "a": "cabeza", "pos": [0, 0.43, 0.118], "r": 0.025, "col": "s" }
+      ] },
+    { "id": "x-bufanda", "categoria": "accesorio", "lugar": "cuello", "es": "bufanda", "genero": "f", "en": "scarf",
+      "etiquetas": ["frio"], "colores": ["rojo", "azul", "rosa", "morado", "verde", "amarillo", "blanco", "turquesa", "naranja"], "secundario": "blanco", "dibujo2d": "bufanda",
+      "piezas": [
+        { "f": "toro", "a": "cuello", "pos": [0, 0.02, 0], "r": 0.085, "grosor": 0.042, "rot": [90, 0, 0], "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.07, 0.29, 0.155], "tam": [0.075, 0.2, 0.03], "rot": [0, 0, 6], "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.072, 0.19, 0.157], "tam": [0.077, 0.03, 0.032], "rot": [0, 0, 6], "col": "s" }
+      ] },
+    { "id": "x-collar", "categoria": "accesorio", "lugar": "cuello", "es": "collar de perlas", "genero": "m", "en": "pearl necklace",
+      "etiquetas": ["elegante", "fiesta", "princesa"], "colores": ["blanco", "rosa", "dorado", "lila", "celeste"], "secundario": "rosa", "dibujo2d": "collar",
+      "piezas": [
+        { "f": "anillo", "a": "cuello", "pos": [0, -0.015, 0.02], "radio": 0.085, "n": 16, "rot": [-25, 0, 0], "pieza": { "f": "esfera", "r": 0.015, "col": "p" } },
+        { "f": "esfera", "a": "cuello", "pos": [0, -0.07, 0.125], "r": 0.025, "col": "s" }
+      ] },
+    { "id": "x-bolsa", "categoria": "accesorio", "lugar": "mano", "es": "bolsa", "genero": "f", "en": "purse",
+      "etiquetas": ["fiesta", "elegante", "casual"], "colores": ["rosa", "rojo", "negro", "blanco", "dorado", "morado", "cafe", "turquesa"], "secundario": "dorado", "dibujo2d": "bolsa",
+      "piezas": [
+        { "f": "caja", "a": "manoI", "pos": [0.0, -0.15, 0], "tam": [0.16, 0.12, 0.06], "col": "p" },
+        { "f": "toro", "a": "manoI", "pos": [0.0, -0.09, 0], "r": 0.055, "grosor": 0.009, "arco": 180, "col": "s" },
+        { "f": "esfera", "a": "manoI", "pos": [0.0, -0.13, 0.032], "r": 0.012, "col": "s" }
+      ] },
+    { "id": "x-alas", "categoria": "accesorio", "lugar": "espalda", "es": "alas de hada", "genero": "f", "plural": true, "en": "fairy wings", "enPlural": true,
+      "etiquetas": ["magia", "flores"], "colores": ["lila", "celeste", "rosa", "turquesa", "verde", "dorado"], "dibujo2d": "alas",
+      "piezas": [
+        { "f": "plano", "a": "torso", "pos": [0.2, 0.36, -0.17], "tam": [0.42, 0.34], "rot": [0, -25, 30], "col": "p", "opacidad": 0.65, "espejo": true },
+        { "f": "plano", "a": "torso", "pos": [0.15, 0.12, -0.16], "tam": [0.26, 0.22], "rot": [0, -25, -25], "col": "p", "opacidad": 0.65, "espejo": true }
+      ] },
+    { "id": "x-varita", "categoria": "accesorio", "lugar": "mano", "es": "varita mágica", "genero": "f", "en": "magic wand",
+      "etiquetas": ["magia", "princesa"], "colores": ["dorado", "rosa", "lila", "celeste", "plateado", "turquesa"], "secundario": "blanco", "brillo": true, "dibujo2d": "varita",
+      "piezas": [
+        { "f": "capsula", "a": "manoD", "pos": [0, -0.05, 0.13], "r": 0.012, "largo": 0.3, "rot": [80, 0, 0], "col": "s" },
+        { "f": "octaedro", "a": "manoD", "pos": [0, -0.02, 0.3], "r": 0.05, "col": "p" }
+      ] },
+    { "id": "x-mono", "categoria": "accesorio", "lugar": "cabeza", "es": "moño", "genero": "m", "en": "bow",
+      "etiquetas": ["fiesta", "escuela", "princesa"], "colores": ["rosa", "rojo", "azul", "morado", "blanco", "amarillo", "negro", "turquesa", "lila"], "dibujo2d": "mono",
+      "piezas": [
+        { "f": "cono", "a": "cabeza", "pos": [0.075, 0.41, -0.06], "r": 0.055, "alto": 0.1, "rot": [0, 0, 90], "col": "p" },
+        { "f": "cono", "a": "cabeza", "pos": [-0.075, 0.41, -0.06], "r": 0.055, "alto": 0.1, "rot": [0, 0, -90], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.41, -0.06], "r": 0.03, "col": "p" }
+      ] },
+    { "id": "x-tiara", "categoria": "accesorio", "lugar": "cabeza", "es": "tiara de estrellas", "genero": "f", "en": "star tiara",
+      "etiquetas": ["princesa", "brillo", "magia", "fiesta"], "colores": ["dorado", "plateado", "rosa", "lila", "celeste"], "secundario": "rosa", "brillo": true, "dibujo2d": "tiara",
+      "modelo": "modelos/tiara.glb", "ancla": "cabeza" },
+    { "id": "x-flor", "categoria": "accesorio", "lugar": "cabeza", "es": "flor en el pelo", "genero": "f", "en": "hair flower",
+      "etiquetas": ["flores", "verano", "magia"], "colores": ["rosa", "amarillo", "rojo", "lila", "blanco", "naranja", "celeste"], "secundario": "amarillo", "dibujo2d": "flor",
+      "piezas": [
+        { "f": "anillo", "a": "cabeza", "pos": [0.17, 0.34, 0.07], "radio": 0.04, "n": 6, "rot": [70, 0, -35], "pieza": { "f": "esfera", "r": 0.032, "esc": [1, 0.5, 1], "col": "p" } },
+        { "f": "esfera", "a": "cabeza", "pos": [0.17, 0.34, 0.07], "r": 0.025, "col": "s" }
+      ] }
+  ]
+}

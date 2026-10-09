@@ -1,0 +1,227 @@
+/* Pasarela: estilos propios (el juego no depende de los del catálogo). Todo crece en la TV (html[data-modo="tv"]).
+   Capas y acomodo: docs/ARQUITECTURA.md § Pantalla. Pantalla ancha (TV, tableta acostada): el panel de ropa va a la
+   derecha; pantalla alta (teléfono): va abajo, y el personaje se corre para que no lo tape (vista3d.js). */
+:root{
+  --bg:#fde7f1; --fg:#2b2236; --muted:#76698a; --card:#ffffff; --line:#f1d9e6;
+  --rosa:#ff7eb6; --azul:#4cb3ff; --sol:#ffc43d; --verde:#3ccf8e; --morado:#8f5cf0; --coral:#ff6b4a;
+  --star:#ffb400; --off:#e7dccb; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12), 0 10px 22px rgba(43,34,54,.12);
+  --vidrio:rgba(255,255,255,.88);
+}
+@media (prefers-color-scheme:dark){:root{--fg:#f6f0ff;--muted:#c9bedb;--card:#2a2338;--line:#3d3352;--off:#4a4060;--foco:#fff;
+  --vidrio:rgba(34,27,48,.9);--sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 22px rgba(0,0,0,.3)}}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, 2.2vmin, 22px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.6vmin, 40px)}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:"Nunito",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+:focus{outline:none}
+html.teclado :focus-visible, html[data-modo="tv"] :focus{outline:5px solid var(--foco);outline-offset:3px;box-shadow:0 0 0 11px var(--halo)}
+svg{display:block}
+h1,h2,h3,.logo{font-family:"Fredoka",system-ui,sans-serif;line-height:1.1}
+.cargando{position:fixed;inset:0;display:grid;place-items:center;font-family:"Fredoka",sans-serif;font-size:1.6rem;margin:0}
+
+/* ---------- Escena ---------- */
+.escena{position:fixed;inset:0}
+.escena .lienzo{width:100%;height:100%;display:block}
+
+/* ---------- Botones ---------- */
+.boton{display:inline-flex;align-items:center;justify-content:center;gap:.5em;background:var(--card);border:2px solid var(--line);
+  border-radius:999px;padding:.6em 1.3em;font-weight:800;font-size:1.05rem;box-shadow:var(--sombra);min-height:3rem}
+.boton .ico{width:1.7em;height:1.7em;flex:none}
+.boton.grande{font-family:"Fredoka",sans-serif;font-weight:600;font-size:1.4rem;padding:.55em 1.3em;border-radius:24px;min-width:12em;min-height:4rem}
+.boton.primario{background:var(--rosa);color:#fff;border-color:transparent}
+.boton.primario.apagado{background:#d9b8c9}
+.boton.chico{font-size:.95rem;padding:.4em 1em;min-height:2.6rem}
+.boton:active,.redondo:active,.prenda:active{transform:translateY(2px)}
+.boton .costo{display:inline-flex;align-items:center;gap:.15em;background:rgba(255,255,255,.3);border-radius:999px;padding:.05em .45em .05em .15em;font-size:.9em}
+.boton .costo svg{width:1.2em;height:1.2em}
+.redondo{width:3.2rem;height:3.2rem;border-radius:50%;background:var(--card);box-shadow:var(--sombra);display:inline-grid;place-items:center;flex:none}
+.redondo svg{width:62%;height:62%}
+.redondo.dorado{background:var(--sol)}
+.redondo.chico{width:2.4rem;height:2.4rem;vertical-align:middle}
+.menu{display:flex;flex-direction:column;gap:.75rem;align-items:center;margin-top:.6rem}
+.menu.fila,.menu .fila{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:.75rem}
+.nota{color:var(--muted);font-size:.9rem;margin:.4rem 0 0}
+
+/* ---------- Capa de pantallas ---------- */
+.capa{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+.capa[hidden]{display:none}
+.capa > *{pointer-events:auto}
+.pantalla{background:var(--vidrio);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:28px 28px 0 0;box-shadow:var(--sombra);
+  width:100%;max-height:62vh;overflow:auto;padding:1.1rem 1.2rem calc(1.4rem + env(safe-area-inset-bottom));text-align:center;
+  animation:sube .35s cubic-bezier(.3,1.4,.6,1) both}
+@keyframes sube{from{transform:translateY(40px);opacity:0}}
+/* En pantalla ancha la tarjeta va a la derecha y el personaje se ve a la izquierda */
+@media (min-aspect-ratio:23/20){
+  .capa{align-items:center;justify-content:flex-end;padding:3vh 4vw}
+  .pantalla{width:min(46vw, 640px);max-height:94vh;border-radius:28px}
+}
+/* Pantallas que ocupan todo (calificación, desbloqueo, clóset, error) */
+.capa:has(.calificacion), .capa:has(.desbloqueo), .capa:has(.closet), .capa:has(.error){align-items:stretch;justify-content:center;padding:0;background:rgba(253,231,241,.6)}
+.pantalla.calificacion,.pantalla.desbloqueo,.pantalla.closet,.pantalla.error{width:min(980px, 100%);max-height:none;height:100%;border-radius:0}
+.logo{font-size:3rem;font-weight:700;margin:.1em 0;color:var(--rosa);text-shadow:0 4px 0 rgba(43,34,54,.15);letter-spacing:.02em}
+.sub{color:var(--muted);margin:0 0 .4rem;font-size:1.05rem}
+.saldo-linea{display:inline-flex;align-items:center;gap:.35em;font-family:"Fredoka",sans-serif;font-size:1.6rem;margin:.2rem 0}
+.saldo-linea svg{width:2rem;height:2rem}
+.saldo-linea span{font-size:1rem;color:var(--muted)}
+.nivel{margin:1rem auto 0;max-width:24rem;text-align:left}
+.nivel-txt{display:flex;justify-content:space-between;align-items:baseline;gap:.6em}
+.nivel-txt b{font-family:"Fredoka",sans-serif;font-size:1.2rem}
+.nivel-txt span{color:var(--muted);font-size:.9rem}
+.barra{height:.9rem;background:var(--off);border-radius:999px;overflow:hidden;margin:.3rem 0}
+.barra i{display:block;height:100%;background:linear-gradient(90deg, var(--rosa), var(--sol));border-radius:999px;transition:width .8s}
+.nivel small{color:var(--muted)}
+.grande-ico{width:5rem;height:5rem;margin:0 auto}
+.tema .antes,.desbloqueo .antes{margin:0;color:var(--muted);font-size:1.1rem}
+.tema-ico{width:6rem;height:6rem;margin:.3rem auto;animation:late 1.6s ease-in-out infinite}
+@keyframes late{50%{transform:scale(1.08) rotate(-4deg)}}
+.tema h1{font-size:2.3rem;margin:.1em 0}
+.tema .frase{font-size:1.2rem;margin:.2em 0}
+.tiempo{display:inline-flex;align-items:center;gap:.4em;font-size:1.1rem}
+.tiempo svg{width:1.6rem;height:1.6rem}
+.nuevo,.badge{background:var(--coral);color:#fff;font-family:"Nunito",sans-serif;font-weight:800;font-size:.75rem;border-radius:999px;padding:.15em .55em;vertical-align:middle}
+
+/* ---------- Estudio: hud, letreros, aviso, joystick ---------- */
+.hud{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  padding:max(10px, env(safe-area-inset-top)) 12px 0 max(12px, env(safe-area-inset-left));pointer-events:none}
+.hud > *{pointer-events:auto}
+.hud[hidden]{display:none}
+.chip-tema,.chip-reloj{display:inline-flex;align-items:center;gap:.4em;background:var(--vidrio);border-radius:999px;padding:.35em .9em .35em .4em;
+  box-shadow:var(--sombra);font-family:"Fredoka",sans-serif;font-size:1.15rem;font-weight:600}
+.chip-tema svg,.chip-reloj svg{width:2rem;height:2rem}
+.chip-reloj.poco{background:var(--coral);color:#fff;animation:late .8s ease-in-out infinite}
+.hud-botones{margin-left:auto;display:flex;gap:.6rem}
+.ayuda-tv{flex-basis:100%;margin:0;color:var(--muted);font-size:.85rem}
+.letreros{position:fixed;inset:0;z-index:5;pointer-events:none;overflow:hidden}
+.letreros[hidden]{display:none}
+.letrero{position:absolute;left:0;top:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:.1rem;
+  font-family:"Fredoka",sans-serif;font-weight:600;font-size:.85rem;color:var(--fg);will-change:transform}
+.letrero svg{width:2.6rem;height:2.6rem;background:var(--card);border-radius:50%;padding:.3rem;box-shadow:var(--sombra)}
+.letrero span{background:var(--vidrio);border-radius:999px;padding:.05em .6em;white-space:nowrap}
+.aviso{position:fixed;left:0;right:0;bottom:calc(1.2rem + env(safe-area-inset-bottom));z-index:12;display:flex;justify-content:center;pointer-events:none}
+.aviso-zona{pointer-events:auto;display:inline-flex;align-items:center;gap:.6em;background:var(--rosa);color:#fff;border-radius:999px;
+  padding:.5em 1.4em .5em .6em;font-family:"Fredoka",sans-serif;font-size:1.4rem;font-weight:600;box-shadow:var(--sombra);animation:sube .25s both}
+.aviso-zona svg{width:2.6rem;height:2.6rem;background:#fff;border-radius:50%;padding:.25rem}
+.aviso-zona kbd{font:inherit;font-size:.8rem;background:rgba(255,255,255,.3);border-radius:8px;padding:.1em .5em}
+.joy{position:fixed;left:0;bottom:0;width:48vw;height:42vh;z-index:9;touch-action:none}
+.joy[hidden]{display:none}
+.joy-base{position:absolute;left:5.5rem;bottom:5.5rem;top:auto;width:7.5rem;height:7.5rem;margin:-3.75rem 0 0 -3.75rem;border-radius:50%;
+  background:rgba(255,255,255,.45);border:3px solid rgba(43,34,54,.15);transform:translateY(50%)}
+.joy.activo .joy-base{bottom:auto;transform:none}
+.joy-palanca{position:absolute;left:50%;top:50%;width:3.6rem;height:3.6rem;margin:-1.8rem;border-radius:50%;background:var(--rosa);box-shadow:var(--sombra)}
+html[data-modo="tv"] .joy{display:none}
+
+/* ---------- Zonas como botones (modo sencillo) y menú "Ir a…" ---------- */
+#zonas2d{position:fixed;left:0;right:0;bottom:0;z-index:11;padding:.6rem .8rem calc(.8rem + env(safe-area-inset-bottom))}
+#zonas2d[hidden]{display:none}
+.zonas-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(6.4rem, 1fr));gap:.6rem}
+.zona-btn{display:flex;flex-direction:column;align-items:center;gap:.25rem;background:var(--card);border-radius:20px;padding:.6rem .4rem;
+  box-shadow:var(--sombra);font-family:"Fredoka",sans-serif;font-weight:600;font-size:.95rem;min-height:5.2rem}
+.zona-btn svg{width:2.6rem;height:2.6rem}
+.menu-ira h2{margin:0 0 .8rem;text-align:center}
+
+/* ---------- Panel de ropa ---------- */
+.panel{position:fixed;left:0;right:0;bottom:0;z-index:15;height:54vh;background:var(--vidrio);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border-radius:26px 26px 0 0;box-shadow:var(--sombra);display:flex;flex-direction:column;padding:.8rem .9rem calc(.6rem + env(safe-area-inset-bottom));
+  animation:sube .3s cubic-bezier(.3,1.4,.6,1) both}
+.panel[hidden]{display:none}
+@media (min-aspect-ratio:23/20){.panel{left:auto;top:0;height:auto;width:min(44vw, 620px);border-radius:26px 0 0 26px}}
+.panel-cab{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.panel-cab h2{display:flex;align-items:center;gap:.4em;margin:0;font-size:1.5rem}
+.panel-cab h2 svg{width:2.4rem;height:2.4rem}
+.prendas{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill, minmax(7rem, 1fr));gap:.6rem;padding:.6rem .2rem;align-content:start}
+.prenda{position:relative;display:flex;flex-direction:column;align-items:center;gap:.1rem;background:var(--card);border:3px solid transparent;border-radius:20px;
+  padding:.4rem .3rem .5rem;box-shadow:var(--sombra);min-height:8.5rem}
+.prenda.sel{border-color:var(--rosa)}
+.prenda.puesta{background:#fff0f7}
+@media (prefers-color-scheme:dark){.prenda.puesta{background:#3d2b45}}
+.prenda .mini-caja{position:relative;width:5.2rem;height:5.2rem}
+.prenda .mini{width:100%;height:100%}
+.prenda .nombre{font-weight:800;font-size:.85rem;line-height:1.1;text-align:center}
+.prenda small{color:var(--muted);font-size:.75rem}
+.prenda .check{position:absolute;right:-.3rem;bottom:-.2rem;width:1.8rem;height:1.8rem;background:var(--verde);border-radius:50%;padding:.2rem}
+.prenda .badge{position:absolute;left:-.3rem;top:-.3rem}
+.prenda.bloqueada{opacity:.75}
+.prenda.bloqueada .mini{filter:grayscale(1);opacity:.45}
+.prenda .candado{position:absolute;inset:25%}
+.colores{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.4rem 0}
+.color{position:relative;width:2.8rem;height:2.8rem;border-radius:50%;background:var(--c);border:3px solid rgba(43,34,54,.25);box-shadow:var(--sombra)}
+.color.sel{border:4px solid var(--fg);transform:scale(1.12)}
+.punto-nuevo{position:absolute;right:-2px;top:-2px;width:.8rem;height:.8rem;border-radius:50%;background:var(--coral);border:2px solid #fff}
+.ingles{display:flex;align-items:center;justify-content:center;gap:.5em;flex-wrap:wrap;margin:.2rem 0;font-size:1.05rem}
+.ingles b{font-family:"Fredoka",sans-serif;font-size:1.25rem;color:var(--morado)}
+.panel .nota{text-align:center;font-size:.8rem}
+
+/* ---------- Desfile y calificación ---------- */
+.desfile-txt{position:fixed;top:max(14px, env(safe-area-inset-top));left:0;right:0;z-index:12;display:flex;flex-direction:column;align-items:center;gap:.3rem;
+  pointer-events:none;font-family:"Fredoka",sans-serif;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+.desfile-txt span{display:inline-flex;align-items:center;gap:.4em;background:rgba(43,34,54,.55);border-radius:999px;padding:.25em .9em .25em .35em;font-size:1.1rem}
+.desfile-txt svg{width:1.8rem;height:1.8rem}
+.desfile-txt b{font-size:2.2rem;animation:late 1.2s ease-in-out infinite}
+.calificacion h1{display:flex;align-items:center;justify-content:center;gap:.4em;font-size:1.9rem;margin:.2rem 0 .8rem}
+.calificacion h1 svg{width:2.6rem;height:2.6rem}
+.jueces{display:grid;grid-template-columns:repeat(auto-fit, minmax(15rem, 1fr));gap:.8rem}
+.juez{display:flex;gap:.7rem;align-items:flex-start;text-align:left;background:var(--card);border-radius:22px;padding:.8rem;box-shadow:var(--sombra);
+  border-top:6px solid var(--c);animation:sube .45s both;animation-delay:var(--d)}
+.juez .cara{width:3.4rem;height:3.4rem;border-radius:50%;padding:.35rem;flex:none}
+.juez h3{margin:0 0 .2rem;font-size:1.2rem}
+.juez p{margin:.3rem 0 0;font-size:1rem}
+.estrellas{display:inline-flex;gap:.1rem}
+.est{width:1.6rem;height:1.6rem;display:inline-block}
+.juez .est.on{animation:brinca .4s both;animation-delay:calc(var(--d) + .3s)}
+@keyframes brinca{from{transform:scale(0)}70%{transform:scale(1.3)}}
+.consejo{margin:1rem auto 0;max-width:40rem;background:#fff6d6;color:#2b2236;border-radius:18px;padding:.7rem 1rem;font-size:1.05rem}
+.grande-txt{font-size:1.1rem;margin-top:.8rem}
+.ganaste{font-family:"Fredoka",sans-serif;font-size:1.6rem;color:var(--rosa);margin:.8rem 0 0}
+.desbloqueo h1{font-size:2.6rem;color:var(--rosa);margin:.1em 0 .4em}
+.desbloqueo h2{font-size:1.2rem;margin:.8rem 0 .4rem}
+.nuevas{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem}
+.nuevas figure{margin:0;background:var(--card);border-radius:18px;padding:.4rem;box-shadow:var(--sombra);width:7.5rem;animation:brinca .5s both}
+.nuevas .mini{width:5.5rem;height:5.5rem;margin:0 auto}
+.nuevas figcaption{font-weight:800;font-size:.85rem;display:flex;flex-direction:column}
+.nuevas small,.nuevos-colores small{color:var(--muted);font-weight:700}
+.nuevos-colores,.nuevos-temas{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+.nuevos-colores span,.nuevos-temas span{display:inline-flex;align-items:center;gap:.4em;background:var(--card);border-radius:999px;padding:.3em .8em .3em .3em;box-shadow:var(--sombra);font-weight:800}
+.nuevos-colores i{width:1.8rem;height:1.8rem;border-radius:50%;background:var(--c);display:inline-block;border:2px solid rgba(43,34,54,.2)}
+.nuevos-temas svg{width:2rem;height:2rem}
+.closet h1{display:flex;align-items:center;justify-content:center;gap:.4em}
+.closet h1 svg{width:2.4rem;height:2.4rem}
+.fotos{display:grid;grid-template-columns:repeat(auto-fill, minmax(11rem, 1fr));gap:.8rem}
+.foto{margin:0;background:var(--card);border-radius:20px;padding:.6rem;box-shadow:var(--sombra);display:flex;flex-direction:column;align-items:center}
+.muneca.chica{width:7rem;height:12.6rem}
+.foto figcaption{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.foto small{color:var(--muted);font-size:.78rem}
+.foto .est{width:1.1rem;height:1.1rem}
+.vacio{color:var(--muted);font-size:1.1rem;margin:2rem 0}
+.error ul{text-align:left;color:#c4553f}
+
+/* ---------- Modal y aviso corto ---------- */
+.modal{position:fixed;inset:0;z-index:30;background:rgba(43,34,54,.35);display:grid;place-items:center;padding:16px}
+.modal[hidden]{display:none}
+.confirmar,.menu-ira{background:var(--card);border-radius:26px;box-shadow:var(--sombra);padding:1.2rem 1.4rem;max-width:min(560px, 100%);width:100%;text-align:center;animation:sube .25s both}
+.confirmar h2{margin:0 0 .4rem}
+.confirmar p{margin:0 0 .6rem}
+.menu-ira .zona-btn{background:var(--bg)}
+.toast{position:fixed;left:50%;top:22%;z-index:40;transform:translate(-50%, -10px);opacity:0;pointer-events:none;background:var(--card);border-radius:999px;
+  padding:.6em 1.4em;box-shadow:var(--sombra);font-family:"Fredoka",sans-serif;font-size:1.3rem;font-weight:600;transition:all .3s;max-width:90vw;text-align:center}
+.toast.ver{opacity:1;transform:translate(-50%, 0)}
+.fps{position:fixed;right:8px;bottom:8px;z-index:50;background:rgba(0,0,0,.6);color:#fff;font:12px monospace;padding:2px 6px;border-radius:6px}
+
+/* ---------- Vista 2D (modo sencillo) ---------- */
+.vista2d{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 85%, #ffd7e8 0 30%, transparent 31%), linear-gradient(#fbe3ff, #fde7f1)}
+.escenario2d{position:relative;width:100%;height:100%;display:grid;place-items:center;padding-bottom:12vh}
+.muneca2d{height:min(62vh, 120vw);aspect-ratio:200/360;transition:transform .5s}
+.muneca2d .muneca{width:100%;height:100%}
+.vista2d[data-modo="inicio"] .muneca2d{transform:translateX(-22vw)}
+@media (max-aspect-ratio:23/20){.vista2d[data-modo="inicio"] .muneca2d{transform:translateY(-14vh) scale(.8)}}
+.vista2d[data-modo="probador"] .muneca2d{transform:translateY(-16vh) scale(.85)}
+@media (min-aspect-ratio:23/20){.vista2d[data-modo="probador"] .muneca2d{transform:translateX(-22vw)}}
+.vista2d[data-modo="pasarela"]{background:linear-gradient(#3b2d55, #5a3f86)}
+.vista2d.desfilando .muneca2d{animation:desfila 4.2s ease-in-out both}
+@keyframes desfila{0%{transform:translateY(-14vh) scale(.45)}70%{transform:translateY(0) scale(1)}80%{transform:translateY(0) scale(1) rotate(-4deg)}90%{transform:translateY(0) scale(1) rotate(4deg)}100%{transform:translateY(0) scale(1)}}
+.muneca2d.vuelta{animation:vuelta 1s ease-in-out}
+@keyframes vuelta{50%{transform:scaleX(-1)}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

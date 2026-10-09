@@ -1,0 +1,22 @@
+{
+  "_ayuda": "Ajustes de la Pasarela. Se pueden cambiar sin tocar código. Ver docs/JUEGO.md.",
+  "costo": 3,
+  "tiempoEstudio": 150,
+  "avisoTiempo": 30,
+  "maxAtuendosGuardados": 12,
+  "categorias": [
+    { "id": "peinado",   "es": "Peinados",          "en": "Hairstyles" },
+    { "id": "arriba",    "es": "Ropa de arriba",    "en": "Tops" },
+    { "id": "abajo",     "es": "Ropa de abajo",     "en": "Bottoms" },
+    { "id": "vestido",   "es": "Vestidos",          "en": "Dresses" },
+    { "id": "zapatos",   "es": "Zapatos",           "en": "Shoes" },
+    { "id": "accesorio", "es": "Accesorios",        "en": "Accessories" }
+  ],
+  "lugares": ["cabeza", "cara", "cuello", "mano", "espalda"],
+  "etiquetas": ["playa", "verano", "fiesta", "elegante", "frio", "princesa", "deportivo", "escuela", "casual", "pijama",
+    "aventura", "flores", "rock", "magia", "brillo"],
+  "tonosPiel": ["#ffd9c0", "#f1c09b", "#d79b6e", "#a9714a", "#7a4b2e"],
+  "colorBase": "#cbbfe6",
+  "movimiento": { "velocidad": 2.6, "giro": 150, "radio": 0.35, "impulsoTeclaMs": 200 },
+  "estudio": { "ancho": 12, "fondo": 10 }
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Ícono de la Pasarela: un vestido sobre una pasarela con una estrella -->
+  <path d="M14 112l20-60h52l20 60z" fill="#ffffff" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M32 112l12-60h32l12 60z" fill="#ffc43d" opacity=".55"/>
+  <path d="M50 16v12l-6 12-16 40h64L76 40l-6-12V16" fill="#ff7eb6" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M44 40h32" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/>
+  <path d="M50 16c3 4 17 4 20 0" fill="none" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/>
+  <path d="M96 10l4 8 9 1-6.5 6 1.7 9L96 29.5 87.8 34l1.7-9-6.5-6 9-1z" fill="#ffc43d" stroke="#2b2236" stroke-width="3" stroke-linejoin="round"/>
+</svg>
