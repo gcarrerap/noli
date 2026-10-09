@@ -1,0 +1,610 @@
+{
+  "a": {
+    "es": "un",
+    "dibujo": "libro-abierto.svg"
+  },
+  "again": {
+    "es": "otra vez",
+    "dibujo": "boton-pagina-anterior.svg"
+  },
+  "ahead": {
+    "es": "adelante",
+    "dibujo": "flecha-pista.svg"
+  },
+  "an": {
+    "es": "un",
+    "dibujo": "libro-abierto.svg"
+  },
+  "and": {
+    "es": "y",
+    "dibujo": "cruce.svg"
+  },
+  "asleep": {
+    "es": "dormida",
+    "dibujo": "dibujos/dibujo-sleepy.svg"
+  },
+  "at": {
+    "es": "en",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "ate": {
+    "es": "comió",
+    "dibujo": "dibujos/dibujo-hungry.svg"
+  },
+  "away": {
+    "es": "lejos",
+    "dibujo": "flecha-pista.svg"
+  },
+  "back": {
+    "es": "de vuelta",
+    "dibujo": "boton-pagina-anterior.svg"
+  },
+  "basket": {
+    "es": "canasta",
+    "dibujo": "dibujos/dibujo-basket.svg"
+  },
+  "bean": {
+    "es": "frijol",
+    "dibujo": "escena-frijol.svg"
+  },
+  "beans": {
+    "es": "frijoles",
+    "dibujo": "escena-frijol.svg"
+  },
+  "bears": {
+    "es": "osos",
+    "dibujo": "cara-oso-papa.svg"
+  },
+  "bed": {
+    "es": "cama",
+    "dibujo": "escena-camas-osos.svg"
+  },
+  "beds": {
+    "es": "camas",
+    "dibujo": "escena-camas-osos.svg"
+  },
+  "big": {
+    "es": "grande",
+    "dibujo": "dibujos/dibujo-giant.svg"
+  },
+  "bowl": {
+    "es": "tazón",
+    "dibujo": "dibujos/dibujo-soup.svg"
+  },
+  "bowls": {
+    "es": "tazones",
+    "dibujo": "escena-cocina-osos.svg"
+  },
+  "boy": {
+    "es": "niño",
+    "dibujo": "cara-jack.svg"
+  },
+  "break": {
+    "es": "romper",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "breaks": {
+    "es": "se rompe",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "brick": {
+    "es": "ladrillo",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "bricks": {
+    "es": "ladrillos",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "broke": {
+    "es": "se rompió",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "broken": {
+    "es": "rota",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "brown": {
+    "es": "café",
+    "dibujo": "escena-casa-palos.svg"
+  },
+  "build": {
+    "es": "construyen",
+    "dibujo": "escena-casa-paja.svg"
+  },
+  "builds": {
+    "es": "construye",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "cake": {
+    "es": "pastel",
+    "dibujo": "dibujos/dibujo-cake.svg"
+  },
+  "cannot": {
+    "es": "no puede",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "carrot": {
+    "es": "zanahoria",
+    "dibujo": "dibujos/dibujo-carrot.svg"
+  },
+  "castle": {
+    "es": "castillo",
+    "dibujo": "escena-castillo-nubes.svg"
+  },
+  "chair": {
+    "es": "silla",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "chairs": {
+    "es": "sillas",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "climb": {
+    "es": "subir",
+    "dibujo": "escena-frijol.svg"
+  },
+  "climbs": {
+    "es": "sube",
+    "dibujo": "personaje-jack.svg"
+  },
+  "clouds": {
+    "es": "nubes",
+    "dibujo": "escena-castillo-nubes.svg"
+  },
+  "come": {
+    "es": "venir",
+    "dibujo": "personaje-oso-papa.svg"
+  },
+  "comes": {
+    "es": "llega",
+    "dibujo": "personaje-abuela.svg"
+  },
+  "cozy": {
+    "es": "a gusto",
+    "dibujo": "dibujos/dibujo-cozy.svg"
+  },
+  "cuts": {
+    "es": "corta",
+    "dibujo": "escena-frijol.svg"
+  },
+  "did": {
+    "es": "hizo",
+    "dibujo": "libro-abierto.svg"
+  },
+  "does": {
+    "es": "hace",
+    "dibujo": "libro-abierto.svg"
+  },
+  "door": {
+    "es": "puerta",
+    "dibujo": "escena-casa-abuela.svg"
+  },
+  "down": {
+    "es": "abajo",
+    "dibujo": "boton-soltar.svg"
+  },
+  "eat": {
+    "es": "comer",
+    "dibujo": "dibujos/dibujo-hungry.svg"
+  },
+  "eats": {
+    "es": "come",
+    "dibujo": "dibujos/dibujo-soup.svg"
+  },
+  "empty": {
+    "es": "vacío",
+    "dibujo": "dibujos/dibujo-hungry.svg"
+  },
+  "ending": {
+    "es": "final",
+    "dibujo": "cruce.svg"
+  },
+  "eyes": {
+    "es": "ojos",
+    "dibujo": "cara-lobo.svg"
+  },
+  "fall": {
+    "es": "caer",
+    "dibujo": "escena-casa-paja.svg"
+  },
+  "falls": {
+    "es": "cae",
+    "dibujo": "escena-frijol.svg"
+  },
+  "fast": {
+    "es": "rápido",
+    "dibujo": "flecha-pista.svg"
+  },
+  "feel": {
+    "es": "sentir",
+    "dibujo": "dibujos/dibujo-cozy.svg"
+  },
+  "feels": {
+    "es": "siente",
+    "dibujo": "dibujos/dibujo-scared.svg"
+  },
+  "fell": {
+    "es": "se cayó",
+    "dibujo": "escena-casa-paja.svg"
+  },
+  "felt": {
+    "es": "sintió",
+    "dibujo": "dibujos/dibujo-cozy.svg"
+  },
+  "finds": {
+    "es": "encuentra",
+    "dibujo": "escena-frijol.svg"
+  },
+  "for": {
+    "es": "para",
+    "dibujo": "dibujos/dibujo-basket.svg"
+  },
+  "get": {
+    "es": "entrar",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "gets": {
+    "es": "se mete",
+    "dibujo": "escena-cuarto-abuela.svg"
+  },
+  "giant": {
+    "es": "gigante",
+    "dibujo": "dibujos/dibujo-giant.svg"
+  },
+  "girl": {
+    "es": "niña",
+    "dibujo": "cara-ricitos.svg"
+  },
+  "goes": {
+    "es": "va",
+    "dibujo": "flecha-pista.svg"
+  },
+  "goldilocks": {
+    "es": "Ricitos",
+    "dibujo": "cara-ricitos.svg"
+  },
+  "gone": {
+    "es": "ya no está",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "good": {
+    "es": "buena",
+    "dibujo": "dibujos/dibujo-cake.svg"
+  },
+  "grandma": {
+    "es": "abuela",
+    "dibujo": "cara-abuela.svg"
+  },
+  "green": {
+    "es": "verde",
+    "dibujo": "escena-frijol.svg"
+  },
+  "grows": {
+    "es": "crece",
+    "dibujo": "escena-frijol.svg"
+  },
+  "happened": {
+    "es": "pasó",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "happy": {
+    "es": "feliz",
+    "dibujo": "cara-jack.svg"
+  },
+  "has": {
+    "es": "tiene",
+    "dibujo": "dibujos/dibujo-basket.svg"
+  },
+  "he": {
+    "es": "él",
+    "dibujo": "cara-jack.svg"
+  },
+  "her": {
+    "es": "su",
+    "dibujo": "cara-caperucita.svg"
+  },
+  "him": {
+    "es": "él",
+    "dibujo": "cara-jack.svg"
+  },
+  "home": {
+    "es": "casa",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "hot": {
+    "es": "caliente",
+    "dibujo": "dibujos/dibujo-soup.svg"
+  },
+  "house": {
+    "es": "casa",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "huffed": {
+    "es": "sopló",
+    "dibujo": "dibujos/dibujo-huffed.svg"
+  },
+  "hugs": {
+    "es": "abraza",
+    "dibujo": "personaje-caperucita.svg"
+  },
+  "hungry": {
+    "es": "hambriento",
+    "dibujo": "dibujos/dibujo-hungry.svg"
+  },
+  "in": {
+    "es": "en",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "inside": {
+    "es": "adentro",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "is": {
+    "es": "es",
+    "dibujo": "libro-abierto.svg"
+  },
+  "it": {
+    "es": "eso",
+    "dibujo": "libro-abierto.svg"
+  },
+  "jack": {
+    "es": "Jack",
+    "dibujo": "cara-jack.svg"
+  },
+  "keeps": {
+    "es": "guarda",
+    "dibujo": "dibujos/dibujo-cake.svg"
+  },
+  "last": {
+    "es": "final",
+    "dibujo": "libro-abierto.svg"
+  },
+  "left": {
+    "es": "se fue",
+    "dibujo": "personaje-lobo.svg"
+  },
+  "little": {
+    "es": "pequeño",
+    "dibujo": "cara-oso-bebe.svg"
+  },
+  "lives": {
+    "es": "vive",
+    "dibujo": "escena-castillo-nubes.svg"
+  },
+  "looks": {
+    "es": "busca",
+    "dibujo": "cara-gigante.svg"
+  },
+  "lost": {
+    "es": "perdida",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "meets": {
+    "es": "se encuentra",
+    "dibujo": "cara-lobo.svg"
+  },
+  "no": {
+    "es": "no",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "not": {
+    "es": "no",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "now": {
+    "es": "ahora",
+    "dibujo": "libro-abierto.svg"
+  },
+  "on": {
+    "es": "en",
+    "dibujo": "libro-abierto.svg"
+  },
+  "one": {
+    "es": "un",
+    "dibujo": "cara-cerdito-1.svg"
+  },
+  "page": {
+    "es": "página",
+    "dibujo": "tarjeta-pagina.svg"
+  },
+  "pick": {
+    "es": "elige",
+    "dibujo": "cruce.svg"
+  },
+  "pig": {
+    "es": "cerdito",
+    "dibujo": "cara-cerdito-1.svg"
+  },
+  "pigs": {
+    "es": "cerditos",
+    "dibujo": "cara-cerdito-2.svg"
+  },
+  "plant": {
+    "es": "planta",
+    "dibujo": "escena-frijol.svg"
+  },
+  "plants": {
+    "es": "siembra",
+    "dibujo": "escena-frijol.svg"
+  },
+  "puffed": {
+    "es": "sopló",
+    "dibujo": "dibujos/dibujo-huffed.svg"
+  },
+  "ran": {
+    "es": "corrieron",
+    "dibujo": "personaje-cerdito-1.svg"
+  },
+  "red": {
+    "es": "Caperucita",
+    "dibujo": "cara-caperucita.svg"
+  },
+  "run": {
+    "es": "correr",
+    "dibujo": "personaje-cerdito-1.svg"
+  },
+  "runs": {
+    "es": "corre",
+    "dibujo": "personaje-caperucita.svg"
+  },
+  "safe": {
+    "es": "a salvo",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "scared": {
+    "es": "asustada",
+    "dibujo": "dibujos/dibujo-scared.svg"
+  },
+  "see": {
+    "es": "ver",
+    "dibujo": "cara-caperucita.svg"
+  },
+  "sees": {
+    "es": "ve",
+    "dibujo": "cara-ricitos.svg"
+  },
+  "she": {
+    "es": "ella",
+    "dibujo": "cara-caperucita.svg"
+  },
+  "shivered": {
+    "es": "tembló",
+    "dibujo": "dibujos/dibujo-shivered.svg"
+  },
+  "sits": {
+    "es": "se sienta",
+    "dibujo": "cara-ricitos.svg"
+  },
+  "sleepy": {
+    "es": "con sueño",
+    "dibujo": "dibujos/dibujo-sleepy.svg"
+  },
+  "small": {
+    "es": "chiquito",
+    "dibujo": "cara-oso-bebe.svg"
+  },
+  "so": {
+    "es": "tan",
+    "dibujo": "libro-abierto.svg"
+  },
+  "some": {
+    "es": "unos",
+    "dibujo": "dibujos/dibujo-cake.svg"
+  },
+  "soup": {
+    "es": "sopa",
+    "dibujo": "dibujos/dibujo-soup.svg"
+  },
+  "stayed": {
+    "es": "se quedó",
+    "dibujo": "dibujos/dibujo-hungry.svg"
+  },
+  "stick": {
+    "es": "palo",
+    "dibujo": "escena-casa-palos.svg"
+  },
+  "sticks": {
+    "es": "palos",
+    "dibujo": "escena-casa-palos.svg"
+  },
+  "straw": {
+    "es": "paja",
+    "dibujo": "escena-casa-paja.svg"
+  },
+  "strong": {
+    "es": "fuerte",
+    "dibujo": "escena-casa-ladrillos.svg"
+  },
+  "takes": {
+    "es": "toma",
+    "dibujo": "dibujos/dibujo-basket.svg"
+  },
+  "tall": {
+    "es": "alta",
+    "dibujo": "escena-frijol.svg"
+  },
+  "the": {
+    "es": "el",
+    "dibujo": "libro-abierto.svg"
+  },
+  "there": {
+    "es": "allí",
+    "dibujo": "escena-castillo-nubes.svg"
+  },
+  "they": {
+    "es": "ellos",
+    "dibujo": "cara-cerdito-1.svg"
+  },
+  "three": {
+    "es": "tres",
+    "dibujo": "cara-cerdito-3.svg"
+  },
+  "to": {
+    "es": "a",
+    "dibujo": "flecha-pista.svg"
+  },
+  "tries": {
+    "es": "prueba",
+    "dibujo": "escena-sillas-osos.svg"
+  },
+  "up": {
+    "es": "arriba",
+    "dibujo": "flecha-pista.svg"
+  },
+  "very": {
+    "es": "muy",
+    "dibujo": "dibujos/dibujo-giant.svg"
+  },
+  "waits": {
+    "es": "espera",
+    "dibujo": "dibujos/dibujo-sleepy.svg"
+  },
+  "walk": {
+    "es": "caminar",
+    "dibujo": "escena-bosque.svg"
+  },
+  "walks": {
+    "es": "camina",
+    "dibujo": "personaje-caperucita.svg"
+  },
+  "want": {
+    "es": "quieren",
+    "dibujo": "dibujos/dibujo-cake.svg"
+  },
+  "wants": {
+    "es": "quiere",
+    "dibujo": "dibujos/dibujo-carrot.svg"
+  },
+  "were": {
+    "es": "estaban",
+    "dibujo": "libro-abierto.svg"
+  },
+  "what": {
+    "es": "qué",
+    "dibujo": "tarjeta-perdida.svg"
+  },
+  "who": {
+    "es": "quién",
+    "dibujo": "cara-lobo.svg"
+  },
+  "why": {
+    "es": "por qué",
+    "dibujo": "flecha-pista.svg"
+  },
+  "with": {
+    "es": "con",
+    "dibujo": "cruce.svg"
+  },
+  "wolf": {
+    "es": "lobo",
+    "dibujo": "cara-lobo.svg"
+  },
+  "woods": {
+    "es": "bosque",
+    "dibujo": "escena-bosque.svg"
+  },
+  "yellow": {
+    "es": "amarilla",
+    "dibujo": "escena-casa-paja.svg"
+  }
+}

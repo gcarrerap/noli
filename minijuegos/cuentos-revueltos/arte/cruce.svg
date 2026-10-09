@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+<title>Cruce: letrero con dos caminos (escoger final)</title>
+<path d="M70 150V40h20v110z" fill="#a86b3c" stroke="#2b2236" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M84 36h52l16 16-16 16H84z" fill="#3ccf8e" stroke="#2b2236" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M76 74H24L8 90l16 16h52z" fill="#c86bfa" stroke="#2b2236" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M118 43L120.65 48.36L126.56 49.22L122.28 53.39L123.29 59.28L118 56.5L112.71 59.28L113.72 53.39L109.44 49.22L115.35 48.36z" fill="#fff" stroke="#2b2236" stroke-width="3" stroke-linejoin="round"/><circle cx="42" cy="90" r="8" fill="#fff" stroke="#2b2236" stroke-width="3"/><path d="M40 152h80" fill="none" stroke="#2b2236" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

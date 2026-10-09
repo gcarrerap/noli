@@ -1,0 +1,67 @@
+// Pistas: en el nivel 1 el paso completo desde el principio.
+// Desde el 2: frase, flecha a los 20 s, paso completo a los 40 s o tras un error.
+// «En español» es el último escalón, y solo en las preguntas.
+
+export const FLECHA_MS = 20000;
+export const COMPLETA_MS = 40000;
+export const ESPANOL_MS = 52000;
+
+const PREGUNTA = new Set(["palabra", "quien", "porque", "cambio", "pagina"]);
+
+export function esPregunta(tipo) {
+  return PREGUNTA.has(tipo);
+}
+
+export function fasePista({ nivel, tipo, ms, errores }) {
+  const pregunta = esPregunta(tipo);
+  const n = nivel | 0;
+  const e = errores | 0;
+  const t = ms | 0;
+  if (n <= 1) {
+    if (pregunta && e >= 1) return "espanol";
+    return "completa";
+  }
+  if (pregunta && (e >= 2 || (e >= 1 && t >= COMPLETA_MS) || t >= ESPANOL_MS)) return "espanol";
+  if (e >= 1 || t >= COMPLETA_MS) return "completa";
+  if (t >= FLECHA_MS) return "flecha";
+  return "corta";
+}
+
+// El paso completo por tiempo o por error no cuenta como primer intento, salvo en el nivel 1.
+export function marcaPasoCompleto({ nivel, fase, ms, errores }) {
+  if ((nivel | 0) <= 1) return false;
+  if (fase !== "completa" && fase !== "espanol") return false;
+  return (ms | 0) >= COMPLETA_MS || (errores | 0) >= 1;
+}
+
+export function textoCorto(tipo) {
+  if (tipo === "ordenar") return "¿Qué pasa primero?";
+  if (tipo === "palabra") return "Mira la oración.";
+  if (tipo === "quien") return "Mira quién.";
+  if (tipo === "porque") return "Mira por qué.";
+  if (tipo === "cambio") return "Mira qué cambió.";
+  if (tipo === "pagina") return "Mira los dibujos.";
+  return "";
+}
+
+export function fraseListo(tv) {
+  return tv
+    ? { texto: "Pulsa OK en Listo.", voz: "Pulsa OK en Listo." }
+    : { texto: "Toca Listo.", voz: "Toca Listo." };
+}
+
+export function cuentaPrimeraPregunta({ nivel, vioCompleta, acerto }) {
+  if (!acerto) return false;
+  if ((nivel | 0) > 1 && vioCompleta) return false;
+  return true;
+}
+
+export function itemLimpio(ahora) {
+  return {
+    aviso: "",
+    errores: 0,
+    vioCompleta: false,
+    reloj: { inicio: ahora, pausa: null },
+    ayuda: null,
+  };
+}

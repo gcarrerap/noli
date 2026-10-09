@@ -1,0 +1,184 @@
+{
+  "id": "cerditos",
+  "titulo": "Los tres cerditos",
+  "nivel": 1,
+  "portada": "libro-cerditos.svg",
+  "paginas": [
+    {
+      "id": "paja",
+      "escena": "escena-casa-paja.svg",
+      "personaje": "personaje-cerdito-1.svg",
+      "oraciones": ["One pig builds with straw.", "It is a yellow house."],
+      "pista": "La casa de paja va primero."
+    },
+    {
+      "id": "palos",
+      "escena": "escena-casa-palos.svg",
+      "personaje": "personaje-cerdito-2.svg",
+      "oraciones": ["One pig builds with sticks.", "It is a brown house."],
+      "pista": "Después va la casa de palos."
+    },
+    {
+      "id": "ladrillos",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-cerdito-3.svg",
+      "oraciones": ["One pig builds with bricks.", "The brick house is strong."],
+      "pista": "La casa de ladrillos va al final."
+    },
+    {
+      "id": "soplo",
+      "escena": "escena-casa-paja.svg",
+      "personaje": "personaje-lobo.svg",
+      "oraciones": ["The wolf huffed and puffed.", "The straw house fell down."],
+      "pista": "Primero el lobo sopla la paja."
+    },
+    {
+      "id": "soplo2",
+      "escena": "escena-casa-palos.svg",
+      "personaje": "personaje-lobo.svg",
+      "oraciones": ["The wolf huffed again.", "The stick house fell down."],
+      "pista": "Luego sopla la casa de palos."
+    },
+    {
+      "id": "corren",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-cerdito-1.svg",
+      "oraciones": ["The pigs ran inside.", "The bricks did not fall."],
+      "pista": "Los cerditos corren adentro."
+    },
+    {
+      "id": "firme",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-cerdito-3.svg",
+      "oraciones": ["The wolf did not get in.", "The pigs were safe."],
+      "pista": "El lobo no entra."
+    },
+    {
+      "id": "cozy",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-cerdito-2.svg",
+      "oraciones": ["The pigs felt cozy.", "They were safe at last."],
+      "pista": "Al final están a gusto."
+    }
+  ],
+  "capitulos": [
+    {
+      "id": "c1",
+      "tareas": [
+        { "tipo": "ordenar", "tarjetas": ["paja", "palos", "ladrillos"] },
+        {
+          "tipo": "quien",
+          "pregunta": "Who builds with bricks?",
+          "preguntaEs": "¿Quién construye con ladrillos?",
+          "pista": "El cerdito del gorrito coral.",
+          "opciones": [
+            { "id": "cerdito-3", "dibujo": "cara-cerdito-3.svg" },
+            { "id": "cerdito-1", "dibujo": "cara-cerdito-1.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" }
+          ],
+          "correcta": "cerdito-3"
+        },
+        { "tipo": "ordenar", "tarjetas": ["soplo", "soplo2", "corren"] },
+        {
+          "tipo": "palabra",
+          "palabra": "huffed",
+          "oracion": "The wolf huffed and puffed.",
+          "preguntaEs": "Huffed quiere decir sopló.",
+          "pista": "El lobo sopla la casa.",
+          "opciones": [
+            { "id": "huffed", "dibujo": "dibujos/dibujo-huffed.svg" },
+            { "id": "cozy", "dibujo": "dibujos/dibujo-cozy.svg" },
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg" }
+          ]
+        },
+        {
+          "tipo": "porque",
+          "pregunta": "Why did the pigs run?",
+          "preguntaEs": "¿Por qué corren los cerditos?",
+          "pista": "La casa de paja se cayó.",
+          "opciones": [
+            { "id": "casa", "dibujo": "escena-casa-paja.svg", "texto": "The house fell." },
+            { "id": "pastel", "dibujo": "dibujos/dibujo-cake.svg", "texto": "They want cake." },
+            { "id": "sueno", "dibujo": "dibujos/dibujo-sleepy.svg", "texto": "They feel sleepy." }
+          ],
+          "correcta": "casa"
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who huffed and puffed?",
+          "preguntaEs": "¿Quién sopló?",
+          "pista": "El lobo.",
+          "opciones": [
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "cerdito-2", "dibujo": "cara-cerdito-2.svg" },
+            { "id": "cerdito-1", "dibujo": "cara-cerdito-1.svg" }
+          ],
+          "correcta": "lobo"
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "tareas": [
+        { "tipo": "ordenar", "tarjetas": ["corren", "firme", "cozy"] },
+        {
+          "tipo": "cruce",
+          "pregunta": "Pick an ending.",
+          "preguntaEs": "Elige un final.",
+          "opciones": [
+            { "id": "hungry", "come": "hungry", "dibujo": "personaje-lobo.svg", "titulo": "The wolf left hungry." },
+            { "id": "carrot", "come": "carrot", "dibujo": "personaje-lobo-vegetariano.svg", "titulo": "The wolf ate a carrot." }
+          ]
+        },
+        {
+          "tipo": "cambio",
+          "pregunta": "What did the wolf eat?",
+          "preguntaEs": "¿Qué comió el lobo?",
+          "pista": "Mira el final que elegiste.",
+          "segun": "come",
+          "opciones": [
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg" },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" }
+          ]
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "cozy",
+          "oracion": "The pigs felt cozy.",
+          "preguntaEs": "Cozy quiere decir a gusto.",
+          "pista": "Están calentitos y a gusto.",
+          "opciones": [
+            { "id": "cozy", "dibujo": "dibujos/dibujo-cozy.svg" },
+            { "id": "scared", "dibujo": "dibujos/dibujo-scared.svg" },
+            { "id": "huffed", "dibujo": "dibujos/dibujo-huffed.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who felt cozy?",
+          "preguntaEs": "¿Quién se sintió a gusto?",
+          "pista": "Un cerdito.",
+          "opciones": [
+            { "id": "cerdito-3", "dibujo": "cara-cerdito-3.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "cerdito-1", "dibujo": "cara-cerdito-1.svg" }
+          ],
+          "correcta": "cerdito-3"
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who runs away?",
+          "preguntaEs": "¿Quién se va?",
+          "pista": "El lobo se va.",
+          "opciones": [
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "cerdito-2", "dibujo": "cara-cerdito-2.svg" },
+            { "id": "cerdito-3", "dibujo": "cara-cerdito-3.svg" }
+          ],
+          "correcta": "lobo"
+        }
+      ]
+    }
+  ]
+}

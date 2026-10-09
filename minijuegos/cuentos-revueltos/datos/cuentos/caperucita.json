@@ -1,0 +1,188 @@
+{
+  "id": "caperucita",
+  "titulo": "Caperucita",
+  "nivel": 2,
+  "portada": "libro-caperucita.svg",
+  "paginas": [
+    {
+      "id": "cesta",
+      "escena": "escena-bosque.svg",
+      "personaje": "personaje-caperucita.svg",
+      "oraciones": ["Red takes a basket.", "She walks to Grandma."],
+      "pista": "Caperucita sale con la canasta."
+    },
+    {
+      "id": "bosque",
+      "escena": "escena-bosque.svg",
+      "personaje": "personaje-lobo.svg",
+      "oraciones": ["Red meets a wolf.", "Red shivered in the woods."],
+      "pista": "Se encuentra al lobo."
+    },
+    {
+      "id": "corre",
+      "escena": "escena-casa-abuela.svg",
+      "personaje": "personaje-lobo.svg",
+      "oraciones": ["The wolf runs ahead.", "He goes to the house."],
+      "pista": "El lobo corre primero."
+    },
+    {
+      "id": "cama",
+      "escena": "escena-cuarto-abuela.svg",
+      "personaje": "personaje-lobo.svg",
+      "oraciones": ["The wolf gets in bed.", "He waits for Red."],
+      "pista": "El lobo se mete en la cama."
+    },
+    {
+      "id": "ojos",
+      "escena": "escena-cuarto-abuela.svg",
+      "personaje": "personaje-caperucita.svg",
+      "oraciones": ["Red sees big eyes.", "She feels so scared."],
+      "pista": "Caperucita ve unos ojos grandes."
+    },
+    {
+      "id": "vuelve",
+      "escena": "escena-casa-abuela.svg",
+      "personaje": "personaje-abuela.svg",
+      "oraciones": ["Grandma comes back.", "The wolf runs away."],
+      "pista": "La abuela regresa."
+    },
+    {
+      "id": "abrazo",
+      "escena": "escena-casa-abuela.svg",
+      "personaje": "personaje-caperucita.svg",
+      "oraciones": ["Red hugs her grandma.", "They feel safe now."],
+      "pista": "Caperucita abraza a la abuela."
+    }
+  ],
+  "capitulos": [
+    {
+      "id": "c1",
+      "tareas": [
+        { "tipo": "ordenar", "tarjetas": ["cesta", "bosque", "corre", "cama"] },
+        {
+          "tipo": "palabra",
+          "palabra": "shivered",
+          "oracion": "Red shivered in the woods.",
+          "preguntaEs": "Shivered quiere decir tembló de frío.",
+          "pista": "Tiene frío en el bosque.",
+          "opciones": [
+            { "id": "shivered", "dibujo": "dibujos/dibujo-shivered.svg" },
+            { "id": "cozy", "dibujo": "dibujos/dibujo-cozy.svg" },
+            { "id": "sleepy", "dibujo": "dibujos/dibujo-sleepy.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who has the basket?",
+          "preguntaEs": "¿Quién tiene la canasta?",
+          "pista": "Caperucita.",
+          "opciones": [
+            { "id": "caperucita", "dibujo": "cara-caperucita.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "abuela", "dibujo": "cara-abuela.svg" }
+          ],
+          "correcta": "caperucita"
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who gets in the bed?",
+          "preguntaEs": "¿Quién se mete en la cama?",
+          "pista": "El lobo.",
+          "opciones": [
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "abuela", "dibujo": "cara-abuela.svg" },
+            { "id": "caperucita", "dibujo": "cara-caperucita.svg" }
+          ],
+          "correcta": "lobo"
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "scared",
+          "oracion": "She feels so scared.",
+          "preguntaEs": "Scared quiere decir asustada.",
+          "pista": "Tiene miedo.",
+          "opciones": [
+            { "id": "scared", "dibujo": "dibujos/dibujo-scared.svg" },
+            { "id": "sleepy", "dibujo": "dibujos/dibujo-sleepy.svg" },
+            { "id": "cozy", "dibujo": "dibujos/dibujo-cozy.svg" }
+          ]
+        },
+        {
+          "tipo": "porque",
+          "pregunta": "Why is Red scared?",
+          "preguntaEs": "¿Por qué Caperucita tiene miedo?",
+          "pista": "Ve los ojos grandes del lobo.",
+          "opciones": [
+            { "id": "ojos", "dibujo": "cara-lobo.svg", "texto": "She sees big eyes." },
+            { "id": "pastel", "dibujo": "dibujos/dibujo-cake.svg", "texto": "She wants cake." },
+            { "id": "cama", "dibujo": "dibujos/dibujo-cozy.svg", "texto": "The bed is cozy." }
+          ],
+          "correcta": "ojos"
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "tareas": [
+        { "tipo": "ordenar", "tarjetas": ["cama", "ojos", "vuelve", "abrazo"] },
+        {
+          "tipo": "cruce",
+          "pregunta": "Pick an ending.",
+          "preguntaEs": "Elige un final.",
+          "opciones": [
+            { "id": "hungry", "come": "hungry", "dibujo": "personaje-lobo.svg", "titulo": "The wolf left hungry." },
+            { "id": "cake", "come": "cake", "dibujo": "dibujos/dibujo-cake.svg", "titulo": "The wolf ate some cake." }
+          ]
+        },
+        {
+          "tipo": "cambio",
+          "pregunta": "What did the wolf eat?",
+          "preguntaEs": "¿Qué comió el lobo?",
+          "pista": "Mira el final que elegiste.",
+          "segun": "come",
+          "opciones": [
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg" },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who hugs Grandma?",
+          "preguntaEs": "¿Quién abraza a la abuela?",
+          "pista": "Caperucita.",
+          "opciones": [
+            { "id": "caperucita", "dibujo": "cara-caperucita.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "abuela", "dibujo": "cara-abuela.svg" }
+          ],
+          "correcta": "caperucita"
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "basket",
+          "oracion": "Red takes a basket.",
+          "preguntaEs": "Basket quiere decir canasta.",
+          "pista": "Lleva la comida en una canasta.",
+          "opciones": [
+            { "id": "basket", "dibujo": "dibujos/dibujo-basket.svg" },
+            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg" },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who comes back?",
+          "preguntaEs": "¿Quién regresa?",
+          "pista": "La abuela.",
+          "opciones": [
+            { "id": "abuela", "dibujo": "cara-abuela.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" },
+            { "id": "cerdito-1", "dibujo": "cara-cerdito-1.svg" }
+          ],
+          "correcta": "abuela"
+        }
+      ]
+    }
+  ]
+}
