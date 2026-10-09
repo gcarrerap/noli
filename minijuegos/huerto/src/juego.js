@@ -10,7 +10,8 @@ import {
 import { pista, marcaPasoCompleto } from "./pista.js";
 import {
   GUIA, GUIA_VOZ_MAX_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
-  topeGuia, efectoAtrasGuia, lineaGuia, esperaAutoGuia, cadenaFocoGuia, focoAlCerrarSalir,
+  topeGuia, efectoAtrasGuia, lineaGuia, cadenaFocoGuia, focoAlCerrarSalir,
+  relojPasoMostrar, entradaTrasCerrar,
 } from "./guia.js";
 import {
   cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
@@ -41,6 +42,8 @@ let avisoInicio = "";
 let token = 0;
 let pistaToken = 0;
 let relojGuia = 0;
+let vozPasoGen = 0;
+let cerradoEn = null;
 
 function hablar(texto, alTerminar) {
   if (!vozOn()) return false;
@@ -50,6 +53,18 @@ function hablar(texto, alTerminar) {
 function vozSigue() {
   const s = typeof window !== "undefined" ? window.speechSynthesis : null;
   return !!(s && (s.speaking || s.pending));
+}
+
+function guardiaTrasSalir(tipo) {
+  if (cerradoEn == null) return false;
+  const ahora = typeof performance !== "undefined" ? performance.now() : Date.now();
+  return entradaTrasCerrar({ ms: ahora - cerradoEn, tipo }) === "ignorar";
+}
+
+function callarPaso() {
+  vozPasoGen++;
+  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
+  try { if (s) s.cancel(); } catch { /* sin voz */ }
 }
 
 function cargarArte() {
@@ -372,14 +387,25 @@ function empezarGuia() {
   clearTimeout(relojGuia);
   relojGuia = 0;
   pintarJuego("aceptar");
-  const hablo = hablar(partida.encargo.leer, avanzarPedidoSiSigue);
-  if (hablo) programarToqueGuia(GUIA_VOZ_MAX_MS);
+  rearmarPasoMostrar();
 }
 
 function avanzarPedidoSiSigue() {
   if (!partida || partida.modo !== "guia" || partida.saliendo) return;
   if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
   aceptarPedido();
+}
+
+// El paso que solo se muestra vuelve a esperar la voz desde cero.
+function rearmarPasoMostrar() {
+  if (!partida || partida.modo !== "guia" || partida.saliendo) return;
+  if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
+  const gen = ++vozPasoGen;
+  const hablo = hablar(textoGuia("pedido", esTv()).leer, () => {
+    if (gen !== vozPasoGen) return;
+    avanzarPedidoSiSigue();
+  });
+  programarToqueGuia(hablo ? GUIA_VOZ_MAX_MS : 0);
 }
 
 function programarToqueGuia(msVoz) {
@@ -391,11 +417,19 @@ function programarToqueGuia(msVoz) {
   }
   if (relojGuia && msVoz == null) return;
   clearTimeout(relojGuia);
-  const ms = esperaAutoGuia(msVoz == null ? (vozSigue() ? GUIA_VOZ_MAX_MS : 0) : msVoz);
+  const voz = msVoz == null ? vozSigue() : Number(msVoz) > 0;
+  const plan = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: voz });
+  const gen = vozPasoGen;
+  if (!plan.correr) {
+    relojGuia = 0;
+    if (plan.avanzar) avanzarPedidoSiSigue();
+    return;
+  }
   relojGuia = setTimeout(() => {
     relojGuia = 0;
+    if (gen !== vozPasoGen) return;
     avanzarPedidoSiSigue();
-  }, ms);
+  }, plan.espera);
 }
 
 function empezarTemporada() {
@@ -761,6 +795,7 @@ function finReto() {
 function preguntarSalir() {
   if (!partida) return;
   token++;
+  callarPaso();
   clearTimeout(relojGuia);
   relojGuia = 0;
   partida.espera = false;
@@ -774,8 +809,10 @@ function seguirJugando() {
   const guardado = partida.focoAntes || "";
   partida.focoAntes = "";
   partida.saliendo = false;
+  cerradoEn = typeof performance !== "undefined" ? performance.now() : Date.now();
   const foco = focoAlCerrarSalir(guardado, partida.modo === "guia", estadoGuia());
   pintarJuego(foco || undefined);
+  rearmarPasoMostrar();
 }
 
 function saltarGuia() {
@@ -831,6 +868,7 @@ function moverContador(accion) {
 // ---------- Acciones ----------
 
 $main.addEventListener("pointerup", (ev) => {
+  if (guardiaTrasSalir("toque")) return;
   if (!partida || partida.modo !== "guia" || partida.saliendo) return;
   if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
   if (ev.target.closest("[data-act=saltar-guia]")) return;
@@ -838,6 +876,7 @@ $main.addEventListener("pointerup", (ev) => {
 }, true);
 
 $main.addEventListener("click", (ev) => {
+  if (!(partida && partida.saliendo) && guardiaTrasSalir("toque")) return;
   const t = ev.target.closest("[data-act]");
   if (!t || !$main.contains(t) || t.disabled) return;
   const act = t.dataset.act;
@@ -868,6 +907,7 @@ Noli.alEntrar((accion) => {
     else preguntarSalir();
     return true;
   }
+  if (accion === "ok" && !(partida && partida.saliendo) && guardiaTrasSalir("ok")) return true;
   if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
     aceptarPedido();
     return true;

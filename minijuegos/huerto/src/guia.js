@@ -10,6 +10,8 @@ export const GUIA = {
 export const GUIA_TOQUE_MS = 2000;
 /** Tope de la espera cuando la voz del paso sigue sonando. */
 export const GUIA_VOZ_MAX_MS = 3000;
+/** Tras cerrar «¿Salir?», toques y OK no caen en lo de debajo. */
+export const GUARDIA_SALIR_MS = 400;
 
 export const PASOS = ["pedido", "filas", "cada", "listo", "abejas"];
 
@@ -58,6 +60,28 @@ export function esperaAutoGuia(msVoz) {
   const v = Number(msVoz);
   if (!Number.isFinite(v) || v <= 0) return GUIA_TOQUE_MS;
   return Math.min(GUIA_VOZ_MAX_MS, v);
+}
+
+/**
+ * Reloj del paso que solo se muestra.
+ * Con el diálogo abierto no corre: el tiempo ahí metido no salta el paso.
+ * Al seguir, se llama con transcurrido 0 para empezar la espera de nuevo.
+ */
+export function relojPasoMostrar({ dialog = false, transcurrido = 0, vozSigue = false } = {}) {
+  if (dialog) return { avanzar: false, espera: 0, correr: false };
+  const t = Number(transcurrido);
+  const pasado = Number.isFinite(t) && t > 0 ? t : 0;
+  const meta = esperaAutoGuia(vozSigue ? GUIA_VOZ_MAX_MS : 0);
+  if (pasado >= meta) return { avanzar: true, espera: 0, correr: false };
+  return { avanzar: false, espera: meta - pasado, correr: true };
+}
+
+/** Toque u OK justo después de Seguir. Atrás y las flechas siguen. */
+export function entradaTrasCerrar({ ms = 0, tipo = "toque" } = {}) {
+  if (tipo !== "toque" && tipo !== "ok") return "pasar";
+  const t = Number(ms);
+  if (!Number.isFinite(t) || t < GUARDIA_SALIR_MS) return "ignorar";
+  return "pasar";
 }
 
 // El paso visible sale de lo que ya hizo, no de un temporizador.

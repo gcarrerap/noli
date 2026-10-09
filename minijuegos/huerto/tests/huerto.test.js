@@ -11,8 +11,8 @@ import {
 import { pista, marcaPasoCompleto } from "../src/pista.js";
 import {
   GUIA, pasoGuia, saltosGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
-  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS, GUIA_VOZ_MAX_MS, esperaAutoGuia,
-  cadenaFocoGuia, focoAlCerrarSalir,
+  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS, GUIA_VOZ_MAX_MS, GUARDIA_SALIR_MS, esperaAutoGuia,
+  cadenaFocoGuia, focoAlCerrarSalir, relojPasoMostrar, entradaTrasCerrar,
 } from "../src/guia.js";
 import {
   nuevo, cargar, registrar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, estrellasTemporada,
@@ -188,6 +188,36 @@ test("el paso que solo se muestra espera a la voz, con tope de 3 s", () => {
   assert.equal(esperaAutoGuia(9000), 3000);
   assert.equal(GUIA_VOZ_MAX_MS, 3000);
   assert.equal(GUIA_TOQUE_MS, 2000);
+});
+
+test("¿Salir? pausa el paso que se muestra y Seguir lo empieza de nuevo", () => {
+  assert.equal(relojPasoMostrar({ dialog: true, transcurrido: 1900 }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: true, transcurrido: 1900 }).correr, false);
+  assert.equal(relojPasoMostrar({ dialog: true, transcurrido: 9000, vozSigue: true }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 1900, vozSigue: false }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 2000, vozSigue: true }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 2600, vozSigue: true }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 3000, vozSigue: true }).avanzar, true);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 2000, vozSigue: false }).avanzar, true);
+  const otra = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: false });
+  assert.equal(otra.avanzar, false);
+  assert.equal(otra.espera, 2000);
+  assert.equal(otra.correr, true);
+  const conVoz = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: true });
+  assert.equal(conVoz.avanzar, false);
+  assert.equal(conVoz.espera, 3000);
+});
+
+test("tras cerrar ¿Salir? un toque o OK no pasa durante 400 ms", () => {
+  assert.equal(GUARDIA_SALIR_MS, 400);
+  for (const tipo of ["toque", "ok"]) {
+    assert.equal(entradaTrasCerrar({ ms: 0, tipo }), "ignorar");
+    assert.equal(entradaTrasCerrar({ ms: 399, tipo }), "ignorar");
+    assert.equal(entradaTrasCerrar({ ms: 400, tipo }), "pasar");
+  }
+  assert.equal(entradaTrasCerrar({ ms: 0, tipo: "atras" }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: 10, tipo: "arriba" }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: Number.NaN, tipo: "toque" }), "ignorar");
 });
 
 test("ver el paso completo a los 40 s no cuenta como primer intento", () => {
