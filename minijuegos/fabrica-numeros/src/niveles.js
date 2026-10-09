@@ -253,7 +253,7 @@ function pedidoComparar(rnd) {
 }
 
 const FALLBACK = {
-  1: () => pedidoArmar(1, "47", 47),
+  1: () => pedidoArmar(1, "Arma 47", 47),
   2: () => pedidoArmar(2, "347", 347),
   3: () => pedidoArmar(3, "305", 305, { dificil: true, subetapa: "base" }),
   4: () => pedidoArmar(4, "300 + 40 + 7", 347, { tipo: "desarrollada", subetapa: "desarrollada" }),
@@ -267,7 +267,7 @@ export function crearPedido(n, rnd, { sub = "base", facil = false } = {}) {
   const hecho = intentar(rnd, () => {
     if (n <= 1) {
       const objetivo = numeroNivel(1, rnd, facil);
-      return pedidoArmar(1, String(objetivo), objetivo, { subetapa: "base" });
+      return pedidoArmar(1, `Arma ${objetivo}`, objetivo, { subetapa: "base" });
     }
     if (n === 2) {
       const objetivo = numeroNivel(2, rnd, facil);

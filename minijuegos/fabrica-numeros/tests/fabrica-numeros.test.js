@@ -18,6 +18,11 @@ import {
 } from "../src/progreso.js";
 import { PIEZAS, ciclarRanura, decoNueva, pisosFabrica, piezasDisponibles } from "../src/deco.js";
 import { retoDelDia, pistasDe, soluciones, cumplePista } from "../src/reto.js";
+import {
+  siguientePaso, exigeCanje, puedeHablarDeCanje, pistaCorta, fasePista, cuentaParaDominio,
+  textoRomper, canjeEsLargo, IDLE_FLECHA_MS, IDLE_COMPLETA_MS,
+} from "../src/pista.js";
+import { resolverAtras } from "../src/salida.js";
 
 const muchos = (n, sub, rnd, k = 200, extra = {}) => Array.from({ length: k }, () => crearPedido(n, rnd, { sub, ...extra }));
 const HOY = "2026-10-09";
@@ -122,6 +127,7 @@ test("nivel 1 solo hasta 99 y sin cero; nivel 2 hasta 999 sin ceros; nivel 3 sie
     assert.equal(p.objetivo, valor(desdeNumero(p.objetivo)));
     assert.ok(p.objetivo >= 11 && p.objetivo <= 99, p.objetivo);
     assert.equal(tieneCero(p.objetivo), false);
+    assert.match(p.texto, /^Arma \d+$/);
     assert.ok(!p.texto.includes("más grande"));
   }
   for (const p of muchos(2, "base", rnd, 300)) {
@@ -454,4 +460,90 @@ test("los SVG de Petra traen el viewBox y los ids que usa el juego", () => {
   assert.match(leer("cubo-1000-coral.svg"), /#ff6b4a/);
   assert.match(fs.readFileSync(new URL("../icono.svg", import.meta.url), "utf8"), /viewBox="0 0 100 100"/);
   assert.equal(NIVELES.length, 8);
+});
+
+// ---------- Pistas, guía y Atrás ----------
+
+test("siguientePaso nombra la primera banda que no coincide, de grande a chica", () => {
+  const vacioE = { mil: 0, c: 0, d: 0, u: 0 };
+  assert.equal(siguientePaso(vacioE, 86).texto, "Pon 8 barras");
+  assert.equal(siguientePaso(vacioE, 86).banda, "d");
+  assert.equal(siguientePaso(desdeNumero(80), 86).texto, "Pon 6 cubitos");
+  assert.equal(siguientePaso(desdeNumero(90), 86).texto, "Quita 1 barra");
+  assert.equal(siguientePaso(desdeNumero(86), 86).texto, "Toca Enviar");
+  assert.equal(siguientePaso(desdeNumero(86), 86).listo, true);
+  assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 10 }, 10).texto, "¡10 cubitos! Toca Pegar.");
+  assert.equal(siguientePaso({ mil: 0, c: 0, d: 1, u: 0 }, 1).texto, "Quita 1 barra");
+  assert.equal(siguientePaso({ mil: 0, c: 0, d: 0, u: 0 }, 1000).texto, "Pon el mil");
+});
+
+test("exigeCanje solo cuando el pedido de verdad reagrupa", () => {
+  assert.equal(exigeCanje({ tipo: "sumar", a: 231, b: 123 }), false);
+  assert.equal(exigeCanje({ tipo: "sumar", a: 347, b: 125 }), true);
+  assert.equal(exigeCanje({ tipo: "restar", a: 400, b: 128 }), true);
+  assert.equal(exigeCanje({ tipo: "restar", a: 456, b: 123 }), false);
+  assert.equal(exigeCanje({ tipo: "contar", secuencia: [180, 190], objetivo: 200 }), true);
+  assert.equal(exigeCanje({ tipo: "contar", secuencia: [21, 22], objetivo: 23 }), false);
+  assert.equal(exigeCanje({ tipo: "armar", objetivo: 1000 }), true);
+  assert.equal(exigeCanje({ tipo: "armar", objetivo: 86 }), false);
+  assert.equal(puedeHablarDeCanje({ c: 0, d: 0, u: 0 }, { tipo: "armar", objetivo: 86 }), false);
+  assert.equal(puedeHablarDeCanje({ c: 0, d: 0, u: 10 }, { tipo: "armar", objetivo: 86 }), true);
+  assert.equal(puedeHablarDeCanje({ c: 0, d: 0, u: 0 }, { tipo: "restar", a: 400, b: 128 }), true);
+});
+
+test("la pista del nivel 1 es el paso entero; del 2 en adelante crece con la espera", () => {
+  assert.equal(fasePista({ nivel: 1, primerDelNivel: true, ms: 0, fallo: false }), "completa");
+  assert.equal(fasePista({ nivel: 2, primerDelNivel: true, ms: 0, fallo: false }), "corta");
+  assert.equal(fasePista({ nivel: 2, primerDelNivel: true, ms: IDLE_FLECHA_MS, fallo: false }), "flecha");
+  assert.equal(fasePista({ nivel: 2, primerDelNivel: true, ms: IDLE_COMPLETA_MS, fallo: false }), "completa");
+  assert.equal(fasePista({ nivel: 2, primerDelNivel: false, ms: 0, fallo: true }), "completa");
+  assert.equal(fasePista({ nivel: 4, primerDelNivel: false, ms: 1000, fallo: false }), "nada");
+  assert.equal(pistaCorta(3), "0 = banda vacía");
+  assert.equal(pistaCorta(4), "Escucha y arma");
+  assert.equal(pistaCorta(5), "Mira el número del camión");
+  assert.equal(pistaCorta(7), "Junta piezas");
+  assert.equal(pistaCorta(8), "Quita piezas");
+  assert.equal(cuentaParaDominio({ nivel: 1, vioPasoCompleto: true }), true);
+  assert.equal(cuentaParaDominio({ nivel: 2, vioPasoCompleto: true }), false);
+  assert.equal(cuentaParaDominio({ nivel: 2, vioPasoCompleto: false }), true);
+});
+
+test("romper nombra la banda que sí se puede partir", () => {
+  assert.equal(textoRomper("u", { mil: 0, c: 2, d: 0, u: 0 }), "Baja en las decenas: la máquina rompe una placa.");
+  assert.equal(textoRomper("u", { mil: 0, c: 0, d: 1, u: 0 }), "Baja otra vez: la máquina rompe una barra.");
+  assert.equal(textoRomper("d", { mil: 1, c: 0, d: 0, u: 0 }), "Baja en las centenas: la máquina rompe el mil.");
+  assert.equal(textoRomper("c", { mil: 0, c: 0, d: 0, u: 0 }), "No hay piezas para quitar.");
+  assert.equal(textoRomper("u", { mil: 0, c: 0, d: 0, u: 0 }), "No hay piezas para quitar.");
+  assert.equal(canjeEsLargo({ primeraVez: true, repetirPorFallo: false }), true);
+  assert.equal(canjeEsLargo({ primeraVez: false, repetirPorFallo: true }), true);
+  assert.equal(canjeEsLargo({ primeraVez: false, repetirPorFallo: false }), false);
+});
+
+test("Atrás abre o cierra ¿Salir? y nunca sale solo", () => {
+  assert.equal(resolverAtras(false), "abrir");
+  assert.equal(resolverAtras(true), "cerrar");
+  assert.notEqual(resolverAtras(false), "salir");
+  assert.notEqual(resolverAtras(true), "salir");
+});
+
+test("el dominio de 8 de 10 cruza turnos: cerrar el turno no vacía la ventana", () => {
+  let pr = jugar(nuevo(), 2, 4);
+  pr = registrar(pr, 2, { ok: false, dificil: false, banda: "d" }, HOY, 1);
+  pr = registrar(pr, 2, { ok: false, dificil: false, banda: "d" }, HOY, 1);
+  assert.equal(pr.niveles[2].ultimos.length, 6);
+  let cerrado = cerrarTurno(pr, 2, 4);
+  assert.equal(cerrado.pr.niveles[2].ultimos.length, 6);
+  pr = jugar(cerrado.pr, 2, 6);
+  cerrado = cerrarTurno(pr, 2, 6);
+  assert.equal(cerrado.pr.niveles[2].ultimos.length, 10);
+  assert.equal(dominio(cerrado.pr, 2).aciertos, 8);
+  assert.equal(dominio(cerrado.pr, 2).listo, true);
+});
+
+test("la guía vista se conserva al cargar, sin subir la versión del progreso", () => {
+  const guardado = { ...nuevo(), guia: { primera: true } };
+  const pr = cargar(guardado);
+  assert.deepEqual(pr.guia, { primera: true });
+  assert.equal(pr.v, 1);
+  assert.equal(cargar(nuevo()).guia, undefined);
 });

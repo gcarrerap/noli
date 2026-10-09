@@ -195,3 +195,42 @@ html[data-modo="tv"] .piezas.c img{width:34px;height:34px}
 html[data-modo="tv"] .piezas.c img.mil{width:calc(34px * 139 / 92)}
 html[data-modo="tv"] .piezas.d img{height:78px}
 html[data-modo="tv"] .banda{flex-basis:160px}
+
+.barra-accion{display:contents}
+.maq-wrap{position:relative;display:flex;flex:0 0 auto}
+.mas-wrap{position:relative;flex:1;display:flex;min-width:0}
+.mas-wrap .pm-btn{flex:1}
+.flecha{position:absolute;left:50%;top:-20px;transform:translateX(-50%);width:22px;height:30px;pointer-events:none;z-index:2;filter:drop-shadow(0 1px 0 #fff)}
+.maq-wrap .flecha{top:-6px}
+.pista{min-height:1.35em;margin:0;font-weight:800;font-size:1.15rem}
+.con-ico{display:inline-flex;align-items:center;justify-content:center;gap:.35rem}
+.con-ico .ico{width:1.35em;height:1.35em;flex:none}
+.saltar{align-self:center}
+.pide{font-size:.72em;color:var(--muted);font-weight:800}
+.enviar.listo{flex-direction:row;gap:.35rem;box-shadow:0 0 0 4px var(--sol), 0 0 16px var(--sol);animation:pulso 1s ease-in-out infinite}
+.maquina-btn.pide-romper{box-shadow:0 0 0 4px var(--coral)}
+.camion-wrap.brilla{filter:drop-shadow(0 0 12px var(--sol))}
+.total.brilla b{background:var(--sol);color:#2b2236;border-radius:12px;padding:0 .35em}
+.banda.apagada{opacity:.38}
+.banda.sin-uso{opacity:.62}
+.banda.apagada .pm-btn{pointer-events:none}
+
+@media (max-width:700px){
+  html:not([data-modo="tv"]) main{gap:.35rem;padding-bottom:8px}
+  html:not([data-modo="tv"]) .pedido{font-size:1.35rem}
+  html:not([data-modo="tv"]) .total{font-size:1.4rem}
+  html:not([data-modo="tv"]) .camion-wrap{width:min(240px, 70vw)}
+  html:not([data-modo="tv"]) .mesa{flex-direction:column;overflow:visible;align-items:stretch;gap:6px}
+  html:not([data-modo="tv"]) .banda{flex:none;width:100%;max-width:none;min-width:0;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;padding:6px}
+  html:not([data-modo="tv"]) .banda .cartel{flex:0 0 72px}
+  html:not([data-modo="tv"]) .banda .cartel svg{height:36px}
+  html:not([data-modo="tv"]) .banda .piezas{flex:1 1 60px;min-height:48px;min-width:0}
+  html:not([data-modo="tv"]) .banda .pm{flex:0 0 auto;width:auto}
+  html:not([data-modo="tv"]) .banda .riel{flex:1 0 100%;height:18px}
+  html:not([data-modo="tv"]) .piezas.d img{height:44px}
+  html:not([data-modo="tv"]) .piezas.c img{width:22px;height:22px}
+  html:not([data-modo="tv"]) .pm-btn{min-width:64px;min-height:64px}
+  html:not([data-modo="tv"]) .barra-accion{display:flex;position:sticky;bottom:0;gap:8px;width:100%;align-items:stretch;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:4}
+  html:not([data-modo="tv"]) .barra-accion .enviar{flex:1;min-width:0;min-height:72px}
+  html:not([data-modo="tv"]) .barra-accion .maquina-btn{min-width:88px}
+}
