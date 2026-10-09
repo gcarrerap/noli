@@ -8,10 +8,13 @@ import {
   NIVELES, crearEncargo, crearTemporada, infoPar, esPar, respuestaParEs, coincide, cabeEnCuadricula,
   saltosCoinciden, opcionesSalto, sumaRepetida, saltosArreglo, limitar, POR_TEMPORADA, planBase,
 } from "../src/niveles.js";
-import { pista } from "../src/pista.js";
-import { GUIA, pasoGuia, saltosGuia, textoGuia } from "../src/guia.js";
+import { pista, marcaPasoCompleto } from "../src/pista.js";
 import {
-  nuevo, cargar, registrar, dominio, cerrarTemporada, quiereFacil, planSlots, estrellasTemporada,
+  GUIA, pasoGuia, saltosGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
+  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS,
+} from "../src/guia.js";
+import {
+  nuevo, cargar, registrar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, estrellasTemporada,
   cumplirReto, racha, marcarGuia, ponerVoz, VENTANA, PARA_SUBIR,
 } from "../src/progreso.js";
 import { retoDelDia, RETO_GRANDE } from "../src/reto.js";
@@ -30,8 +33,12 @@ test("la guía es el ejemplo fijo de 2 filas de 3 y cuenta 3, 6", () => {
   assert.deepEqual(saltosGuia(), [3, 6]);
   assert.equal(textoGuia("filas", false).texto, "Toca + hasta 2.");
   assert.equal(textoGuia("filas", true).texto, "Pulsa ▲ hasta 2.");
-  assert.equal(textoGuia("filas", true).leer, "Toca más hasta 2.");
-  assert.doesNotMatch(textoGuia("filas", true).leer, SIMBOLO_HABLA);
+  assert.equal(textoGuia("filas", false).leer, "Toca más hasta 2.");
+  assert.equal(textoGuia("filas", true).leer, "Pulsa arriba hasta 2.");
+  assert.equal(textoGuia("listo", true).texto, "¡Brilla! Pulsa OK.");
+  assert.equal(textoGuia("listo", true).leer, "Brilla. Pulsa OK.");
+  assert.doesNotMatch(textoGuia("filas", true).leer, /Toca más/);
+  assert.doesNotMatch(textoGuia("filas", true).leer + textoGuia("listo", true).leer, SIMBOLO_HABLA);
   assert.equal(pasoGuia({ acepto: false, filas: 1, porFila: 1, fase: "plantar" }), "pedido");
   assert.equal(pasoGuia({ acepto: true, filas: 1, porFila: 1, fase: "plantar" }), "filas");
   assert.equal(pasoGuia({ acepto: true, filas: 2, porFila: 1, fase: "plantar" }), "cada");
@@ -136,10 +143,68 @@ test("coincide solo cuando filas y en cada fila son las del encargo", () => {
   assert.notEqual(e.filas, e.filas2);
 });
 
-test("pistas: nivel 1 completo, nivel 2 suma 5, nivel 4 filas luego cada fila, nivel 6 prueba con 2", () => {
+test("la guía no avanza sin el conteo, Listo espera el brillo y Atrás no sale dos veces", () => {
+  const base = { acepto: true, filas: 1, porFila: 1, fase: "plantar" };
+  assert.equal(pasoGuia(base), "filas");
+  assert.equal(listoGuiaActivo(base), false);
+  assert.equal(focoGuia(base), "contador-filas");
+  assert.notEqual(focoGuia(base), "saltar");
+  const dos = { ...base, filas: 2 };
+  assert.equal(pasoGuia(dos), "cada");
+  assert.equal(focoGuia(dos), "contador-cada");
+  assert.equal(listoGuiaActivo(dos), false);
+  assert.equal(pasoGuia({ ...base, filas: 5, porFila: 1 }), "filas");
+  assert.equal(topeGuia("filas", 5), 2);
+  assert.equal(topeGuia("cada", 10), 3);
+  const listo = { ...dos, porFila: 3 };
+  assert.equal(pasoGuia(listo), "listo");
+  assert.equal(listoGuiaActivo(listo), true);
+  assert.equal(focoGuia(listo), "listo");
+  assert.equal(guiaAvanzaConToque("pedido"), true);
+  assert.equal(guiaAvanzaConToque("filas"), false);
+  assert.equal(guiaAvanzaConToque("cada"), false);
+  assert.equal(GUIA_TOQUE_MS, 2000);
+  assert.equal(efectoAtrasGuia(false), "preguntar");
+  assert.equal(efectoAtrasGuia(true), "seguir");
+  assert.notEqual(efectoAtrasGuia(true), "salir");
+  assert.notEqual(efectoAtrasGuia(false), "saltar");
+  for (const estado of [base, dos, listo, { acepto: false, filas: 1, porFila: 1, fase: "plantar" }]) {
+    assert.notEqual(focoGuia(estado), "saltar");
+  }
+});
+
+test("ver el paso completo a los 40 s no cuenta como primer intento", () => {
+  assert.equal(marcaPasoCompleto(2, "completo", 40), true);
+  assert.equal(marcaPasoCompleto(2, "completo", 39), false);
+  assert.equal(marcaPasoCompleto(2, "corto", 40), false);
+  assert.equal(marcaPasoCompleto(1, "completo", 40), false);
+  let pr = nuevo();
+  pr = anotarEncargo(pr, 2, true, "2026-10-09", true);
+  assert.equal(dominio(pr, 2).intentos, 0);
+  assert.equal(dominio(pr, 2).aciertos, 0);
+  pr = anotarEncargo(pr, 2, true, "2026-10-09", false);
+  assert.equal(dominio(pr, 2).aciertos, 1);
+  pr = anotarEncargo(pr, 2, false, "2026-10-09", true);
+  assert.equal(dominio(pr, 2).intentos, 2);
+  assert.equal(dominio(pr, 2).aciertos, 1);
+  pr = anotarEncargo(pr, 1, true, "2026-10-09", true);
+  assert.equal(dominio(pr, 1).aciertos, 1);
+});
+
+test("pistas: nivel 1 cuenta sin regalar los números, nivel 2 suma 5, nivel 4 filas luego cada fila, nivel 6 prueba con 2", () => {
   const n1 = pista({ fase: "cosecha", salto: 0 }, { nivel: 1, secuencia: [2, 4, 6], paso: 2, direccion: 1 }, { segundos: 0 });
-  assert.match(n1.texto, /2, 4, 6/);
-  assert.equal(n1.paso, "completo");
+  assert.equal(n1.texto, "Cuenta de 2 en 2.");
+  assert.doesNotMatch(n1.texto, /2, 4/);
+  const n1full = pista({ fase: "cosecha", salto: 0 }, { nivel: 1, secuencia: [2, 4, 6], paso: 2, direccion: 1 }, { segundos: 40 });
+  assert.match(n1full.texto, /2, 4, 6/);
+  const n1diez = pista({ fase: "cosecha", salto: 0 }, { nivel: 1, secuencia: [10, 20], paso: 10, direccion: 1 }, { segundos: 0 });
+  assert.equal(n1diez.texto, "Cuenta de 10 en 10.");
+  const muestra = pista({ fase: "muestra", filas: 1, porFila: 1 }, { nivel: 3, filas: 2, porFila: 10 }, { segundos: 0 });
+  assert.equal(muestra.texto, "");
+  const tvListo = pista({ fase: "plantar", filas: 2, porFila: 3 }, { nivel: 4, filas: 2, porFila: 3 }, { segundos: 40, tv: true });
+  assert.equal(tvListo.texto, "¡Brilla! Pulsa OK.");
+  assert.equal(tvListo.leer, "Brilla. Pulsa OK.");
+  assert.doesNotMatch(tvListo.leer, /Toca más|▲|\+/);
   const n2 = pista({ fase: "cosecha", salto: 0 }, { nivel: 2, secuencia: [5, 10, 15], paso: 5, direccion: 1 }, { segundos: 0 });
   assert.equal(n2.texto, "Suma 5 más.");
   assert.equal(n2.paso, "corto");
@@ -161,6 +226,10 @@ test("pistas: nivel 1 completo, nivel 2 suma 5, nivel 4 filas luego cada fila, n
   const n3 = pista({ fase: "par" }, { nivel: 3 }, { segundos: 0 });
   assert.match(n3.texto, /parejas/);
   assert.doesNotMatch(n4a.leer + n6.leer + textoGuia("listo", false).leer, SIMBOLO_HABLA);
+  const tvFilas = pista({ fase: "plantar", filas: 1, porFila: 1 }, { nivel: 2, filas: 3, porFila: 5 }, { segundos: 40, tv: true });
+  assert.match(tvFilas.texto, /▲/);
+  assert.equal(tvFilas.leer, "Pulsa arriba hasta 3.");
+  assert.doesNotMatch(tvFilas.leer, /Toca más/);
 });
 
 test("la voz quita los símbolos", () => {

@@ -32,6 +32,13 @@ export function dominio(pr, n) {
   return { intentos: u.length, aciertos, listo: u.length >= VENTANA && aciertos >= PARA_SUBIR };
 }
 
+// Un acierto después de ver el paso completo (40 s) no entra en la ventana.
+// Un fallo sí: no fue un primer intento limpio.
+export function anotarEncargo(pr, nivelN, ok, hoy, vioPasoCompleto) {
+  if (ok && (nivelN | 0) > 1 && vioPasoCompleto) return pr;
+  return registrar(pr, nivelN, !!ok, hoy);
+}
+
 export function registrar(pr, nivelN, ok, hoy) {
   const nv = nivelDe(pr, nivelN);
   const niveles = {

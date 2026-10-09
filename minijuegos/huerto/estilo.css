@@ -16,7 +16,7 @@ body{margin:0;min-height:100dvh;background-color:#d7f5a8;background-image:url("i
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
 button:disabled{cursor:default;opacity:.38;filter:grayscale(.4)}
 :focus{outline:none}
-html.teclado button:focus{outline:5px solid var(--foco);outline-offset:3px;box-shadow:0 0 0 8px var(--halo)}
+html.teclado button:focus,html.teclado .stepper:focus{outline:5px solid var(--foco);outline-offset:3px;box-shadow:0 0 0 8px var(--halo)}
 main{width:100%;max-width:1100px;margin:0 auto;padding:8px 10px 12px;display:flex;flex-direction:column;align-items:center;
   text-align:center;gap:.4rem;min-height:100dvh;overflow-x:hidden}
 .titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.8rem;margin:.1em 0 0;line-height:1.05}
@@ -46,7 +46,7 @@ main{width:100%;max-width:1100px;margin:0 auto;padding:8px 10px 12px;display:fle
 
 .cab{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
 .nivel-mini{font-weight:800;color:var(--fg);background:var(--card);border-radius:999px;padding:.15em .7em;min-width:0}
-.saltar{min-height:48px;padding:.25em .9em;flex:none}
+.saltar{min-height:64px;min-width:64px;padding:.35em .9em;flex:none}
 .puntos{display:flex;gap:5px;flex:none}
 .puntos i{width:12px;height:12px;border-radius:50%;background:var(--off);display:block}
 .puntos i.lleno{background:var(--verde)}
@@ -109,6 +109,14 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .par .planta.b{right:6px}
 .ecuacion{font-family:"Fredoka",sans-serif;font-size:1.25rem;margin:.15rem 0;line-height:1.2}
 .frase{margin:0;font-weight:800;font-size:.95rem}
+.resultado-par{display:flex;flex-direction:column;align-items:center;gap:.2rem;width:100%}
+.resultado-par .par{width:58px;height:32px}
+.resultado-par .par.sola{width:32px}
+.resultado-par .par .planta{width:20px;height:20px;top:6px}
+.resultado-par .par .planta.a{left:4px}
+.resultado-par .par .planta.b{right:4px}
+.resultado-par .huerto{width:min(100%, calc(var(--cols) * 30px))}
+.resultado-par .ecuacion,.resultado-par .frase{margin:0}
 .paquete{width:92px;height:auto}
 
 .velo{position:fixed;inset:0;background:rgba(43,34,54,.45);display:grid;place-items:center;z-index:5;padding:16px}

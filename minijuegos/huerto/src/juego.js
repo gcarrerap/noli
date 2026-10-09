@@ -7,10 +7,13 @@ import { SEMILLAS, semillaNueva } from "./semillas.js";
 import {
   NIVELES, POR_TEMPORADA, MAX_FILAS, MAX_POR_FILA, coincide, infoPar, limitar, opcionesSalto,
 } from "./niveles.js";
-import { pista } from "./pista.js";
-import { GUIA, pasoGuia, textoGuia } from "./guia.js";
+import { pista, marcaPasoCompleto } from "./pista.js";
 import {
-  cargar, registrar, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
+  GUIA, GUIA_TOQUE_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
+  topeGuia, efectoAtrasGuia, lineaGuia,
+} from "./guia.js";
+import {
+  cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
   marcarGuia, ponerVoz, fechaLocal, cumplirReto, racha, semana, resumen, nivelDe,
   VENTANA, PARA_SUBIR,
 } from "./progreso.js";
@@ -37,6 +40,7 @@ let partida = null;
 let avisoInicio = "";
 let token = 0;
 let pistaToken = 0;
+let relojGuia = 0;
 
 function hablar(texto) {
   if (vozOn()) decir(texto, { activo: true });
@@ -71,8 +75,18 @@ function mostrar(html, nombre, focoId) {
   $main.className = "p-" + nombre;
   $main.innerHTML = html;
   if (esTv()) document.documentElement.classList.add("teclado");
-  const el = focoId && $main.querySelector(`[data-foco-id="${focoId}"]`);
-  if (el && !el.disabled) el.focus({ preventScroll: true });
+  enfocar(focoId);
+}
+
+// Si el destino está apagado, el foco no cae solo en Saltar.
+function enfocar(focoId) {
+  const pedido = focoId && $main.querySelector(`[data-foco-id="${focoId}"]`);
+  if (pedido && !pedido.disabled) {
+    pedido.focus({ preventScroll: true });
+    return;
+  }
+  const otro = [...$main.querySelectorAll("[data-foco]")].find((e) => !e.disabled && e.dataset.focoId !== "saltar");
+  if (otro) otro.focus({ preventScroll: true });
   else focoInicial($main);
 }
 
@@ -103,7 +117,8 @@ function pistaAhora() {
   const metaForma = fase === "plantar" || fase === "giro2"
     ? (partida.fase === "giro2" ? { filas: e.filas2, porFila: e.porFila2 } : { filas: e.filas, porFila: e.porFila })
     : { filas: e.filas, porFila: e.porFila };
-  return pista({
+  const segundos = segundosPista();
+  const ayuda = pista({
     fase: partida.fase === "giro2" ? "plantar" : partida.fase,
     filas: partida.filas,
     porFila: partida.porFila,
@@ -115,7 +130,9 @@ function pistaAhora() {
     secuencia: e.secuencia,
     paso: e.paso || e.porFila,
     direccion: e.direccion || 1,
-  }, { segundos: segundosPista(), errores: partida.errores, tv: esTv() });
+  }, { segundos, errores: partida.errores, tv: esTv() });
+  if (marcaPasoCompleto(e.nivel, ayuda.paso, segundos)) partida.vioPasoCompleto = true;
+  return ayuda;
 }
 
 // ---------- Dibujo ----------
@@ -171,7 +188,7 @@ function htmlMonton(cantidad, semilla) {
 
 function htmlPares(cantidad, semilla) {
   const inf = infoPar(cantidad);
-  let s = `<div class="parejas">`;
+  let s = `<div class="resultado-par"><div class="parejas">`;
   for (let i = 0; i < inf.parejas; i++) {
     s += `<div class="par"><img class="lazo" alt="" src="img/pareja.svg"><img class="planta a" alt="" src="img/planta-${semilla}.svg"><img class="planta b" alt="" src="img/planta-${semilla}.svg"></div>`;
   }
@@ -181,12 +198,12 @@ function htmlPares(cantidad, semilla) {
   s += `</div>`;
   if (inf.par) {
     s += `<p class="ecuacion">${esc(inf.doble)}</p>`;
-    s += htmlHuerto(2, inf.porFila, semilla, null);
     s += `<p class="frase">2 filas y ${inf.porFila} columnas. Son ${cantidad} cuadros.</p>`;
+    s += htmlHuerto(2, inf.porFila, semilla, null);
   } else {
     s += `<p class="ecuacion">Sobra una. Es ${esc(TEXTOS.non)}.</p>`;
   }
-  return s;
+  return s + `</div>`;
 }
 
 function htmlRecta() {
@@ -230,16 +247,20 @@ function htmlRecta() {
 }
 
 function htmlStepper(campo, valor, max, etiqueta) {
-  const bloqueado = partida.modo === "guia" && !partida.acepto;
+  const guia = partida.modo === "guia";
+  const bloqueado = guia && !partida.acepto;
+  const tope = guia && (partida.fase === "plantar" || partida.fase === "giro2") ? topeGuia(campo, max) : max;
   const menosOff = bloqueado || valor <= 1;
-  const masOff = bloqueado || valor >= max;
-  const foco = partida.saliendo ? "" : "data-foco";
+  const masOff = bloqueado || valor >= tope;
   const pistaF = partida._flecha === campo ? " con-flecha" : "";
-  return `<div class="stepper${pistaF}" data-flecha="${campo}">
+  const grupo = bloqueado || partida.saliendo
+    ? ""
+    : `tabindex="0" data-foco data-foco-id="contador-${campo}"`;
+  return `<div class="stepper${pistaF}" data-flecha="${campo}" data-contador="${campo}" ${grupo}>
     <span class="etiq">${etiqueta}</span>
-    <button type="button" class="pm menos" ${menosOff ? "disabled" : foco} data-foco-id="menos-${campo}" data-act="step" data-campo="${campo}" data-delta="-1" aria-label="Quitar en ${etiqueta}">${svg("boton-menos")}<span class="signo-tv" aria-hidden="true">▼</span></button>
+    <button type="button" class="pm menos" ${menosOff ? "disabled" : ""} data-act="step" data-campo="${campo}" data-delta="-1" aria-label="Quitar en ${etiqueta}">${svg("boton-menos")}<span class="signo-tv" aria-hidden="true">▼</span></button>
     <span class="valor">${valor}</span>
-    <button type="button" class="pm mas" ${masOff ? "disabled" : foco} data-foco-id="mas-${campo}" data-act="step" data-campo="${campo}" data-delta="1" aria-label="Poner en ${etiqueta}">${svg("boton-mas")}<span class="signo-tv" aria-hidden="true">▲</span></button>
+    <button type="button" class="pm mas" ${masOff ? "disabled" : ""} data-act="step" data-campo="${campo}" data-delta="1" aria-label="Poner en ${etiqueta}">${svg("boton-mas")}<span class="signo-tv" aria-hidden="true">▲</span></button>
   </div>`;
 }
 
@@ -340,10 +361,27 @@ function empezarGuia() {
     },
     fase: "plantar", filas: 1, porFila: 1, acepto: false, salto: 0, opciones: null,
     fallo: false, errores: 0, t0: Date.now(), saliendo: false, coincidia: false, regreso: false,
-    espera: false, aviso: "", _flecha: null,
+    espera: false, aviso: "", _flecha: null, vioPasoCompleto: false,
   };
+  clearTimeout(relojGuia);
+  relojGuia = 0;
   pintarJuego("aceptar");
   hablar(partida.encargo.leer);
+}
+
+function programarToqueGuia() {
+  if (!partida || partida.modo !== "guia" || partida.saliendo || !guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
+    clearTimeout(relojGuia);
+    relojGuia = 0;
+    return;
+  }
+  if (relojGuia) return;
+  relojGuia = setTimeout(() => {
+    relojGuia = 0;
+    if (!partida || partida.modo !== "guia" || partida.saliendo) return;
+    if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
+    aceptarPedido();
+  }, GUIA_TOQUE_MS);
 }
 
 function empezarTemporada() {
@@ -373,11 +411,11 @@ function cargarEncargo() {
   Object.assign(partida, {
     encargo, fase, filas: 1, porFila: 1, acepto: true, salto: 0, opciones: null,
     fallo: false, errores: 0, t0: Date.now(), saliendo: false, coincidia: false,
-    regreso: false, espera: false, aviso: "", _flecha: null,
+    regreso: false, espera: false, aviso: "", _flecha: null, vioPasoCompleto: false,
   });
   if (fase === "saltar") prepararOpciones();
   programarPista();
-  pintarJuego(fase === "par" ? "par-par" : fase === "saltar" ? "op-0" : "mas-filas");
+  pintarJuego(fase === "par" ? "par-par" : fase === "saltar" ? "op-0" : "contador-filas");
   hablar(encargo.leer);
 }
 
@@ -398,17 +436,18 @@ function abejaEnHuerto() {
 
 function coachGuia() {
   const paso = pasoGuia(estadoGuia());
+  const tv = esTv();
   if (paso === "filas" && partida.filas > GUIA.filas) {
-    return esTv()
-      ? { texto: "Pulsa ▼ hasta 2.", leer: "Quita hasta 2." }
+    return tv
+      ? { texto: "Pulsa ▼ hasta 2.", leer: "Pulsa abajo hasta 2." }
       : { texto: "Quita con − hasta 2.", leer: "Quita hasta 2." };
   }
   if (paso === "cada" && partida.porFila > GUIA.porFila) {
-    return esTv()
-      ? { texto: "Pulsa ▼ hasta 3.", leer: "Quita hasta 3." }
+    return tv
+      ? { texto: "Pulsa ▼ hasta 3.", leer: "Pulsa abajo hasta 3." }
       : { texto: "Quita con − hasta 3.", leer: "Quita hasta 3." };
   }
-  return textoGuia(paso, esTv());
+  return textoGuia(paso, tv);
 }
 
 function pintarJuego(focoId) {
@@ -430,9 +469,10 @@ function pintarJuego(focoId) {
       ? `<button type="button" class="pedido boton" data-foco="inicial" data-foco-id="aceptar" data-act="aceptar">Planta 2 filas de 3.</button>`
       : `<p class="pedido">Planta 2 filas de 3.</p>`)
     : `<p class="pedido">${esc(partida.fase === "giro2" ? e.texto2 : e.texto)}</p>`;
-  const lineaPista = guia
-    ? (paso === "pedido" ? "" : `<p class="pista">${esc(coach.texto)}</p>`)
-    : `<p class="pista">${esc(partida.aviso || (ayuda && ayuda.texto) || "")}</p>`;
+  const textoAyuda = guia
+    ? lineaGuia(paso === "pedido" ? "" : coach.texto, partida.aviso)
+    : (partida.fase === "muestra" ? "" : (partida.aviso || (ayuda && ayuda.texto) || ""));
+  const lineaPista = textoAyuda ? `<p class="pista">${esc(textoAyuda)}</p>` : "";
 
   let zonaHuerto = "";
   let zonaControles = "";
@@ -454,7 +494,7 @@ function pintarJuego(focoId) {
     zonaControles = htmlOpciones();
   } else {
     const brilla = coincide(partida.filas, partida.porFila, e, partida.fase);
-    const listoOff = guia && !partida.acepto;
+    const listoOff = guia && !listoGuiaActivo(estadoGuia());
     zonaHuerto = htmlHuerto(partida.filas, partida.porFila, e.semilla, null);
     zonaControles = `<div class="steppers">
         ${htmlStepper("filas", partida.filas, MAX_FILAS, "Filas")}
@@ -472,6 +512,7 @@ function pintarJuego(focoId) {
     </div>
     <div class="mesa"><div class="zona-huerto">${zonaHuerto}</div><div class="zona-controles">${zonaControles}</div></div>
     ${partida.saliendo ? dialogoSalir() : ""}`, "juego", partida.saliendo ? "seguir" : focoId);
+  programarToqueGuia();
 }
 
 function htmlOpciones() {
@@ -499,11 +540,14 @@ function htmlMuestra(controles) {
 }
 
 function aceptarPedido() {
-  if (!partida || partida.acepto) return;
+  if (!partida || partida.acepto || partida.saliendo) return;
   partida.acepto = true;
+  partida.aviso = "";
   partida.t0 = Date.now();
+  clearTimeout(relojGuia);
+  relojGuia = 0;
   clic();
-  pintarJuego("mas-filas");
+  pintarJuego(focoGuia(estadoGuia()));
   hablar(textoGuia("filas", esTv()).leer);
 }
 
@@ -512,17 +556,27 @@ function step(campo, delta) {
   if (partida.fase !== "plantar" && partida.fase !== "giro2") return;
   if (partida.modo === "guia" && !partida.acepto) return;
   const max = campo === "filas" ? MAX_FILAS : MAX_POR_FILA;
+  const tope = partida.modo === "guia" ? topeGuia(campo, max) : max;
   const clave = campo === "cada" ? "porFila" : "filas";
   const antes = partida[clave];
-  const ahora = limitar(antes + delta, max);
-  if (ahora === antes) return;
+  const pasoAntes = partida.modo === "guia" ? pasoGuia(estadoGuia()) : "";
+  const ahora = limitar(antes + delta, tope);
+  if (ahora === antes) {
+    if (partida.modo === "guia") pintarJuego(focoGuia(estadoGuia()));
+    return;
+  }
   clic();
   partida[clave] = ahora;
   partida.aviso = "";
   const ok = coincide(partida.filas, partida.porFila, partida.encargo, partida.fase);
   const recien = ok && !partida.coincidia;
   partida.coincidia = ok;
-  const foco = recien ? "listo" : (delta > 0 ? "mas-" + campo : "menos-" + campo);
+  let foco = recien ? "listo" : "contador-" + campo;
+  if (partida.modo === "guia") {
+    const paso = pasoGuia(estadoGuia());
+    foco = paso !== pasoAntes ? focoGuia(estadoGuia()) : "contador-" + campo;
+    if (paso === "listo") foco = "listo";
+  }
   pintarJuego(foco);
   if (recien) sonidoListo();
   if (partida.modo === "guia") {
@@ -535,6 +589,7 @@ function step(campo, delta) {
 function pulsarListo() {
   if (!partida || partida.saliendo || partida.espera) return;
   if (partida.fase !== "plantar" && partida.fase !== "giro2") return;
+  if (partida.modo === "guia" && !listoGuiaActivo(estadoGuia())) return;
   const ok = coincide(partida.filas, partida.porFila, partida.encargo, partida.fase);
   if (!ok) {
     if (partida.modo !== "guia") partida.fallo = true;
@@ -550,7 +605,7 @@ function pulsarListo() {
     partida.fase = "giro2";
     partida.t0 = Date.now();
     programarPista();
-    pintarJuego("mas-filas");
+    pintarJuego(coincide(partida.filas, partida.porFila, e, "giro2") ? "listo" : "contador-filas");
     hablar(e.leer2);
     return;
   }
@@ -633,8 +688,9 @@ function cerrarEncargo() {
     return;
   }
   const ok = !partida.fallo;
-  pr = registrar(pr, partida.encargo.nivel, ok, hoy());
-  if (ok) partida.aciertos++;
+  const antes = pr;
+  pr = anotarEncargo(pr, partida.encargo.nivel, ok, hoy(), !!partida.vioPasoCompleto);
+  if (ok && pr !== antes) partida.aciertos++;
   guardar();
   partida.i++;
   if (partida.i >= partida.total) {
@@ -689,8 +745,10 @@ function finReto() {
 }
 
 function preguntarSalir() {
-  if (!partida || partida.modo === "guia") return;
+  if (!partida) return;
   token++;
+  clearTimeout(relojGuia);
+  relojGuia = 0;
   partida.espera = false;
   partida.saliendo = true;
   pintarJuego("seguir");
@@ -699,17 +757,67 @@ function preguntarSalir() {
 function seguirJugando() {
   if (!partida) return;
   partida.saliendo = false;
-  pintarJuego();
+  const foco = partida.modo === "guia" ? focoGuia(estadoGuia()) : undefined;
+  pintarJuego(foco);
 }
 
 function saltarGuia() {
+  clearTimeout(relojGuia);
+  relojGuia = 0;
   pr = marcarGuia(pr);
   guardar();
   partida = null;
   inicio();
 }
 
+function campoFoco() {
+  const el = document.activeElement;
+  if (!el || !$main.contains(el)) return "";
+  if (el.dataset && el.dataset.contador) return el.dataset.contador;
+  const padre = el.closest && el.closest("[data-contador]");
+  return padre ? padre.dataset.contador : "";
+}
+
+function idFoco() {
+  const el = document.activeElement;
+  return el && el.dataset ? el.dataset.focoId || "" : "";
+}
+
+// ▲ y ▼ cambian el contador enfocado. Izquierda y derecha pasan al otro.
+function moverContador(accion) {
+  if (!partida || partida.saliendo) return false;
+  if (partida.fase !== "plantar" && partida.fase !== "giro2") return false;
+  const campo = campoFoco();
+  if (campo && (accion === "arriba" || accion === "ok")) {
+    step(campo, 1);
+    return true;
+  }
+  if (campo && accion === "abajo") {
+    step(campo, -1);
+    return true;
+  }
+  if (accion !== "izquierda" && accion !== "derecha") return false;
+  const id = idFoco();
+  if (id !== "saltar" && id !== "contador-filas" && id !== "contador-cada" && id !== "listo") return false;
+  const ids = ["saltar", "contador-filas", "contador-cada", "listo"].filter((x) => {
+    const el = $main.querySelector(`[data-foco-id="${x}"]`);
+    return el && !el.disabled;
+  });
+  const i = ids.indexOf(id);
+  if (i < 0) return false;
+  const j = i + (accion === "derecha" ? 1 : -1);
+  if (j >= 0 && j < ids.length) $main.querySelector(`[data-foco-id="${ids[j]}"]`).focus();
+  return true;
+}
+
 // ---------- Acciones ----------
+
+$main.addEventListener("pointerup", (ev) => {
+  if (!partida || partida.modo !== "guia" || partida.saliendo) return;
+  if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
+  if (ev.target.closest("[data-act=saltar-guia]")) return;
+  aceptarPedido();
+}, true);
 
 $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
@@ -737,15 +845,20 @@ $main.addEventListener("click", (ev) => {
 
 Noli.alEntrar((accion) => {
   document.documentElement.classList.add("teclado");
-  if (pantalla === "juego" && partida && partida.modo === "guia" && accion === "atras") {
-    saltarGuia();
-    return true;
-  }
   if (pantalla === "juego" && partida && accion === "atras") {
-    if (partida.saliendo) seguirJugando();
+    if (efectoAtrasGuia(partida.saliendo) === "seguir") seguirJugando();
     else preguntarSalir();
     return true;
   }
+  if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && idFoco() === "saltar") {
+    document.activeElement.click();
+    return true;
+  }
+  if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
+    aceptarPedido();
+    return true;
+  }
+  if (moverContador(accion)) return true;
   if (moverFoco(accion, $main)) return true;
   if (accion === "ok") {
     const e = document.activeElement;
