@@ -1,0 +1,40 @@
+{
+  "_ayuda": "Pesos mexicanos. Los valores están en pesos (sin centavos): monedas de 1, 2, 5 y 10; billetes de 20, 50 y 100. Mismo formato que usd.json.",
+  "id": "mxn",
+  "codigo": "MXN",
+  "nombre": "Pesos",
+  "simbolo": "$",
+  "simboloMenor": "",
+  "decimales": 0,
+  "menorPorMayor": 0,
+  "mayor": { "uno": "peso", "muchos": "pesos" },
+  "menor": null,
+  "cambioMax": 99,
+  "piezas": [
+    { "id": "p1", "valor": 1, "tipo": "moneda", "nombre": "moneda de 1", "plural": "monedas de 1", "etiqueta": "$1", "color": "#e0b44c", "borde": "#8a6a20", "tinta": "#3a2c10", "tam": 0.78 },
+    { "id": "p2", "valor": 2, "tipo": "moneda", "nombre": "moneda de 2", "plural": "monedas de 2", "etiqueta": "$2", "color": "#d5d8de", "borde": "#6a707c", "tinta": "#2a2e36", "tam": 0.9 },
+    { "id": "p5", "valor": 5, "tipo": "moneda", "nombre": "moneda de 5", "plural": "monedas de 5", "etiqueta": "$5", "color": "#dfe3ea", "borde": "#5c6774", "tinta": "#24303a", "tam": 1.02, "centro": "#e0b44c" },
+    { "id": "p10", "valor": 10, "tipo": "moneda", "nombre": "moneda de 10", "plural": "monedas de 10", "etiqueta": "$10", "color": "#eceff4", "borde": "#8a6a20", "tinta": "#2b2618", "tam": 1.16, "centro": "#e7c56a" },
+    { "id": "b20", "valor": 20, "tipo": "billete", "nombre": "billete de 20", "plural": "billetes de 20", "etiqueta": "$20", "banda": "PESOS", "color": "#3d7ec4", "borde": "#1e4e86", "tinta": "#f7fbff", "tam": 1 },
+    { "id": "b50", "valor": 50, "tipo": "billete", "nombre": "billete de 50", "plural": "billetes de 50", "etiqueta": "$50", "banda": "PESOS", "color": "#c44b7a", "borde": "#7a2450", "tinta": "#fff8fb", "tam": 1.06 },
+    { "id": "b100", "valor": 100, "tipo": "billete", "nombre": "billete de 100", "plural": "billetes de 100", "etiqueta": "$100", "banda": "PESOS", "color": "#c4473d", "borde": "#7a241c", "tinta": "#fff6f4", "tam": 1.12 }
+  ],
+  "caja": { "p1": 1, "p2": 2, "p5": 1, "p10": 1, "b20": 2, "b50": 1 },
+  "confusiones": [
+    { "de": 10, "como": 1, "motivo": "La de 10 vale 10, no 1." },
+    { "de": 5, "como": 1, "motivo": "La de 5 vale 5, no 1." },
+    { "de": 2, "como": 1, "motivo": "La de 2 vale 2, no 1." },
+    { "de": 50, "como": 20, "motivo": "El billete de 50 vale 50, no 20." },
+    { "de": 20, "como": 10, "motivo": "El billete de 20 vale 20, no 10." },
+    { "de": 5, "como": 2, "motivo": "La de 5 vale 5, no 2." }
+  ],
+  "niveles": [
+    { "n": 1, "nombre": "Monedas de 1 y de 10", "modo": "contar", "piezas": ["p1", "p10"], "min": 6, "max": 50, "minPiezas": 2, "maxPiezas": 8 },
+    { "n": 2, "nombre": "Todas las monedas", "modo": "contar", "piezas": ["p1", "p2", "p5", "p10"], "min": 8, "max": 100, "minPiezas": 2, "maxPiezas": 8 },
+    { "n": 3, "nombre": "Monedas y billetes", "modo": "contar", "piezas": ["p1", "p2", "p5", "p10", "b20", "b50"], "min": 20, "max": 100, "minPiezas": 2, "maxPiezas": 6, "conBillete": true },
+    { "n": 4, "nombre": "El cambio", "modo": "cambio", "billetes": ["b20"], "billeteMax": 20, "precioMin": 3 },
+    { "n": 5, "nombre": "Dos productos", "modo": "dos", "precioMin": 2, "precioMax": 30, "billetes": ["b20", "b50", "b100"] },
+    { "n": 6, "nombre": "Cambio grande", "modo": "cambio", "billetes": ["b20", "b50", "b100"], "billeteMax": 100, "precioMin": 5 },
+    { "n": 7, "nombre": "¿Me alcanza?", "modo": "alcanza", "piezas": ["p1", "p2", "p5", "p10", "b20", "b50"], "min": 8, "max": 80, "minPiezas": 2, "maxPiezas": 6 }
+  ]
+}

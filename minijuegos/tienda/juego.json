@@ -1,0 +1,13 @@
+{
+  "id": "tienda",
+  "titulo": "La Tienda de Noli",
+  "descripcion": "Cobra, da el cambio y haz crecer la tienda.",
+  "icono": "icono.svg",
+  "color": "#ef8b2c",
+  "materia": "matemáticas",
+  "edades": [6, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

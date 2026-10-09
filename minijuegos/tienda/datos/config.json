@@ -1,0 +1,13 @@
+{
+  "_ayuda": "Ajustes de La Tienda. Dólares es la moneda inicial (2.º grado en EE. UU.). Los pesos están en mxn.json: para otra moneda, agrega su id aquí y un JSON con el mismo formato; el juego no trae denominaciones escritas en el código.",
+  "monedaInicial": "usd",
+  "monedas": ["usd", "mxn"],
+  "clientesPorDia": 8,
+  "mejoras": [
+    { "id": "letrero", "nombre": "Letrero", "costo": 4, "texto": "Un letrero con el nombre de la tienda." },
+    { "id": "maceta", "nombre": "Maceta", "costo": 6, "texto": "Una planta junto a la puerta." },
+    { "id": "toldo", "nombre": "Toldo", "costo": 8, "texto": "Un toldo de rayas." },
+    { "id": "alfombra", "nombre": "Alfombra", "costo": 10, "texto": "Una alfombra en la entrada." },
+    { "id": "estante", "nombre": "Estante nuevo", "costo": 14, "texto": "Otro estante para más productos." }
+  ]
+}
