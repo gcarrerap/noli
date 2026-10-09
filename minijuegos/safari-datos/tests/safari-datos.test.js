@@ -179,10 +179,8 @@ test("Saltar guarda la guía; en mirar OK espera a la voz y en acción el bloque
   assert.equal(bloqueada(g, 500), true);
   assert.equal(aplicarGuia(g, { tipo: "ok" }, 0).paso, "cuidar");
   assert.equal(aplicarGuia(g, { tipo: "toque" }, 100).paso, "cuidar");
-  assert.equal(aplicarGuia(g, { tipo: "ok" }, 1000).paso, "cuidar");
-  const fallada = anotarVoz(g, "fallo", 80);
-  assert.equal(aplicarGuia(fallada, { tipo: "ok" }, 999).paso, "cuidar");
-  const contando = aplicarGuia(fallada, { tipo: "ok" }, 1000);
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 999).paso, "cuidar");
+  const contando = aplicarGuia(g, { tipo: "ok" }, 1000);
   assert.equal(contando.paso, "contar");
   assert.equal(aplicarGuia(contando, { tipo: "marcar", i: 0 }, 500).marcados[0], false);
   assert.equal(aplicarGuia(contando, { tipo: "marcar", i: 0 }, contando.bloqueoHasta).marcados[0], true);
@@ -222,6 +220,13 @@ test("mirar espera a la voz: 2.5 s, spam y un tope de 3 s con tiempos enormes", 
   assert.equal(aplicarGuia(eterna, { tipo: "ok" }, t0 + 2999).paso, "cuidar");
   assert.equal(aplicarGuia(eterna, { tipo: "toque" }, t0 + 2999).paso, "cuidar");
   assert.equal(aplicarGuia(eterna, { tipo: "ok" }, t0 + 3000).paso, "contar");
+
+  const muda = guiaNueva(t0);
+  assert.equal(muda.vozEstado, "esperando");
+  for (let t = t0; t < t0 + 1000; t += 50) {
+    assert.equal(aplicarGuia(muda, { tipo: "ok" }, t).paso, "cuidar");
+  }
+  assert.equal(aplicarGuia(muda, { tipo: "ok" }, t0 + 1000).paso, "contar");
 
   const grafica = anotarVoz({
     ...guiaNueva(t0),
@@ -537,6 +542,8 @@ test("la pista del nivel 1 es el paso entero y a los 40 s ya no es a la primera"
   const luzTodos = pista(todos, {}, { nivel: 4, segundos: 20, errores: 0 });
   assert.equal(luzTodos.flecha, "barras");
   assert.equal(luzTodos.luces, true);
+  assert.equal(luzPar.texto, "Suma una y luego la otra.");
+  assert.equal(luzTodos.texto, "Suma todas las barras.");
   assert.equal(marcaPasoCompleto(3, "completo", 40), true);
   assert.equal(marcaPasoCompleto(1, "completo", 40), false);
   assert.equal(marcaPasoCompleto(3, "completo", 39), false);

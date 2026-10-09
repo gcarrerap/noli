@@ -156,10 +156,10 @@ export function bloqueada(g, ahora) {
 }
 
 // Un paso de solo mirar no se corta mientras la frase sigue.
-// El segundo mínimo lo pone el candado (bloqueoHasta). Aquí, además,
-// la voz tiene que haber acabado, haber fallado, o que ya pasaran 3 s
-// desde que apareció el paso. Tras Seguir el candado no vuelve a empezar,
-// pero la frase nueva sí: si sigue en espera o hablando, no se salta.
+// El candado de 1 s lo pone bloqueoHasta. Aquí, además, la voz tiene
+// que haber acabado, haber fallado, o que pasen 3 s. Si pasado cerca
+// de 1 s la voz no ha empezado, cuenta como fallo y vale ese candado.
+// Si está hablando, se espera a que acabe o a los 3 s.
 export function mirarCerrada(g, ahora) {
   if (!g || !esMirar(g.paso)) return false;
   const inicio = Number(g.aparecio);
@@ -168,6 +168,7 @@ export function mirarCerrada(g, ahora) {
   if (t >= MIRAR_MAX_MS) return false;
   const voz = g.vozEstado;
   if (voz === "termino" || voz === "fallo") return false;
+  if (voz !== "hablando" && t >= BLOQUEO_MIN_MS) return false;
   return true;
 }
 

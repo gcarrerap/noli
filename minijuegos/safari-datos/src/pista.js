@@ -76,7 +76,8 @@ function pistaPregunta(elemento, paso, errores) {
     const marca = todos ? "barras" : "par";
     const par = elemento.par || null;
     if (!dio && paso === "corto") return { paso, ...frase("Junta los números."), flecha: null, linea: false, luces: false, par };
-    if (!dio) return { paso, ...frase("Suma una y luego la otra."), flecha: marca, linea: false, luces: true, par };
+    const suma = todos ? "Suma todas las barras." : "Suma una y luego la otra.";
+    if (!dio) return { paso, ...frase(suma), flecha: marca, linea: false, luces: true, par };
     return { paso, ...frase(`Son ${elemento.correcta}.`), flecha: marca, linea: false, luces: true, par };
   }
   if (elemento.clase === "mas") {

@@ -66,9 +66,15 @@ button.pedido{width:100%;text-align:left;min-height:64px;box-shadow:none;border-
 .controles{width:100%;min-width:0;display:flex;flex-direction:column;gap:4px;flex:none}
 .controles.dos{display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:stretch}
 .controles.dos .listo,.controles.dos .opciones,.controles.dos .palitos-vivo{grid-column:1 / -1}
-.controles.dos .fila-barra{grid-template-columns:48px minmax(0,1fr) 48px;min-height:64px}
-.controles.dos .pm,.controles.dos .pm svg{width:48px;height:48px}
-.controles.dos .medio .nom{min-height:48px;font-size:.78rem}
+/* Cada celda: el nombre arriba (64 px) y abajo − número + con botones de 64. 64+40+64 cabe en la columna de 360. */
+.controles.dos .fila-barra{grid-template-columns:64px minmax(0,1fr) 64px;grid-template-areas:"nom nom nom" "extra extra extra" "menos num mas";gap:0;padding:0;min-height:0;min-width:0}
+.controles.dos .medio,.controles.dos .marca-num{display:contents}
+.controles.dos .fila-barra > .pm:first-child{grid-area:menos}
+.controles.dos .fila-barra > .pm:last-child{grid-area:mas}
+.controles.dos .pm,.controles.dos .pm svg,.controles.dos .pm img{width:64px;height:64px;min-width:64px;min-height:64px;display:block}
+.controles.dos .fila-barra .nom{grid-area:nom;min-height:64px;min-width:64px;width:100%;background:transparent;box-shadow:none}
+.controles.dos .pista-num{grid-area:num;justify-self:center}
+.controles.dos .cabezas,.controles.dos .palitos-vivo{grid-area:extra}
 .lecturas{display:flex;gap:6px;width:100%;flex:none}
 .leer,.nom{min-height:64px;min-width:64px;background:var(--card);border-radius:14px;padding:.2em .5em;font-weight:800;box-shadow:var(--sombra);line-height:1.05}
 .leer small{display:block;font-weight:700;color:var(--muted);font-size:.72rem}
@@ -180,6 +186,10 @@ html[data-modo="tv"] .pm img{opacity:0}
 @keyframes enciende{50%{opacity:.45}}
 
 html[data-modo="tv"] main{height:100dvh;max-height:100dvh;overflow:hidden;padding:36px 48px 52px;justify-content:center}
+.tono-coral{box-shadow:inset 10px 0 0 #ff6b4a}
+.tono-azul{box-shadow:inset 10px 0 0 #4cb3ff}
+.tono-verde{box-shadow:inset 10px 0 0 #3ccf8e}
+.tono-morado{box-shadow:inset 10px 0 0 #c86bfa}
 html[data-modo="tv"] .tono-coral{box-shadow:inset 10px 0 0 #ff6b4a}
 html[data-modo="tv"] .tono-azul{box-shadow:inset 10px 0 0 #4cb3ff}
 html[data-modo="tv"] .tono-verde{box-shadow:inset 10px 0 0 #3ccf8e}
