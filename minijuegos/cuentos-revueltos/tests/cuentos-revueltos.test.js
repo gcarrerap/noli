@@ -239,13 +239,16 @@ test("en un paso para mirar, el candado dura 1 s y no se trunca a 32 bits", () =
   assert.equal(g0.bloqueoHasta, BLOQUEO_MIRAR_MS);
   assert.equal(reducirGuia(g0, { tipo: "toque", ahora: 0 }).paso, 0);
   assert.equal(reducirGuia(g0, { tipo: "ok", ahora: 999 }).paso, 0);
-  assert.equal(reducirGuia(g0, { tipo: "toque", ahora: 1000 }).paso, 1);
+  const callo = reducirGuia(g0, { tipo: "voz", resultado: "fallo", ahora: 100 });
+  assert.equal(reducirGuia(callo, { tipo: "ok", ahora: 999 }).paso, 0);
+  assert.equal(reducirGuia(callo, { tipo: "toque", ahora: 1000 }).paso, 1);
   const T = 1.7e12;
   const grande = guiaNueva(T);
   assert.equal(grande.bloqueoHasta, T + BLOQUEO_MIRAR_MS);
   assert.notEqual((T + BLOQUEO_MIRAR_MS) | 0, T + BLOQUEO_MIRAR_MS);
   assert.equal(reducirGuia(grande, { tipo: "ok", ahora: T + 999 }).paso, 0);
-  let rafaga = reducirGuia(grande, { tipo: "ok", ahora: T + 1000 });
+  const grandeCallo = reducirGuia(grande, { tipo: "voz", resultado: "fallo", ahora: T + 100 });
+  let rafaga = reducirGuia(grandeCallo, { tipo: "ok", ahora: T + 1000 });
   rafaga = reducirGuia(rafaga, { tipo: "ok", ahora: T + 1000 });
   assert.equal(rafaga.paso, 1);
   assert.equal(saltarEnFlechas(), false);
@@ -276,7 +279,9 @@ test("¿Salir? pausa el paso, ignora la voz y al seguir empieza otra vez", () =>
   assert.equal(g.ignorarHasta, 2000 + TRAS_DIALOGO_MS);
   assert.equal(reducirGuia(g, { tipo: "toque", ahora: 2100 }).paso, 0);
   assert.equal(reducirGuia(g, { tipo: "ok", ahora: 2300 }).paso, 0);
-  assert.equal(reducirGuia(g, { tipo: "toque", ahora: 2400 }).paso, 1);
+  assert.equal(reducirGuia(g, { tipo: "toque", ahora: 2400 }).paso, 0);
+  const dijo = reducirGuia(g, { tipo: "voz", resultado: "termino", ahora: 2600 });
+  assert.equal(reducirGuia(dijo, { tipo: "toque", ahora: 2600 }).paso, 1);
   assert.equal(debeAutoAvanzar(g, 2300), false);
 });
 
@@ -414,10 +419,40 @@ test("dominio, reanudación, lectura sola y el libro siguiente", () => {
   assert.equal(repasadas.at(-1).repaso, true);
 });
 
+function mirarCuandoLaVozCede(g, ahora) {
+  const dijo = reducirGuia(g, { tipo: "voz", resultado: "termino", ahora });
+  return reducirGuia(dijo, { tipo: "toque", ahora });
+}
+
+test("una voz de 2,5 s no se corta con OK cada 50 ms, ni con tiempos de época", () => {
+  const T = 1.7e12;
+  const DUR = 2500;
+  let g = guiaNueva(T);
+  assert.equal(g.bloqueoHasta, T + BLOQUEO_MIRAR_MS);
+  assert.notEqual((T + DUR) | 0, T + DUR);
+  for (let t = 0; t <= DUR; t += 50) {
+    const seguido = reducirGuia(g, { tipo: "ok", ahora: T + t });
+    assert.equal(seguido.paso, 0, `ok a los ${t} ms`);
+    assert.equal(seguido.voz.activa, true);
+    assert.equal(seguido.voz.termino, false);
+  }
+  g = reducirGuia(g, { tipo: "voz", resultado: "termino", ahora: T + DUR });
+  assert.equal(g.paso, 0);
+  assert.equal(g.voz.termino, true);
+  const uno = reducirGuia(g, { tipo: "ok", ahora: T + DUR });
+  assert.equal(uno.paso, 1);
+  const otro = reducirGuia(uno, { tipo: "ok", ahora: T + DUR });
+  assert.equal(otro.paso, 1);
+  const habla = guiaNueva(T);
+  assert.equal(reducirGuia(habla, { tipo: "ok", ahora: T + TOPE_VOZ_MS - 1 }).paso, 0);
+  assert.equal(reducirGuia(habla, { tipo: "toque", ahora: T + TOPE_VOZ_MS }).paso, 1);
+  assert.equal(hastaLibre(T + BLOQUEO_MIRAR_MS, T + 400), T + BLOQUEO_MIRAR_MS);
+});
+
 test("los 400 ms y el candado del paso se solapan: no se suman", () => {
   let g = guiaNueva(0);
-  g = reducirGuia(g, { tipo: "toque", ahora: 1000 });
-  g = reducirGuia(g, { tipo: "toque", ahora: 2000 });
+  g = mirarCuandoLaVozCede(g, 1000);
+  g = mirarCuandoLaVozCede(g, 2000);
   assert.equal(g.paso, 2);
   assert.equal(g.bloqueoHasta, 3500);
   g = reducirGuia(g, { tipo: "atras", ahora: 2200 });
@@ -431,8 +466,8 @@ test("los 400 ms y el candado del paso se solapan: no se suman", () => {
   assert.equal(reducirGuia(g, { tipo: "tomar", id: "casas", ahora: 3500 }).paso, 3);
 
   let tarde = guiaNueva(0);
-  tarde = reducirGuia(tarde, { tipo: "toque", ahora: 1000 });
-  tarde = reducirGuia(tarde, { tipo: "toque", ahora: 2000 });
+  tarde = mirarCuandoLaVozCede(tarde, 1000);
+  tarde = mirarCuandoLaVozCede(tarde, 2000);
   tarde = reducirGuia(tarde, { tipo: "atras", ahora: 4000 });
   tarde = reducirGuia(tarde, { tipo: "seguir", ahora: 4100 });
   assert.equal(tarde.bloqueoHasta, 3500);
@@ -447,7 +482,8 @@ test("los 400 ms y el candado del paso se solapan: no se suman", () => {
   assert.equal(mira.bloqueoHasta, 1000);
   assert.equal(mira.ignorarHasta, 600);
   assert.equal(reducirGuia(mira, { tipo: "toque", ahora: 600 }).paso, 0);
-  assert.equal(reducirGuia(mira, { tipo: "toque", ahora: 1000 }).paso, 1);
+  assert.equal(reducirGuia(mira, { tipo: "toque", ahora: 1000 }).paso, 0);
+  assert.equal(mirarCuandoLaVozCede(mira, 1000).paso, 1);
   assert.equal(reducirGuia(mira, { tipo: "saltar", ahora: 600 }).fin, false);
   assert.equal(reducirGuia(mira, { tipo: "saltar", ahora: 1000 }).fin, true);
 });

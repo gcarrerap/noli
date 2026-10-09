@@ -114,11 +114,20 @@ function bloqueado(estado, ahora) {
   return ahora < hastaLibre(estado.bloqueoHasta, estado.ignorarHasta);
 }
 
-// Un paso para mirar también tiene su candado de 1 s.
+// La frase sigue sonando: no se corta con OK ni con un toque.
+// Se abre al cumplirse el segundo Y (la voz o el mp3 terminó, falló, o pasaron 3 s).
+function vozYaCabe(estado, ahora) {
+  if (relojMs(estado.reloj, ahora) >= TOPE_VOZ_MS) return true;
+  const voz = estado.voz || {};
+  return !!(voz.termino || voz.fallo || !voz.activa);
+}
+
+// Un paso para mirar espera 1 s como mínimo, y también a la voz.
 // El diálogo y los 400 ms de después siguen cerrados. No se suman al candado.
 function mirarCerrado(estado, ahora) {
   if (estado.fin || estado.dialogo) return true;
-  return ahora < hastaLibre(estado.bloqueoHasta, estado.ignorarHasta);
+  if (ahora < hastaLibre(estado.bloqueoHasta, estado.ignorarHasta)) return true;
+  return !vozYaCabe(estado, ahora);
 }
 
 // Un error o una voz que no arranca no es «ya terminó».
