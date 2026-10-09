@@ -6,11 +6,13 @@ import { TEXTOS, capital } from "./textos.js";
 import { SEMILLAS, semillaNueva } from "./semillas.js";
 import {
   NIVELES, POR_TEMPORADA, MAX_FILAS, MAX_POR_FILA, coincide, infoPar, limitar, opcionesSalto,
+  columnasParejas,
 } from "./niveles.js";
 import { pista, marcaPasoCompleto } from "./pista.js";
 import {
-  GUIA, GUIA_TOQUE_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
-  topeGuia, efectoAtrasGuia, lineaGuia,
+  GUIA, GUIA_VOZ_MAX_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
+  topeGuia, efectoAtrasGuia, lineaGuia, cadenaFocoGuia, focoAlCerrarSalir,
+  relojPasoMostrar, esperaTrasVoz, entradaTrasCerrar, toqueEnVelo,
 } from "./guia.js";
 import {
   cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
@@ -41,9 +43,30 @@ let avisoInicio = "";
 let token = 0;
 let pistaToken = 0;
 let relojGuia = 0;
+let vozPasoGen = 0;
+let cerradoEn = null;
 
-function hablar(texto) {
-  if (vozOn()) decir(texto, { activo: true });
+function hablar(texto, opts) {
+  if (!vozOn()) return false;
+  const o = opts && typeof opts === "object" ? opts : {};
+  return decir(texto, { activo: true, alTerminar: o.alTerminar, alFallar: o.alFallar });
+}
+
+function vozSigue() {
+  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
+  return !!(s && (s.speaking || s.pending));
+}
+
+function guardiaTrasSalir(tipo) {
+  if (cerradoEn == null) return false;
+  const ahora = typeof performance !== "undefined" ? performance.now() : Date.now();
+  return entradaTrasCerrar({ ms: ahora - cerradoEn, tipo }) === "ignorar";
+}
+
+function callarPaso() {
+  vozPasoGen++;
+  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
+  try { if (s) s.cancel(); } catch { /* sin voz */ }
 }
 
 function cargarArte() {
@@ -188,7 +211,7 @@ function htmlMonton(cantidad, semilla) {
 
 function htmlPares(cantidad, semilla) {
   const inf = infoPar(cantidad);
-  let s = `<div class="resultado-par"><div class="parejas">`;
+  let s = `<div class="resultado-par"><div class="parejas" style="--par-cols:${columnasParejas(inf.parejas)}">`;
   for (let i = 0; i < inf.parejas; i++) {
     s += `<div class="par"><img class="lazo" alt="" src="img/pareja.svg"><img class="planta a" alt="" src="img/planta-${semilla}.svg"><img class="planta b" alt="" src="img/planta-${semilla}.svg"></div>`;
   }
@@ -366,22 +389,85 @@ function empezarGuia() {
   clearTimeout(relojGuia);
   relojGuia = 0;
   pintarJuego("aceptar");
-  hablar(partida.encargo.leer);
+  rearmarPasoMostrar();
 }
 
-function programarToqueGuia() {
+function avanzarPedidoSiSigue() {
+  if (!partida || partida.modo !== "guia" || partida.saliendo) return;
+  if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
+  aceptarPedido();
+}
+
+function ahoraMs() {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+// Aplica el reloj del paso que solo se muestra. Un error no lo adelanta.
+function aplicarEspera(evento, t0, gen) {
+  if (gen !== vozPasoGen) return;
   if (!partida || partida.modo !== "guia" || partida.saliendo || !guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
     clearTimeout(relojGuia);
     relojGuia = 0;
     return;
   }
-  if (relojGuia) return;
+  const plan = esperaTrasVoz({ evento, transcurrido: ahoraMs() - t0 });
+  clearTimeout(relojGuia);
+  relojGuia = 0;
+  if (plan.avanzar) {
+    avanzarPedidoSiSigue();
+    return;
+  }
+  if (!plan.correr) return;
   relojGuia = setTimeout(() => {
     relojGuia = 0;
-    if (!partida || partida.modo !== "guia" || partida.saliendo) return;
-    if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
-    aceptarPedido();
-  }, GUIA_TOQUE_MS);
+    if (gen !== vozPasoGen) return;
+    avanzarPedidoSiSigue();
+  }, plan.espera);
+}
+
+// El paso que solo se muestra vuelve a esperar la voz desde cero.
+function rearmarPasoMostrar() {
+  if (!partida || partida.modo !== "guia" || partida.saliendo) return;
+  if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
+  const gen = ++vozPasoGen;
+  const t0 = ahoraMs();
+  let fallo = false;
+  const hablo = hablar(textoGuia("pedido", esTv()).leer, {
+    alTerminar: () => {
+      if (fallo) return;
+      aplicarEspera("fin", t0, gen);
+    },
+    alFallar: () => {
+      fallo = true;
+      aplicarEspera("error", t0, gen);
+    },
+  });
+  if (fallo) return;
+  aplicarEspera(hablo ? "sigue" : "sin-voces", t0, gen);
+}
+
+function programarToqueGuia(msVoz) {
+  const activo = partida && partida.modo === "guia" && !partida.saliendo && guiaAvanzaConToque(pasoGuia(estadoGuia()));
+  if (!activo) {
+    clearTimeout(relojGuia);
+    relojGuia = 0;
+    return;
+  }
+  if (relojGuia && msVoz == null) return;
+  clearTimeout(relojGuia);
+  const voz = msVoz == null ? vozSigue() : Number(msVoz) > 0;
+  const plan = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: voz });
+  const gen = vozPasoGen;
+  if (!plan.correr) {
+    relojGuia = 0;
+    if (plan.avanzar) avanzarPedidoSiSigue();
+    return;
+  }
+  relojGuia = setTimeout(() => {
+    relojGuia = 0;
+    if (gen !== vozPasoGen) return;
+    avanzarPedidoSiSigue();
+  }, plan.espera);
 }
 
 function empezarTemporada() {
@@ -503,7 +589,7 @@ function pintarJuego(focoId) {
       <button type="button" class="boton listo${brilla ? " brilla" : ""}${partida._flecha === "listo" ? " con-flecha" : ""}" ${listoOff ? "disabled" : focoAttr("listo", !!brilla)} data-act="listo" data-flecha="listo">Listo</button>`;
   }
 
-  const saltar = guia ? `<button type="button" class="boton saltar" ${focoAttr("saltar", false)} data-act="saltar-guia">Saltar</button>` : "";
+  const saltar = guia ? `<button type="button" class="boton saltar" tabindex="-1" data-act="saltar-guia">Saltar</button>` : "";
   mostrar(`
     <div class="cab">${saltar}<span class="nivel-mini">${guia ? "Guía" : esc(NIVELES[(e.nivel || partida.n) - 1].nombre)}</span>${puntos}</div>
     <div class="encargo">
@@ -526,7 +612,7 @@ function htmlMuestra(controles) {
   const e = partida.encargo;
   if (controles) {
     const foco = partida.saliendo ? "" : 'data-foco="inicial" data-foco-id="seguir-muestra"';
-    return `<button type="button" class="boton listo brilla" ${foco} data-act="seguir-muestra">Seguir</button>`;
+    return `<button type="button" class="boton listo brilla seguir-muestra" ${foco} data-act="seguir-muestra">Seguir</button>`;
   }
   if (e.tipo === "par") return htmlPares(e.cantidad, e.semilla);
   if (e.tipo === "giro") {
@@ -747,18 +833,24 @@ function finReto() {
 function preguntarSalir() {
   if (!partida) return;
   token++;
+  callarPaso();
   clearTimeout(relojGuia);
   relojGuia = 0;
   partida.espera = false;
+  partida.focoAntes = idFoco();
   partida.saliendo = true;
   pintarJuego("seguir");
 }
 
 function seguirJugando() {
   if (!partida) return;
+  const guardado = partida.focoAntes || "";
+  partida.focoAntes = "";
   partida.saliendo = false;
-  const foco = partida.modo === "guia" ? focoGuia(estadoGuia()) : undefined;
-  pintarJuego(foco);
+  cerradoEn = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const foco = focoAlCerrarSalir(guardado, partida.modo === "guia", estadoGuia());
+  pintarJuego(foco || undefined);
+  rearmarPasoMostrar();
 }
 
 function saltarGuia() {
@@ -798,8 +890,9 @@ function moverContador(accion) {
   }
   if (accion !== "izquierda" && accion !== "derecha") return false;
   const id = idFoco();
-  if (id !== "saltar" && id !== "contador-filas" && id !== "contador-cada" && id !== "listo") return false;
-  const ids = ["saltar", "contador-filas", "contador-cada", "listo"].filter((x) => {
+  const cadena = cadenaFocoGuia();
+  if (!cadena.includes(id)) return false;
+  const ids = cadena.filter((x) => {
     const el = $main.querySelector(`[data-foco-id="${x}"]`);
     return el && !el.disabled;
   });
@@ -813,6 +906,7 @@ function moverContador(accion) {
 // ---------- Acciones ----------
 
 $main.addEventListener("pointerup", (ev) => {
+  if (guardiaTrasSalir("toque")) return;
   if (!partida || partida.modo !== "guia" || partida.saliendo) return;
   if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
   if (ev.target.closest("[data-act=saltar-guia]")) return;
@@ -820,6 +914,15 @@ $main.addEventListener("pointerup", (ev) => {
 }, true);
 
 $main.addEventListener("click", (ev) => {
+  if (!(partida && partida.saliendo) && guardiaTrasSalir("toque")) return;
+  if (partida && partida.saliendo) {
+    const enDialogo = !!ev.target.closest(".dialogo");
+    const enVelo = !!ev.target.closest(".velo");
+    if (enVelo && toqueEnVelo({ tv: esTv(), enDialogo }) === "seguir") {
+      seguirJugando();
+      return;
+    }
+  }
   const t = ev.target.closest("[data-act]");
   if (!t || !$main.contains(t) || t.disabled) return;
   const act = t.dataset.act;
@@ -850,10 +953,7 @@ Noli.alEntrar((accion) => {
     else preguntarSalir();
     return true;
   }
-  if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && idFoco() === "saltar") {
-    document.activeElement.click();
-    return true;
-  }
+  if (accion === "ok" && !(partida && partida.saliendo) && guardiaTrasSalir("ok")) return true;
   if (partida && partida.modo === "guia" && !partida.saliendo && accion === "ok" && guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
     aceptarPedido();
     return true;

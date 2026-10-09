@@ -2,16 +2,18 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { rngConSemilla } from "../src/rng.js";
 import { TEXTOS, preguntaPar } from "../src/textos.js";
-import { limpiarHabla } from "../src/voz.js";
+import { limpiarHabla, decir } from "../src/voz.js";
 import { SEMILLAS, semillasAbiertas, semillaNueva, semillaDeNivel } from "../src/semillas.js";
 import {
   NIVELES, crearEncargo, crearTemporada, infoPar, esPar, respuestaParEs, coincide, cabeEnCuadricula,
+  columnasParejas,
   saltosCoinciden, opcionesSalto, sumaRepetida, saltosArreglo, limitar, POR_TEMPORADA, planBase,
 } from "../src/niveles.js";
 import { pista, marcaPasoCompleto } from "../src/pista.js";
 import {
   GUIA, pasoGuia, saltosGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
-  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS,
+  topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS, GUIA_VOZ_MAX_MS, GUARDIA_SALIR_MS, esperaAutoGuia,
+  cadenaFocoGuia, focoAlCerrarSalir, relojPasoMostrar, esperaTrasVoz, entradaTrasCerrar, toqueEnVelo,
 } from "../src/guia.js";
 import {
   nuevo, cargar, registrar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, estrellasTemporada,
@@ -164,6 +166,11 @@ test("la guía no avanza sin el conteo, Listo espera el brillo y Atrás no sale 
   assert.equal(guiaAvanzaConToque("filas"), false);
   assert.equal(guiaAvanzaConToque("cada"), false);
   assert.equal(GUIA_TOQUE_MS, 2000);
+  assert.deepEqual(cadenaFocoGuia(), ["contador-filas", "contador-cada", "listo"]);
+  assert.equal(cadenaFocoGuia().includes("saltar"), false);
+  assert.equal(focoAlCerrarSalir("listo", false, base), "listo");
+  assert.equal(focoAlCerrarSalir("contador-cada", true, dos), "contador-cada");
+  assert.equal(focoAlCerrarSalir("", true, base), "contador-filas");
   assert.equal(efectoAtrasGuia(false), "preguntar");
   assert.equal(efectoAtrasGuia(true), "seguir");
   assert.notEqual(efectoAtrasGuia(true), "salir");
@@ -171,6 +178,160 @@ test("la guía no avanza sin el conteo, Listo espera el brillo y Atrás no sale 
   for (const estado of [base, dos, listo, { acepto: false, filas: 1, porFila: 1, fase: "plantar" }]) {
     assert.notEqual(focoGuia(estado), "saltar");
   }
+});
+
+test("el paso que solo se muestra espera a la voz, con tope de 3 s", () => {
+  assert.equal(guiaAvanzaConToque("pedido"), true);
+  assert.equal(guiaAvanzaConToque("filas"), false);
+  assert.equal(esperaAutoGuia(0), 2000);
+  assert.equal(esperaAutoGuia(undefined), 2000);
+  assert.equal(esperaAutoGuia(2600), 2600);
+  assert.equal(esperaAutoGuia(9000), 3000);
+  assert.equal(GUIA_VOZ_MAX_MS, 3000);
+  assert.equal(GUIA_TOQUE_MS, 2000);
+});
+
+function conVoz(mock, fn) {
+  const antes = globalThis.window;
+  globalThis.window = mock;
+  try { return fn(); }
+  finally {
+    if (antes === undefined) delete globalThis.window;
+    else globalThis.window = antes;
+  }
+}
+
+class Frase {
+  constructor(texto) { this.text = texto; }
+}
+
+test("si la voz falla, no hay voces o no acaba, el paso no se va antes de 2 s", () => {
+  const voz = { lang: "es-ES" };
+  let termino = 0;
+  let fallo = 0;
+  let hablo = false;
+  conVoz({
+    speechSynthesis: {
+      speaking: false,
+      pending: false,
+      getVoices: () => [voz],
+      cancel() {},
+      speak(u) {
+        this.speaking = true;
+        u.onerror({ error: "not-allowed" });
+      },
+    },
+    SpeechSynthesisUtterance: Frase,
+  }, () => {
+    hablo = decir("Planta 2 filas de 3.", {
+      alTerminar: () => { termino++; },
+      alFallar: () => { fallo++; },
+    });
+  });
+  assert.equal(hablo, false);
+  assert.equal(termino, 0);
+  assert.equal(fallo, 1);
+  const trasError = esperaTrasVoz({ evento: "error", transcurrido: 1 });
+  assert.equal(trasError.avanzar, false);
+  assert.equal(trasError.espera, 1999);
+  assert.equal(esperaTrasVoz({ evento: "error", transcurrido: 2000 }).avanzar, true);
+
+  termino = 0;
+  fallo = 0;
+  let speakLlamado = false;
+  conVoz({
+    speechSynthesis: {
+      speaking: false,
+      pending: false,
+      getVoices: () => [],
+      cancel() {},
+      speak() { speakLlamado = true; },
+    },
+    SpeechSynthesisUtterance: Frase,
+  }, () => {
+    hablo = decir("Planta 2 filas de 3.", {
+      alTerminar: () => { termino++; },
+      alFallar: () => { fallo++; },
+    });
+  });
+  assert.equal(hablo, false);
+  assert.equal(speakLlamado, false);
+  assert.equal(termino, 0);
+  assert.equal(fallo, 1);
+  assert.equal(esperaTrasVoz({ evento: "sin-voces", transcurrido: 0 }).avanzar, false);
+  assert.equal(esperaTrasVoz({ evento: "sin-voces", transcurrido: 0 }).espera, 2000);
+
+  termino = 0;
+  fallo = 0;
+  conVoz({
+    speechSynthesis: {
+      speaking: false,
+      pending: false,
+      getVoices: () => [voz],
+      cancel() {},
+      speak() { this.speaking = true; },
+    },
+    SpeechSynthesisUtterance: Frase,
+  }, () => {
+    hablo = decir("Planta 2 filas de 3.", {
+      alTerminar: () => { termino++; },
+      alFallar: () => { fallo++; },
+    });
+  });
+  assert.equal(hablo, true);
+  assert.equal(termino, 0);
+  assert.equal(fallo, 0);
+  assert.equal(esperaTrasVoz({ evento: "sigue", transcurrido: 2000 }).avanzar, false);
+  assert.equal(esperaTrasVoz({ evento: "sigue", transcurrido: 3000 }).avanzar, true);
+  assert.equal(esperaTrasVoz({ evento: "fin", transcurrido: 2600 }).avanzar, true);
+  assert.equal(esperaTrasVoz({ evento: "fin", transcurrido: 500 }).avanzar, false);
+  assert.equal(esperaTrasVoz({ evento: "fin", transcurrido: 500 }).espera, 1500);
+});
+
+test("en el teléfono el fondo de ¿Salir? es Seguir y en la tele no", () => {
+  assert.equal(toqueEnVelo({ tv: false, enDialogo: false }), "seguir");
+  assert.equal(toqueEnVelo({ tv: false, enDialogo: true }), "nada");
+  assert.equal(toqueEnVelo({ tv: true, enDialogo: false }), "nada");
+});
+
+test("las parejas del 20 no dejan una sola en la última fila", () => {
+  assert.equal(columnasParejas(10), 5);
+  assert.equal(10 % columnasParejas(10), 0);
+  for (let n = 2; n <= 10; n++) {
+    const cols = columnasParejas(n);
+    const ultima = n % cols || cols;
+    assert.notEqual(ultima, 1, n);
+  }
+});
+
+test("¿Salir? pausa el paso que se muestra y Seguir lo empieza de nuevo", () => {
+  assert.equal(relojPasoMostrar({ dialog: true, transcurrido: 1900 }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: true, transcurrido: 1900 }).correr, false);
+  assert.equal(relojPasoMostrar({ dialog: true, transcurrido: 9000, vozSigue: true }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 1900, vozSigue: false }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 2000, vozSigue: true }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 2600, vozSigue: true }).avanzar, false);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 3000, vozSigue: true }).avanzar, true);
+  assert.equal(relojPasoMostrar({ dialog: false, transcurrido: 2000, vozSigue: false }).avanzar, true);
+  const otra = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: false });
+  assert.equal(otra.avanzar, false);
+  assert.equal(otra.espera, 2000);
+  assert.equal(otra.correr, true);
+  const conVoz = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: true });
+  assert.equal(conVoz.avanzar, false);
+  assert.equal(conVoz.espera, 3000);
+});
+
+test("tras cerrar ¿Salir? un toque o OK no pasa durante 400 ms", () => {
+  assert.equal(GUARDIA_SALIR_MS, 400);
+  for (const tipo of ["toque", "ok"]) {
+    assert.equal(entradaTrasCerrar({ ms: 0, tipo }), "ignorar");
+    assert.equal(entradaTrasCerrar({ ms: 399, tipo }), "ignorar");
+    assert.equal(entradaTrasCerrar({ ms: 400, tipo }), "pasar");
+  }
+  assert.equal(entradaTrasCerrar({ ms: 0, tipo: "atras" }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: 10, tipo: "arriba" }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: Number.NaN, tipo: "toque" }), "ignorar");
 });
 
 test("ver el paso completo a los 40 s no cuenta como primer intento", () => {

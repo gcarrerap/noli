@@ -101,6 +101,7 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .abeja-mini{position:absolute;width:36px;height:27px;left:0;top:-22px;pointer-events:none;overflow:hidden}
 
 .parejas{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;width:100%;max-width:100%}
+.resultado-par .parejas{display:grid;grid-template-columns:repeat(var(--par-cols, 5), 58px);width:max-content;max-width:100%;justify-content:center}
 .par{position:relative;width:84px;height:44px;flex:none}
 .par.sola{width:44px}
 .par .lazo{position:absolute;inset:0;width:100%;height:100%}
@@ -117,6 +118,8 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .resultado-par .par .planta.b{right:4px}
 .resultado-par .huerto{width:min(100%, calc(var(--cols) * 30px))}
 .resultado-par .ecuacion,.resultado-par .frase{margin:0}
+.seguir-muestra{margin-top:36px}
+html[data-modo="tv"] .seguir-muestra{margin-top:0;margin-left:16px;width:calc(100% - 16px)}
 .paquete{width:92px;height:auto}
 
 .velo{position:fixed;inset:0;background:rgba(43,34,54,.45);display:grid;place-items:center;z-index:5;padding:16px}
