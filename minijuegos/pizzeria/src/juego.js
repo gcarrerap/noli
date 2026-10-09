@@ -425,7 +425,7 @@ function htmlBandeja(p) {
   const mas = glifoMas(modo), menos = glifoMenos(modo);
   const celdasHtml = Array.from({ length: f * c }, () => `<img alt="" src="img/brownie.svg">`).join("");
   return `<div class="bandeja">
-    <div class="parrilla" style="grid-template-columns:repeat(${c}, minmax(0,1fr))">${celdasHtml}</div>
+    <div class="parrilla" style="grid-template-columns:repeat(${c}, var(--celda))">${celdasHtml}</div>
     <div class="pasos">
       <div class="step" data-foco data-foco-id="filas" data-grupo="filas" tabindex="0">
         <span class="etiq">${esc(textos.filas)}</span>
@@ -449,7 +449,7 @@ function htmlCuantos(p) {
   const filas = [];
   for (let f = 0; f < p.filas; f++) {
     const browns = Array.from({ length: p.columnas }, () => `<img alt="" src="img/brownie.svg">`).join("");
-    filas.push(`<div class="fila-cuenta"><div class="parrilla mini" style="grid-template-columns:repeat(${p.columnas}, minmax(0,1fr))">${browns}</div><b class="prende" style="animation-delay:${f * 0.45}s">${p.cuenta[f]}</b></div>`);
+    filas.push(`<div class="fila-cuenta"><div class="parrilla mini" style="grid-template-columns:repeat(${p.columnas}, var(--celda))">${browns}</div><b class="prende" style="animation-delay:${f * 0.45}s">${p.cuenta[f]}</b></div>`);
   }
   return `<div class="cuantos">${filas.join("")}
     <div class="opciones numeros">${ops.map((n, i) => `<button type="button" class="boton grande" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="num-${i}" data-act="cuantos" data-n="${n}">${n}</button>`).join("")}</div>
