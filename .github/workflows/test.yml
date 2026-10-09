@@ -1,0 +1,17 @@
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # LTS. package.json pide >=18; el README, Node 18 o más nuevo.
+          node-version: 22
+      - run: npm test
