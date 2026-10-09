@@ -69,9 +69,9 @@ function arte() {
       .catch(() => { cache[n] = ""; })));
 }
 
-function hablar(texto, alTerminar) {
+function hablar(texto, alTerminar, alFallar) {
   if (!pr.voz || !texto) return false;
-  return decir(texto, "es-MX", alTerminar);
+  return decir(texto, "es-MX", alTerminar, alFallar);
 }
 
 // La explicación ya se dice en programarExplicacion, para enganchar el fin de la voz.
@@ -464,25 +464,36 @@ function programarExplicacion() {
   const t0 = performance.now();
   let acortada = false;
   let vozLista = false;
+  let vozFallo = false;
   let msVoz = 0;
   const avanzar = () => {
     if (gen !== explicarGen || !guia || guia.paso !== paso) return;
     const transcurrido = performance.now() - t0;
-    if (!debeAvanzarExplicacion({ dialog: overlay, transcurrido, voz: hablada, termino: vozLista, msVoz })) return;
+    if (!debeAvanzarExplicacion({
+      dialog: overlay, transcurrido, voz: hablada && !vozFallo, termino: vozLista, error: vozFallo || !hablada, msVoz,
+    })) return;
     explicarGen++;
     seguirExplicacion();
   };
   const alAcabar = () => {
-    if (gen !== explicarGen || overlay) return;
+    if (gen !== explicarGen || overlay || vozFallo) return;
     acortada = true;
     vozLista = true;
     msVoz = performance.now() - t0;
     const falta = esperaExplicar({ voz: true, termino: true, ms: msVoz }) - msVoz;
     luego(avanzar, falta > 40 ? falta : 0);
   };
+  const alFallar = () => {
+    if (gen !== explicarGen || overlay || vozFallo) return;
+    vozFallo = true;
+    acortada = true;
+    const transcurrido = performance.now() - t0;
+    const falta = esperaExplicar({ error: true }) - transcurrido;
+    luego(avanzar, falta > 0 ? falta : 0);
+  };
   callar();
-  const hablada = hablar(linea, alAcabar);
-  if (!acortada) luego(avanzar, esperaExplicar({ voz: hablada }));
+  const hablada = hablar(linea, alAcabar, alFallar);
+  if (!acortada) luego(avanzar, esperaExplicar({ voz: hablada && !vozFallo, error: vozFallo || !hablada }));
 }
 
 function seguirExplicacion() {
@@ -989,7 +1000,6 @@ $main.addEventListener("pointerdown", (ev) => {
   }
   fondoToque = false;
   if (ignoraTrasCerrar(performance.now() - cerradoEn)) {
-    tragar = true;
     ev.preventDefault();
     return;
   }

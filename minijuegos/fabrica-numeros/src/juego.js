@@ -23,7 +23,7 @@ import {
 } from "./pista.js";
 import { resolverAtras, accionAtras } from "./salida.js";
 import {
-  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, esperaVozGuia,
+  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, esperaTrasVoz,
   relojDeGuia, toqueTrasSalir, resolverToqueGuia,
 } from "./guia.js";
 
@@ -309,6 +309,7 @@ function programarGuia() {
   const token = ++guiaVozToken;
   partida.relojPaso = paso;
   const t0 = Date.now();
+  let cerrado = false;
   const seguir = () => {
     if (token !== guiaVozToken) return;
     guiaVozToken++;
@@ -317,21 +318,25 @@ function programarGuia() {
     if (saliendo || !esGuia() || !partida || partida.paso !== paso) return;
     avanzarGuia();
   };
-  relojGuia = setTimeout(seguir, esperaVozGuia(0));
-  decir(vozDeGuia(paso, modoJuego()), "es-ES", () => {
-    if (token !== guiaVozToken) return;
-    const pasoMs = Date.now() - t0;
-    // Un cierre al instante es un aparato sin voz: se queda el tope de 3 s.
-    if (pasoMs < 200) return;
-    const falta = esperaVozGuia(pasoMs) - pasoMs;
-    if (falta > 30) {
-      clearTimeout(relojGuia);
-      relojGuia = setTimeout(seguir, falta);
-      return;
-    }
+  const en = (ms) => {
     clearTimeout(relojGuia);
-    seguir();
-  });
+    relojGuia = setTimeout(seguir, Math.max(0, ms));
+  };
+  const alAcabar = () => {
+    if (token !== guiaVozToken || saliendo) return;
+    cerrado = true;
+    const pasoMs = Date.now() - t0;
+    const falta = esperaTrasVoz({ empezo: true, termino: true, ms: pasoMs }) - pasoMs;
+    en(falta > 30 ? falta : 0);
+  };
+  const alFallar = () => {
+    if (token !== guiaVozToken || saliendo) return;
+    cerrado = true;
+    const pasoMs = Date.now() - t0;
+    en(esperaTrasVoz({ empezo: true, error: true }) - pasoMs);
+  };
+  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", alAcabar, alFallar);
+  if (!cerrado) en(esperaTrasVoz({ empezo, error: !empezo }));
 }
 
 function avanzarGuia() {

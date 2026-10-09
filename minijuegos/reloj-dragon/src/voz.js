@@ -6,16 +6,40 @@ export function callar() {
   try { if (s?.speaking) s.cancel(); } catch { /* sin voz */ }
 }
 
-// Devuelve true si la frase empezó a decirse. alTerminar corre al acabar (no si no hay voz).
-export function decir(texto, lang, alTerminar) {
+// Lista vacía: este aparato no tiene voces. No se intenta hablar.
+export function hayVoces(sintesis) {
+  if (!sintesis || typeof sintesis.getVoices !== "function") return true;
+  try {
+    const lista = sintesis.getVoices();
+    return Array.isArray(lista) && lista.length > 0;
+  } catch {
+    return true;
+  }
+}
+
+// true si la frase empezó. alTerminar corre solo si de verdad acabó.
+// onerror no es «acabó»: llama a alFallar. Sin voces o si no arranca, false y sin aviso.
+export function decir(texto, lang, alTerminar, alFallar) {
   const s = typeof window !== "undefined" ? window.speechSynthesis : null;
   const U = typeof window !== "undefined" ? window.SpeechSynthesisUtterance : null;
-  if (!s || !U || !texto) return false;
+  if (!s || !U || !texto || !hayVoces(s)) return false;
+  let cerrado = false;
+  const acabar = () => {
+    if (cerrado) return;
+    cerrado = true;
+    if (typeof alTerminar === "function") alTerminar();
+  };
+  const fallar = () => {
+    if (cerrado) return;
+    cerrado = true;
+    if (typeof alFallar === "function") alFallar();
+  };
   try {
     const u = new U(texto);
     u.lang = lang || "es-MX";
     u.rate = 0.92;
-    if (typeof alTerminar === "function") u.onend = () => alTerminar();
+    u.onend = acabar;
+    u.onerror = fallar;
     s.speak(u);
     return true;
   } catch { /* la tele a veces no tiene voces */

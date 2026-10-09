@@ -5,20 +5,40 @@
 
 /** Tope de un paso que solo se muestra: espera a la voz, y a los 3 s avanza igual. */
 export const GUIA_VOZ_TOPE_MS = 3000;
+/** Sin voz, si falla o si no llega a sonar: el temporizador de 2 s. Nunca antes. */
+export const GUIA_VOZ_MIN_MS = 2000;
 /** Tras cerrar «¿Salir?», toques y OK no llegan al juego. Así un segundo toque no cae debajo. */
 export const GUIA_TRAS_SALIR_MS = 400;
 
 const VOZ = ["Arma el 23", "Pon 2 barras", "Pon 3 cubitos", "¡Igual!", "Toca Enviar"];
 
 /**
- * Cuánto esperar antes de avanzar solo.
- * msVoz es lo que duró la frase. Sin voz, o si no llegó a sonar, el tope.
- * Si sonó, ese tiempo, y nunca más del tope.
+ * Cuánto duró una frase que sí sonó, para el avance solo.
+ * Menos de 2 s se queda en 2 s. Más de 3 s se queda en el tope.
+ * 0 significa que todavía no acabó: el tope, no el temporizador corto.
  */
 export function esperaVozGuia(msVoz) {
   const v = Number(msVoz);
   if (!Number.isFinite(v) || v <= 0) return GUIA_VOZ_TOPE_MS;
-  return Math.min(v, GUIA_VOZ_TOPE_MS);
+  return Math.min(GUIA_VOZ_TOPE_MS, Math.max(GUIA_VOZ_MIN_MS, v));
+}
+
+/**
+ * Espera del avance solo. Un error, sin voces o si no arrancó: 2 s.
+ * Mientras habla y no avisa: el tope de 3 s. Al acabar de verdad: entre 2 y 3 s.
+ */
+export function esperaTrasVoz({ empezo = false, error = false, termino = false, ms = 0 } = {}) {
+  if (!empezo || error) return GUIA_VOZ_MIN_MS;
+  if (!termino) return GUIA_VOZ_TOPE_MS;
+  const v = Number(ms);
+  if (!Number.isFinite(v) || v <= 0) return GUIA_VOZ_MIN_MS;
+  return esperaVozGuia(v);
+}
+
+/** true cuando ya toca avanzar solo. Con el diálogo abierto, nunca. */
+export function avanzaSoloGuia({ dialogo = false, empezo = false, error = false, termino = false, ms = 0, transcurrido = 0 } = {}) {
+  if (dialogo) return false;
+  return transcurrido >= esperaTrasVoz({ empezo, error, termino, ms });
 }
 
 /**

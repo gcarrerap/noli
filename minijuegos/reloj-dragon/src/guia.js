@@ -13,22 +13,26 @@ export const ESPERA_VOZ_MAX_MS = 3000;
 export const TRAS_CERRAR_MS = 400;
 
 // Espera del avance solo. Un toque o OK no pasan por aquí.
-// Sin voz: 2 s. Con voz todavía hablando: el tope de 3 s. Al terminar, lo que duró, con ese tope.
-export function esperaExplicar({ voz = false, termino = false, ms = 0 } = {}) {
-  if (!voz) return ESPERA_EXPLICAR_MS;
+// Sin voz, si falla o si no arrancó: 2 s. Mientras habla: el tope de 3 s.
+// Al terminar de verdad: lo que duró, nunca antes de 2 s y nunca más de 3 s.
+export function esperaExplicar({ voz = false, termino = false, error = false, ms = 0 } = {}) {
+  if (!voz || error) return ESPERA_EXPLICAR_MS;
   if (!termino) return ESPERA_VOZ_MAX_MS;
   const t = Number(ms);
   if (!Number.isFinite(t) || t <= 0) return ESPERA_EXPLICAR_MS;
-  return Math.min(ESPERA_VOZ_MAX_MS, t);
+  return Math.min(ESPERA_VOZ_MAX_MS, Math.max(ESPERA_EXPLICAR_MS, t));
 }
 
 // Con el diálogo abierto el avance solo no corre, aunque hayan pasado más de 2 s.
-export function debeAvanzarExplicacion({ dialog = false, transcurrido = 0, voz = false, termino = false, msVoz = 0 } = {}) {
+export function debeAvanzarExplicacion({ dialog = false, transcurrido = 0, voz = false, termino = false, error = false, msVoz = 0 } = {}) {
   if (dialog) return false;
-  const espera = termino
-    ? esperaExplicar({ voz: true, termino: true, ms: msVoz })
-    : esperaExplicar({ voz });
-  return transcurrido >= espera;
+  return transcurrido >= esperaExplicar({ voz, termino, error, ms: msVoz });
+}
+
+// Listo en el último paso. Solo cierran los 400 ms tras «¿Salir?».
+// El paso no añade otro cierre encima, así un toque a los 560 ms sí entra.
+export function aceptaListoGuia(msTrasCerrar) {
+  return !ignoraTrasCerrar(msTrasCerrar);
 }
 
 // Abrir «¿Salir?» pausa el paso. Seguir lo reinicia entero, sin cambiar de paso.
