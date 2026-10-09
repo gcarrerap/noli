@@ -19,6 +19,7 @@ La página principal es un **catálogo**: cada juego es una tarjeta, y cada jueg
 | Robot de Palabras (`robot-palabras`) | Inglés | 7–10 | #36: clasifica palabras en inglés (pieza, moverse, cómo es), plurales y pasado; cada palabra se oye; la banda espera; 7 niveles (el 1 sube con 9 de 10); reto Puerta secreta (6 puertas, 4 a la primera) |
 | Pasarela (`pasarela`) | Inglés (premio) | 6–11 | #19: juego de vestir en 3D: camina por un estudio hasta los percheros, vístete según el tema en 2:30, desfila y tres jueces te califican con un consejo; cada prenda y color en inglés; cuesta 3 créditos; los puntos de estilo abren ropa, colores y temas (8 niveles); modo sencillo 2D si el aparato no puede con el 3D. Documentación en [minijuegos/pasarela/docs](minijuegos/pasarela/docs/README.md) |
 | Mi Casita (`mi-casita`) | Matemáticas (premio) | 6–11 | #37: paga el mueble con las monedas exactas y lo acomoda en la cuadrícula. Cada visita cuesta 3 créditos y trae una bolsa fija (la de La Tienda: dólares o pesos). Si sale, ese día no se vuelve a cobrar. «Solo mirar» es gratis |
+| Cuentos Revueltos (`cuentos-revueltos`) | Inglés | 7–10 | #34: pone en orden cuentos que ya conoce (cerditos, Caperucita, Ricitos, Jack), en capítulos cortos; el texto está en inglés y se oye; las instrucciones, en español |
 | Cuenta y toca (`ejemplo`) | Matemáticas | 4–7 | #1: ejemplo del contrato y plantilla para juegos nuevos |
 
 Cada juego nuevo se agrega con su propio issue.

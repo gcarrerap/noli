@@ -1,0 +1,13 @@
+{
+  "id": "cuentos-revueltos",
+  "titulo": "Cuentos Revueltos",
+  "descripcion": "Pon en orden los cuentos en inglés.",
+  "icono": "icono.svg",
+  "color": "#b5835a",
+  "materia": "inglés",
+  "edades": [7, 10],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

@@ -1,0 +1,231 @@
+{
+  "id": "jack",
+  "titulo": "Jack y los frijoles",
+  "nivel": 4,
+  "portada": "libro-jack.svg",
+  "paginas": [
+    {
+      "id": "frijoles",
+      "escena": "escena-frijol.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["Jack finds some beans.", "He plants the beans."],
+      "pista": "Jack encuentra los frijoles."
+    },
+    {
+      "id": "planta",
+      "escena": "escena-frijol.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["A giant bean plant grows.", "It goes up to the clouds."],
+      "pista": "La planta de frijol crece."
+    },
+    {
+      "id": "sube",
+      "escena": "escena-castillo-nubes.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["Jack climbs up the tall green plant to the clouds.", "He sees a big castle."],
+      "pista": "Jack sube por la planta."
+    },
+    {
+      "id": "castillo",
+      "escena": "escena-castillo-nubes.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["A big castle is there.", "It is in the clouds."],
+      "pista": "Hay un castillo en las nubes."
+    },
+    {
+      "id": "gigante",
+      "escena": "escena-castillo-nubes.svg",
+      "personaje": "personaje-gigante.svg",
+      "oraciones": ["A giant lives in the castle.", "The giant is very big."],
+      "pista": "El gigante vive ahí."
+    },
+    {
+      "id": "pastel",
+      "escena": "escena-castillo-nubes.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["Jack sees some cake.", "He takes the cake with him."],
+      "pista": "Jack ve el pastel."
+    },
+    {
+      "id": "busca",
+      "escena": "escena-frijol.svg",
+      "personaje": "personaje-gigante.svg",
+      "oraciones": ["The hungry giant looks for the little boy.", "Jack feels scared."],
+      "pista": "El gigante busca a Jack."
+    },
+    {
+      "id": "baja",
+      "escena": "escena-frijol.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["Jack climbs down very fast.", "He keeps the cake."],
+      "pista": "Jack baja rápido."
+    },
+    {
+      "id": "corta",
+      "escena": "escena-frijol.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["Jack cuts the big plant.", "He is safe now."],
+      "pista": "Jack corta la planta."
+    },
+    {
+      "id": "quieto",
+      "escena": "escena-frijol.svg",
+      "personaje": "personaje-gigante.svg",
+      "oraciones": ["The plant falls down.", "The giant cannot get down."],
+      "pista": "La planta cae."
+    },
+    {
+      "id": "casa",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["Jack feels cozy at home.", "He is safe at last."],
+      "pista": "Jack está a gusto en casa."
+    },
+    {
+      "id": "come",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-jack.svg",
+      "oraciones": ["He eats the cake.", "Jack feels happy."],
+      "pista": "Jack se come el pastel."
+    }
+  ],
+  "capitulos": [
+    {
+      "id": "c1",
+      "tareas": [
+        {
+          "tipo": "ordenar",
+          "soloTexto": true,
+          "tarjetas": ["frijoles", "planta", "sube", "castillo", "gigante", "pastel"]
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "giant",
+          "oracion": "A giant lives in the castle.",
+          "preguntaEs": "Giant quiere decir gigante.",
+          "pista": "Es enorme, al lado de una casita.",
+          "opciones": [
+            { "id": "giant", "dibujo": "dibujos/dibujo-giant.svg" },
+            { "id": "scared", "dibujo": "dibujos/dibujo-scared.svg" },
+            { "id": "cozy", "dibujo": "dibujos/dibujo-cozy.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who climbs the plant?",
+          "preguntaEs": "¿Quién sube por la planta?",
+          "pista": "Jack.",
+          "opciones": [
+            { "id": "jack", "dibujo": "cara-jack.svg" },
+            { "id": "gigante", "dibujo": "cara-gigante.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" }
+          ],
+          "correcta": "jack"
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who is very big?",
+          "preguntaEs": "¿Quién es muy grande?",
+          "pista": "El gigante.",
+          "opciones": [
+            { "id": "gigante", "dibujo": "cara-gigante.svg" },
+            { "id": "jack", "dibujo": "cara-jack.svg" },
+            { "id": "oso-papa", "dibujo": "cara-oso-papa.svg" }
+          ],
+          "correcta": "gigante"
+        },
+        {
+          "tipo": "porque",
+          "pregunta": "Why does Jack climb?",
+          "preguntaEs": "¿Por qué sube Jack?",
+          "pista": "Quiere ver el castillo.",
+          "opciones": [
+            { "id": "castillo", "dibujo": "escena-castillo-nubes.svg", "texto": "He sees the castle." },
+            { "id": "zanahoria", "dibujo": "dibujos/dibujo-carrot.svg", "texto": "He wants a carrot." },
+            { "id": "sopa", "dibujo": "dibujos/dibujo-soup.svg", "texto": "He wants soup." }
+          ],
+          "correcta": "castillo"
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "beans",
+          "oracion": "Jack finds some beans.",
+          "preguntaEs": "Beans quiere decir frijoles.",
+          "pista": "Son las semillas de la planta.",
+          "opciones": [
+            { "id": "beans", "dibujo": "dibujos/dibujo-bean.svg" },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "tareas": [
+        {
+          "tipo": "ordenar",
+          "soloTexto": true,
+          "tarjetas": ["busca", "baja", "corta", "quieto", "casa", "come"]
+        },
+        {
+          "tipo": "cruce",
+          "pregunta": "Pick an ending.",
+          "preguntaEs": "Elige un final.",
+          "opciones": [
+            { "id": "hungry", "come": "hungry", "dibujo": "personaje-gigante.svg", "titulo": "The giant stayed hungry." },
+            { "id": "soup", "come": "soup", "dibujo": "dibujos/dibujo-soup.svg", "titulo": "The giant ate some soup." }
+          ]
+        },
+        {
+          "tipo": "cambio",
+          "pregunta": "What did the giant eat?",
+          "preguntaEs": "¿Qué comió el gigante?",
+          "pista": "Mira el final que elegiste.",
+          "segun": "come",
+          "opciones": [
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg", "es": "Se quedó con hambre." },
+            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg", "es": "Sopa." },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg", "es": "Un pastel." }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who climbs down?",
+          "preguntaEs": "¿Quién baja?",
+          "pista": "Jack.",
+          "opciones": [
+            { "id": "jack", "dibujo": "cara-jack.svg" },
+            { "id": "gigante", "dibujo": "cara-gigante.svg" },
+            { "id": "oso-bebe", "dibujo": "cara-oso-bebe.svg" }
+          ],
+          "correcta": "jack"
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "castle",
+          "oracion": "A big castle is there.",
+          "preguntaEs": "Castle quiere decir castillo.",
+          "pista": "Está arriba, en las nubes.",
+          "opciones": [
+            { "id": "castle", "dibujo": "escena-castillo-nubes.svg" },
+            { "id": "bosque", "dibujo": "escena-bosque.svg" },
+            { "id": "paja", "dibujo": "escena-casa-paja.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who lives in the castle?",
+          "preguntaEs": "¿Quién vive en el castillo?",
+          "pista": "El gigante.",
+          "opciones": [
+            { "id": "gigante", "dibujo": "cara-gigante.svg" },
+            { "id": "jack", "dibujo": "cara-jack.svg" },
+            { "id": "abuela", "dibujo": "cara-abuela.svg" }
+          ],
+          "correcta": "gigante"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+{
+  "id": "ricitos",
+  "titulo": "Ricitos de Oro",
+  "nivel": 3,
+  "portada": "libro-ricitos.svg",
+  "paginas": [
+    {
+      "id": "casa",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-ricitos.svg",
+      "oraciones": ["Goldilocks finds a house.", "She goes inside.", "No one is home."],
+      "pista": "Ricitos encuentra la casa."
+    },
+    {
+      "id": "sopa",
+      "escena": "escena-cocina-osos.svg",
+      "personaje": "personaje-ricitos.svg",
+      "oraciones": ["She sees three bowls.", "The small bowl is good.", "She eats the soup."],
+      "pista": "Primero prueba la sopa."
+    },
+    {
+      "id": "silla",
+      "escena": "escena-sillas-osos.svg",
+      "personaje": "personaje-ricitos.svg",
+      "oraciones": ["She tries three chairs.", "The small chair breaks."],
+      "pista": "Luego se sienta."
+    },
+    {
+      "id": "cama",
+      "escena": "escena-camas-osos.svg",
+      "personaje": "personaje-ricitos.svg",
+      "oraciones": ["She tries three beds.", "The small bed is cozy."],
+      "pista": "Después prueba las camas."
+    },
+    {
+      "id": "sueno",
+      "escena": "escena-camas-osos.svg",
+      "personaje": "personaje-ricitos.svg",
+      "oraciones": ["She feels sleepy.", "She falls asleep."],
+      "pista": "Se queda dormida."
+    },
+    {
+      "id": "osos",
+      "escena": "escena-casa-ladrillos.svg",
+      "personaje": "personaje-oso-papa.svg",
+      "oraciones": ["The three bears come home.", "They walk in the door."],
+      "pista": "Los osos llegan a casa."
+    },
+    {
+      "id": "vacio",
+      "escena": "escena-cocina-osos.svg",
+      "personaje": "personaje-oso-mama.svg",
+      "oraciones": ["They see an empty bowl.", "The soup is gone."],
+      "pista": "Ven el tazón vacío."
+    },
+    {
+      "id": "rota",
+      "escena": "escena-sillas-osos.svg",
+      "personaje": "personaje-oso-papa.svg",
+      "oraciones": ["They see a broken chair.", "The small chair broke."],
+      "pista": "Ven la silla rota."
+    },
+    {
+      "id": "cama2",
+      "escena": "escena-camas-osos.svg",
+      "personaje": "personaje-oso-bebe.svg",
+      "oraciones": ["They see the small bed.", "A girl is there."],
+      "pista": "Ven a la niña en la cama."
+    },
+    {
+      "id": "huye",
+      "escena": "escena-bosque.svg",
+      "personaje": "personaje-ricitos.svg",
+      "oraciones": ["Goldilocks runs away.", "She feels scared."],
+      "pista": "Ricitos corre lejos."
+    }
+  ],
+  "capitulos": [
+    {
+      "id": "c1",
+      "tareas": [
+        { "tipo": "ordenar", "tarjetas": ["casa", "sopa", "silla", "cama", "sueno"] },
+        {
+          "tipo": "palabra",
+          "palabra": "cozy",
+          "oracion": "The small bed is cozy.",
+          "preguntaEs": "Cozy quiere decir a gusto.",
+          "pista": "La cama chiquita está a gusto.",
+          "opciones": [
+            { "id": "cozy", "dibujo": "dibujos/dibujo-cozy.svg" },
+            { "id": "scared", "dibujo": "dibujos/dibujo-scared.svg" },
+            { "id": "hungry", "dibujo": "dibujos/dibujo-hungry.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who eats the soup?",
+          "preguntaEs": "¿Quién se come la sopa?",
+          "pista": "Ricitos.",
+          "opciones": [
+            { "id": "ricitos", "dibujo": "cara-ricitos.svg" },
+            { "id": "oso-papa", "dibujo": "cara-oso-papa.svg" },
+            { "id": "oso-bebe", "dibujo": "cara-oso-bebe.svg" }
+          ],
+          "correcta": "ricitos"
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who has the small bed?",
+          "preguntaEs": "¿Quién tiene la cama chiquita?",
+          "pista": "El osezno.",
+          "opciones": [
+            { "id": "oso-bebe", "dibujo": "cara-oso-bebe.svg" },
+            { "id": "oso-papa", "dibujo": "cara-oso-papa.svg" },
+            { "id": "ricitos", "dibujo": "cara-ricitos.svg" }
+          ],
+          "correcta": "oso-bebe"
+        },
+        {
+          "tipo": "porque",
+          "pregunta": "Why did the small chair break?",
+          "preguntaEs": "¿Por qué se rompe la silla chiquita?",
+          "pista": "Ricitos se sienta en ella.",
+          "opciones": [
+            { "id": "sienta", "dibujo": "cara-ricitos.svg", "texto": "She sits down." },
+            { "id": "sopa", "dibujo": "dibujos/dibujo-soup.svg", "texto": "The soup is hot." },
+            { "id": "lobo", "dibujo": "cara-lobo.svg", "texto": "The wolf sits." }
+          ],
+          "correcta": "sienta"
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "soup",
+          "oracion": "She eats the soup.",
+          "preguntaEs": "Soup quiere decir sopa.",
+          "pista": "Está en el tazón.",
+          "opciones": [
+            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg" },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg" },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "tareas": [
+        { "tipo": "ordenar", "tarjetas": ["osos", "vacio", "rota", "cama2", "huye"] },
+        {
+          "tipo": "cruce",
+          "pregunta": "Pick an ending.",
+          "preguntaEs": "Elige un final.",
+          "opciones": [
+            { "id": "soup", "come": "soup", "dibujo": "dibujos/dibujo-soup.svg", "titulo": "Goldilocks ate the soup." },
+            { "id": "cake", "come": "cake", "dibujo": "dibujos/dibujo-cake.svg", "titulo": "Goldilocks ate some cake." }
+          ]
+        },
+        {
+          "tipo": "cambio",
+          "pregunta": "What did Goldilocks eat?",
+          "preguntaEs": "¿Qué comió Ricitos?",
+          "pista": "Mira el final que elegiste.",
+          "segun": "come",
+          "opciones": [
+            { "id": "soup", "dibujo": "dibujos/dibujo-soup.svg", "es": "Sopa." },
+            { "id": "cake", "dibujo": "dibujos/dibujo-cake.svg", "es": "Un pastel." },
+            { "id": "carrot", "dibujo": "dibujos/dibujo-carrot.svg", "es": "Una zanahoria." }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who comes home?",
+          "preguntaEs": "¿Quién llega a casa?",
+          "pista": "Papá oso.",
+          "opciones": [
+            { "id": "oso-papa", "dibujo": "cara-oso-papa.svg" },
+            { "id": "ricitos", "dibujo": "cara-ricitos.svg" },
+            { "id": "lobo", "dibujo": "cara-lobo.svg" }
+          ],
+          "correcta": "oso-papa"
+        },
+        {
+          "tipo": "palabra",
+          "palabra": "sleepy",
+          "oracion": "She feels sleepy.",
+          "preguntaEs": "Sleepy quiere decir con sueño.",
+          "pista": "Se le cierran los ojos.",
+          "opciones": [
+            { "id": "sleepy", "dibujo": "dibujos/dibujo-sleepy.svg" },
+            { "id": "giant", "dibujo": "dibujos/dibujo-giant.svg" },
+            { "id": "huffed", "dibujo": "dibujos/dibujo-huffed.svg" }
+          ]
+        },
+        {
+          "tipo": "quien",
+          "pregunta": "Who runs away?",
+          "preguntaEs": "¿Quién corre lejos?",
+          "pista": "Ricitos.",
+          "opciones": [
+            { "id": "ricitos", "dibujo": "cara-ricitos.svg" },
+            { "id": "oso-mama", "dibujo": "cara-oso-mama.svg" },
+            { "id": "oso-bebe", "dibujo": "cara-oso-bebe.svg" }
+          ],
+          "correcta": "ricitos"
+        }
+      ]
+    }
+  ]
+}
