@@ -6,3 +6,5 @@ export { nuevoCodigo, esCodigo, leerCodigo, salaVigente, controlVivo, urlControl
 export { qr, qrSvg } from "./qr.js";
 export { REGLAS, MOTIVOS, TIPOS_CREDITOS, libroVacio, leerLibro, saldo, saldoVisible, dia, ganadoHoy, ganancia, idMov, agregar,
   gastar, unir, iguales, compactar, historial } from "./creditos.js";
+export { revisarMundo, colocarLugares, centroSitio, solidoDe, mapaMundo, fisicaDe, azar, decorar, todosLosSitios, lugarCercano,
+  cristalesDe, cristalTocado, crearCaminos, rutaPorCaminos, puntoLibre, plataformasAlcanzables, elegirVista, acomodarLetreros, brazoCamara } from "./mundo.js";

@@ -21,6 +21,10 @@ export const PROTOCOLO = 1;
 // o del teléfono usado como control remoto.
 export const ACCIONES = ["arriba", "abajo", "izquierda", "derecha", "ok", "atras"];
 
+// Las que manda el control (teclado, control de la TV, teléfono como control remoto): las de los juegos y además
+// "brincar", que solo usa el mundo 3D del menú principal (#25). A los juegos no se les manda "brincar".
+export const ACCIONES_CONTROL = ACCIONES.concat(["brincar"]);
+
 export const TIPOS = ["hola", "entrada", "listo", "terminar", "guardar", "salir", "gastar", "gasto"];
 
 export function mensaje(tipo, datos = {}) {

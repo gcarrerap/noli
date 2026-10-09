@@ -1,16 +1,11 @@
-// La escena: renderer, cámara, luces, el ciclo de cuadros y la calidad según el aparato.
-// Ver docs/ESCENA-3D.md (§ Renderer y calidad) y docs/RENDIMIENTO.md.
-import * as THREE from "../../vendor/three.module.min.js";
+// La escena: renderer, cámara, luces, el ciclo de cuadros y la calidad según el aparato. La usan la Pasarela y el
+// mundo del menú principal (#25). Ver minijuegos/pasarela/docs/ESCENA-3D.md (§ Renderer y calidad) y RENDIMIENTO.md.
+import * as THREE from "./vendor/three.module.min.js";
 import { liberarMateriales } from "./materiales.js";
 import { liberarFormas } from "./formas.js";
 
-/** ¿Hay WebGL en este navegador? (sin él, el juego usa el modo sencillo 2D) */
-export function hayWebGL() {
-  try {
-    const c = document.createElement("canvas");
-    return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl")));
-  } catch { return false; }
-}
+/** ¿Hay WebGL en este navegador? (sin él, se usa la vista 2D) */
+export { hayWebGL } from "./webgl.js";
 
 /**
  * Niveles de calidad. Se empieza en "alta" en el teléfono y en "media" en la TV (pantallas grandes con GPU modestas)
@@ -26,7 +21,8 @@ const ORDEN = ["alta", "media", "baja"];
 /**
  * Crea la escena en un contenedor.
  * @param {HTMLElement} cont
- * @param {{ tv: boolean, calidad?: string, alBajarMucho?: () => void }} op
+ * @param {{ tv: boolean, calidad?: string, alBajarMucho?: () => void, fondo?: string, niebla?: [number, number], lejos?: number }} op
+ *   fondo y niebla: color del cielo y desde/hasta dónde se desvanece (por omisión los del estudio de la Pasarela)
  */
 export function crearEscena(cont, op) {
   // Antialias cuesta mucho en la TV (4K con GPU de tele); en la TV se suaviza con más pixeles en su lugar.
@@ -36,9 +32,10 @@ export function crearEscena(cont, op) {
   renderer.domElement.className = "lienzo";
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#fde7f1");
-  scene.fog = new THREE.Fog("#fde7f1", 16, 34);
-  const camara = new THREE.PerspectiveCamera(48, 1, 0.1, 80);
+  const fondo = op.fondo || "#fde7f1", niebla = op.niebla || [16, 34];
+  scene.background = new THREE.Color(fondo);
+  scene.fog = new THREE.Fog(fondo, niebla[0], niebla[1]);
+  const camara = new THREE.PerspectiveCamera(48, 1, 0.1, op.lejos || 80);
 
   const cielo = new THREE.HemisphereLight("#ffffff", "#f6d6c8", 2.1);
   scene.add(cielo);
@@ -79,11 +76,11 @@ export function crearEscena(cont, op) {
   }
 
   const alCuadro = new Set();
-  let anterior = 0, vivo = true, pausado = false;
+  let anterior = 0, vivo = true, pausado = false, detenido = false;
   function ciclo(ahora) {
     if (!vivo) return;
     requestAnimationFrame(ciclo);
-    if (pausado) { anterior = ahora; return; }
+    if (pausado || detenido) { anterior = ahora; return; }
     const dt = Math.min(0.05, anterior ? (ahora - anterior) / 1000 : 0.016); // máximo 50 ms: si la TV se traba no "salta"
     anterior = ahora;
     for (const fn of alCuadro) fn(dt, ahora);
@@ -117,6 +114,8 @@ export function crearEscena(cont, op) {
     get calidad() { return calidad; },
     ponerCalidad(c) { if (CALIDADES[c]) { calidad = c; tamano(); } },
     tamano,
+    /** Deja de dibujar (por ejemplo, mientras hay un juego abierto encima) o vuelve a dibujar */
+    pausar(si) { detenido = !!si; if (!si) { fps.historial = []; fps.desde = 0; fps.cuadros = 0; } },
     /** Libera todo (al salir del juego): la memoria de la TV es poca */
     liberar() {
       vivo = false;

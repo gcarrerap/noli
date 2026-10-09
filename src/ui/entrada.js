@@ -6,13 +6,17 @@ import { teclaAAccion } from "../../kit/teclas.js";
 import { moverFoco as moverFocoEn } from "../../kit/foco.js";
 import { moverFoco, teclaEnFiltros, enfocarFiltros, enfocarTarjeta } from "./screens/catalogo.js";
 import { accionEnPanel } from "./components/remoto.js";
+import { accionMundo, mundoActivo } from "./screens/mundo.js";
+
+// ¿Las teclas van al mundo 3D? (ahí la barra espaciadora y el botón rojo del control brincan, #25)
+const enMundo = () => state.vista === "mundo" && mundoActivo() && !state.nubeAbierta && !state.creditosAbierto && !state.remoto.panel;
 
 export let conTeclado = false;
 
 export function instalarEntrada() {
   document.addEventListener("pointerdown", () => { conTeclado = false; document.documentElement.classList.remove("teclado"); }, true);
   document.addEventListener("keydown", (e) => {
-    const accion = teclaAAccion(e);
+    const accion = teclaAAccion(e, { brincar: enMundo() });
     if (!accion) return;
     // Escribiendo en un campo (el código de la nube): solo las flechas arriba/abajo y "atrás" (Escape) salen de él
     if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !["arriba", "abajo"].includes(accion) && e.key !== "Escape") return;
@@ -42,6 +46,8 @@ export function aplicarAccion(accion) {
   }
   if (state.jugando) return actions.entrada(accion);
   if (state.remoto.panel && accionEnPanel(accion)) return;
+  if (state.vista === "mundo") return accionMundo(accion); // el menú es el mundo 3D (#25): caminar, brincar, entrar
+  if (accion === "brincar") return; // en el menú 2D no se brinca
   const el = document.activeElement;
   if (el && el.classList.contains("chip")) return teclaEnFiltros(accion, el);
   if (el && (el.id === "nubeBtn" || el.id === "creditosBtn")) {

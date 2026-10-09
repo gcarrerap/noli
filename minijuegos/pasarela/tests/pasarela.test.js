@@ -290,7 +290,7 @@ test("2D: cada prenda tiene su figura y la muñeca se dibuja sin errores", () =>
 // ---------- 3D: cada prenda se arma ----------
 
 test("3D: el personaje y cada prenda (con espejo y anillos) se arman con Three.js", async () => {
-  const { crearAvatar, CUERPO } = await import("../src/escena/avatar.js");
+  const { crearAvatar, CUERPO } = await import("../../../kit/3d/avatar.js");
   const av = crearAvatar({ piel: "#ffd9c0", base: D.config.colorBase });
   for (const n of ANCLAS) assert.ok(av.anclas[n], `ancla ${n}`);
   assert.ok(CUERPO.cadera > 0.5);

@@ -4,13 +4,13 @@
 import { Noli, moverFoco, focoInicial } from "../../../../kit/noli.js";
 import { teclaAAccion } from "../../../../kit/teclas.js";
 import { cargarDatos } from "./cargar.js";
-import { hayWebGL } from "../escena/escena.js";
+import { hayWebGL } from "../../../../kit/3d/escena.js";
 import { crearVista3d } from "./vista3d.js";
 import { crearVista2d } from "./vista2d.js";
-import { crearJoystick } from "./joystick.js";
+import { crearJoystick } from "../../../../kit/3d/joystick.js";
 import { hayVoz, decir } from "./voz.js";
 import * as P from "./pantallas.js";
-import { atuendoVacio, poner, colorPuesto, fraseIngles } from "../atuendo.js";
+import { atuendoVacio, atuendoInicial, poner, colorPuesto, fraseIngles } from "../atuendo.js";
 import { calificar } from "../puntuacion.js";
 import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, nivelDePrenda, esNuevo } from "../progreso.js";
 import { siguiente, quedan, EN_ESTUDIO } from "../partida.js";
@@ -35,8 +35,6 @@ const S = {
   teclas: { hasta: {}, apretadas: {} }, joyDir: { x: 0, z: 0 },
 };
 
-const ATUENDO_INICIAL = [["p-cola", "cafe"], ["a-camiseta", "rosa"], ["b-shorts", "azul"], ["z-tenis", "blanco"]];
-
 // ---------- Arranque ----------
 
 async function arrancar() {
@@ -59,7 +57,7 @@ async function arrancar() {
   S.saldo = await Noli.creditos;
 
   let a = S.progreso.ultimo;
-  if (!a) { a = atuendoVacio(); for (const [id, c] of ATUENDO_INICIAL) a = poner(a, idx.prendas.get(id), c); }
+  if (!a) a = atuendoInicial(idx);
   S.atuendo = a;
 
   crearVista(!hayWebGL() || parametros.has("modo2d") || leerPref() === "2d" ? "2d" : "3d");

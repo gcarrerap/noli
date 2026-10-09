@@ -20,7 +20,7 @@ node --test minijuegos/pasarela/tests/pasarela.test.js     # solo las de la Pasa
 | 2D | Cada prenda tiene figura, miniatura y muñeca sin `undefined`/`NaN` |
 | 3D | El personaje tiene todas las anclas; **cada prenda se arma con Three.js** (en Node) y anima en las 6 posturas; ninguna pasa de 6 000 triángulos; el `.glb` existe, es glTF y pesa menos de 200 KB |
 
-Además, las pruebas del repo revisan que `juego.json` sea válido (incluido `"creditos": "gasta"` y `"costo"`), que el juego esté en `catalogo.json`, y que cada módulo (también `vendor/`) se analice y sus imports existan (`tests/sintaxis.test.js`). `herramientas/simular-curva.mjs` es `.mjs` para que esa prueba no lo trate como parte del juego.
+Además, las pruebas del repo revisan que `juego.json` sea válido (incluido `"creditos": "gasta"` y `"costo"`), que el juego esté en `catalogo.json`, y que cada módulo (también `kit/3d/vendor/`) se analice y sus imports existan (`tests/sintaxis.test.js`). `herramientas/simular-curva.mjs` es `.mjs` para que esa prueba no lo trate como parte del juego.
 
 ## En el navegador (Chromium, sin aparato)
 

@@ -2,7 +2,7 @@
 
 Juegos educativos para Noelia (7 años), en el navegador. Se juegan en el **teléfono o la tableta** con el dedo, o en la **smart TV** con el control de la tele o usando un **teléfono como control remoto**.
 
-La página principal es un **catálogo**: cada juego es una tarjeta, y cada juego vive en su propia carpeta dentro de `minijuegos/`. Está hecho con HTML, CSS y JavaScript en módulos, sin dependencias ni paso de compilación, con la misma filosofía que [Dominó de la Familia](https://github.com/gcarrerap/myDomino) y [La Pata de la Familia](https://github.com/gcarrerap/myPata). El diseño completo está en [DESIGN.md](DESIGN.md).
+La página principal es un **mundo mágico en 3D** (#25): Noelia camina y brinca con su personaje por un bosque encantado y entra a cada juego por la puerta de su edificio (un castillo de números, el árbol de las letras, una tiendita, una fábrica…). Si el aparato no puede con el 3D, es un **catálogo** de tarjetas, el de siempre. Cada juego vive en su propia carpeta dentro de `minijuegos/`. Está hecho con HTML, CSS y JavaScript en módulos, sin dependencias ni paso de compilación, con la misma filosofía que [Dominó de la Familia](https://github.com/gcarrerap/myDomino) y [La Pata de la Familia](https://github.com/gcarrerap/myPata). El diseño completo está en [DESIGN.md](DESIGN.md).
 
 ## Juegos
 
@@ -27,13 +27,15 @@ Cada juego nuevo se agrega con su propio issue.
 
 ### En el teléfono o la tableta
 
-Abre la página y toca un juego. La casita 🏠 regresa al catálogo. Las estrellas de cada juego (la mejor partida) se guardan en el dispositivo.
+Abre la página: es el mundo mágico. Camina con el **joystick** (pulgar izquierdo) o tocando el piso, **brinca** con el botón **Brincar** (pulgar derecho) y, al llegar a la puerta de un juego, toca **Entrar a…** (o toca el letrero del juego). El botón **Menú** abre «¿A dónde vamos?»: escoges un juego y el personaje camina solo hasta su puerta. Arriba de las plataformas (hongos gigantes, piedras flotantes, nubes…) hay **cristales mágicos** para encontrar. La casita 🏠 regresa al mundo, frente a la puerta del juego. Las estrellas de cada juego (la mejor partida) se guardan en el dispositivo.
+
+**Menú sencillo:** el botón **Menú sencillo** (en «¿A dónde vamos?») cambia a la cuadrícula de tarjetas, y **Mundo mágico** (al principio de los filtros) regresa al mundo; el aparato se acuerda de lo que escogiste. Sin WebGL, o si el aparato va muy lento, es la cuadrícula. `?menu2d` y `?menu3d` lo fuerzan para probar. Todo del mundo en [docs/MUNDO.md](docs/MUNDO.md).
 
 ### En la TV
 
-Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele; **Atrás** regresa al catálogo.
+Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele. En el mundo: las flechas caminan, **OK** brinca (o entra, si estás en la puerta de un juego), el **botón rojo** siempre brinca y **Atrás** abre «¿A dónde vamos?». Dentro de un juego, **Atrás** regresa al mundo. Si la TV no puede con el 3D, es la cuadrícula de tarjetas.
 
-**Teléfono como control remoto:** en la TV, sube con las flechas hasta **📱 Usar mi teléfono** y aprieta OK. Sale un código de 4 números y un QR: apunta la cámara del teléfono al QR (o abre `https://gcarrerap.github.io/noli/control.html` y escribe el código). El teléfono queda como control: cruceta, OK y Atrás, igual que el de la tele. Si el teléfono se bloquea o la TV recarga la página, se vuelven a conectar solos con el mismo código. Va directo del teléfono a la TV por WebRTC; si eso no conecta en unos segundos, por Firestore (dice "por internet" en el teléfono).
+**Teléfono como control remoto:** en la TV, sube con las flechas hasta **📱 Usar mi teléfono** y aprieta OK. Sale un código de 4 números y un QR: apunta la cámara del teléfono al QR (o abre `https://gcarrerap.github.io/noli/control.html` y escribe el código). El teléfono queda como control: cruceta, OK y Atrás, igual que el de la tele, y **Brincar** para el mundo. Si el teléfono se bloquea o la TV recarga la página, se vuelven a conectar solos con el mismo código. Va directo del teléfono a la TV por WebRTC; si eso no conecta en unos segundos, por Firestore (dice "por internet" en el teléfono).
 
 **Diagnóstico de la TV:** `https://gcarrerap.github.io/noli/diagnostico.html` enseña qué manda cada botón del control y qué tiene el navegador de la TV (módulos, WebRTC, WebGL para la Pasarela…), con un bloque para pegar en el issue #3.
 
@@ -74,7 +76,7 @@ Sin internet se sigue jugando; lo nuevo se sube al regresar la conexión.
 
 ### Firebase
 
-Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `noli_` (`src/config.js`). **Antes de usar la nube o el control remoto hay que publicar las reglas:** copia [`firestore.rules`](firestore.rules) completo en **Firebase → Firestore → Reglas** y publícalas. Trae también los bloques de La Pata y el dominó (Firestore tiene un solo archivo de reglas por proyecto y publicar reemplaza todo), así que esas apps siguen funcionando igual. **Ojo:** si después se publican las reglas de myPata o myDomino, se borran las de Noli; hay que mantener los tres bloques juntos. El dominio `gcarrerap.github.io` ya está autorizado por el dominó.
+Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `noli_` (`src/config.js`). **Antes de usar la nube o el control remoto hay que publicar las reglas** (y volver a publicarlas cuando cambien; con #25 aceptan la acción `brincar` del control remoto): copia [`firestore.rules`](firestore.rules) completo en **Firebase → Firestore → Reglas** y publícalas. Trae también los bloques de La Pata y el dominó (Firestore tiene un solo archivo de reglas por proyecto y publicar reemplaza todo), así que esas apps siguen funcionando igual. **Ojo:** si después se publican las reglas de myPata o myDomino, se borran las de Noli; hay que mantener los tres bloques juntos. El dominio `gcarrerap.github.io` ya está autorizado por el dominó.
 
 ## Agregar un juego
 
@@ -93,7 +95,7 @@ Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `nol
    Noli.terminar({ estrellas: 3 });
    ```
    Nada de emojis para lo que importa visualmente: en la TV LG salen en blanco y negro (#5). Usa SVG.
-4. Agrega el id a `minijuegos/catalogo.json` (el orden ahí es el orden del catálogo).
+4. Agrega el id a `minijuegos/catalogo.json` (el orden ahí es el orden del catálogo). En el mundo aparece solo, en el siguiente sitio libre, con un portal mágico de su color. Para darle un lugar fijo y un edificio (tiendita, casita, fábrica…), una línea en `mundo/lugares.json` ([docs/MUNDO.md § Cómo agregar…](docs/MUNDO.md#cómo-agregar)).
 5. Corre `npm test`, cambia `src/version.js` y abre el PR.
 
 Para juntar el PR hace falta, además:
@@ -115,8 +117,9 @@ ui/  →  app/  →  engine/          kit/  (protocolo, teclas, SDK de los juego
 - **`engine/`** valida manifiestos, filtra por materia y mueve el foco con flechas (funciones puras).
 - **`services/`** lee `minijuegos/catalogo.json` y cada `juego.json`, guarda preferencias y habla con Firebase.
 - **`app/`** guarda el estado y lo cambia con acciones; toda la entrada pasa por `actions.entrada(accion)`.
-- **`ui/`** dibuja el catálogo y abre cada juego en un iframe, con un puente de mensajes.
-- **`kit/`** lo comparten catálogo y juegos.
+- **`ui/`** dibuja el menú (el mundo 3D o el catálogo 2D) y abre cada juego en un iframe, con un puente de mensajes.
+- **`mundo/`** (datos), **`src/mundo/`** (la escena) y **`src/engine/mundo.js`** (lógica pura): el mundo mágico del menú principal ([docs/MUNDO.md](docs/MUNDO.md)).
+- **`kit/`** lo comparten catálogo y juegos; **`kit/3d/`**, lo 3D que comparten el mundo y la Pasarela (Three.js, escena, personaje, física).
 
 ```
 noli/
@@ -126,6 +129,9 @@ noli/
 ├── sw.js               # service worker: siempre la versión más reciente
 ├── firestore.rules     # reglas del proyecto dominomx (Noli, La Pata y el dominó)
 ├── kit/                # protocolo.js, teclas.js, foco.js (flechas entre botones), noli.js (SDK de los juegos)
+│   └── 3d/             # Three.js (vendor/), escena, personaje, formas, materiales, lotes, física, joystick (mundo y Pasarela)
+├── mundo/              # mundo.json (plataformas, cristales, decoración) y lugares.json (dónde va cada juego)
+├── docs/MUNDO.md       # el mundo mágico del menú principal (#25)
 ├── minijuegos/
 │   ├── catalogo.json   # registro de juegos, en orden
 │   ├── spelling/       # juego.json, index.html, estilo.css, icono.svg, src/ (listas, faltas típicas, progreso, prueba de nivel, reto, banco de CH, voz), audio/ (grabaciones), herramientas/grabar.py, tests/
@@ -134,12 +140,13 @@ noli/
 │   └── ejemplo/        # un juego mínimo: juego.json, index.html, juego.js, estilo.css
 ├── src/
 │   ├── main.js, version.js, config.js (Firebase)
-│   ├── engine/         # manifiesto.js, catalogo.js, sala.js, qr.js
+│   ├── engine/         # manifiesto.js, catalogo.js, sala.js, qr.js, mundo.js (lógica del mundo)
+│   ├── mundo/          # escena-mundo.js, edificios.js, vista.js (Three.js; se bajan solo si se usa el mundo)
 │   ├── services/       # catalogo-repo.js, prefs.js, updates.js, firebase.js, salas.js
 │   ├── app/            # store.js, actions.js, updates.js, enlace.js, remoto.js (TV), telefono.js
 │   ├── control/        # main.js: la pantalla del teléfono
-│   └── ui/             # render.js, entrada.js, labels.js, screens/, components/
-├── styles/             # tokens (colores, tema, escala TV), base, catálogo, remoto, control
+│   └── ui/             # render.js, entrada.js, labels.js, screens/ (mundo, catálogo, jugando), components/
+├── styles/             # tokens (colores, tema, escala TV), base, catálogo, mundo, remoto, control
 ├── tests/              # node:test, sin dependencias (fakes/: Firebase y WebRTC de mentira)
 ├── package.json        # solo para correr las pruebas
 ├── DESIGN.md
@@ -154,7 +161,7 @@ Corren con Node 18 o más nuevo, sin instalar nada:
 npm test
 ```
 
-Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**, y el control remoto: códigos y salas, el QR (comparado con una librería de referencia), y una TV y un teléfono de mentira que se emparejan, mandan acciones, se pasan al respaldo por Firestore y se vuelven a conectar. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
+Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**, y el control remoto: códigos y salas, el QR (comparado con una librería de referencia), y una TV y un teléfono de mentira que se emparejan, mandan acciones, se pasan al respaldo por Firestore y se vuelven a conectar. Y el mundo (`tests/mundo.test.js`): que cada juego tenga lugar, que de la plaza se llegue caminando a todos, la física del brinco, que cada ruta de plataformas se suba brincando de verdad, los cristales, los letreros, la cámara y cuándo usar el menú 2D. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
 
 ## Stack
 
@@ -162,3 +169,4 @@ Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, e
 - Tipografías: Fredoka y Nunito (Google Fonts)
 - Firebase 10.12 (SDK compat del CDN, solo si la nube está activada): Authentication anónima y Cloud Firestore (proyecto `dominomx`, colecciones `noli_`)
 - Control remoto: WebRTC del navegador (`RTCDataChannel`), con señalización y respaldo en Firestore (proyecto `dominomx`, colección `noli_salas`, SDK compat del CDN, cargado solo al usarlo); QR generado aquí mismo (`engine/qr.js`)
+- 3D (el mundo del menú principal y la Pasarela): Three.js r160.1 copiado en `kit/3d/vendor/` (MIT, WebGL 1, sin CDN), cargado solo cuando se usa

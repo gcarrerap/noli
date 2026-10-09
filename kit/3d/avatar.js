@@ -8,7 +8,7 @@
 //                            ├ brazoD (x −0.205)  …                                                D = derecha (−x)
 //                            ├ musloI (x +0.085) ─ piernaI (−0.34) ─ pieI (−0.30)
 //                            └ musloD (x −0.085)  …
-import * as THREE from "../../vendor/three.module.min.js";
+import * as THREE from "./vendor/three.module.min.js";
 import { material } from "./materiales.js";
 import { crearPieza, reflejar } from "./formas.js";
 
@@ -130,7 +130,8 @@ export function crearAvatar(op) {
   /**
    * Mueve las articulaciones. Cada modo tiene una postura (o un ciclo); la postura actual se acerca poco a poco a la
    * nueva, así los cambios se ven suaves (no saltan).
-   * @param {"quieto"|"caminar"|"desfilar"|"cintura"|"saludo"|"estrella"|"vuelta"} modo
+   * @param {"quieto"|"caminar"|"desfilar"|"cintura"|"saludo"|"estrella"|"vuelta"|"brinco"} modo  ("brinco": en el aire, en el
+   *   mundo del menú principal)
    * @param {number} dt segundos desde el cuadro anterior
    * @param {number} [velocidad] 0 a 1 (qué tan rápido camina), para el ciclo de pasos
    */
@@ -152,7 +153,7 @@ export function crearAvatar(op) {
     a.torso.scale.y = 1 + Math.sin(t * 2.2) * 0.012;
   }
 
-  return { raiz, anclas: a, vestir, ponerPiel, animar, CUERPO };
+  return { raiz, anclas: a, sombra, vestir, ponerPiel, animar, CUERPO };
 }
 
 // Articulaciones que en el ciclo de caminar se ponen directo (sin suavizar), para que el paso no se vea "lento"
@@ -179,6 +180,9 @@ function posturas(modo, f, t) {
     case "saludo": return { ...quieto, "brazoD.z": -2.5, "antebrazoD.z": -0.3 + Math.sin(t * 9) * 0.45, "cabeza.z": 0.1, "brazoI.z": 0.2 };
     case "estrella": return { ...quieto, "brazoI.z": 2.4, "brazoD.z": -2.4, "musloI.z": 0.22, "musloD.z": -0.22, "cabeza.x": -0.12 };
     case "vuelta": return { ...quieto, "brazoI.z": 1.2, "brazoD.z": -1.2 };
+    // En el aire: brazos arriba, rodillas dobladas hacia el frente (el cuerpo lo sube la física, no la postura)
+    case "brinco": return { ...quieto, "brazoI.z": 2.2, "brazoD.z": -2.2, "antebrazoI.z": 0.3, "antebrazoD.z": -0.3,
+      "musloI.x": -0.75, "musloD.x": -0.35, "piernaI.x": 1.1, "piernaD.x": 0.6, "cabeza.x": -0.1, "cabeza.z": 0 };
     default: return quieto;
   }
 }

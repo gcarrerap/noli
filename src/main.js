@@ -10,6 +10,15 @@ import { renderCelebrar } from "./ui/components/celebrar.js";
 import { renderNube, botonNube } from "./ui/components/nube.js";
 import { renderRemoto } from "./ui/components/remoto.js";
 import { renderCreditos, botonCreditos } from "./ui/components/creditos.js";
+import { elegirVista } from "./engine/index.js";
+import { ls } from "./services/index.js";
+import { hayWebGL } from "../kit/3d/webgl.js";
+
+// Menú principal: el mundo 3D o el menú 2D (#25). Sin WebGL, con ?menu2d o si en este aparato se escogió el menú
+// sencillo, el 2D; ?menu3d fuerza el mundo. Si el mundo falla al armarse o va muy lento, también cae al 2D.
+const eleccion = elegirVista({ webgl: hayWebGL(), pref: ls.get("noli.vista"), params: new URLSearchParams(location.search) });
+state.vista = eleccion.vista;
+if (eleccion.motivo !== "normal") console.info("[menú]", eleccion.vista, eleccion.motivo);
 
 let estaba = null; // para regresar el foco a la tarjeta del juego al salir
 subscribe((what) => {

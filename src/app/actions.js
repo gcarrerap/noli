@@ -5,6 +5,9 @@ import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
 import * as sync from "./sync.js";
 
+// Id con el que se guardan (y sincronizan) los datos del mundo del menú principal (#25)
+export const MUNDO = "_mundo";
+
 // El reproductor (ui/screens/jugando.js) se registra aquí para recibir las acciones mientras hay un juego abierto
 let alJuego = null;
 export function conectarJuego(fn) { alJuego = fn; return () => { if (alJuego === fn) alJuego = null; }; }
@@ -40,6 +43,18 @@ export const actions = {
     ls.set("noli.materia", state.materia || "");
     notify();
   },
+
+  // Menú principal: el mundo 3D o el menú 2D (#25). recordar: guardarlo en este aparato (la persona lo eligió, o dijo
+  // que sí al menú sencillo porque iba lento); si no, solo por esta vez (por ejemplo, la escena 3D falló al crearse).
+  ponerVista(v, { recordar = false } = {}) {
+    const vista = v === "mundo" ? "mundo" : "2d";
+    if (recordar) ls.set("noli.vista", vista === "2d" ? "2d" : "3d");
+    if (state.vista === vista) return;
+    state.vista = vista; state.foco = 0; notify();
+  },
+  // Lo que se guarda del mundo (los cristales encontrados). Se guarda y sincroniza como los datos de un juego.
+  datosMundo() { return leerDatosJuego(MUNDO); },
+  guardarMundo(datos) { guardarDatosJuego(MUNDO, datos); sync.marcarCambio(MUNDO); },
 
   enfocar(i) { if (i !== state.foco) { state.foco = i; notify("foco"); } },
 
@@ -103,6 +118,7 @@ export const actions = {
 
   // Punto único de entrada para el control: dedo, teclado, control de la TV o teléfono remoto
   entrada(accion) {
+    if (accion === "brincar" && (state.jugando || state.vista !== "mundo")) return; // solo el mundo 3D brinca (#25)
     if (state.jugando) { if (alJuego) alJuego(accion); return; }
     const lista = visibles();
     if (accion === "ok") { if (lista[state.foco]) actions.abrir(lista[state.foco].id); return; }
