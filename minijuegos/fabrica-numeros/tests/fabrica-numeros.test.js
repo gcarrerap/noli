@@ -653,12 +653,24 @@ test("¿Salir? pausa la guía y el toque de después no la salta", () => {
   assert.equal(entradaSolapada({ ms: 1000, pasoMs: 1000 }), false);
   assert.equal(entradaSolapada({ ms: 1200, pasoMs: 1000 }), false, "400 y 1000 no suman 1400");
   assert.equal(entradaSolapada({ ms: Number.NaN, pasoMs: 400 }), false);
+  const epoca = 1.7e12;
+  assert.equal(toqueTrasSalir(epoca - (epoca - 200)), true);
+  assert.equal(toqueTrasSalir(epoca - (epoca - 560)), false);
+  assert.equal(toqueTrasSalir(epoca), false);
+  assert.equal(entradaSolapada({ ms: epoca - (epoca - 200), pasoMs: 400 }), true);
+  assert.equal(entradaSolapada({ ms: epoca - (epoca - 560), pasoMs: 400 }), false);
+  assert.equal(entradaSolapada({ ms: epoca, pasoMs: 1000 }), false);
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.match(juego, /relojDeGuia\(true\)/);
   assert.match(juego, /relojDeGuia\(false\)/);
   assert.match(juego, /entradaSolapada\(\{ ms: Date\.now\(\) - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS \}\)/);
   assert.match(juego, /resolverToqueGuia/);
   assert.match(juego, /callar\(\)/);
+  const boton = juego.slice(juego.indexOf('class="saltar"'), juego.indexOf("Saltar</button>") + 16);
+  assert.match(boton, /tabindex="-1"/);
+  assert.equal(boton.includes("data-foco"), false);
+  assert.match(boton, /data-ir="saltar-guia"/);
+  assert.match(juego, /"saltar-guia": terminarGuia/);
 });
 
 test("el dominio de 8 de 10 cruza turnos: cerrar el turno no vacía la ventana", () => {

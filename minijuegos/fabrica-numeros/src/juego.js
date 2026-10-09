@@ -458,7 +458,7 @@ function pintar(focoId) {
   const flechaMaq = info && (info.fase === "flecha" || info.fase === "completa") && info.paso.canje === "pegar" ? FLECHA : "";
   const defecto = guia ? focoDeGuia() : (p.pistaBanda ? "banda-" + p.pistaBanda : "banda-u");
   mostrar(`
-    <header class="cab"><span>${esc(etiqueta())}</span>${guia ? `<button type="button" class="saltar" data-foco data-foco-id="saltar-guia" data-act="ir" data-ir="saltar-guia">Saltar</button>` : puntos}</header>
+    <header class="cab"><span>${esc(etiqueta())}</span>${guia ? `<button type="button" class="saltar" tabindex="-1" data-act="ir" data-ir="saltar-guia">Saltar</button>` : puntos}</header>
     <p class="pedido">${esc(p.texto)}</p>
     ${p.pistas ? `<ul class="pistas">${p.pistas.map((x) => `<li>${esc(x.texto)}</li>`).join("")}</ul>` : ""}
     ${p.leer ? `<button type="button" class="boton oir" ${foco} data-foco-id="oir" data-act="oir">Oír</button>` : ""}

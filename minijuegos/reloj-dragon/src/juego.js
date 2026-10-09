@@ -371,7 +371,7 @@ function pintarGuia(focoId) {
   pantalla = "guia";
   $main.innerHTML = `
     <div class="tira guia-top">
-      <button type="button" class="boton saltar" data-foco data-foco-id="saltar" data-ctrl="saltar" data-act="saltar">Saltar</button>
+      <button type="button" class="boton saltar" tabindex="-1" data-act="saltar">Saltar</button>
       <button type="button" class="escena-guia${luz === "escena" ? " luz" : ""}" data-luz="escena" data-foco${focoId === "escena" ? '="inicial"' : ""} data-foco-id="escena" data-ctrl="escena" data-act="escena" aria-label="El dragón come">
         <img alt="" src="img/escena-comida.svg">
       </button>
@@ -853,7 +853,7 @@ function cerrarSalir() {
 
 // ---------- Teclas ----------
 
-const CICLO = ["saltar", "escena", "hora", "minutos", "listo", "borrar", "oir"];
+const CICLO = ["escena", "hora", "minutos", "listo", "borrar", "oir"];
 
 function controlEl(id) {
   return $main.querySelector(`[data-foco][data-ctrl="${id}"]`);

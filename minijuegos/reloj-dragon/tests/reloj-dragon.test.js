@@ -291,6 +291,18 @@ test("tras cerrar ¿Salir? un toque de 90 a 300 ms no cae debajo", () => {
   assert.equal(aceptaListoGuia(560), true, "Listo a los 560 ms no sigue cerrado");
   assert.equal(aceptaListoGuia(399), false);
   assert.equal(aceptaListoGuia(400), true);
+  const epoca = 1.7e12;
+  assert.equal(ignoraTrasCerrar(epoca - (epoca - 200)), true);
+  assert.equal(ignoraTrasCerrar(epoca - (epoca - 560)), false);
+  assert.equal(ignoraTrasCerrar(epoca), false);
+  assert.equal(aceptaListoGuia(epoca - (epoca - 560)), true);
+  const ciclo = src.match(/const CICLO = \[([^\]]+)\]/);
+  assert.equal(ciclo[1].includes('"saltar"'), false);
+  const boton = src.slice(src.indexOf('class="boton saltar"'), src.indexOf("Saltar</button>") + 16);
+  assert.match(boton, /tabindex="-1"/);
+  assert.equal(boton.includes("data-foco"), false);
+  assert.match(boton, /data-act="saltar"/);
+  assert.match(src, /act === "saltar"/);
   const rama = pointer.slice(pointer.indexOf("ignoraTrasCerrar"), pointer.indexOf("partida?.fase"));
   assert.equal(/tragar\s*=\s*true/.test(rama), false, "el cierre del diálogo no deja un trago para el toque siguiente");
 });

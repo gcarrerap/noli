@@ -353,6 +353,15 @@ test("tras cerrar ¿Salir? un toque o OK no pasa durante 400 ms", () => {
   assert.equal(entradaTrasCerrar({ ms: 1000, tipo: "toque", pasoMs: 1000 }), "pasar");
   assert.equal(entradaTrasCerrar({ ms: 1200, tipo: "ok", pasoMs: 1000 }), "pasar", "400 y 1000 no suman 1400");
   assert.equal(entradaTrasCerrar({ ms: 0, tipo: "atras", pasoMs: 1000 }), "pasar");
+  const epoca = 1.7e12;
+  assert.equal(entradaTrasCerrar({ ms: epoca - (epoca - 200), tipo: "toque" }), "ignorar");
+  assert.equal(entradaTrasCerrar({ ms: epoca - (epoca - 560), tipo: "ok" }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: epoca, tipo: "toque", pasoMs: 400 }), "pasar");
+  const juego = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const boton = juego.slice(juego.indexOf('class="boton saltar"'), juego.indexOf("Saltar</button>") + 16);
+  assert.match(boton, /tabindex="-1"/);
+  assert.equal(boton.includes("data-foco"), false);
+  assert.match(boton, /data-act="saltar-guia"/);
 });
 
 test("el pedido no se queda colgado si la voz falla al momento o tarde", () => {
