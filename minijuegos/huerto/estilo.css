@@ -67,7 +67,8 @@ button.pedido{width:100%;text-align:left;min-height:64px;box-shadow:none;border-
 .celda{position:relative;aspect-ratio:1;min-width:0}
 .celda .tierra,.celda .planta{position:absolute;inset:0;width:100%;height:100%}
 .abeja{position:absolute;width:78%;left:10%;top:-28%;z-index:2;pointer-events:none}
-.abeja svg,.abeja-mini svg{width:100%;height:auto;display:block}
+.abeja svg{width:100%;height:auto;display:block}
+.abeja-mini svg{width:36px;height:27px;display:block}
 .abeja .alas,.abeja-mini .alas{transform-box:fill-box;transform-origin:center;animation:aleteo .18s ease-in-out infinite}
 @keyframes aleteo{50%{transform:scaleY(.4)}}
 
@@ -97,7 +98,7 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .arco svg{width:100%;height:34px;display:block}
 .tramo{min-width:0;align-self:center}
 .tramo img{width:100%;height:8px;object-fit:fill;display:block}
-.abeja-mini{position:absolute;width:32px;left:2px;top:-16px;pointer-events:none}
+.abeja-mini{position:absolute;width:36px;height:27px;left:0;top:-22px;pointer-events:none;overflow:hidden}
 
 .parejas{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;width:100%;max-width:100%}
 .par{position:relative;width:84px;height:44px;flex:none}
@@ -143,7 +144,7 @@ html[data-modo="tv"] .pm svg path{opacity:0}
 .tabla th,.tabla td{padding:.3rem .4rem;border-bottom:1px solid var(--line)}
 .tabla th{color:var(--muted)}
 
-html[data-modo="tv"] main{height:100dvh;max-height:100dvh;overflow:hidden;padding:36px 64px;justify-content:center}
+html[data-modo="tv"] main{height:100dvh;max-height:100dvh;overflow:hidden;padding:52px 80px;justify-content:center}
 html[data-modo="tv"] .menu-inicio{display:grid;grid-template-columns:1fr 1fr;width:min(760px, 100%)}
 html[data-modo="tv"] .menu-inicio .principal{grid-column:1 / -1}
 html[data-modo="tv"] .p-juego .mesa{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,.8fr);gap:12px;align-items:center}
