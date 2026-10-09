@@ -6,7 +6,7 @@ import { analizar, sonIguales } from "../src/area.js";
 import { medir, lineasSvg, patron, opcionesCorte } from "../src/cortes.js";
 import { ladosDe, opcionesForma, crearFigura, reiniciarIds } from "../src/figuras.js";
 import { crearPedido, esCorrecto, POR_TURNO } from "../src/pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, siguienteAutoGuia, reanudarPasoGuia, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, guiaServirActivo, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, guiaBloqueada, siguienteAutoGuia, reanudarPasoGuia, vozDelPaso, GUIA_TOQUE_MS, GUIA_CIERRE_MS, GUIA_TOPE_MS, TRAS_GUIA_MS } from "../src/guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, textoPista, IDLE_COMPLETA_MS } from "../src/pista.js";
 import { abiertos, recienAbierto, sumarPropinas, PROPINA, ADORNOS } from "../src/deco.js";
 import { ajustar, celdas, cuentaFilas, totalBandeja, BANDEJA_MAX, opcionesCuantos, bandejaLista, focoTrasContador } from "../src/bandeja.js";
@@ -16,6 +16,7 @@ import {
 } from "../src/progreso.js";
 import { retoDelDia, META_GIGANTE } from "../src/reto.js";
 import { accionAtras, resolverAtras, alCerrarSalir, toqueEnVelo, ignoraTrasCierre, TRAS_DIALOGO_MS } from "../src/salida.js";
+import { decir } from "../src/voz.js";
 
 const banco = JSON.parse(fs.readFileSync(new URL("../datos/cortes.json", import.meta.url), "utf8"));
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
@@ -475,6 +476,96 @@ test("¿Salir? pausa la guía y Seguir empieza otra vez el paso y la voz", () =>
   assert.deepEqual({ paso: vozCorta.paso, t: vozCorta.t, aparecio: vozCorta.aparecio }, { paso: 1, t: 4000, aparecio: 2000 });
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.match(juego, /reanudarPasoGuia/);
+});
+
+function conSintesis(voces, speak) {
+  const anterior = globalThis.window;
+  let hablo = 0;
+  const sintesis = {
+    speaking: false,
+    pending: false,
+    getVoices: () => voces,
+    cancel() { this.speaking = false; this.pending = false; },
+    speak(u) {
+      hablo++;
+      this.speaking = true;
+      if (speak) speak(u, this);
+    },
+  };
+  globalThis.window = {
+    speechSynthesis: sintesis,
+    SpeechSynthesisUtterance: function (texto) { this.text = texto; },
+  };
+  return {
+    hablo: () => hablo,
+    fin() {
+      if (anterior === undefined) delete globalThis.window;
+      else globalThis.window = anterior;
+    },
+  };
+}
+
+function estadoTrasDecir(speak, voces = [{ lang: "es-MX" }]) {
+  const mundo = conSintesis(voces, speak);
+  let aviso;
+  let empezo = false;
+  try {
+    empezo = decir("Corta en 2 partes iguales.", "es-MX", (ok) => { aviso = ok === true; }) === true;
+  } finally {
+    mundo.fin();
+  }
+  return { empezo, aviso, vozSigue: vozDelPaso(empezo, aviso), hablo: mundo.hablo() };
+}
+
+test("si la voz falla con onerror, el paso usa los 2 s y no se va antes", () => {
+  const r = estadoTrasDecir((u) => { if (u.onerror) u.onerror({ error: "not-allowed" }); });
+  assert.equal(r.empezo, true);
+  assert.equal(r.aviso, false);
+  assert.equal(r.vozSigue, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 50, vozSigue: r.vozSigue }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 1999, vozSigue: r.vozSigue }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 2000, vozSigue: r.vozSigue }).avanzar, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: 3000, vozSigue: r.vozSigue }).avanzar, true);
+  const re = reanudarPasoGuia({ ahora: 4000, vozSigue: r.vozSigue });
+  assert.equal(re.auto.avanzar, false);
+  assert.equal(re.auto.espera, GUIA_TOQUE_MS);
+  assert.equal(entradaGuia(0, { tipo: "toque" }, { ahora: 1000, aparecio: 0, vozSigue: r.vozSigue }).accion, "avanzo");
+  assert.equal(entradaGuia(1, { tipo: "ok" }, { ahora: 1000, aparecio: 0, vozSigue: r.vozSigue }).accion, "avanzo");
+  assert.equal(siguienteAutoGuia({ transcurrido: 1000, vozSigue: r.vozSigue }).avanzar, false);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /vozDelPaso/);
+});
+
+test("sin voces, o si hablar no empieza, el paso espera 2 s", () => {
+  const sin = estadoTrasDecir(() => { throw new Error("no debía hablar"); }, []);
+  assert.equal(sin.hablo, 0);
+  assert.equal(sin.empezo, false);
+  assert.equal(sin.vozSigue, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 1999, vozSigue: sin.vozSigue }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOQUE_MS, vozSigue: sin.vozSigue }).avanzar, true);
+  const re = reanudarPasoGuia({ ahora: 2500, vozSigue: sin.vozSigue });
+  assert.equal(re.auto.avanzar, false);
+  assert.equal(re.auto.espera, GUIA_TOQUE_MS);
+  const roto = estadoTrasDecir(() => { throw new Error("no hay audio"); });
+  assert.equal(roto.empezo, false);
+  assert.equal(roto.vozSigue, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 100, vozSigue: roto.vozSigue }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOQUE_MS, vozSigue: roto.vozSigue }).avanzar, true);
+});
+
+test("si la voz no avisa onend, el paso no se va antes de 2 s y corta a los 3", () => {
+  const r = estadoTrasDecir(() => {});
+  assert.equal(r.hablo, 1);
+  assert.equal(r.aviso, undefined);
+  assert.equal(r.vozSigue, true);
+  assert.equal(siguienteAutoGuia({ transcurrido: 2000, vozSigue: r.vozSigue }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: 2999, vozSigue: r.vozSigue }).avanzar, false);
+  assert.equal(siguienteAutoGuia({ transcurrido: GUIA_TOPE_MS, vozSigue: r.vozSigue }).avanzar, true);
+  const re = reanudarPasoGuia({ ahora: 5000, vozSigue: r.vozSigue });
+  assert.equal(re.auto.avanzar, false);
+  assert.equal(re.auto.espera, GUIA_TOPE_MS);
+  assert.equal(entradaGuia(0, { tipo: "ok" }, { ahora: 3000, aparecio: 0, vozSigue: true }).accion, "avanzo");
+  assert.equal(entradaGuia(2, { tipo: "toque" }, { ahora: 3000, aparecio: 0, vozSigue: true }).accion, "avanzo");
 });
 
 test("en el teléfono el fondo de ¿Salir? es Seguir y en la tele no", () => {

@@ -5,7 +5,7 @@ import { clic, listo as sonidoListo, feliz as sonidoFeliz, desbloquear } from ".
 import { patron, lineasSvg, rebanadasDe, svgPila } from "./cortes.js";
 import { svgFigura, nombreFigura } from "./figuras.js";
 import { esCorrecto } from "./pedidos.js";
-import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia, reanudarPasoGuia } from "./guia.js";
+import { siguientePasoGuia, guiaTerminada, textoDeGuia, vozDeGuia, guiaAvanzaConToque, focoDeGuia, toqueDuranteGuia, entradaGuia, entradaPedido, siguienteAutoGuia, reanudarPasoGuia, vozDelPaso } from "./guia.js";
 import { fasePista, debeBrillar, cuentaParaDominio, hablaSegura, textoPista, glifoMas, glifoMenos, textoContador, vozContador, pistaVisible, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import { abiertos, recienAbierto } from "./deco.js";
 import { ajustar, opcionesCuantos, bandejaLista, focoTrasContador, BANDEJA_MAX } from "./bandeja.js";
@@ -335,11 +335,14 @@ function hablarGuia(paso) {
   if (!pr.voz) return;
   const linea = hablaSegura(vozDeGuia(paso, textos, modoJuego()));
   if (!linea) return;
-  vozSigue = decir(linea, "es-MX", () => {
+  let aviso;
+  const empezo = decir(linea, "es-MX", (ok) => {
     if (mio !== vozGen) return;
-    vozSigue = false;
+    aviso = ok === true;
+    vozSigue = vozDelPaso(true, aviso);
     programarGuia();
   }) === true;
+  vozSigue = vozDelPaso(empezo, aviso);
 }
 
 function aplicarPasoGuia(paso) {
