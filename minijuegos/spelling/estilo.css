@@ -10,14 +10,14 @@
 *{box-sizing:border-box}
 html{font-size:clamp(15px, 2.3vmin, 22px)}
 html[data-modo="tv"]{font-size:clamp(18px, 3.1vmin, 44px)}
-html[data-modo="tv"] main.p-palabra,html[data-modo="tv"] main.p-detective{justify-content:center}
+html[data-modo="tv"] main.p-palabra,html[data-modo="tv"] main.p-detective,html[data-modo="tv"] main.p-sonido{justify-content:center}
 html[data-modo="tv"] .cab{position:absolute;top:2vh;left:4vw;right:4vw;width:auto;padding-left:0}
 body{margin:0;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:"Nunito",system-ui,sans-serif;
   -webkit-tap-highlight-color:transparent}
 main{max-width:900px;margin:0 auto;padding:max(16px, env(safe-area-inset-top)) 16px 28px;padding-left:max(16px, env(safe-area-inset-left));
   display:flex;flex-direction:column;align-items:center;text-align:center;gap:.9rem;min-height:100dvh}
-main.p-inicio,main.p-fin,main.p-finReto,main.p-retoIntro{justify-content:center}
-main.p-palabra,main.p-detective{gap:.7rem}
+main.p-inicio,main.p-fin,main.p-finReto,main.p-retoIntro,main.p-finCh{justify-content:center}
+main.p-palabra,main.p-detective,main.p-sonido{gap:.7rem}
 button{font:inherit;color:inherit;cursor:pointer;border:0}
 :focus{outline:none}
 html.teclado :focus-visible{outline:5px solid var(--foco);outline-offset:4px;box-shadow:0 0 0 12px var(--halo)}
@@ -36,6 +36,7 @@ h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.6em 0 0}
 .boton.primario{background:var(--azul);color:#fff;border-color:transparent}
 .boton.reto{background:var(--sol);color:#2b2236;border-color:transparent}
 .boton.hecho{background:var(--verde);color:#fff;border-color:transparent}
+.boton.ch{background:var(--morado);color:#fff;border-color:transparent}
 .boton.chico{font-size:.95rem;padding:.4em 1.1em}
 .boton:active{transform:translateY(2px)}
 .menu{display:flex;flex-direction:column;gap:.8rem;align-items:center;margin-top:.4rem}
@@ -153,6 +154,34 @@ h2{font-family:"Fredoka",system-ui,sans-serif;font-size:1.3rem;margin:.6em 0 0}
 .lista:disabled{cursor:default}
 .en-curso{font-weight:800;color:var(--muted);font-size:.9rem;white-space:nowrap}
 .candado{color:var(--muted)}
+
+/* Sonidos de CH: cada sonido tiene su color (el nombre siempre está escrito, el color solo ayuda) */
+.s-ch{--c:var(--azul)}.s-k{--c:var(--sol)}.s-sh{--c:var(--coral)}
+.sono{font-family:"Fredoka",sans-serif;font-weight:700;font-size:2.4rem;line-height:1;min-width:2.6em;padding:.15em .3em;border-radius:14px;
+  background:var(--c);color:#2b2236}
+.ch-cards{display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:.6rem;width:min(560px, 100%)}
+.ch-card{display:flex;flex-direction:column;align-items:center;gap:.25rem;background:var(--card);border:4px solid var(--line);border-radius:20px;
+  padding:.6rem .3rem;box-shadow:var(--sombra);font-weight:800}
+button.ch-card:active{transform:translateY(2px)}
+.ch-card.activo{border-color:var(--c)}
+.ch-card .sono{font-size:2rem}
+.ch-card .como{font-size:1.05rem}
+.ch-card small{color:var(--muted);font-weight:700;font-size:.85rem}
+.ch-cards.chicas .como{font-family:"Fredoka",sans-serif;font-size:1.3rem}
+.ch-regla{min-height:4.4em}
+.ejemplos{display:inline-flex;gap:.9rem;flex-wrap:wrap;justify-content:center;margin-top:.3rem;font-family:"Fredoka",sans-serif;font-weight:600;font-size:1.5rem;color:var(--fg)}
+.hl{background:var(--c, var(--sol));color:#2b2236;border-radius:.2em;padding:0 .06em}
+.s-ch .hl,.s-k .hl,.s-sh .hl{background:var(--c)}
+.sonidos{display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:.7rem;width:min(520px, 100%)}
+.op-ch{display:flex;flex-direction:column;align-items:center;gap:.3rem;background:var(--card);border:4px solid var(--line);border-radius:22px;padding:.7rem .3rem;
+  box-shadow:var(--sombra);font-weight:800;font-size:1.05rem;transition:transform .12s}
+.op-ch .sono{font-size:2.6rem}
+.op-ch:active{transform:scale(.96)}
+.op-ch.bien{border-color:var(--bien);box-shadow:0 0 0 5px var(--bien)}
+.op-ch.mal{border-color:var(--mal);box-shadow:0 0 0 5px var(--mal);animation:no .3s}
+.op-ch:disabled{cursor:default}
+.op-ch:disabled:not(.bien):not(.mal){opacity:.45}
+.correcta .hl{padding:0 .08em}
 
 /* Sin voz */
 .sin-voz{display:flex;align-items:center;gap:.6rem;text-align:left;background:#fff3d6;color:#5c4300;border-radius:16px;padding:.6rem 1rem;margin:0;

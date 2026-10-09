@@ -8,6 +8,7 @@ import { opciones, letrasParaArmar, diferencias, igual } from "./faltas.js";
 import { cargar, registrar, cerrarRonda, armarRonda, colocar, dominio, cumplirReto, racha, semana, resumen, fechaLocal, elegida, estrellasRonda, POR_RONDA, VENTANA, NECESITA } from "./progreso.js";
 import { empezarPrueba, responderPrueba, palabraActual } from "./nivelacion.js";
 import { retoDelDia } from "./reto.js";
+import { SONIDOS, sonido as datosSonido, resaltar, armarRondaCh, registrarCh, cerrarRondaCh, chDe, pctCh } from "./ch.js";
 import { Voz } from "./voz.js";
 
 const $main = document.getElementById("juego");
@@ -86,6 +87,7 @@ function inicio() {
       <button class="boton grande primario" data-foco="inicial" data-ir="ronda">Jugar <small>Dictado</small></button>
       <button class="boton grande ${reto?.cumplido ? "hecho" : "reto"}" data-foco data-ir="retoIntro">
         Reto del día <small>${reto?.cumplido ? "¡Cumplido!" : "Te espera"}</small></button>
+      <button class="boton grande ch" data-foco data-ir="ch">Sonidos de CH <small>ch · k · sh</small></button>
       <div class="menu fila">
         <button class="boton" data-foco data-ir="practicar">Practicar</button>
         <button class="boton" data-foco data-ir="progreso">Mi progreso</button>
@@ -149,12 +151,7 @@ function palabra() {
   mostrar(`
     ${cabecera()}
     <p class="instr">${etapa === "escribe" ? "Escucha y escribe la palabra" : esc(ETAPAS.find((e) => e.id === etapa).que)}</p>
-    <div class="oir">
-      <button class="altavoz" data-foco data-ir="decir" aria-label="Escuchar otra vez">${ALTAVOZ}<span>Otra vez</span></button>
-      <button class="boton chico" data-foco data-ir="despacio">${TORTUGA} Despacio</button>
-      <button class="boton chico" data-foco data-ir="frase">${BURBUJA} Frase</button>
-    </div>
-    ${Voz.hay ? `<p class="frase" hidden></p>` : `${avisoSinVoz()}<p class="frase">${esc(conHueco(it.frase, it.palabra))}</p>`}
+    ${oirHtml(it)}
     <div class="zona z-${etapa}">${zona}</div>
     <p class="aviso" aria-live="polite"></p>
     <div class="abajo"></div>`, "palabra");
@@ -166,11 +163,23 @@ function palabra() {
   decir();
 }
 
+// Los botones para escuchar la palabra (y la frase con hueco, que aparece si la pide o si no hay voz)
+const oirHtml = (it) => `<div class="oir">
+      <button class="altavoz" data-foco data-ir="decir" aria-label="Escuchar otra vez">${ALTAVOZ}<span>Otra vez</span></button>
+      <button class="boton chico" data-foco data-ir="despacio">${TORTUGA} Despacio</button>
+      <button class="boton chico" data-foco data-ir="frase">${BURBUJA} Frase</button>
+    </div>
+    ${Voz.hay ? `<p class="frase" hidden></p>` : `${avisoSinVoz()}<p class="frase">${esc(conHueco(it.frase, it.palabra))}</p>`}`;
+
 function cabecera() {
   const m = juego.modo;
   if (m === "dictado" || m === "practica") {
     const puntos = Array.from({ length: POR_RONDA }, (_, k) => `<i class="${k < Math.min(juego.i, POR_RONDA) ? "lleno" : ""}"></i>`).join("");
     return `<header class="cab"><span>Lista ${juego.n} · ${NOMBRE_ETAPA[juego.etapa]}${actual().tipo === "repaso" ? " · repaso" : ""}</span><span class="puntos">${puntos}</span></header>`;
+  }
+  if (m === "ch") {
+    const puntos = Array.from({ length: juego.lista.length }, (_, k) => `<i class="${k < juego.i ? "lleno" : ""}"></i>`).join("");
+    return `<header class="cab"><span>CH · ${juego.sub === "sonido" ? "¿Cuál suena?" : "Escribe"}</span><span class="puntos">${puntos}</span></header>`;
   }
   if (m === "prueba") return `<header class="cab"><span>Prueba de nivel</span><span class="cuenta">Palabra ${juego.prueba.total + 1}</span></header>`;
   if (m === "contrarreloj") return `<header class="cab"><span>Contrarreloj · ${juego.aciertos} bien</span><span class="reloj"><i style="width:${relojPct()}%"></i></span></header>`;
@@ -254,6 +263,7 @@ function contestar(ok, intento, motivo = null) {
   juego.contestado = true;
   const it = actual(), m = juego.modo;
   pr = registrar(pr, m === "dictado" ? juego.n : null, it.palabra, ok, hoy());
+  if (m === "ch") { pr = registrarCh(pr, "escribe", it.sonido, ok); anotarCh(it, ok); }
   guardar();
   // Al armar o escribir, las letras y el teclado se quitan y en su lugar queda la palabra bien escrita
   if (juego.etapa !== "escoge") $main.querySelector(".zona").innerHTML = correccion(it.palabra, intento, ok);
@@ -267,10 +277,11 @@ function contestar(ok, intento, motivo = null) {
 
   if (m === "contrarreloj") { if (!ok) aviso(`Se escribe ${it.palabra}.`, "mal"); return setTimeout(siguiente, ok ? 350 : 1400); }
   if (ok) {
-    aviso(uno(["¡Bien!", "¡Muy bien!", "¡Eso!", "¡Perfecto!", "¡Excelente!"]), "bien");
-    setTimeout(siguiente, 1000);
+    aviso(uno(["¡Bien!", "¡Muy bien!", "¡Eso!", "¡Perfecto!", "¡Excelente!"]) + (m === "ch" ? " " + notaCh(it) : ""), "bien");
+    setTimeout(siguiente, m === "ch" ? 1800 : 1000);
     return;
   }
+  if (m === "ch") motivo = `Se escribe ${it.palabra}. ${notaCh(it)}`;
   // Error: enseñar cómo se escribe, deletrearla en voz alta y esperar a "Seguir"
   aviso(m === "prueba" ? "¡No pasa nada! Así se escribe." : motivo || (juego.etapa === "escoge" ? `Se escribe ${it.palabra}.` : "Fíjate en las letras marcadas."), "mal");
   Voz.deletrear(it.palabra);
@@ -279,7 +290,7 @@ function contestar(ok, intento, motivo = null) {
 
 // La palabra bien escrita con las letras que fallaron marcadas, y abajo lo que escribió tachado
 function correccion(palabra, intento, ok) {
-  if (ok) return `<p class="correcta bien">${esc(palabra)}</p>`;
+  if (ok) return `<p class="correcta bien${juego.modo === "ch" ? " s-" + actual().sonido : ""}">${juego.modo === "ch" ? resaltarHtml(palabra) : esc(palabra)}</p>`;
   const marcas = diferencias(palabra, intento).map((x) => `<span class="${x.ok ? "" : "ojo"}">${esc(x.letra)}</span>`).join("");
   return `<div class="correccion"><p class="correcta">${marcas}</p>${intento ? `<p class="intento"><s>${esc(intento)}</s></p>` : ""}</div>`;
 }
@@ -295,10 +306,11 @@ function ponerSeguir() {
 function aviso(t, clase) { const a = $main.querySelector(".aviso"); a.textContent = t; a.className = "aviso " + clase; }
 
 function siguiente() {
-  if (pantalla !== "palabra" && pantalla !== "detective") return;
+  if (pantalla !== "palabra" && pantalla !== "detective" && pantalla !== "sonido") return;
   const m = juego.modo;
   if (m === "prueba") return juego.prueba.fin ? finPrueba(juego.prueba.fin) : palabra();
   juego.i++;
+  if (m === "ch") return juego.i < juego.lista.length ? (juego.sub === "sonido" ? sonidoCh() : palabra()) : finCh();
   if (m === "dictado" || m === "practica") return juego.i < juego.lista.length ? palabra() : finRonda();
   if (m === "contrarreloj") return palabra();
   if (m === "abeja") return juego.i < juego.lista.length ? palabra() : finReto();
@@ -420,6 +432,114 @@ function semanaHtml() {
   }).join("")}</div>`;
 }
 
+// ---------- Sonidos de CH ----------
+// La CH suena de tres maneras. Se aprende (tarjetas con ejemplos que se oyen) y se prueba de dos formas:
+// "¿Cuál suena?" (oye la palabra y dice qué sonido hace la CH) y "Escribe" (dictado de palabras con CH).
+
+const notaCh = (it) => (it.sonido === "ch" ? "Aquí CH suena normal." : `Aquí CH suena como ${datosSonido(it.sonido).id.toUpperCase()}.`);
+const resaltarHtml = (palabra) => resaltar(palabra).map((t) => (t.ch ? `<b class="hl">${esc(t.texto)}</b>` : esc(t.texto))).join("");
+// Lo que lleva la ronda por sonido (para el resumen del final)
+function anotarCh(it, ok) {
+  const r = (juego.porSonido[it.sonido] ||= { a: 0, t: 0 });
+  r.t++; r.a += ok ? 1 : 0;
+}
+
+function chInicio() {
+  const c = chDe(pr);
+  mostrar(`
+    <h1 class="titulo">Sonidos de CH</h1>
+    <p class="sub">La CH suena de tres maneras. Toca una tarjeta para oír ejemplos.</p>
+    <div class="ch-cards">${SONIDOS.map((s, k) => `
+      <button class="ch-card s-${s.id}" data-foco${k === 0 ? '="inicial"' : ""} data-ir="chEjemplo" data-s="${s.id}">
+        <b class="sono">${s.id}</b><span class="como">${esc(s.como)}</span><small>${esc(s.corto)}</small></button>`).join("")}</div>
+    <p class="nota ch-regla" aria-live="polite">Cada tarjeta dice tres palabras con ese sonido.</p>
+    <div class="menu">
+      <button class="boton grande primario" data-foco data-ir="chRonda" data-sub="sonido">¿Cuál suena? <small>escucha y escoge el sonido</small></button>
+      <button class="boton grande primario" data-foco data-ir="chRonda" data-sub="escribe">Escribe <small>dictado · nivel ${c.nivel} de 3</small></button>
+      <button class="boton" data-foco data-ir="inicio">Inicio</button>
+    </div>
+    ${Voz.hay ? "" : avisoSinVoz()}`, "ch");
+}
+
+function chEjemplo({ s }) {
+  const d = datosSonido(s);
+  for (const b of $main.querySelectorAll(".ch-card")) b.classList.toggle("activo", b.dataset.s === s);
+  $main.querySelector(".ch-regla").className = `nota ch-regla s-${s}`;
+  $main.querySelector(".ch-regla").innerHTML = `${esc(d.regla)}<br><span class="ejemplos">${d.ejemplos.map((w) => `<span>${resaltarHtml(w)}</span>`).join("")}</span>`;
+  intentar();
+  Voz.palabras(d.ejemplos);
+}
+
+function nuevaRondaCh(sub) {
+  const lista = armarRondaCh(pr, sub, rnd);
+  juego = { modo: "ch", sub, etapa: "escribe", lista, i: 0, aciertos: 0, porSonido: {} };
+  Voz.precargar(lista.map((x) => x.palabra));
+  if (sub === "sonido") sonidoCh(); else palabra();
+}
+
+// Oye la palabra y toca el sonido que hace su CH
+function sonidoCh() {
+  const it = actual();
+  juego.contestado = false;
+  mostrar(`
+    ${cabecera()}
+    <p class="instr">Escucha la palabra: ¿cómo suena la CH?</p>
+    ${oirHtml(it)}
+    <div class="sonidos">${SONIDOS.map((s, k) => `
+      <button class="op-ch s-${s.id}" data-foco${k === 0 ? '="inicial"' : ""} data-s="${s.id}">
+        <b class="sono">${s.id}</b><span>${esc(s.como)}</span></button>`).join("")}</div>
+    <p class="aviso" aria-live="polite"></p>
+    <div class="zona"></div>
+    <div class="abajo"></div>`, "sonido");
+  for (const b of $main.querySelectorAll(".op-ch")) b.onclick = () => responderSonido(b.dataset.s);
+  decir();
+}
+
+function responderSonido(s) {
+  if (juego.contestado) return;
+  juego.contestado = true;
+  const it = actual(), ok = s === it.sonido;
+  pr = registrar(pr, null, it.palabra, ok, hoy());
+  pr = registrarCh(pr, "sonido", it.sonido, ok);
+  guardar();
+  if (ok) juego.aciertos++;
+  anotarCh(it, ok);
+  const botones = [...$main.querySelectorAll(".op-ch")];
+  for (const b of botones) {
+    b.disabled = true; b.removeAttribute("data-foco");
+    if (b.dataset.s === it.sonido) b.classList.add("bien");
+    else if (b.dataset.s === s) b.classList.add("mal");
+  }
+  $main.querySelector(".zona").innerHTML = `<p class="correcta s-${it.sonido}${ok ? " bien" : ""}">${resaltarHtml(it.palabra)}</p>`;
+  aviso(ok ? `${uno(["¡Bien!", "¡Muy bien!", "¡Eso!", "¡Perfecto!"])} ${notaCh(it)}` : `${notaCh(it)} Se escribe ${it.palabra}.`, ok ? "bien" : "mal");
+  if (ok) return void setTimeout(siguiente, 1800);
+  Voz.palabra(it.palabra);
+  ponerSeguir();
+}
+
+function finCh() {
+  const { pr: p2, estrellas, nivel, cambio } = cerrarRondaCh(pr, juego.sub, juego.aciertos, juego.lista.length);
+  pr = p2;
+  guardar();
+  Noli.terminar({ estrellas });
+  const sub = juego.sub, total = juego.lista.length;
+  mostrar(`
+    <h1 class="titulo">${["¡Buen intento!", "¡Bien hecho!", "¡Muy bien!", "¡Perfecto!"][estrellas]}</h1>
+    <p class="estrellas grande">${estrellasHtml(estrellas)}</p>
+    <p class="sub">${juego.aciertos} de ${total} bien</p>
+    ${cambio > 0 ? `<div class="subio"><b>¡Subiste al nivel ${nivel} de CH!</b><span>Ahora salen palabras más difíciles.</span></div>` : ""}
+    ${cambio < 0 ? `<div class="subio"><b>Bajamos al nivel ${nivel}</b><span>Para practicar con palabras más fáciles.</span></div>` : ""}
+    <div class="ch-cards chicas">${SONIDOS.map((s) => {
+      const r = juego.porSonido[s.id] || { a: 0, t: 0 };
+      return `<div class="ch-card s-${s.id}"><b class="sono">${s.id}</b><span class="como">${r.t ? `${r.a} de ${r.t}` : "–"}</span></div>`;
+    }).join("")}</div>
+    <div class="menu fila">
+      <button class="boton grande primario" data-foco="inicial" data-ir="chRonda" data-sub="${sub}">Otra ronda</button>
+      <button class="boton grande" data-foco data-ir="ch">Sonidos de CH</button>
+      <button class="boton grande" data-foco data-ir="inicio">Inicio</button>
+    </div>`, "finCh");
+}
+
 // ---------- Mi progreso y para papás ----------
 
 function progreso() {
@@ -462,6 +582,8 @@ function papas() {
     </tbody></table>` : `<p class="nota">Todavía no hay días jugados.</p>`}
     <h2>Nivel</h2>
     <p class="nota">Va en la lista ${pr.lista}. La prueba de nivel la vuelve a colocar (sube o baja) con un dictado corto.</p>
+    <h2>Sonidos de CH</h2>
+    ${chPapas()}
     <h2>Voz</h2>
     <p class="nota">${Voz.hay ? `Voz en inglés: ${esc(Voz.nombre)}.` : "La voz en inglés no está sonando en este aparato."}
       Si no se oye: sube el volumen y, en iPhone, quita el modo silencio (el switch de un lado).</p>
@@ -471,6 +593,14 @@ function papas() {
       <button class="boton" data-foco="inicial" data-ir="progreso">Regresar</button>
     </div>
     <pre class="diagnostico" aria-live="polite">${esc(diagnostico())}</pre>`, "papas");
+}
+
+function chPapas() {
+  const c = chDe(pr), p = (m, s) => { const v = pctCh(pr, m, s), t = c.stats[m][s].t; return v == null ? "–" : `${v} % <small>(${t})</small>`; };
+  return `<table class="tabla"><thead><tr><th>Sonido</th><th>Cuál suena</th><th>Escribe</th></tr></thead><tbody>
+    ${SONIDOS.map((s) => `<tr><td>${s.id} <small>(${esc(s.como)})</small></td><td>${p("sonido", s.id)}</td><td>${p("escribe", s.id)}</td></tr>`).join("")}
+    </tbody></table>
+    <p class="nota">Nivel de escritura: ${c.nivel} de 3 (sube con 8 de 10). Rondas: ${c.rondas.sonido} de "cuál suena", ${c.rondas.escribe} de escribir.</p>`;
 }
 
 // Lo que sabe el juego de la voz de este aparato (para saber qué pasa en cada teléfono o TV)
@@ -495,7 +625,7 @@ function probarVoz() {
 
 // Si la voz deja de sonar a media partida: aviso y la frase con hueco (nunca la palabra)
 Voz.alFallar(() => {
-  if (pantalla === "palabra" && !$main.querySelector(".sin-voz")) {
+  if ((pantalla === "palabra" || pantalla === "sonido") && !$main.querySelector(".sin-voz")) {
     $main.querySelector(".oir").insertAdjacentHTML("afterend", avisoSinVoz());
     const p = $main.querySelector(".frase");
     if (p) { p.textContent = conHueco(actual().frase, actual().palabra); p.hidden = false; }
@@ -505,7 +635,8 @@ Voz.alFallar(() => {
 // ---------- Navegación ----------
 
 const IR = {
-  inicio, progreso, papas, practicar, retoIntro, retoJugar, decir, despacio, frase, listo, probarVoz, prueba,
+  inicio, progreso, papas, practicar, retoIntro, retoJugar, decir, despacio, frase, listo, probarVoz, prueba, ch: chInicio,
+  chEjemplo, chRonda: ({ sub }) => nuevaRondaCh(sub),
   ronda: ({ etapa }) => nuevaRonda(etapa || "escribe"),
   practica: ({ etapa }) => nuevaRonda(etapa),
   borrar: () => borrar(),
@@ -529,6 +660,7 @@ Noli.alEntrar((accion) => {
     if (escribiendo() && borrar()) return true;                   // "atrás" borra la última letra
     if (pantalla === "inicio" || pantalla === "bienvenida") return false;   // el kit regresa al catálogo
     if (pantalla === "papas") { progreso(); return true; }
+    if (["palabra", "sonido", "finCh"].includes(pantalla) && juego?.modo === "ch") { chInicio(); return true; }
     inicio(); return true;
   }
 });

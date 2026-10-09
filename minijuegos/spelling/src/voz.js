@@ -13,6 +13,7 @@
 // (Voz.alFallar) para que diga cómo arreglarlo. Nunca se enseña la palabra en su lugar.
 // Voz.estado() junta todo para la pantalla "Para papás" (probar la voz en cada aparato).
 import { buscar } from "./palabras.js";
+import { buscarCh } from "./ch.js";
 
 const PREFERIDAS = /samantha|google us english|aria|jenny|allison|ava|zira|karen|serena|moira|daniel|english united states/i;
 // Voces de broma de Apple: suenan raro para aprender
@@ -291,12 +292,14 @@ export const Voz = {
   get hay() { return modo !== "ninguno" || Sintesis.hay; },
   get nombre() { return modo === "ninguno" ? Sintesis.nombre : "grabaciones (voz en inglés de EE. UU.)"; },
   palabra(w, lento = false) { return reproducir([lento ? ARCHIVO.despacio(w) : ARCHIVO.palabra(w)], w, lento ? 0.5 : 0.85); },
-  frase(w) { const p = buscar(w); return reproducir([ARCHIVO.frase(w)], p ? p.frase : w, 0.85); },
+  frase(w) { const p = buscar(w) || buscarCh(w); return reproducir([ARCHIVO.frase(w)], p ? p.frase : w, 0.85); },
   // "cake. C. A. K. E. cake."
   deletrear(w) {
     const letras = w.toLowerCase().split("").map(ARCHIVO.letra);
     return reproducir([ARCHIVO.palabra(w), ...letras, ARCHIVO.palabra(w)], `${w}. ${letraPorLetra(w)} ${w}.`, 0.75);
   },
+  // Varias palabras seguidas (los ejemplos de cada sonido de CH)
+  palabras(ws) { return reproducir(ws.map(ARCHIVO.palabra), ws.join(". ") + ".", 0.85); },
   prueba() { return reproducir([ARCHIVO.prueba()], "Hello Noli! Can you spell cat? C. A. T. Cat."); },
   // Baja de una vez las grabaciones de una ronda (y las letras), para que suenen al instante
   precargar(palabras) {
