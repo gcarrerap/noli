@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 140">
+<title>Marquesina con focos y estrella</title>
+<rect x="10" y="10" width="200" height="120" rx="20" fill="#c86bfa" stroke="#2b2236" stroke-width="5"/>
+<rect x="34" y="34" width="152" height="72" rx="10" fill="#fff" stroke="#2b2236" stroke-width="4"/>
+<path d="M110 42L117.9 59.13L136.63 61.35L122.78 74.15L126.46 92.65L110 83.44L93.54 92.65L97.22 74.15L83.37 61.35L102.1 59.13z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<circle class="foco" cx="30" cy="22" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="50" cy="22" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="70" cy="22" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="90" cy="22" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="110" cy="22" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="130" cy="22" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="150" cy="22" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="170" cy="22" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="190" cy="22" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="30" cy="118" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="50" cy="118" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="70" cy="118" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="90" cy="118" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="110" cy="118" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="130" cy="118" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="150" cy="118" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="170" cy="118" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="190" cy="118" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="22" cy="50" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="22" cy="70" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="22" cy="90" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="198" cy="50" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="198" cy="70" r="6" fill="#ffc43d" stroke="#2b2236" stroke-width="2.5"/>
+<circle class="foco" cx="198" cy="90" r="6" fill="#fff" stroke="#2b2236" stroke-width="2.5"/>
+</svg>
