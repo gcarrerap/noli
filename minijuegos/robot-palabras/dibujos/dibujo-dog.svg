@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<title>dog</title>
+<path d="M20 30c-6 4-8 26 2 30l8-24zM80 30c6 4 8 26-2 30l-8-24z" fill="#8a5a3c" stroke="#2b2236" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="50" cy="52" r="28" fill="#e0b07a" stroke="#2b2236" stroke-width="5"/><circle cx="40" cy="46" r="3" fill="#2b2236"/><circle cx="60" cy="46" r="3" fill="#2b2236"/><ellipse cx="50" cy="60" rx="7" ry="5" fill="#2b2236" stroke="#2b2236" stroke-width="0"/><path d="M50 64v6q-6 6-10 0M50 70q6 6 10 0" fill="none" stroke="#2b2236" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
