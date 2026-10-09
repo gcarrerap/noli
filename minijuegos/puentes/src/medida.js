@@ -2,7 +2,6 @@
 // La voz dice «centímetros» y «pulgadas», nunca la abreviatura.
 
 import { revolver } from "./rng.js";
-import { posicionRegla } from "./escena.js";
 
 export const U_CM = 30;
 export const U_IN = 76.2;
@@ -40,9 +39,17 @@ export function confirmarCero(desplaza) {
 }
 
 export function reglaArchivo(unidad, tv) {
-  if (unidad === "in") return { archivo: "regla-in-6", max: 6, ancho: 509.2, cero: 26 };
-  if (tv) return { archivo: "regla-cm-20", max: 20, ancho: 652, cero: 26 };
-  return { archivo: "regla-cm-12", max: 12, ancho: 412, cero: 26 };
+  if (unidad === "in") return { archivo: "regla-in-6", max: 6, ancho: 509.2, cero: 26, unidadX: 475.2 };
+  if (tv) return { archivo: "regla-cm-20", max: 20, ancho: 652, cero: 26, unidadX: 618 };
+  return { archivo: "regla-cm-12", max: 12, ancho: 412, cero: 26, unidadX: 378 };
+}
+
+// Ancho útil del hueco: el mismo recorte que usa la pantalla
+// (padding del juego, tope de la tele).
+export function anchoDeVista(viewport, tv = false) {
+  const w = Number(viewport) || 0;
+  const pad = tv ? 80 : 28;
+  return Math.max(220, Math.min(w - pad, 980));
 }
 
 export function decirUnidad(n, unidad) {
@@ -184,14 +191,21 @@ export function spanBloques(cubos) {
   return Math.max(...cubos.map((c) => c.x)) + 1;
 }
 
+// Alto del arte de la orilla, en las mismas unidades que la regla.
+// El ancho nativo (120) cabe junto al cero sin aplastar el dibujo.
+export const BANCO_ARTE = 120;
+
 // Una escala por unidad y viewport. No depende del hueco de este cruce,
 // así la referencia y el río usan los mismos px por centímetro o pulgada.
+// Cabe la orilla y la regla entera, con su unidad, dentro del ancho.
 export function escalaFija({ unidad = "cm", tv = false, ancho = 320, corta = false } = {}) {
   const uNombre = unidad === "in" ? "in" : "cm";
   const reg = reglaArchivo(uNombre, !!(tv && uNombre !== "in" && !corta));
   const unit = uDe(uNombre);
   const tope = tv ? 168 : 128;
-  const u = Math.min(Math.max(1, ancho) / reg.ancho, tope / 160);
+  const libre = Math.max(1, ancho);
+  const conOrilla = libre / (BANCO_ARTE + reg.ancho - reg.cero);
+  const u = Math.min(libre / reg.ancho, tope / 160, conOrilla);
   return { u, unit, px: unit * u, reg };
 }
 
@@ -242,12 +256,58 @@ export function cajaTabla(n, unidad, alto) {
 // El hueco, en px, con la escala fija. Sirve para comprobar que no cambia
 // de un cruce a otro.
 export function huecoEnPx({ unidad = "cm", longitud = 1, tv = false, ancho = 320, desplaza = 0, corta = false } = {}) {
-  const escala = escalaFija({ unidad, tv, ancho, corta });
-  const gapU = Math.max(escala.unit, (longitud || 1) * escala.unit);
-  const pos = posicionRegla({
-    anchoVb: escala.reg.ancho, cero: escala.reg.cero, gapU, desplaza, unidadU: escala.unit,
-  });
-  return { ...escala, gapU, gapPx: gapU * escala.u, pos };
+  const lay = layoutRegla({ unidad, longitud, tv, ancho, desplaza, corta });
+  return { u: lay.u, unit: lay.unit, px: lay.unit * lay.u, reg: lay.reg, gapU: lay.gapU, gapPx: lay.gapPx, pos: lay.pos };
+}
+
+// La orilla izquierda termina en el cero de la regla sin correr.
+// El hueco sale de ahí. La regla puede deslizarse; la marca del final no.
+export function layoutRegla({
+  unidad = "cm", longitud = 1, tv = false, ancho = 320,
+  desplaza = 0, corta = false, llenar = false,
+} = {}) {
+  const uNombre = unidad === "in" ? "in" : "cm";
+  const escala = escalaFija({ unidad: uNombre, tv, ancho, corta });
+  const { unit, reg, u } = escala;
+  const largo = Math.max(1, Number(longitud) || 1);
+  const gapU = largo * unit;
+  const slide = Number(desplaza) || 0;
+  if (llenar) {
+    const bancoU = 90;
+    const total = bancoU * 2 + gapU;
+    const tope = tv ? 168 : 128;
+    const uD = Math.min(Math.max(1, ancho) / total, tope / 160);
+    const bancoI = bancoU * uD;
+    const gapPx = gapU * uD;
+    const bancoD = bancoU * uD;
+    const w = bancoI + gapPx + bancoD;
+    return {
+      u: uD, unit, reg, gapU, gapPx, bancoI, bancoD, w,
+      marcaX: bancoI + gapPx, unidadX: null,
+      reglaX: 0, reglaW: w, alto: Math.max(64, 160 * uD), rielH: Math.max(48, 78 * uD),
+      pos: { left: bancoU, x: 0, gapU },
+    };
+  }
+  const bancoI = BANCO_ARTE * u;
+  const gapPx = gapU * u;
+  const w = (BANCO_ARTE - reg.cero + reg.ancho) * u;
+  const bancoD = Math.max(0, w - bancoI - gapPx);
+  const reglaX = (BANCO_ARTE - reg.cero + slide * unit) * u;
+  const unidadX = (BANCO_ARTE + reg.unidadX + slide * unit) * u;
+  return {
+    u, unit, reg, gapU, gapPx, bancoI, bancoD, w,
+    marcaX: bancoI + gapPx, unidadX,
+    reglaX, reglaW: reg.ancho * u,
+    alto: Math.max(64, 160 * u), rielH: Math.max(48, 78 * u),
+    pos: { left: BANCO_ARTE, x: BANCO_ARTE - reg.cero + slide * unit, gapU },
+  };
+}
+
+// «Cero» señala la orilla, aunque la regla esté corrida sobre el agua.
+// «Marca» señala el final del hueco, o el inicio si el cero quedó a la izquierda.
+export function xDeFlecha({ blanco = "", bancoI = 0, marcaX = 0, desplaza = 0 } = {}) {
+  if (blanco === "marca") return Number(desplaza) < 0 ? bancoI : marcaX;
+  return bancoI;
 }
 
 export function brilloCeroVisible({ desplaza = 0, fasePista = "frase", forzar = false, nivel = 1 } = {}) {

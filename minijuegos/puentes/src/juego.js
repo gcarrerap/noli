@@ -13,10 +13,11 @@ import {
   moverRegla, confirmarCero, marcaAlFinal, decirUnidad, valorInicial,
   ajustarValor, listoBrilla, cruzarBrilla, seMidioBien, brilloCeroVisible, cubosDe, resultadoListo,
   escalaFija, cajaReferencia, escalaBloques, altoComunTablas, cajaTabla,
+  anchoDeVista, layoutRegla, xDeFlecha,
 } from "./medida.js";
 import { maxRegla } from "./niveles.js";
 import { promptDe, vozDeFase, notaReferencia, nombreZona, explicaBloques } from "./frases.js";
-import { htmlComparar, htmlFalta, htmlBloques, conBrillo, posicionRegla, svgInline } from "./escena.js";
+import { htmlComparar, htmlFalta, htmlBloques, conBrillo, svgInline } from "./escena.js";
 import {
   cargar, registrar, dominio, cerrarTurno, crucePara, planTurno, cumplirReto, racha,
   fechaLocal, semana, resumen, marcarGuia, textoRacha, cicloUnidad, textoUnidad,
@@ -178,8 +179,7 @@ function entradaLibre(tipo) {
 
 function anchoLienzo() {
   const w = (typeof window !== "undefined" && window.innerWidth) || 360;
-  const pad = modoJuego() === "tv" ? 80 : 28;
-  return Math.max(220, Math.min(w - pad, 980));
+  return anchoDeVista(w, modoJuego() === "tv");
 }
 
 function archivoTabla(n, unidad) {
@@ -254,53 +254,23 @@ function htmlReglaEscena({ unidad, longitud, desplaza = 0, brillo = false, marca
       </div>
     </div>`;
   }
-  const uNombre = unidad === "in" ? "in" : "cm";
-  const escala = escalaFija({ unidad: uNombre, tv, ancho, corta });
-  const { unit, reg } = escala;
-  const gapU = Math.max(unit, (longitud || 1) * unit);
-  let uDibujo = escala.u;
-  let bancoI;
-  let gapPx;
-  let bancoD;
-  let wEscena;
-  let pos;
-  if (llenar) {
-    const bancoU = 90;
-    const total = bancoU * 2 + gapU;
-    const tope = tv ? 168 : 128;
-    uDibujo = Math.min(ancho / total, tope / 160);
-    bancoI = bancoU * uDibujo;
-    gapPx = gapU * uDibujo;
-    bancoD = bancoU * uDibujo;
-    wEscena = bancoI + gapPx + bancoD;
-    pos = { left: bancoU, x: 0 };
-  } else {
-    pos = posicionRegla({ anchoVb: reg.ancho, cero: reg.cero, gapU, desplaza, unidadU: unit });
-    wEscena = reg.ancho * escala.u;
-    bancoI = Math.max(0, pos.left * escala.u);
-    gapPx = gapU * escala.u;
-    bancoD = Math.max(0, wEscena - bancoI - gapPx);
-  }
-  const xPx = pos.x * uDibujo;
-  const padIzq = xPx < 0 ? -xPx : 0;
-  const wCaja = wEscena + padIzq;
-  const alto = Math.max(64, 160 * uDibujo);
+  const lay = layoutRegla({ unidad, longitud, tv, ancho, desplaza, corta, llenar });
+  const { bancoI, gapPx, bancoD, w, marcaX, reglaX, reglaW, reg, alto, rielH } = lay;
   const regla = conBrillo(arte(reg.archivo), { brillo, marca });
-  const xFlecha = (blanco === "marca" ? (desplaza < 0 ? bancoI : bancoI + gapPx) : (pos.left + desplaza * unit) * uDibujo) + padIzq;
+  const xFlecha = xDeFlecha({ blanco, bancoI, marcaX, desplaza });
   const flecha = blanco === "cero" || blanco === "marca"
     ? `<span class="flecha-pista" style="left:${px(xFlecha)}px">${svgInline(arte("flecha-pista"))}</span>`
     : "";
-  const bancoVis = bancoI + padIzq;
-  return `<div class="medidor" style="width:${px(wCaja)}px">
-    <div class="escena" style="width:${px(wCaja)}px;height:${px(alto)}px">
-      <div class="banco" style="width:${px(bancoVis)}px">${svgCaja(arte(izq))}</div>
+  return `<div class="medidor" style="width:${px(w)}px">
+    <div class="escena" style="width:${px(w)}px;height:${px(alto)}px">
+      <div class="banco" style="width:${px(bancoI)}px">${svgCaja(arte(izq))}</div>
       <div class="hueco" data-longitud="${longitud | 0}" style="width:${px(gapPx)}px">${svgCaja(arte("hueco-" + (hueco || "rio")))}${encima}</div>
       <div class="banco" style="width:${px(bancoD)}px">${svgCaja(arte(der))}</div>
-      <div class="bicho" style="left:${px(Math.max(0, bancoVis - 28))}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
-      ${punta || marca != null ? `<div class="marca-fin" style="left:${px(bancoVis + gapPx)}px">${svgInline(arte("marca-resaltada"))}</div>` : ""}
+      <div class="bicho" style="left:${px(Math.max(0, bancoI - 28))}px">${svgInline(arte("animal-" + (animal || "conejo")))}</div>
+      ${punta || marca != null ? `<div class="marca-fin" style="left:${px(marcaX)}px">${svgInline(arte("marca-resaltada"))}</div>` : ""}
       ${flecha}
     </div>
-    ${sinRegla ? "" : `<div class="riel" style="width:${px(wCaja)}px;height:${px(Math.max(48, 78 * uDibujo))}px"><div class="regla-mov" style="width:${px(wEscena)}px;transform:translateX(${px(xPx + padIzq)}px)">${regla}</div></div>`}
+    ${sinRegla ? "" : `<div class="riel" style="width:${px(w)}px;height:${px(rielH)}px"><div class="regla-mov" style="width:${px(reglaW)}px;transform:translateX(${px(reglaX)}px)">${regla}</div></div>`}
   </div>`;
 }
 

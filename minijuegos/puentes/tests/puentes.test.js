@@ -6,9 +6,10 @@ import {
   longitudReal, marcaAlFinal, confirmarCero, decirUnidad, hablaSegura, cerca, opcionesCerca,
   combinacion, cruzarBrilla, cubosDe, seMidioBien, moverRegla, U_CM, U_IN, resultadoListo,
   escalaFija, cajaReferencia, escalaBloques, altoComunTablas, cajaTabla, huecoEnPx,
+  anchoDeVista, layoutRegla, xDeFlecha,
 } from "../src/medida.js";
 import {
-  crearCruce, sumaValida, unidadDeCruce, planSuma, POR_TURNO, ZONAS, NIVELES_MAX,
+  crearCruce, sumaValida, unidadDeCruce, planSuma, POR_TURNO, ZONAS, NIVELES_MAX, maxRegla,
 } from "../src/niveles.js";
 import {
   crearReloj, abrirDialogoGuia, seguirDialogoGuia, debeAvanzarSolo, msHastaAvance,
@@ -509,6 +510,64 @@ test("la referencia y el hueco comparten los px por unidad", () => {
   assert.equal(chica.h, grande.h);
   assert.ok(chica.w * 12 - grande.w < 1e-6 && grande.w - chica.w * 12 < 1e-6);
   assert.ok(chica.w < grande.w);
+});
+
+test("la marca del final cabe a 360, a 412 y en la tele", () => {
+  const vistas = [
+    { viewport: 360, tv: false },
+    { viewport: 412, tv: false },
+    { viewport: 1280, tv: true },
+  ];
+  let vistos = 0;
+  for (const vista of vistas) {
+    const ancho = anchoDeVista(vista.viewport, vista.tv);
+    for (let nivel = 1; nivel <= NIVELES_MAX; nivel++) {
+      for (let i = 0; i < 24; i++) {
+        for (const ajuste of ["ambas", "cm", "in"]) {
+          const c = crearCruce(nivel, rngConSemilla(`marca-${vista.viewport}-${nivel}-${i}-${ajuste}-${vista.tv ? 1 : 0}`), {
+            indice: i, tv: vista.tv, ajuste, bien: i,
+          });
+          if (c.tipo === "bloques" || c.tipo === "comparar" || c.tipo === "arbol") continue;
+          const unidad = c.unidad === "in" ? "in" : "cm";
+          const tope = maxRegla(unidad, vista.tv);
+          const llenar = c.tipo === "juntar" && c.longitud > tope;
+          const longitud = llenar ? c.longitud : Math.min(c.longitud, tope);
+          const desplaza = c.tipo === "desfase" ? -Number(c.desplazaInicial || 0) : Number(c.desplazaInicial || 0);
+          const lay = layoutRegla({ unidad, longitud, tv: vista.tv, ancho, desplaza, llenar });
+          const corrida = layoutRegla({ unidad, longitud, tv: vista.tv, ancho, desplaza: 4, llenar });
+          assert.ok(lay.marcaX >= 0);
+          assert.ok(lay.marcaX <= ancho, `marca ${lay.marcaX} fuera de ${ancho} (nivel ${nivel}, ${unidad}, ${longitud})`);
+          assert.equal(lay.marcaX, corrida.marcaX);
+          if (!llenar) {
+            const puesta = layoutRegla({ unidad, longitud, tv: vista.tv, ancho, desplaza: 0 });
+            assert.ok(puesta.unidadX <= ancho, `unidad ${puesta.unidadX} fuera de ${ancho}`);
+            assert.ok(puesta.unidadX <= puesta.w + 1e-6);
+            assert.ok(puesta.reglaX >= -1e-6);
+            assert.ok(puesta.reglaX + puesta.reglaW <= puesta.w + 1e-6);
+            assert.ok(puesta.marcaX <= puesta.unidadX);
+          }
+          vistos++;
+        }
+      }
+    }
+  }
+  assert.ok(vistos > 200);
+});
+
+test("la flecha del cero señala la orilla y pulg. se lee", () => {
+  const ancho = anchoDeVista(360, false);
+  const lay = layoutRegla({ unidad: "in", longitud: 6, ancho, desplaza: 2 });
+  const ceroEnRegla = lay.bancoI + 2 * lay.unit * lay.u;
+  assert.ok(ceroEnRegla > lay.bancoI + 1);
+  assert.ok(ceroEnRegla < lay.marcaX);
+  assert.equal(xDeFlecha({ blanco: "cero", bancoI: lay.bancoI, marcaX: lay.marcaX, desplaza: 2 }), lay.bancoI);
+  const regla = fs.readFileSync(new URL("../img/regla-in-6.svg", import.meta.url), "utf8");
+  const tam = regla.match(/<text class="unidad"[^>]*font-size="(\d+)"/);
+  assert.ok(tam);
+  assert.ok(Number(tam[1]) >= 24);
+  const css = fs.readFileSync(new URL("../estilo.css", import.meta.url), "utf8");
+  assert.match(css, /\.opciones\.apunta\{[^}]*padding-top:\s*46px/);
+  assert.equal(css.includes("overflow-wrap:anywhere"), false);
 });
 
 test("8 de 10 sube, la pista completa no es a la primera y la racha no baja el nivel", () => {
