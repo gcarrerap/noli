@@ -1,0 +1,149 @@
+/* Robot de Palabras. Estilos propios: el juego no usa los del catálogo. */
+:root{
+  --bg:#f3fffc; --fg:#2b2236; --muted:#76698a; --card:#fff; --line:#d5efe9;
+  --turquesa:#2ec4b6; --azul:#4cb3ff; --coral:#ff6b4a; --sol:#ffc43d; --verde:#3ccf8e;
+  --star:#ffb400; --off:#e7dccb; --foco:#2b2236; --halo:#ffc43d;
+  --sombra:0 6px 0 rgba(43,34,54,.12);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#142824; --fg:#f6f0ff; --muted:#b7ddd4; --card:#1d3330; --line:#2c4a44; --off:#3d554e; --foco:#fff;
+}}
+*{box-sizing:border-box}
+html,body{height:100%; width:100%; max-width:100%; overflow:hidden}
+html{font-size:clamp(15px, 2.1vmin, 20px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.2vmin, 26px)}
+body{margin:0; background:var(--bg); color:var(--fg); font-family:"Nunito",system-ui,sans-serif; -webkit-tap-highlight-color:transparent}
+button{font:inherit; color:inherit; cursor:pointer; border:0; background:none; touch-action:manipulation}
+:focus{outline:none}
+html.teclado [data-foco]:focus,
+html[data-modo="tv"] [data-foco]:focus{
+  outline:5px solid var(--foco); outline-offset:3px; box-shadow:0 0 0 9px var(--halo);
+}
+main{
+  height:100dvh; max-height:100dvh; width:100%; max-width:100%;
+  overflow:hidden; display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  text-align:center;
+}
+.titulo{font-family:"Fredoka",system-ui,sans-serif; font-weight:700; font-size:1.55rem; margin:0; line-height:1.05}
+.sub{font-size:.95rem; color:var(--muted); margin:0}
+.coach{font-family:"Fredoka",system-ui,sans-serif; font-size:1.25rem; margin:0; min-height:2.4rem; max-width:100%}
+.cargando{color:var(--muted); margin:auto}
+.boton{
+  background:var(--card); border:2px solid var(--line); border-radius:999px;
+  padding:.35em .9em; font-weight:800; font-size:1rem; box-shadow:var(--sombra);
+  min-height:64px; min-width:64px;
+}
+.boton.grande{
+  font-family:"Fredoka",system-ui,sans-serif; font-size:1.2rem; font-weight:600;
+  border-radius:18px; width:100%; max-width:420px;
+  display:flex; align-items:center; justify-content:center;
+}
+.boton.primario{background:var(--verde); color:#143024; border-color:transparent}
+.boton.reto{background:var(--sol); color:#2b2236; border-color:transparent}
+.boton:disabled{opacity:.45; filter:grayscale(.35); box-shadow:none}
+.menu{display:flex; flex-direction:column; gap:.4rem; width:min(420px, 100%); max-width:100%}
+.barra{display:flex; align-items:center; gap:8px; width:min(520px, 100%); max-width:100%; min-height:64px}
+.minis{display:flex; gap:4px; flex:1; min-width:0; justify-content:center; overflow:hidden}
+.minis svg{width:28px; height:36px; flex:none}
+.ico-btn{width:64px; height:64px; min-width:64px; min-height:64px; flex:none; border-radius:16px; background:var(--card); box-shadow:var(--sombra); padding:4px}
+.ico-btn svg{width:100%; height:100%}
+.escenario{flex:1; min-height:0; width:min(560px, 100%); max-width:100%; display:flex; flex-direction:column; align-items:center; gap:6px; overflow:hidden}
+.robot-lienzo{width:min(150px, 34vw); aspect-ratio:200/260; position:relative; flex:none}
+.robot-lienzo .pila{position:absolute; inset:0}
+.robot-lienzo .capa{position:absolute; inset:0}
+.robot-lienzo svg{width:100%; height:100%; display:block}
+.robot-lienzo .pintura{fill:var(--pintura, #7cc8ff)}
+.robot-lienzo.grande .pila{transform:scale(1.12); transform-origin:50% 80%}
+.robot-lienzo.chico .pila{transform:scale(.68); transform-origin:50% 80%}
+.zona{flex:1; min-height:0; width:100%; max-width:100%; display:flex; flex-direction:column; align-items:center; gap:6px; overflow:hidden}
+.banda{width:100%; max-width:100%; overflow:hidden; position:relative; min-height:78px}
+.banda .riel{width:100%; height:46px; overflow:hidden}
+.banda .riel svg{width:140%; height:46px}
+.carta{width:min(280px, 92%); margin:-8px auto 0; max-width:100%}
+.carta svg{width:100%; height:auto; display:block}
+.marco{margin:0; font-family:"Fredoka",sans-serif; font-size:1.05rem; min-height:1.2rem}
+.cajas{display:flex; gap:6px; width:100%; max-width:100%; align-items:stretch}
+.caja{flex:1; min-width:0; min-height:64px; background:none; padding:0; position:relative; border-radius:16px}
+.caja svg{width:100%; height:auto; display:block}
+.caja.luz{outline:4px solid var(--sol); outline-offset:2px}
+.caja:disabled{opacity:.4}
+.tecla{display:none; font-family:"Fredoka",sans-serif; font-size:1.4rem; font-weight:800; line-height:1}
+.caja-leyenda{display:block; font-size:.8rem; font-weight:800; line-height:1.05; margin-top:1px}
+.nota{margin:0; min-height:1.2rem; font-weight:800; color:var(--coral)}
+.pista-visual{display:flex; gap:8px; align-items:center; justify-content:center; width:100%; max-width:100%}
+.blanco{width:96px; height:96px; flex:none; background:var(--card); border-radius:16px; box-shadow:var(--sombra); overflow:hidden}
+.blanco svg{width:100%; height:100%; display:block}
+.ese{border-radius:6px; padding:0 2px}
+.ese.encendida{background:var(--sol); color:#2b2236}
+.flecha{position:absolute; top:-8px; left:50%; width:36px; height:44px; transform:translateX(-50%); pointer-events:none}
+.opciones,.fichas{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:100%; max-width:100%; overflow:hidden}
+.op-fila{display:flex; gap:6px; align-items:center; min-height:64px; max-width:100%}
+.opcion,.ficha,.slot{
+  position:relative;
+  min-height:64px; min-width:64px; border-radius:16px; background:var(--card);
+  box-shadow:var(--sombra); padding:4px 8px; display:flex; align-items:center; gap:6px;
+  font-family:"Fredoka",sans-serif; font-size:1.05rem;
+}
+.opcion{flex:1}
+.mini-dib{width:48px; height:48px; flex:none}
+.mini-dib svg{width:100%; height:100%}
+.oracion{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; align-items:center; margin:0; max-width:100%}
+.oracion .pal{min-height:64px; min-width:64px; border-radius:14px; background:var(--card); padding:0 10px; font-family:"Fredoka",sans-serif; font-size:1.15rem}
+.hueco{min-width:72px; min-height:64px; border:3px dashed var(--muted); border-radius:14px; display:inline-flex; align-items:center; justify-content:center}
+.puerta-svg{width:min(120px, 28vw); flex:none}
+.puerta-svg svg{width:100%; height:auto}
+.slots{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:100%; max-width:100%}
+.slot{min-width:72px; justify-content:center}
+.slot svg{width:88px; height:40px}
+.ficha{max-width:46%}
+.op-fila .ficha{max-width:none;flex:0 1 auto}
+.pie{display:flex; gap:8px; width:min(420px, 100%); max-width:100%; justify-content:center; align-items:center; padding-bottom:14px}
+.probar{
+  position:relative; flex:1; gap:8px; background:var(--card);
+  display:flex; align-items:center; justify-content:center;
+  height:64px; max-height:64px; max-width:280px; overflow:hidden;
+}
+.probar .ico{width:40px; height:40px; flex:none; display:block}
+.probar .ico svg{width:40px; height:40px; max-width:40px; max-height:40px; display:block}
+.probar.brilla{background:var(--verde); animation:brillo 1s ease-in-out infinite}
+.pista-caja{margin:0; min-height:1.2rem; color:var(--muted); font-weight:800}
+.estrellas{display:inline-flex; gap:.15em}
+.estrellas svg{width:2.2rem; height:2.2rem}
+.estrellas .on{fill:var(--star)}
+.estrellas .off{fill:var(--off)}
+.barra-prog{height:12px; background:var(--off); border-radius:999px; overflow:hidden; width:min(420px, 100%)}
+.barra-prog i{display:block; height:100%; background:var(--turquesa)}
+.niveles{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:min(420px, 100%); max-width:100%}
+.velo{position:fixed; inset:0; background:rgba(20,16,28,.45); display:grid; place-items:center; z-index:5; padding:24px}
+.dialogo{background:var(--card); border-radius:24px; padding:1.1rem; box-shadow:var(--sombra); display:flex; flex-direction:column; gap:.6rem; width:min(360px, 92vw)}
+.dialogo p{font-family:"Fredoka",sans-serif; font-size:2rem; margin:0}
+.hero-ico{width:88px; height:88px}
+.hero-ico svg{width:100%; height:100%}
+.regalo{width:96px; height:96px; margin:0 auto}
+.regalo svg{width:100%; height:100%}
+@keyframes salto{0%,100%{transform:translateY(0)} 40%{transform:translateY(-26px)}}
+@keyframes gira{to{transform:rotate(360deg)}}
+@keyframes corre{0%,100%{transform:translateX(0)} 50%{transform:translateX(10px)}}
+@keyframes rebote{0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)}}
+@keyframes brillo{50%{filter:brightness(1.08)}}
+.robot-lienzo.anim-salta .pila{animation:salto .7s ease}
+.robot-lienzo.anim-gira .helice{transform-origin:100px 13px; animation:gira .8s linear infinite}
+.robot-lienzo.anim-corre .pila{animation:corre .5s ease infinite}
+.robot-lienzo.anim-rapido .pila{animation:rebote .28s ease infinite}
+.robot-lienzo.anim-lento .pila{animation:rebote 1.4s ease infinite}
+.robot-lienzo.anim-rebote .pila{animation:rebote .6s ease}
+@media (prefers-reduced-motion:reduce){
+  .robot-lienzo .pila,.robot-lienzo .helice,.probar.brilla{animation:none !important}
+}
+html[data-modo="tv"] .tecla{display:block; position:absolute; left:8px; bottom:4px; z-index:1; font-size:2.2rem}
+html[data-modo="tv"] main{padding:36px 48px 36px; gap:8px}
+html[data-modo="tv"] .escenario{flex-direction:row; align-items:center; width:100%; max-width:100%}
+html[data-modo="tv"] .robot-lienzo{width:200px}
+html[data-modo="tv"] .zona{align-items:stretch; overflow:visible}
+html[data-modo="tv"] .escenario{overflow:visible}
+html[data-modo="tv"] .cajas{max-width:640px}
+html[data-modo="tv"] .menu{max-width:520px}
+.chip{min-width:64px; padding-left:.7em; padding-right:.7em}
+.hero-mini{width:40px; height:40px; display:inline-block; vertical-align:middle}
+.hero-mini svg{width:100%; height:100%; display:block}

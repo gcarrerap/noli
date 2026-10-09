@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<title>go</title>
+<path d="M16 70c16-8 28-28 36-46" fill="none" stroke="#ffc43d" stroke-width="10" stroke-linecap="round"/>
+<path d="M44 20h28L60 36" fill="none" stroke="#2b2236" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="22" cy="74" r="8" fill="#3ccf8e" stroke="#2b2236" stroke-width="4"/>
+</svg>

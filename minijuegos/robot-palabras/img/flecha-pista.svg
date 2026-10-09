@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100">
+<title>Flecha de pista (apunta hacia abajo; gírala con CSS)</title>
+<path class="flecha" d="M26 6h28v46h18L40 94 8 52h18z" fill="#ffc43d" stroke="#2b2236" stroke-width="6" stroke-linejoin="round"/>
+</svg>

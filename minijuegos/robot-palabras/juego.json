@@ -1,0 +1,13 @@
+{
+  "id": "robot-palabras",
+  "titulo": "Robot de Palabras",
+  "descripcion": "Arma el robot con palabras en inglés.",
+  "icono": "icono.svg",
+  "color": "#2ec4b6",
+  "materia": "inglés",
+  "edades": [7, 10],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260">
+<title>Brazos con manos redondas</title>
+<g class="parte parte-brazos"><path d="M50 140q-24 4-26 34" fill="none" stroke="#2b2236" stroke-width="16" stroke-linecap="round"/><path d="M50 140q-24 4-26 34" fill="none" stroke="#9aa6b5" stroke-width="7" stroke-linecap="round"/><path d="M150 140q24 4 26 34" fill="none" stroke="#2b2236" stroke-width="16" stroke-linecap="round"/><path d="M150 140q24 4 26 34" fill="none" stroke="#9aa6b5" stroke-width="7" stroke-linecap="round"/><circle class="pintura" cx="24" cy="180" r="12" fill="#7cc8ff" stroke="#2b2236" stroke-width="5"/><circle class="pintura" cx="176" cy="180" r="12" fill="#7cc8ff" stroke="#2b2236" stroke-width="5"/></g>
+</svg>

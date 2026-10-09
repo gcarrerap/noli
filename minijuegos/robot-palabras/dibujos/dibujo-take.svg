@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<title>take</title>
+<path d="M18 58c10 0 16 8 24 8h14" fill="none" stroke="#f6c79e" stroke-width="10" stroke-linecap="round"/>
+<path d="M18 58c10 0 16 8 24 8h14" fill="none" stroke="#2b2236" stroke-width="3" stroke-linecap="round"/>
+<circle cx="70" cy="50" r="16" fill="#ff6b4a" stroke="#2b2236" stroke-width="4"/>
+<path d="M48 66l10-8" stroke="#2b2236" stroke-width="4" stroke-linecap="round"/>
+</svg>
