@@ -516,13 +516,13 @@ function programarPaso() {
       if (token !== pasoToken || salir) return;
       vozFallo = true;
       vozTerminoEn = null;
-      bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: false });
+      bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: true, fallo: true });
       programarAvance(token, "silencio");
       programarFinBloqueo();
     },
   }) : { sono: false };
   vozSono = !!r.sono && !vozFallo;
-  bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: vozSono, vozTerminoEn: null });
+  if (!vozFallo) bloqueoPasoHasta = finBloqueoPaso({ aparecio, sono: vozSono, vozTerminoEn: null });
   const evento = !vozSono ? "silencio" : vozTerminoEn != null ? "voz" : "tiempo";
   programarAvance(token, evento);
 }
@@ -564,7 +564,7 @@ function saltarGuia() {
 function avanzarMuestra(evento) {
   if (!guia || salir) return;
   const ahora = Date.now();
-  if (!muestraPuedeAvanzar({ aparecio, ahora, evento, vozTerminoEn, hasta: hastaAhora() })) return;
+  if (!muestraPuedeAvanzar({ aparecio, ahora, evento, vozTerminoEn, hasta: hastaAhora(), sono: vozSono, fallo: vozFallo })) return;
   const sig = aplicarGuia(guia.paso, evento);
   if (sig.fin) { terminarGuia(); return; }
   guia = { paso: sig.paso };
@@ -1002,7 +1002,7 @@ Noli.alEntrar((accion) => {
       enfocado.click();
       return true;
     }
-    if (guiaAvanzaConToque(guia.paso) && muestraPuedeAvanzar({ aparecio, ahora: Date.now(), evento: "ok", vozTerminoEn, hasta: hastaAhora() })) {
+    if (guiaAvanzaConToque(guia.paso) && muestraPuedeAvanzar({ aparecio, ahora: Date.now(), evento: "ok", vozTerminoEn, hasta: hastaAhora(), sono: vozSono, fallo: vozFallo })) {
       avanzarMuestra("ok");
       return true;
     }

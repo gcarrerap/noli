@@ -1,6 +1,7 @@
-// Guía de la primera visita. Los pasos de mirar avanzan con un toque, con OK
-// o cuando la voz termina, entre 2 s y 3 s. Abrir la caja solo avanza al hacerlo.
-// Saltar no recibe el foco solo. Salir no guarda la guía.
+// Guía de la primera visita. Los pasos de mirar avanzan solos entre 2 s y 3 s.
+// Un toque o OK en esos pasos espera la voz: 1 s como mínimo, y además que
+// la frase haya terminado, que haya fallado (entonces 2 s) o que pasen 3 s.
+// Abrir la caja solo avanza al hacerlo. Saltar no recibe el foco solo.
 
 import { unirBloqueos, TRAS_DIALOGO_MS } from "./salida.js";
 
@@ -48,12 +49,14 @@ export function cuandoAvanzaMuestra(aparecio, vozTerminoEn) {
 /**
  * Hasta cuándo el paso no acepta la acción.
  * Sin habla: 1 s. Con habla: hasta que termina, entre 1 s y 3 s.
- * Si la voz falla o no termina, el tope es 3 s. No incluye los 400 ms del diálogo.
+ * Si sigue hablando y no hay fin, el tope es 3 s. Si la voz falla, 2 s.
+ * No incluye los 400 ms del diálogo.
  */
-export function finBloqueoPaso({ aparecio, sono = false, vozTerminoEn = null } = {}) {
+export function finBloqueoPaso({ aparecio, sono = false, fallo = false, vozTerminoEn = null } = {}) {
   const base = Number(aparecio) || 0;
   const min = base + GUIA_BLOQUEO_MS;
   const max = base + GUIA_MAX_MS;
+  if (fallo) return base + GUIA_MIN_MS;
   if (!sono) return min;
   if (vozTerminoEn == null || vozTerminoEn === "") return max;
   const fin = Number(vozTerminoEn);
@@ -62,8 +65,26 @@ export function finBloqueoPaso({ aparecio, sono = false, vozTerminoEn = null } =
 }
 
 /** Bloqueo real: el del paso y el de después de «¿Salir?» se pisan. */
-export function finBloqueoGuia({ aparecio, sono = false, vozTerminoEn = null, hastaDialogo = null } = {}) {
-  return unirBloqueos(finBloqueoPaso({ aparecio, sono, vozTerminoEn }), hastaDialogo);
+export function finBloqueoGuia({ aparecio, sono = false, fallo = false, vozTerminoEn = null, hastaDialogo = null } = {}) {
+  return unirBloqueos(finBloqueoPaso({ aparecio, sono, fallo, vozTerminoEn }), hastaDialogo);
+}
+
+/**
+ * Un paso que solo se mira acepta toque u OK después del segundo mínimo
+ * y de una de estas tres: la voz ya terminó, la voz falló (entonces 2 s)
+ * o pasaron 3 s desde que apareció el paso. Sin voz, el piso es 2 s.
+ * Una frase que sigue no se corta con OK repetido.
+ */
+export function aceptaEntradaGuia({ aparecio, ahora, sono = false, fallo = false, vozTerminoEn = null } = {}) {
+  const t0 = Number(aparecio) || 0;
+  const t = Number(ahora) || 0;
+  if (t < t0 + GUIA_BLOQUEO_MS) return false;
+  if (fallo || !sono) return t >= t0 + GUIA_MIN_MS;
+  if (t >= t0 + GUIA_MAX_MS) return true;
+  if (vozTerminoEn == null || vozTerminoEn === "") return false;
+  const fin = Number(vozTerminoEn);
+  if (!Number.isFinite(fin)) return false;
+  return t >= fin;
 }
 
 /**
@@ -86,12 +107,14 @@ export function bloqueoAlSeguir({ ahora, hastaPaso = 0 } = {}) {
   };
 }
 
-export function muestraPuedeAvanzar({ aparecio, ahora, evento, vozTerminoEn = null, hasta = 0 } = {}) {
+export function muestraPuedeAvanzar({ aparecio, ahora, evento, vozTerminoEn = null, hasta = 0, sono = false, fallo = false } = {}) {
   const t0 = Number(aparecio) || 0;
   const t = Number(ahora) || 0;
   const tope = Number(hasta) || 0;
   if (t < tope) return false;
-  if (evento === "toque" || evento === "ok") return t - t0 >= GUIA_MIN_MS;
+  if (evento === "toque" || evento === "ok") {
+    return aceptaEntradaGuia({ aparecio: t0, ahora: t, sono, fallo, vozTerminoEn });
+  }
   if (evento === "voz") {
     if (vozTerminoEn == null || vozTerminoEn === "") return false;
     const fin = Number(vozTerminoEn);

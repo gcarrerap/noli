@@ -11,7 +11,7 @@ import {
 } from "../src/coleccion.js";
 import {
   PASOS, guiaAvanzaConToque, focoDeGuia, cuandoAvanzaMuestra, finBloqueoPaso,
-  bloqueoAlSeguir, muestraPuedeAvanzar, aplicarGuia, GUIA_MIN_MS, GUIA_MAX_MS, GUIA_BLOQUEO_MS,
+  aceptaEntradaGuia, bloqueoAlSeguir, muestraPuedeAvanzar, aplicarGuia, GUIA_MIN_MS, GUIA_MAX_MS, GUIA_BLOQUEO_MS,
 } from "../src/guia.js";
 import { unirBloqueos, tapBloqueado, resolverAtras, toqueConDialogo, toqueEnVelo, teclaConDialogo, atrasEnPantalla, TRAS_DIALOGO_MS } from "../src/salida.js";
 import { decir, calentarVoces, escogerVoz, escogerVozIngles, olvidarVoz, vozActual, paraVoz } from "../src/voz.js";
@@ -536,6 +536,43 @@ test("los plazos usan la hora entera y Seguir no reinicia un bloqueo ya cumplido
   const limitado = { ...estadoNuevo(), dia, hoy: 2 };
   assert.equal(puedeAbrir(limitado, { creditos: 20, fecha: dia, piezas }).razon, "limite");
   assert.equal(puedeAbrir(limitado, { creditos: 20, fecha: manana, piezas }).ok, true);
+});
+
+test("un paso de mirar espera una voz de 2.5 s y el OK cada 50 ms no la corta", () => {
+  const aparecio = 1.7e12;
+  assert.notEqual(aparecio | 0, aparecio);
+  const fin = aparecio + 2500;
+  for (let dt = 0; dt < 2500; dt += 50) {
+    const ahora = aparecio + dt;
+    assert.equal(aceptaEntradaGuia({ aparecio, ahora, sono: true, vozTerminoEn: null }), false);
+    assert.equal(muestraPuedeAvanzar({
+      aparecio, ahora, evento: "ok", sono: true, vozTerminoEn: null, hasta: 0,
+    }), false);
+  }
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: fin, sono: true, vozTerminoEn: null }), false);
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: fin, sono: true, vozTerminoEn: fin }), true);
+  assert.equal(muestraPuedeAvanzar({
+    aparecio, ahora: fin, evento: "toque", sono: true, vozTerminoEn: fin, hasta: 0,
+  }), true);
+  assert.equal(muestraPuedeAvanzar({
+    aparecio, ahora: aparecio + 2000, evento: "ok", sono: true, vozTerminoEn: null, hasta: 0,
+  }), false);
+
+  const corta = aparecio + 400;
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: aparecio + 999, sono: true, vozTerminoEn: corta }), false);
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: aparecio + 1000, sono: true, vozTerminoEn: corta }), true);
+
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: aparecio + 1999, sono: true, fallo: true }), false);
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: aparecio + 2000, sono: true, fallo: true }), true);
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: aparecio + 2999, sono: true, vozTerminoEn: null }), false);
+  assert.equal(aceptaEntradaGuia({ aparecio, ahora: aparecio + 3000, sono: true, vozTerminoEn: null }), true);
+
+  const plazo = finBloqueoPaso({ aparecio, sono: true, vozTerminoEn: fin });
+  assert.equal(plazo, fin);
+  assert.ok(plazo > 1e12);
+  assert.notEqual(plazo, (aparecio | 0) + 2500);
+  assert.equal(finBloqueoPaso({ aparecio, sono: true, fallo: true }), aparecio + GUIA_MIN_MS);
+  assert.equal(finBloqueoPaso({ aparecio, sono: false }), aparecio + GUIA_BLOQUEO_MS);
 });
 
 test("¿Salir? se abre con Atrás en todas las pantallas y OK confirma", () => {

@@ -210,6 +210,7 @@ html[data-modo="tv"] .retrato { width: 200px; }
   align-items: center;
   justify-content: center;
   gap: 8px;
+  flex: 0 0 auto;
   min-width: 64px;
   min-height: 64px;
   height: 64px;
@@ -284,7 +285,11 @@ html[data-modo="tv"] .retrato { width: 200px; }
 }
 .carta-grande h2 { font-size: 1.8rem; }
 .carta-grande p { margin: 0; font-weight: 800; }
-.carta-grande .foto-grande { width: 100%; height: auto; border-radius: 14px; }
+.carta-grande .foto-grande { width: 100%; height: auto; max-height: 190px; object-fit: contain; border-radius: 14px; }
+html[data-modo="tv"] .carta-grande { width: 240px; padding: 6px 8px 8px; }
+html[data-modo="tv"] .carta-grande h2 { font-size: 1.35rem; }
+html[data-modo="tv"] .carta-grande .foto-grande { max-height: 140px; }
+main[data-fase="plain"] .frasco-svg { width: 96px; }
 .carta-grande .aviso { color: #6a4a12; }
 .carta-plain { box-shadow: 0 8px 0 rgba(0, 0, 0, .12); background: #fff; }
 .zona-meta { position: relative; width: min(100%, 280px); display: flex; flex-direction: column; align-items: center; gap: 6px; }
