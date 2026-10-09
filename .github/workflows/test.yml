@@ -14,4 +14,12 @@ jobs:
         with:
           # LTS. package.json pide >=18; el README, Node 18 o más nuevo.
           node-version: 22
+      - name: Chrome para medir los controles
+        run: |
+          if ! command -v google-chrome >/dev/null && ! command -v google-chrome-stable >/dev/null && ! command -v chromium >/dev/null && ! command -v chromium-browser >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt-get install -y /tmp/chrome.deb
+          fi
       - run: npm test
