@@ -13,7 +13,7 @@ import {
   cargar, registrar, dominio, cerrarTurno, pedidoPara, planTurno, cumplirReto, racha, semana,
   fechaLocal, resumen, marcarIngles, piezasDe, VENTANA, PARA_SUBIR,
 } from "./progreso.js";
-import { RANURAS, PIEZAS, pieza, ciclarRanura, pisosFabrica, svgSimple } from "./deco.js";
+import { RANURAS, PIEZAS, pieza, ciclarRanura, pisosFabrica } from "./deco.js";
 import { retoDelDia } from "./reto.js";
 import { enIngles } from "./palabras.js";
 
@@ -129,7 +129,7 @@ const CANDADO = `<svg class="ico" viewBox="0 0 24 24" aria-label="Bloqueado"><re
 
 function htmlMini(e, coral) {
   const suf = coral ? "-coral" : "";
-  let s = e.mil ? `<span class="mil-mini">1000</span>` : "";
+  let s = e.mil ? `<img class="mini mil" alt="" src="img/cubo-1000${suf}.svg">` : "";
   for (const [banda, n] of [["c", e.c], ["d", e.d], ["u", e.u]]) {
     for (let i = 0; i < n; i++) s += `<img class="mini ${banda}" alt="" src="img/${BANDA[banda].art}${suf}.svg">`;
   }
@@ -137,7 +137,7 @@ function htmlMini(e, coral) {
 }
 
 function htmlPiezas(e, banda) {
-  let s = banda === "c" && e.mil ? `<span class="mil">1000</span>` : "";
+  let s = banda === "c" && e.mil ? `<img class="mil" alt="" src="img/cubo-1000.svg">` : "";
   for (let i = 0; i < e[banda]; i++) s += `<img alt="" src="img/${BANDA[banda].art}.svg">`;
   return s;
 }
@@ -158,9 +158,8 @@ function edificio(pisos) {
 function svgRanura(id) {
   if (!id) return `<span class="vacio-ranura">Vacío</span>`;
   const p = pieza(id);
-  if (!p) return "";
-  if (p.arte) return `<span class="deco" data-svg="${p.arte}"></span>`;
-  return `<span class="deco">${svgSimple(p.simple)}</span>`;
+  if (!p?.arte) return "";
+  return `<span class="deco" data-svg="${p.arte}"></span>`;
 }
 
 const DIAS = ["D", "L", "M", "M", "J", "V", "S"];
@@ -675,7 +674,7 @@ function finIngles() {
   mostrar(`
     <h1 class="titulo">${gano ? "¡Sello en inglés!" : "Casi el sello"}</h1>
     <p class="sub">${partida.aciertos} de 4. Esto no cuenta para subir de nivel.</p>
-    ${gano ? `<div class="deco">${svgSimple("sello")}</div>` : ""}
+    ${gano ? `<div class="deco" data-svg="sello-en"></div>` : ""}
     <div class="menu fila">
       <button class="boton grande primario" data-foco="inicial" data-act="ir" data-ir="inicio">La fábrica</button>
       ${gano ? "" : `<button class="boton grande" data-foco data-act="ir" data-ir="ingles">Otra vez</button>`}

@@ -45,6 +45,7 @@ main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 
 .ranura .deco svg{width:100%;height:64px;display:block}
 .ranura.chimenea .deco svg{height:92px}
 .ranura.entrada .deco svg{height:56px;width:auto}
+.p-finIngles .deco svg{width:140px;height:140px}
 .vacio-ranura{font-size:.75rem;font-weight:800;color:var(--muted)}
 .edificio{grid-area:edificio;min-height:120px}
 .edificio svg{width:100%;height:140px;display:block}
@@ -83,7 +84,8 @@ main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 
 .minis img.mini.c{width:22px;height:22px}
 .minis img.mini.d{height:40px;width:auto}
 .minis img.mini.u{width:10px;height:10px}
-.mil-mini,.mil{font-family:"Fredoka",sans-serif;background:var(--azul);color:#fff;border-radius:8px;padding:.1em .35em;font-weight:700}
+/* La cara frontal del cubo de mil es 92/139 del archivo: ~1.5× una placa. */
+.minis img.mini.mil{width:calc(22px * 139 / 92);height:auto}
 
 .mesa{width:100%;display:flex;gap:8px;align-items:stretch;justify-content:center;overflow-x:auto;padding-bottom:4px}
 .banda{flex:1 0 132px;max-width:240px;background:var(--card);border-radius:20px;padding:8px;box-shadow:var(--sombra);
@@ -92,6 +94,7 @@ main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 
 .cartel svg{width:100%;height:48px;display:block}
 .piezas{min-height:70px;width:100%;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;align-content:flex-end;gap:2px}
 .piezas.c img{width:26px;height:26px}
+.piezas.c img.mil{width:calc(26px * 139 / 92);height:auto}
 .piezas.d img{height:62px;width:auto}
 .piezas.u img{width:14px;height:14px}
 .riel{width:100%;height:36px;background-repeat:repeat-x;background-size:calc(160 / 60 * 36px) 36px}
@@ -189,5 +192,6 @@ main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 
 html[data-modo="tv"] .pedido{font-size:2rem}
 html[data-modo="tv"] .pm-btn{min-height:72px;min-width:72px}
 html[data-modo="tv"] .piezas.c img{width:34px;height:34px}
+html[data-modo="tv"] .piezas.c img.mil{width:calc(34px * 139 / 92)}
 html[data-modo="tv"] .piezas.d img{height:78px}
 html[data-modo="tv"] .banda{flex-basis:160px}

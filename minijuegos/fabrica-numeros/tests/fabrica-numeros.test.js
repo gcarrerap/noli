@@ -340,7 +340,8 @@ test("el sello de inglés no cuenta para el dominio y la fábrica crece por nive
   assert.equal(piezasDe(pr).some((p) => p.ingles), true);
   assert.equal(piezasDe(nuevo()).some((p) => p.ingles), false);
   assert.equal(PIEZAS.length, 20);
-  assert.equal(PIEZAS.filter((p) => p.arte).length, 9);
+  assert.equal(PIEZAS.filter((p) => p.arte).length, 20);
+  assert.equal(PIEZAS.some((p) => p.simple), false);
   assert.equal(pisosFabrica(1), 1);
   assert.equal(pisosFabrica(6), 4);
   let deco = decoNueva();
@@ -433,6 +434,24 @@ test("los SVG de Petra traen el viewBox y los ids que usa el juego", () => {
   assert.match(leer("deco-chimenea-1.svg"), /id="humo"/);
   assert.match(leer("deco-luces-1.svg"), /class="foco"/);
   assert.match(leer("deco-luces-3.svg"), /id="rayos"/);
+  assert.equal((leer("deco-guirnalda-puntos.svg").match(/class="banderin"/g) || []).length, 9);
+  assert.equal((leer("deco-estrellas-techo.svg").match(/class="banderin"/g) || []).length, 5);
+  for (const nombre of ["deco-tubo-chimenea", "deco-nube-humo"]) {
+    const s = leer(nombre + ".svg");
+    assert.match(s, /id="humo"/);
+    assert.match(s, /class="nube"/);
+  }
+  assert.match(leer("deco-velas.svg"), /viewBox="0 -8 160 124"/);
+  assert.match(leer("deco-velas.svg"), /class="foco"/);
+  assert.match(leer("deco-luces-redondas.svg"), /viewBox="0 4 160 76"/);
+  assert.match(leer("deco-luces-redondas.svg"), /class="foco"/);
+  for (const nombre of ["puerta-estrella", "puerta-sol", "puerta-flor", "puerta-corazon"]) {
+    assert.match(leer(nombre + ".svg"), /id="figura"/);
+  }
+  assert.match(leer("sello-en.svg"), /id="texto"/);
+  assert.match(leer("cubo-1000.svg"), /viewBox="0 0 139 139"/);
+  assert.match(leer("cubo-1000.svg"), /#4cb3ff/);
+  assert.match(leer("cubo-1000-coral.svg"), /#ff6b4a/);
   assert.match(fs.readFileSync(new URL("../icono.svg", import.meta.url), "utf8"), /viewBox="0 0 100 100"/);
   assert.equal(NIVELES.length, 8);
 });
