@@ -1,0 +1,103 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Probador de prendas · Pasarela</title>
+<style>
+  /* Herramienta para quien diseña ropa (docs/ASSETS.md): ver una prenda en el personaje, girarla y revisar errores. */
+  :root{--bg:#fff7ec;--fg:#2b2236;--muted:#76698a;--card:#fff;--line:#ecdcc6}
+  @media (prefers-color-scheme:dark){:root{--bg:#1c1726;--fg:#f6f0ff;--muted:#b5a9c9;--card:#2a2338;--line:#342b45}}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}
+  .app{display:grid;grid-template-columns:300px 1fr;height:100%}
+  @media (max-width:700px){.app{grid-template-columns:1fr;grid-template-rows:auto 60vh}}
+  aside{padding:12px;overflow:auto;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+  #vista{position:relative;min-height:300px}
+  #vista canvas{width:100%;height:100%;display:block}
+  label{display:flex;flex-direction:column;gap:3px;font-weight:600}
+  select,button{font:inherit;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+  .errores{color:#c4553f;white-space:pre-wrap;font-size:13px}
+  .info{color:var(--muted);font-size:13px}
+  .fila{display:flex;gap:6px;flex-wrap:wrap}
+</style></head><body>
+<div class="app">
+  <aside>
+    <h2 style="margin:0">Probador</h2>
+    <p class="info">Escoge prendas para ver cómo quedan. Arrastra para girar. Recarga después de editar <code>datos/prendas.json</code>.</p>
+    <div id="controles"></div>
+    <div class="fila">
+      <button id="pose">Postura: quieto</button>
+      <button id="todo">Quitar todo</button>
+    </div>
+    <p class="info" id="tris"></p>
+    <div class="errores" id="errores"></div>
+  </aside>
+  <div id="vista"></div>
+</div>
+<script type="module">
+import * as THREE from "../vendor/three.module.min.js";
+import { cargarDatos } from "../src/ui/cargar.js";
+import { crearEscena } from "../src/escena/escena.js";
+import { crearAvatar } from "../src/escena/avatar.js";
+import { atuendoVacio, poner } from "../src/atuendo.js";
+import { cargarModelo, modeloPara } from "../src/escena/modelos.js";
+
+const { idx, errores } = await cargarDatos("../datos/");
+document.getElementById("errores").textContent = errores.length ? "Errores en los datos:\n" + errores.join("\n") : "Datos sin errores.";
+const esc = crearEscena(document.getElementById("vista"), { tv: false });
+const piso = new THREE.Mesh(new THREE.CircleGeometry(1.2, 40), new THREE.MeshToonMaterial({ color: "#ffd7e8" }));
+piso.rotation.x = -Math.PI / 2; esc.scene.add(piso);
+const av = crearAvatar({ piel: idx.config.tonosPiel[0], base: idx.config.colorBase });
+esc.scene.add(av.raiz);
+esc.camara.position.set(0, 1.0, 2.7); esc.camara.lookAt(0, 0.8, 0);
+
+const q = new URLSearchParams(location.search);
+let atuendo = atuendoVacio();
+for (const id of (q.get("prendas") || "p-cola").split(",")) { const p = idx.prendas.get(id); if (p) atuendo = poner(atuendo, p, p.colores[0]); }
+
+const POSES = ["quieto", "caminar", "desfilar", "cintura", "saludo", "estrella"];
+let pose = q.get("pose") || "quieto";
+document.getElementById("pose").textContent = "Postura: " + pose;
+document.getElementById("pose").onclick = (e) => { pose = POSES[(POSES.indexOf(pose) + 1) % POSES.length]; e.target.textContent = "Postura: " + pose; };
+document.getElementById("todo").onclick = () => { atuendo = atuendoVacio(); dibujar(); };
+
+async function vestir() {
+  const conModelo = [...Object.values(atuendo)].flat().filter(Boolean);
+  for (const p of idx.prendas.values()) if (p.modelo) await cargarModelo(p, "../").catch((e) => { document.getElementById("errores").textContent += "\n" + e.message; });
+  av.vestir(atuendo, idx, modeloPara);
+  let tris = 0;
+  av.raiz.traverse((o) => { if (o.isMesh) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+  document.getElementById("tris").textContent = `Triángulos del personaje vestido: ${Math.round(tris).toLocaleString("es-MX")} (máximo 15 000)`;
+}
+
+function dibujar() {
+  const c = document.getElementById("controles");
+  c.innerHTML = idx.config.categorias.map((cat) => {
+    const actual = cat.id === "accesorio" ? null : atuendo[cat.id];
+    return `<label>${cat.es}<select data-cat="${cat.id}"><option value="">— nada —</option>${idx.porCategoria.get(cat.id).map((p) => {
+      const sel = cat.id === "accesorio" ? (atuendo.accesorios[p.lugar] || {}).id === p.id : actual && actual.id === p.id;
+      return `<option value="${p.id}"${sel ? " selected" : ""}>${p.es} (${p.id})</option>`; }).join("")}</select></label>`;
+  }).join("") + `<label>Color<select id="color">${[...idx.colores.values()].map((x) => `<option value="${x.id}">${x.es}</option>`).join("")}</select></label>
+  <label>Piel<select id="piel">${idx.config.tonosPiel.map((t, i) => `<option value="${t}">Tono ${i + 1}</option>`).join("")}</select></label>`;
+  for (const s of c.querySelectorAll("select[data-cat]")) s.onchange = () => {
+    const p = idx.prendas.get(s.value);
+    if (!p) { const cat = s.dataset.cat; if (cat !== "accesorio") atuendo = { ...atuendo, [cat]: null }; }
+    else { const col = document.getElementById("color").value; atuendo = poner(atuendo, p, p.colores.includes(col) ? col : p.colores[0]); }
+    dibujar();
+  };
+  document.getElementById("color").onchange = (e) => {
+    const col = e.target.value; const a2 = { ...atuendo, accesorios: { ...atuendo.accesorios } };
+    for (const k of ["peinado", "arriba", "abajo", "vestido", "zapatos"]) if (a2[k] && idx.prendas.get(a2[k].id).colores.includes(col)) a2[k] = { ...a2[k], color: col };
+    atuendo = a2; vestir();
+  };
+  document.getElementById("piel").onchange = (e) => av.ponerPiel(e.target.value);
+  vestir();
+}
+dibujar();
+
+// Girar arrastrando
+let girando = null, ang = 0;
+const lienzo = esc.renderer.domElement;
+lienzo.addEventListener("pointerdown", (e) => { girando = e.clientX; lienzo.setPointerCapture(e.pointerId); });
+lienzo.addEventListener("pointermove", (e) => { if (girando !== null) { ang += (e.clientX - girando) * 0.01; girando = e.clientX; } });
+lienzo.addEventListener("pointerup", () => { girando = null; });
+esc.cadaCuadro((dt) => { av.raiz.rotation.y = ang; av.animar(pose, dt); });
+window.probador = { av, idx, esc, ponerAngulo: (a) => { ang = a; } };
+</script>
+</body></html>

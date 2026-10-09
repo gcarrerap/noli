@@ -1,0 +1,11 @@
+{
+  "_ayuda": "Los tres jueces. pesos: cuánto le importa cada cosa (suman 1): tema (que la ropa vaya con el tema), color (colores del tema y que combinen), completo (que no falte nada: arriba y abajo o vestido, zapatos, peinado) y detalles (accesorios que van con el tema). La fórmula: docs/JUEGO.md. color y pelo: su dibujo en la pasarela.",
+  "jueces": [
+    { "id": "estrella", "nombre": "Estela", "dice": "Lo que más me importa es el tema.",
+      "pesos": { "tema": 0.6, "color": 0.1, "completo": 0.2, "detalles": 0.1 }, "color": "#ff7eb6", "pelo": "#2b2236" },
+    { "id": "colorina", "nombre": "Colorina", "dice": "¡A mí me encantan los colores!",
+      "pesos": { "tema": 0.3, "color": 0.5, "completo": 0.1, "detalles": 0.1 }, "color": "#ffd23f", "pelo": "#ff9a3c" },
+    { "id": "detalle", "nombre": "Don Detalle", "dice": "Me fijo en todo, hasta en los accesorios.",
+      "pesos": { "tema": 0.3, "color": 0.1, "completo": 0.3, "detalles": 0.3 }, "color": "#4c7dff", "pelo": "#c3c7d3" }
+  ]
+}

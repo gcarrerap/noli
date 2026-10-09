@@ -1,0 +1,14 @@
+{
+  "id": "pasarela",
+  "titulo": "Pasarela",
+  "descripcion": "Vístete según el tema y desfila frente a los jueces.",
+  "icono": "icono.svg",
+  "color": "#ff7eb6",
+  "materia": "inglés",
+  "edades": [6, 11],
+  "controles": ["tactil", "flechas", "remoto"],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gasta",
+  "costo": 3
+}

@@ -10,6 +10,7 @@ La página principal es un **catálogo**: cada juego es una tarjeta, y cada jueg
 |---|---|---|---|
 | Sumas y restas (`sumas-restas`) | Matemáticas | 6–8 | #4: 12 niveles (de sumas hasta 10 a restas pidiendo prestado hasta 100), sube de nivel al dominar, reto del día con racha, progreso para Noelia y para papás |
 | Spelling (`spelling`) | Inglés | 6–11 | #8, #13, #15: dictado: dice la palabra en inglés con grabaciones que suenan en cualquier navegador (nunca la enseña) y la usa en una frase si se le pide; prueba de nivel al empezar; 16 listas (de *cat* a *necessary*), se pasa con 18 de 20; práctica opcional (escoger la bien escrita, armarla con letras); reto del día (spelling bee, detective, contrarreloj) con racha; sección **Sonidos de CH** (los 3 sonidos de *ch*: *chips*, *school*, *chef*) con banco de 133 palabras en 5 niveles (empieza fácil y sube) |
+| Pasarela (`pasarela`) | Inglés (premio) | 6–11 | #19: juego de vestir en 3D: camina por un estudio hasta los percheros, vístete según el tema en 2:30, desfila y tres jueces te califican con un consejo; cada prenda y color en inglés; cuesta 3 créditos; los puntos de estilo abren ropa, colores y temas (8 niveles); modo sencillo 2D si el aparato no puede con el 3D. Documentación en [minijuegos/pasarela/docs](minijuegos/pasarela/docs/README.md) |
 | Cuenta y toca (`ejemplo`) | Matemáticas | 4–7 | #1: ejemplo del contrato y plantilla para juegos nuevos |
 
 Cada juego nuevo se agrega con su propio issue.
@@ -26,7 +27,7 @@ Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la mism
 
 **Teléfono como control remoto:** en la TV, sube con las flechas hasta **📱 Usar mi teléfono** y aprieta OK. Sale un código de 4 números y un QR: apunta la cámara del teléfono al QR (o abre `https://gcarrerap.github.io/noli/control.html` y escribe el código). El teléfono queda como control: cruceta, OK y Atrás, igual que el de la tele. Si el teléfono se bloquea o la TV recarga la página, se vuelven a conectar solos con el mismo código. Va directo del teléfono a la TV por WebRTC; si eso no conecta en unos segundos, por Firestore (dice "por internet" en el teléfono).
 
-**Diagnóstico de la TV:** `https://gcarrerap.github.io/noli/diagnostico.html` enseña qué manda cada botón del control y qué tiene el navegador de la TV (módulos, WebRTC…), con un bloque para pegar en el issue #3.
+**Diagnóstico de la TV:** `https://gcarrerap.github.io/noli/diagnostico.html` enseña qué manda cada botón del control y qué tiene el navegador de la TV (módulos, WebRTC, WebGL para la Pasarela…), con un bloque para pegar en el issue #3.
 
 ## Publicarlo
 

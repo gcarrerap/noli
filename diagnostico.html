@@ -117,6 +117,21 @@
   cap("Service worker", si("serviceWorker" in navigator), "serviceWorker" in navigator ? "si" : "no");
   cap("fetch / Promise", si(!!window.fetch) + " / " + si(!!window.Promise), window.fetch && window.Promise ? "si" : "no");
   cap("navigator.vibrate", si(!!navigator.vibrate), "");
+
+  // WebGL (Pasarela, #19): sin WebGL la Pasarela usa su modo sencillo en 2D. Se enseña también la tarjeta gráfica
+  // y el tamaño máximo de textura, para saber qué tan lejos se puede llegar en la TV.
+  (function () {
+    var c = document.createElement("canvas"), gl = null;
+    try { gl = c.getContext("webgl") || c.getContext("experimental-webgl"); } catch (x) {}
+    cap("WebGL (Pasarela 3D)", gl ? "sí" : "no (la Pasarela usa el modo sencillo 2D)", gl ? "si" : "no");
+    if (!gl) return;
+    var info = gl.getExtension("WEBGL_debug_renderer_info");
+    cap("Tarjeta gráfica", info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), "");
+    cap("Textura máxima", gl.getParameter(gl.MAX_TEXTURE_SIZE) + " px", gl.getParameter(gl.MAX_TEXTURE_SIZE) >= 2048 ? "si" : "tal");
+    var c2 = document.createElement("canvas"), gl2 = null;
+    try { gl2 = c2.getContext("webgl2"); } catch (x) {}
+    cap("WebGL 2", si(!!gl2), gl2 ? "si" : "tal");
+  })();
   cap("RTCPeerConnection", si(!!window.RTCPeerConnection) + (window.webkitRTCPeerConnection && !window.RTCPeerConnection ? " (solo webkitRTCPeerConnection)" : ""), window.RTCPeerConnection ? "si" : "no");
 
   // RTCDataChannel: no basta con que exista; se conectan dos conexiones dentro de la misma página y se manda un mensaje

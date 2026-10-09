@@ -1,0 +1,25 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pasarela</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head><body>
+<!-- Capas, de abajo hacia arriba (docs/ARQUITECTURA.md § Pantalla):
+     escena (lienzo 3D o muñeca 2D) · letreros sobre los muebles · interfaz del estudio (hud, zonas 2D, aviso, joystick)
+     · panel de ropa · texto del desfile · capa de pantallas (inicio, tema, calificación…) · modal · aviso corto -->
+<div id="escena" class="escena"></div>
+<div id="letreros" class="letreros" hidden></div>
+<div id="estudio-ui">
+  <header id="hud" class="hud" hidden></header>
+  <div id="zonas2d" hidden></div>
+  <div id="aviso" class="aviso"></div>
+  <div id="joy" class="joy" hidden></div>
+</div>
+<aside id="panel" class="panel" hidden aria-label="Ropa"></aside>
+<div id="desfile"></div>
+<div id="capa" class="capa"><p class="cargando">Cargando…</p></div>
+<div id="modal" class="modal" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="fps" class="fps" hidden></div>
+<script type="module" src="src/ui/juego.js"></script>
+</body></html>
