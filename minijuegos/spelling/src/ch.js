@@ -5,7 +5,8 @@
 // Aquí está el banco de palabras (con frase y dificultad), cómo se arma una ronda y el progreso de la sección.
 // Todo es lógica pura; las pantallas están en juego.js.
 //
-// Dificultad (n): 1 = cortas y comunes, 2 = medias, 3 = largas o raras.
+// Dificultad (n): 5 niveles, del 1 (palabras que un niño de 7 años conoce) al 5 (largas o raras). Cada nivel suma palabras a
+// las del anterior. Se empieza en el 1 y se sube de a poco.
 // Se evitan palabras que suenan igual a otra (chews/choose, chute/shoot, chord/cord, which/witch…), para que
 // escucharlas no sea ambiguo, y las que llevan "tch" (watch, kitchen), que no son parte de esta lección.
 import { revolver } from "./rng.js";
@@ -21,7 +22,26 @@ export const SONIDOS = [
 ];
 export const sonido = (id) => SONIDOS.find((s) => s.id === id);
 
-const B = (sonido, n, filas) => filas.map(([palabra, frase]) => ({ palabra, frase, sonido, n }));
+// (el segundo dato es el grupo en que se escribió; el nivel real sale de NIVEL)
+const B = (sonido, _grupo, filas) => filas.map(([palabra, frase]) => ({ palabra, frase, sonido, n: NIVEL[palabra.toLowerCase()] }));
+
+export const NIVELES = 5;
+
+// En qué nivel entra cada palabra
+const NIVEL = {};
+for (const [n, ws] of Object.entries({
+  1: "chip chips chin chat chop chick chest chair cheese cheek child check much such rich lunch each " +
+     "school Christmas stomach ache echo chef machine chic parachute Chicago",
+  2: "cheer chalk inch bench punch munch bunch pinch ouch couch coach peach reach teach chicken chase cheap cherry chess chew " +
+     "change lunchbox sandwich teacher touch porch march branch ranch crunch chain " +
+     "mechanic character chemist scheme headache toothache brochure mustache Michigan Charlotte",
+  3: "chocolate children church chance charge cheat chief chill chimney chimp chirp chunk chubby chore chapter champ channel " +
+     "cheetah checkers speech search perch torch chaos chorus chemical anchor orchid schedule chrome monarch scholar " +
+     "chauffeur champagne charade crochet",
+  4: "chopsticks chestnut chuckle champion challenge cheerful cheddar achieve architect orchestra technology chemistry " +
+     "chameleon chalet chandelier chaperone pistachio",
+  5: "chimpanzee purchase research exchange approach butcher orchard technical technique chlorine chasm archive",
+})) for (const w of ws.split(" ")) NIVEL[w.toLowerCase()] = +n;
 
 export const BANCO = [
   // ---- ch, el sonido normal ----
@@ -189,18 +209,20 @@ export function resaltar(palabra) {
 }
 
 // ---------- Progreso de la sección ----------
-// pr.ch = { nivel: 1–3 (para escribir), rondas: {sonido, escribe}, estrellas: {sonido, escribe},
+// pr.ch = { niveles: { sonido: 1–5, escribe: 1–5 }, rondas: {sonido, escribe}, estrellas: {sonido, escribe},
 //           stats: { sonido: { ch: {t, a}, k, sh }, escribe: { … } } }
-// Es opcional dentro del progreso del juego: si falta, se usan estos valores.
+// Cada juego tiene su propio nivel; los dos empiezan en 1. Es opcional dentro del progreso: si falta, se usan estos valores.
 
 export const MODOS = ["sonido", "escribe"];
 const ID = SONIDOS.map((s) => s.id);
 const entero = (x, d = 0) => (Number.isFinite(x) && x >= 0 ? Math.floor(x) : d);
+const nivelValido = (x) => Math.max(1, Math.min(NIVELES, entero(x, 1) || 1));
 
 export function chDe(pr) {
   const c = (pr && pr.ch) || {};
-  const out = { nivel: Math.max(1, Math.min(3, entero(c.nivel, 2) || 2)), rondas: {}, estrellas: {}, stats: {} };
+  const out = { niveles: {}, rondas: {}, estrellas: {}, stats: {} };
   for (const m of MODOS) {
+    out.niveles[m] = nivelValido(c.niveles?.[m]);
     out.rondas[m] = entero(c.rondas?.[m]);
     out.estrellas[m] = Math.min(3, entero(c.estrellas?.[m]));
     out.stats[m] = {};
@@ -222,18 +244,23 @@ export const pctCh = (pr, modo, s) => {
   return t ? Math.round((100 * a) / t) : null;
 };
 
-// Al terminar una ronda: estrellas y, en "escribe", el nivel sube con 8 de 10 y baja con 4 o menos.
+// Cambiar el nivel a mano (los botones − y + del menú)
+export function ponerNivelCh(pr, modo, n) {
+  const c = chDe(pr);
+  c.niveles[modo] = nivelValido(n);
+  return { ...pr, ch: c };
+}
+
+// Al terminar una ronda: estrellas y el nivel de ese juego sube con 8 de 10 y baja con 4 o menos.
 // Devuelve { pr, estrellas, nivel, cambio: 1 | -1 | 0 }
 export function cerrarRondaCh(pr, modo, aciertos, de = 10) {
   const c = chDe(pr), est = estrellasRonda(aciertos, de);
   c.rondas[modo]++;
   c.estrellas[modo] = Math.max(c.estrellas[modo], est);
   let cambio = 0;
-  if (modo === "escribe") {
-    if (aciertos >= de * 0.8 && c.nivel < 3) { c.nivel++; cambio = 1; }
-    else if (aciertos <= de * 0.4 && c.nivel > 1) { c.nivel--; cambio = -1; }
-  }
-  return { pr: { ...pr, ch: c }, estrellas: est, nivel: c.nivel, cambio };
+  if (aciertos >= de * 0.8 && c.niveles[modo] < NIVELES) { c.niveles[modo]++; cambio = 1; }
+  else if (aciertos <= de * 0.4 && c.niveles[modo] > 1) { c.niveles[modo]--; cambio = -1; }
+  return { pr: { ...pr, ch: c }, estrellas: est, nivel: c.niveles[modo], cambio };
 }
 
 // ---------- Armar una ronda ----------
@@ -245,12 +272,10 @@ function sortear(rnd, lista, k, peso) {
 }
 
 // 10 palabras con los tres sonidos mezclados (4 del que más le cuesta, 3 de cada uno de los otros).
-// "escribe" usa palabras hasta su nivel; "sonido" se anima un nivel más (oír el sonido es más fácil que escribirlo).
-// Las que falló antes y las de su nivel salen más.
+// Usa las palabras hasta el nivel de ese juego; las que falló antes y las de su nivel salen más.
 export function armarRondaCh(pr, modo, rnd, cuantas = 10) {
-  const c = chDe(pr), tope = Math.min(3, c.nivel + (modo === "sonido" ? 1 : 0));
-  // En "sonido" los botones muestran chips / school / chef: esas tres no salen, para no enseñar cómo se escribe la palabra
-  const pool = BANCO.filter((p) => p.n <= tope && !(modo === "sonido" && SONIDOS.some((s) => s.como.toLowerCase() === p.palabra.toLowerCase())));
+  const c = chDe(pr), tope = c.niveles[modo];
+  const pool = BANCO.filter((p) => p.n <= tope);
   const fallo = (p) => !!pr?.fallos?.[p.palabra.toLowerCase()];
   const peso = (p) => 1 + (p.n === tope ? 2 : 0) + (fallo(p) ? 4 : 0);
   // el sonido más flojo recibe una palabra de más (con empate, el azar decide)

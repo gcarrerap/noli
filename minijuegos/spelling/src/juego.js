@@ -8,7 +8,7 @@ import { opciones, letrasParaArmar, diferencias, igual } from "./faltas.js";
 import { cargar, registrar, cerrarRonda, armarRonda, colocar, dominio, cumplirReto, racha, semana, resumen, fechaLocal, elegida, estrellasRonda, POR_RONDA, VENTANA, NECESITA } from "./progreso.js";
 import { empezarPrueba, responderPrueba, palabraActual } from "./nivelacion.js";
 import { retoDelDia } from "./reto.js";
-import { SONIDOS, sonido as datosSonido, resaltar, armarRondaCh, registrarCh, cerrarRondaCh, chDe, pctCh } from "./ch.js";
+import { SONIDOS, NIVELES, sonido as datosSonido, resaltar, armarRondaCh, registrarCh, cerrarRondaCh, ponerNivelCh, chDe, pctCh } from "./ch.js";
 import { Voz } from "./voz.js";
 
 const $main = document.getElementById("juego");
@@ -457,10 +457,26 @@ function chInicio() {
     <p class="nota ch-regla" aria-live="polite">Cada tarjeta dice tres palabras con ese sonido.</p>
     <div class="menu">
       <button class="boton grande primario" data-foco data-ir="chRonda" data-sub="sonido">¿Cuál suena? <small>escucha y escoge el sonido</small></button>
-      <button class="boton grande primario" data-foco data-ir="chRonda" data-sub="escribe">Escribe <small>dictado · nivel ${c.nivel} de 3</small></button>
+      ${nivelHtml("sonido", c.niveles.sonido)}
+      <button class="boton grande primario" data-foco data-ir="chRonda" data-sub="escribe">Escribe <small>dictado de palabras con CH</small></button>
+      ${nivelHtml("escribe", c.niveles.escribe)}
       <button class="boton" data-foco data-ir="inicio">Inicio</button>
     </div>
     ${Voz.hay ? "" : avisoSinVoz()}`, "ch");
+}
+
+// Nivel de cada juego: sube solo con 8 de 10, y con − y + se cambia a mano
+const nivelHtml = (sub, n) => `<div class="nivel">
+      <button class="boton chico" data-foco data-ir="chNivel" data-sub="${sub}" data-d="-1" aria-label="Nivel más fácil"${n <= 1 ? " disabled" : ""}>−</button>
+      <span>Nivel <b>${n}</b> de ${NIVELES}</span>
+      <button class="boton chico" data-foco data-ir="chNivel" data-sub="${sub}" data-d="1" aria-label="Nivel más difícil"${n >= NIVELES ? " disabled" : ""}>+</button></div>`;
+
+function chNivel({ sub, d }) {
+  pr = ponerNivelCh(pr, sub, chDe(pr).niveles[sub] + +d);
+  guardar();
+  chInicio();
+  const b = $main.querySelector(`[data-ir="chNivel"][data-sub="${sub}"][data-d="${d}"]:not(:disabled)`) || $main.querySelector(`[data-ir="chNivel"][data-sub="${sub}"]:not(:disabled)`);
+  if (b && document.documentElement.classList.contains("teclado")) b.focus();
 }
 
 function chEjemplo({ s }) {
@@ -489,7 +505,7 @@ function sonidoCh() {
     ${oirHtml(it)}
     <div class="sonidos">${SONIDOS.map((s, k) => `
       <button class="op-ch s-${s.id}" data-foco${k === 0 ? '="inicial"' : ""} data-s="${s.id}">
-        <b class="sono">${s.id}</b><span>${esc(s.como)}</span></button>`).join("")}</div>
+        <b class="sono">${s.id}</b><span>${esc(s.ejemplos.find((e) => e.toLowerCase() !== it.palabra.toLowerCase()))}</span></button>`).join("")}</div>
     <p class="aviso" aria-live="polite"></p>
     <div class="zona"></div>
     <div class="abajo"></div>`, "sonido");
@@ -529,8 +545,8 @@ function finCh() {
     <h1 class="titulo">${["¡Buen intento!", "¡Bien hecho!", "¡Muy bien!", "¡Perfecto!"][estrellas]}</h1>
     <p class="estrellas grande">${estrellasHtml(estrellas)}</p>
     <p class="sub">${juego.aciertos} de ${total} bien</p>
-    ${cambio > 0 ? `<div class="subio"><b>¡Subiste al nivel ${nivel} de CH!</b><span>Ahora salen palabras más difíciles.</span></div>` : ""}
-    ${cambio < 0 ? `<div class="subio"><b>Bajamos al nivel ${nivel}</b><span>Para practicar con palabras más fáciles.</span></div>` : ""}
+    ${cambio > 0 ? `<div class="subio"><b>¡Subiste al nivel ${nivel} de ${NIVELES}!</b><span>Ahora salen palabras más difíciles.</span></div>` : ""}
+    ${cambio < 0 ? `<div class="subio"><b>Bajamos al nivel ${nivel} de ${NIVELES}</b><span>Para practicar con palabras más fáciles.</span></div>` : ""}
     <div class="ch-cards chicas">${SONIDOS.map((s) => {
       const r = juego.porSonido[s.id] || { a: 0, t: 0 };
       return `<div class="ch-card s-${s.id}"><b class="sono">${s.id}</b><span class="como">${r.t ? `${r.a} de ${r.t}` : "–"}</span></div>`;
@@ -602,7 +618,7 @@ function chPapas() {
   return `<table class="tabla"><thead><tr><th>Sonido</th><th>Cuál suena</th><th>Escribe</th></tr></thead><tbody>
     ${SONIDOS.map((s) => `<tr><td>${s.id} <small>(${esc(s.como)})</small></td><td>${p("sonido", s.id)}</td><td>${p("escribe", s.id)}</td></tr>`).join("")}
     </tbody></table>
-    <p class="nota">Nivel de escritura: ${c.nivel} de 3 (sube con 8 de 10). Rondas: ${c.rondas.sonido} de "cuál suena", ${c.rondas.escribe} de escribir.</p>`;
+    <p class="nota">Nivel (de ${NIVELES}): "cuál suena" ${c.niveles.sonido}, escribir ${c.niveles.escribe}. Sube con 8 de 10 y baja con 4 o menos; se puede cambiar a mano en el menú. Rondas: ${c.rondas.sonido} de "cuál suena", ${c.rondas.escribe} de escribir.</p>`;
 }
 
 // Lo que sabe el juego de la voz de este aparato (para saber qué pasa en cada teléfono o TV)
@@ -638,7 +654,7 @@ Voz.alFallar(() => {
 
 const IR = {
   inicio, progreso, papas, practicar, retoIntro, retoJugar, decir, despacio, frase, listo, probarVoz, prueba, ch: chInicio,
-  chEjemplo, chRonda: ({ sub }) => nuevaRondaCh(sub),
+  chEjemplo, chNivel, chRonda: ({ sub }) => nuevaRondaCh(sub),
   ronda: ({ etapa }) => nuevaRonda(etapa || "escribe"),
   practica: ({ etapa }) => nuevaRonda(etapa),
   borrar: () => borrar(),

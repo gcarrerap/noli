@@ -169,6 +169,10 @@ button.ch-card:active{transform:translateY(2px)}
 .ch-card small{color:var(--muted);font-weight:700;font-size:.85rem}
 .ch-cards.chicas .como{font-family:"Fredoka",sans-serif;font-size:1.3rem}
 .ch-regla{min-height:4.4em}
+.nivel{display:flex;align-items:center;gap:.8rem;margin:-.3rem 0 .4rem;color:var(--muted);font-weight:800}
+.nivel b{color:var(--fg)}
+.nivel .boton{min-width:2.6em;padding:.2em .8em;font-size:1.3rem;line-height:1.2}
+.nivel .boton:disabled{opacity:.35;cursor:default}
 .ejemplos{display:inline-flex;gap:.9rem;flex-wrap:wrap;justify-content:center;margin-top:.3rem;font-family:"Fredoka",sans-serif;font-weight:600;font-size:1.5rem;color:var(--fg)}
 .hl{background:var(--c, var(--sol));color:#2b2236;border-radius:.2em;padding:0 .06em}
 .s-ch .hl,.s-k .hl,.s-sh .hl{background:var(--c)}
