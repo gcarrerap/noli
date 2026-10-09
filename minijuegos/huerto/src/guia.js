@@ -10,7 +10,7 @@ export const GUIA = {
 export const GUIA_TOQUE_MS = 2000;
 /** Tope de la espera cuando la voz del paso sigue sonando. */
 export const GUIA_VOZ_MAX_MS = 3000;
-/** Tras pintar un paso no entran OK ni toques: al menos 1 s. */
+/** Mínimo antes de un OK o un toque. Si la voz sigue, se espera más. */
 export const GUIA_CIERRE_MS = 1000;
 /** A los 3 s el paso se abre aunque la voz siga. */
 export const GUIA_TOPE_MS = GUIA_VOZ_MAX_MS;
@@ -112,9 +112,9 @@ export function relojTrasEvento(estado, evento, transcurrido) {
   return { estado: s, ...esperaTrasVoz({ evento: nombre, transcurrido }) };
 }
 
-// Tras pintar un paso no entran OK ni toques: al menos 1 s, o hasta que
-// acabe la frase, lo que dure más. A los 3 s se abre aunque la voz siga.
-// Comparte el instante con los 400 ms de «¿Salir?»: no se suman.
+// El paso acepta OK o un toque solo después de 1 s Y (la voz acabó, la voz
+// falló, o ya pasaron 3 s). No es un cierre fijo de 1 s: una frase de 2,5 s
+// sigue cerrada al segundo. Comparte el instante con los 400 ms de «¿Salir?».
 export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
   const t = ahora - aparecio;
   if (t < GUIA_CIERRE_MS) return true;

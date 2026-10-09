@@ -86,13 +86,18 @@ function hablarPasoGuia() {
   if (!guia || esExplicacion(guia.paso)) return;
   const mio = ++vozGen;
   vozSigue = false;
-  hablar(vozPaso(guia.paso, esTv()), () => {
+  let cerro = false;
+  const hablada = hablar(vozPaso(guia.paso, esTv()), () => {
+    cerro = true;
     if (mio === vozGen) vozSigue = false;
   }, () => {
+    cerro = true;
     if (mio === vozGen) vozSigue = false;
   }, () => {
     if (mio === vozGen) vozSigue = true;
   });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (hablada && !cerro && mio === vozGen) vozSigue = true;
 }
 
 const guardar = () => Noli.guardar(pr);
@@ -484,6 +489,7 @@ function programarExplicacion() {
   let vozEstado = estadoExplicacion();
   // La meta sale siempre de t0. Un onerror inmediato o tarde, o un onstart que no llega,
   // deja los 2 s. Si el temporizador avisa antes, se vuelve a pedir lo que falta.
+  let cerro = false;
   const callo = () => { if (gen === explicarGen) vozSigue = false; };
   const revisar = (evento) => {
     if (gen !== explicarGen || !guia || guia.paso !== paso) return;
@@ -495,13 +501,18 @@ function programarExplicacion() {
       return;
     }
     explicarGen++;
+    // El reloj ya decidió (acabó, falló o no arrancó). Si vozSigue siguiera,
+    // el cierre entre 1 s y 3 s se tragaría este avance de 2 s.
+    vozSigue = false;
     seguirExplicacion();
   };
-  const alFallar = () => { callo(); revisar("error"); };
-  const hablada = hablar(linea, () => { callo(); revisar("end"); }, alFallar, () => {
+  const alFallar = () => { cerro = true; callo(); revisar("error"); };
+  const hablada = hablar(linea, () => { cerro = true; callo(); revisar("end"); }, alFallar, () => {
     if (gen === explicarGen) vozSigue = true;
     revisar("start");
   });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (hablada && !cerro && gen === explicarGen) vozSigue = true;
   if (!hablada) vozEstado = relojExplicacion(vozEstado, "error", performance.now() - t0).estado;
   revisar("");
 }

@@ -88,20 +88,25 @@ function pasoCerrado() {
 function decirGuia(texto, opts) {
   const mio = ++vozGen;
   const o = opts && typeof opts === "object" ? opts : {};
+  let cerro = false;
   const ok = hablar(texto, {
     alEmpezar: () => {
       if (mio === vozGen) vozSigue = true;
       if (typeof o.alEmpezar === "function") o.alEmpezar();
     },
     alTerminar: () => {
+      cerro = true;
       if (mio === vozGen) vozSigue = false;
       if (typeof o.alTerminar === "function") o.alTerminar();
     },
     alFallar: () => {
+      cerro = true;
       if (mio === vozGen) vozSigue = false;
       if (typeof o.alFallar === "function") o.alFallar();
     },
   });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (ok && !cerro && mio === vozGen) vozSigue = true;
   return ok;
 }
 
@@ -459,6 +464,9 @@ function rearmarPasoMostrar() {
     clearTimeout(relojGuia);
     relojGuia = 0;
     if (plan.avanzar) {
+      // El reloj ya decidió (acabó, falló o no arrancó). Si vozSigue siguiera,
+      // el cierre entre 1 s y 3 s se tragaría este avance de 2 s.
+      vozSigue = false;
       avanzarPedidoSiSigue();
       return;
     }

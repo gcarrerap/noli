@@ -319,6 +319,7 @@ function programarGuia() {
   let vozEstado = { arranco: false, error: false, termino: false, ms: 0 };
   // La meta sale de t0. onerror inmediato o tarde, o un onstart que no llega, son 2 s.
   // Si el temporizador se adelanta, se vuelve a armar con lo que falta.
+  let cerro = false;
   const callo = () => { if (gen === guiaVozToken) vozSigue = false; };
   const revisar = (evento) => {
     if (gen !== guiaVozToken) return;
@@ -333,13 +334,18 @@ function programarGuia() {
     guiaVozToken++;
     relojGuia = 0;
     if (!esGuia() || !partida || partida.paso !== paso) return;
+    // El reloj ya decidió (acabó, falló o no arrancó). Si vozSigue siguiera,
+    // el cierre entre 1 s y 3 s se tragaría este avance de 2 s.
+    vozSigue = false;
     avanzarGuia();
   };
-  const alFallar = () => { callo(); revisar("error"); };
-  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", () => { callo(); revisar("end"); }, alFallar, () => {
+  const alFallar = () => { cerro = true; callo(); revisar("error"); };
+  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", () => { cerro = true; callo(); revisar("end"); }, alFallar, () => {
     if (gen === guiaVozToken) vozSigue = true;
     revisar("start");
   });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (empezo && !cerro && gen === guiaVozToken) vozSigue = true;
   if (!empezo) vozEstado = relojPasoVoz(vozEstado, "error", Date.now() - t0).estado;
   revisar("");
 }

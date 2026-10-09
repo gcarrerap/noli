@@ -386,6 +386,33 @@ test("un OK a los 100 ms no avanza; a los 1,1 s con la voz acabada sí", () => {
   assert.match(boton, /data-act="saltar-guia"/);
 });
 
+test("una frase de 2,5 s no se corta al segundo: el OK cada 50 ms espera a la voz", () => {
+  const epoca = 1.7e12;
+  const aparecio = epoca;
+  const DURACION = 2500;
+  function alOk(paso, dt) {
+    const vozSigue = dt < DURACION;
+    if (guiaBloqueada({ ahora: epoca + dt, aparecio, vozSigue })) return paso;
+    return paso === "pedido" ? "filas" : paso;
+  }
+  let paso = "pedido";
+  for (let dt = 0; dt < DURACION; dt += 50) {
+    const sigue = alOk(paso, dt);
+    assert.equal(sigue, paso, "a los " + dt + " ms la voz sigue");
+    paso = sigue;
+  }
+  assert.equal(alOk(paso, 1000), "pedido", "al segundo exacto la frase de 2,5 s sigue");
+  assert.equal(alOk(paso, 1100), "pedido", "a los 1,1 s la voz no ha acabado ni ha fallado");
+  assert.equal(alOk(paso, 2450), "pedido");
+  assert.equal(alOk(paso, 2500), "filas", "a los 2,5 s la voz acabó");
+  assert.equal(guiaBloqueada({ ahora: epoca + 1100, aparecio, vozSigue: false }), false, "si la voz falló, a los 1,1 s sí entra");
+  assert.equal(guiaBloqueada({ ahora: epoca + 3000, aparecio, vozSigue: true }), false, "a los 3 s se abre aunque siga");
+  assert.equal(guiaBloqueada({ ahora: epoca + 2999, aparecio, vozSigue: true }), true);
+  const juego = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /guiaBloqueada\(\{ ahora: Date\.now\(\), aparecio: pasoAparecio, vozSigue \}\)/);
+  assert.match(juego, /speak\(\) aceptó la frase/);
+});
+
 test("el pedido no se queda colgado si la voz falla al momento o tarde", () => {
   assert.equal(pasoGuia({ fase: "plantar", acepto: false, filas: 1, porFila: 1 }), "pedido");
   assert.equal(guiaAvanzaConToque("pedido"), true);
