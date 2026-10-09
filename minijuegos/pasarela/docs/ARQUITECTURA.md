@@ -1,5 +1,7 @@
 # Arquitectura de la Pasarela
 
+> **Código 3D compartido (#25).** Lo 3D que no es propio de la Pasarela (Three.js, la escena, el personaje, las formas, los materiales, el joystick y el movimiento básico) vive en `kit/3d/`, porque también lo usa el mundo mágico del menú principal (`src/mundo/`, ver `docs/MUNDO.md` en la raíz). La Pasarela lo importa de ahí; sus propios archivos 3D (`src/escena/estudio.js`, `pasarela.js`, `modelos.js`) siguen aquí.
+
 La Pasarela sigue las reglas de Noli (DESIGN.md §1): módulos ES sin compilación, una isla dentro de su carpeta que solo importa `kit/`, lógica pura separada y probada en Node. Lo nuevo es que es el primer juego en 3D (Three.js) y el primero que **gasta créditos** (#20).
 
 ## Capas
@@ -8,8 +10,9 @@ La Pasarela sigue las reglas de Noli (DESIGN.md §1): módulos ES sin compilaci�
                   ┌──────────────────────────── src/ui/ (navegador) ─────────────────────────────┐
   kit/noli.js ◀── │ juego.js (controlador) ── pantallas.js · iconos.js · dibujo2d.js · voz.js      │
   (catálogo)      │      │                     joystick.js · cargar.js                             │
-                  │      ├── vista3d.js ──▶ src/escena/ (Three.js): escena · avatar · formas ·      │
-                  │      │                  materiales · estudio · pasarela · modelos ──▶ vendor/   │
+                  │      ├── vista3d.js ──▶ src/escena/ (Three.js): estudio · pasarela · modelos    │
+                  │      │                  └─▶ kit/3d/: escena · avatar · formas · materiales ·    │
+                  │      │                      joystick · movimiento ──▶ kit/3d/vendor/ (Three.js) │
                   │      └── vista2d.js ──▶ dibujo2d.js                                             │
                   └──────┬───────────────────────────────────────────────────────────────────────┘
                          ▼
@@ -21,7 +24,7 @@ La Pasarela sigue las reglas de Noli (DESIGN.md §1): módulos ES sin compilaci�
 | Capa | Puede importar | No puede |
 |---|---|---|
 | `src/*.js` (lógica pura) | otros `src/*.js` | DOM, Three.js, `kit/`, `fetch` |
-| `src/escena/` | `vendor/`, `src/*.js` | DOM fuera de un `<canvas>` o `document.createElement` para texturas; nada de la interfaz |
+| `src/escena/` | `kit/3d/` (y su `vendor/`), `src/*.js` | DOM fuera de un `<canvas>` o `document.createElement` para texturas; nada de la interfaz |
 | `src/ui/` | todo lo anterior y `../../../../kit/` | — |
 
 Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y la escena se puede cambiar (o quitar, en el modo sencillo) sin tocar las reglas.
@@ -37,17 +40,19 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `src/progreso.js` | Puntos de estilo, `nivelDe`, `abiertos`, `registrarPasarela`, lo "nuevo", `escogerTema`, `leerProgreso`. |
 | `src/movimiento.js` | `paso` (caminar con deslizamiento en paredes), `choca`, `zonaCercana`, `rutaHacia`/`seguirRuta`, `direccionDeTeclas`. |
 | `src/partida.js` | La máquina de estados (`TRANSICIONES`, `siguiente`) y el reloj. |
-| `src/escena/escena.js` | Renderer, cámara, luces, el ciclo de cuadros, medir FPS y bajar la calidad, liberar memoria. |
-| `src/escena/avatar.js` | El personaje de partes, sus anclas, vestir, posturas y animaciones. |
-| `src/escena/formas.js` | Pieza de `prendas.json` → malla de Three.js (con geometrías compartidas) y `reflejar` (espejo). |
-| `src/escena/materiales.js` | Materiales caricatura por color, compartidos. |
+| `kit/3d/escena.js` | Renderer, cámara, luces, el ciclo de cuadros, medir FPS y bajar la calidad, pausar, liberar memoria. **Compartido** con el mundo del menú principal (#25). |
+| `kit/3d/avatar.js` | El personaje de partes, sus anclas, vestir, posturas y animaciones (incluida `brinco`, que usa el mundo). Compartido. |
+| `kit/3d/formas.js` | Pieza de `prendas.json` → malla de Three.js (con geometrías compartidas) y `reflejar` (espejo). Compartido. |
+| `kit/3d/materiales.js` | Materiales caricatura por color, compartidos. Compartido. |
+| `kit/3d/movimiento.js` | Ángulos, `seguirRuta`, `direccionDeTeclas` (las flechas). `src/movimiento.js` los vuelve a exportar. Compartido. |
+| `kit/3d/webgl.js` | `hayWebGL()` sin bajar Three.js. Compartido. |
 | `src/escena/estudio.js`, `pasarela.js` | Los dos lugares. |
 | `src/escena/modelos.js` | Prendas hechas en Blender (`.glb`): cargar, copiar y pintar. |
 | `src/ui/vista3d.js`, `vista2d.js` | Las dos vistas con la misma interfaz (abajo). |
 | `src/ui/juego.js` | El controlador: estado, eventos, entrada, guardar, créditos. |
 | `src/ui/pantallas.js` | HTML de cada pantalla. No cambia nada. |
 | `src/ui/dibujo2d.js` | La muñeca en SVG (modo sencillo, miniaturas, clóset). |
-| `src/ui/joystick.js`, `voz.js`, `iconos.js`, `cargar.js` | Joystick táctil, voz en inglés, íconos SVG, leer los JSON. |
+| `kit/3d/joystick.js`, `src/ui/voz.js`, `iconos.js`, `cargar.js` | Joystick táctil (compartido), voz en inglés, íconos SVG, leer los JSON. |
 
 ## La partida (máquina de estados)
 

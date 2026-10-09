@@ -1,6 +1,6 @@
 # La escena 3D
 
-Todo lo 3D está en `src/escena/` y usa **Three.js r160.1** (`vendor/three.module.min.js`), sin compilación. No hay archivos de modelo para el personaje ni para la ropa: se arman con formas sencillas descritas en `datos/prendas.json`. Solo las prendas que lo piden usan un `.glb` hecho en Blender (`src/escena/modelos.js`).
+Lo 3D propio de la Pasarela está en `src/escena/` (estudio, pasarela, modelos .glb); la escena, el personaje, las formas y los materiales están en `kit/3d/` porque también los usa el mundo del menú principal (#25). Todo usa **Three.js r160.1** (`kit/3d/vendor/three.module.min.js`), sin compilación. No hay archivos de modelo para el personaje ni para la ropa: se arman con formas sencillas descritas en `datos/prendas.json`. Solo las prendas que lo piden usan un `.glb` hecho en Blender (`src/escena/modelos.js`).
 
 ## Renderer y calidad
 

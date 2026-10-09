@@ -1,0 +1,122 @@
+/* Mundo mágico del menú principal (#25): el lienzo 3D a pantalla completa y lo que va encima (HUD, letreros de los
+   juegos, aviso de "entrar", joystick, botón de brincar, menú "¿A dónde vamos?" y la pantalla de carga).
+   Debajo de las ventanas (nube, créditos, control remoto: z-index 40) y de los avisos (20–30). */
+:root.en-mundo body{overflow:hidden}
+.mundo{position:fixed;inset:0;z-index:5;overflow:hidden;background:#eee3ff;color:#2b2236;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.mundo[hidden]{display:none}
+.mundo-lienzo{position:absolute;inset:0;touch-action:none}
+.mundo-lienzo canvas{width:100%;height:100%;display:block}
+
+/* ---------- Letreros de los juegos (HTML encima de cada edificio) ---------- */
+.mundo-letreros{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.mundo .letrero{--c:#c86bfa;position:absolute;left:0;top:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:.2rem;
+  transform-origin:50% 100%;will-change:transform;font-family:var(--display);transition:opacity .2s}
+.mundo .letrero .ico{width:3.1rem;height:3.1rem;border-radius:50%;background:#fff;display:grid;place-items:center;
+  border:4px solid var(--c);box-shadow:0 4px 0 rgba(43,34,54,.18);font-size:1.8rem;line-height:1}
+.mundo .letrero .ico img{width:2.1rem;height:2.1rem;display:block}
+.mundo .letrero .nombre{background:var(--c);color:#fff;font-weight:600;font-size:1.05rem;border-radius:999px;padding:.08em .75em;white-space:nowrap;
+  box-shadow:0 3px 0 rgba(43,34,54,.18);text-shadow:0 1px 0 rgba(0,0,0,.18)}
+.mundo .letrero .pie{background:rgba(255,255,255,.92);border-radius:999px;padding:0 .5em;font-size:.95rem;display:flex;align-items:center;gap:.2em}
+.mundo .letrero .pie .moneda{width:1.1em;height:1.1em}
+.mundo .letrero.cerca .ico{box-shadow:0 0 0 6px rgba(255,209,102,.85), 0 4px 0 rgba(43,34,54,.18)}
+.mundo .letrero.apagado{opacity:.45}
+
+/* ---------- HUD (arriba) ---------- */
+.mundo-hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;
+  padding:max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));pointer-events:none}
+.mundo-hud > *{pointer-events:auto}
+.mundo-hud-izq,.mundo-hud-der{display:flex;gap:.5rem;align-items:center}
+.mundo-hud .creditos-btn,.mundo-hud .nube-btn{position:static}
+.mundo-cristales{display:flex;align-items:center;gap:.25rem;background:rgba(255,255,255,.9);border-radius:999px;padding:.35rem .8rem;
+  font-family:var(--display);font-size:1.15rem;box-shadow:var(--shadow)}
+.mundo-cristales span{color:#76698a;font-size:.9rem}
+.mundo-cristales.brilla{animation:brillo .9s ease-out}
+@keyframes brillo{0%{transform:scale(1)}30%{transform:scale(1.25);box-shadow:0 0 0 10px rgba(159,230,255,.6)}100%{transform:scale(1)}}
+.mundo-menu-btn{display:flex;align-items:center;gap:.35rem;height:3rem;padding:0 1rem 0 .7rem;border-radius:999px;background:var(--card);color:var(--fg);
+  box-shadow:var(--shadow);font-family:var(--display);font-size:1.15rem}
+.mundo-pista{font-size:.95rem;font-weight:700;background:rgba(255,255,255,.85);border-radius:999px;padding:.3em .9em;white-space:nowrap}
+.mundo kbd{font:inherit;font-size:.8em;font-weight:800;background:#2b2236;color:#fff;border-radius:6px;padding:.05em .45em}
+
+/* ---------- Abajo: aviso de entrar, joystick y botón de brincar ---------- */
+.mundo-abajo{position:absolute;left:0;right:0;bottom:calc(1.2rem + env(safe-area-inset-bottom));display:flex;justify-content:center;pointer-events:none}
+.mundo-aviso{--c:#c86bfa;pointer-events:auto;display:inline-flex;align-items:center;gap:.6em;background:var(--c);color:#fff;border-radius:999px;
+  padding:.55em 1.5em;font-family:var(--display);font-size:1.45rem;font-weight:600;box-shadow:0 6px 0 rgba(43,34,54,.2);
+  text-shadow:0 1px 0 rgba(0,0,0,.2);animation:sube .25s both;max-width:calc(100vw - 15rem)}
+.mundo-aviso span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mundo-aviso[hidden]{display:none}
+.mundo-aviso kbd{background:rgba(255,255,255,.3)}
+@keyframes sube{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+
+.mundo-joy{position:absolute;left:0;bottom:0;width:50vw;height:45vh;touch-action:none}
+.mundo-joy .joy-base{position:absolute;left:5.5rem;bottom:5.5rem;width:7.5rem;height:7.5rem;margin:-3.75rem 0 0 -3.75rem;border-radius:50%;
+  background:rgba(255,255,255,.45);border:3px solid rgba(43,34,54,.15);transform:translateY(50%)}
+.mundo-joy.activo .joy-base{bottom:auto;transform:none}
+.mundo-joy .joy-palanca{position:absolute;left:50%;top:50%;width:3.6rem;height:3.6rem;margin:-1.8rem;border-radius:50%;background:#c86bfa;
+  box-shadow:0 4px 0 rgba(43,34,54,.2)}
+
+.mundo-brincar{position:absolute;right:max(1.4rem, env(safe-area-inset-right));bottom:max(1.6rem, env(safe-area-inset-bottom));width:6.2rem;height:6.2rem;
+  border-radius:50%;background:var(--sun);color:#2b2236;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  font-family:var(--display);font-weight:600;font-size:1rem;box-shadow:0 6px 0 rgba(43,34,54,.22);touch-action:none;transition:transform .08s}
+.mundo-brincar:active{transform:scale(.9) translateY(3px);box-shadow:0 3px 0 rgba(43,34,54,.22)}
+/* Teléfono parado: el aviso de entrar sube para no tapar el botón de brincar ni el joystick */
+@media (max-width:600px){
+  .mundo-abajo{bottom:calc(9.4rem + env(safe-area-inset-bottom))}
+  .mundo-aviso{max-width:calc(100vw - 2rem);font-size:1.25rem}
+}
+/* En la TV no hay dedo: ni joystick ni botón (se brinca con OK o el botón rojo) */
+:root[data-modo="tv"] .mundo-joy,:root[data-modo="tv"] .mundo-brincar{display:none}
+:root[data-modo="tv"] .mundo-abajo{bottom:4vh}
+
+/* ---------- Avisos cortos ---------- */
+.mundo-toast{position:absolute;left:50%;top:calc(4.8rem + env(safe-area-inset-top));transform:translate(-50%,-10px);opacity:0;pointer-events:none;
+  background:var(--card);color:var(--fg);border-radius:999px;padding:.5em 1.3em;font-family:var(--display);font-size:1.2rem;box-shadow:var(--shadow);
+  transition:opacity .25s, transform .25s;max-width:calc(100vw - 2rem);text-align:center}
+.mundo-toast.ver{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Menú "¿A dónde vamos?" ---------- */
+.mundo-menu{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:max(16px, 3vh) max(16px, 3vw);
+  background:rgba(28,23,38,.45);animation:aparecer .2s ease-out}
+.mundo-menu[hidden]{display:none}
+@keyframes aparecer{from{opacity:0}to{opacity:1}}
+.mundo-menu-caja{background:var(--bg);color:var(--fg);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.2em 1.4em;
+  width:min(1100px, 100%);max-height:100%;overflow:auto}
+.mundo-menu-caja.chica{width:min(560px, 100%);text-align:center}
+.mundo-menu-caja h2{font-family:var(--display);font-weight:600;font-size:1.6rem;margin:0 0 .6em;text-align:center}
+.mundo-ir{display:grid;grid-template-columns:repeat(auto-fill, minmax(min(9rem, 40%), 1fr));gap:.7rem}
+:root[data-modo="tv"] .mundo-ir{grid-template-columns:repeat(6, minmax(0, 1fr))}
+.mundo-ir .ir{--c:#c86bfa;display:flex;flex-direction:column;align-items:center;gap:.25em;padding:.7em .4em .55em;border-radius:22px;background:var(--c);
+  color:#fff;box-shadow:0 5px 0 rgba(43,34,54,.15);text-align:center}
+.mundo-ir .ir .ico{width:3rem;height:3rem;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:1.8rem}
+.mundo-ir .ir .ico img{width:2.1rem;height:2.1rem}
+.mundo-ir .ir .nombre{font-family:var(--display);font-weight:600;font-size:1.05rem;line-height:1.1;overflow-wrap:anywhere;hyphens:auto;text-shadow:0 1px 0 rgba(0,0,0,.15)}
+.mundo-ir .ir .pie{background:rgba(255,255,255,.92);color:#2b2236;border-radius:999px;padding:0 .45em;font-size:.9rem;display:flex;align-items:center;gap:.2em}
+.mundo-ir .ir .pie .moneda{width:1.1em;height:1.1em}
+.mundo-ir .ir.apagado{opacity:.5}
+.mundo-menu-sub{display:flex;align-items:center;justify-content:center;gap:.4em;flex-wrap:wrap;color:var(--muted);font-weight:700;margin:.9em 0 .3em;text-align:center}
+.mundo-menu-sub b{color:var(--fg)}
+.mundo-chips{justify-content:center;flex-wrap:wrap;overflow:visible;margin:0;padding:4px 0 6px}
+.mundo-menu .fila{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:.9em}
+.mundo-boton{display:inline-flex;align-items:center;gap:.35em;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.45em 1em;font-weight:800}
+.mundo-boton .moneda{width:1.3em;height:1.3em}
+.mundo-menu .chip.remoto{margin-left:0}
+
+/* ---------- Cargando ---------- */
+.mundo-carga{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:linear-gradient(#e9dcff, #fbeaff 60%, #d8f3d0)}
+.mundo-carga[hidden]{display:none}
+.mundo-carga-caja{display:flex;flex-direction:column;align-items:center;gap:1rem;font-family:var(--display);font-size:1.5rem;text-align:center;padding:1rem}
+.mundo-carga-caja p{margin:0}
+.mundo-sencillo{display:inline-flex;align-items:center;gap:.4em;background:rgba(255,255,255,.75);border-radius:999px;padding:.4em 1em;
+  font-family:var(--body);font-weight:800;font-size:1rem}
+.chispas{display:flex;gap:.7rem;height:3rem;align-items:flex-end}
+.chispas i{width:1.1rem;height:1.1rem;background:#c86bfa;transform:rotate(45deg);border-radius:3px;animation:chispa 1.1s ease-in-out infinite}
+.chispas i:nth-child(2){background:#4cb3ff;animation-delay:.12s}.chispas i:nth-child(3){background:#ffd166;animation-delay:.24s}
+.chispas i:nth-child(4){background:#3ccf8e;animation-delay:.36s}.chispas i:nth-child(5){background:#ff6b8b;animation-delay:.48s}
+@keyframes chispa{0%,100%{transform:translateY(0) rotate(45deg)}50%{transform:translateY(-1.6rem) rotate(225deg)}}
+
+.mundo-fps{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font:12px/1.3 monospace;padding:3px 7px;border-radius:6px;pointer-events:none}
+.mundo-fps[hidden]{display:none}
+
+/* Botón del menú 2D para ir al mundo */
+.chip-mundo{border-color:#c86bfa}
+.chip-mundo svg{flex:none}

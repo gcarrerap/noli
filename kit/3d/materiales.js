@@ -1,7 +1,7 @@
 // Materiales de la escena, guardados por color para reusarlos (crear un material por pieza llena la memoria de la
 // TV). Estilo caricatura: MeshToonMaterial con tres tonos de luz. Las prendas con "brillo" usan Phong con reflejo.
 // Ver docs/ESCENA-3D.md § Materiales.
-import * as THREE from "../../vendor/three.module.min.js";
+import * as THREE from "./vendor/three.module.min.js";
 
 let degradado = null;
 /** Textura de 3 tonos para el sombreado de caricatura (sombra, medio, luz) */

@@ -6,10 +6,10 @@ Regla: **nada entra al repo sin su renglón aquí.** El repo es público, así q
 
 | Qué | Archivo(s) | Autor | Origen | Licencia | Fecha |
 |---|---|---|---|---|---|
-| Three.js r160.1 (motor 3D) | `vendor/three.module.min.js` | Three.js Authors | npm `three@0.160.1` (`build/three.module.min.js`) | MIT, texto en `vendor/LICENSE-three.txt` | 2026-10-08 |
-| GLTFLoader (cargar .glb) | `vendor/GLTFLoader.js` | Three.js Authors | npm `three@0.160.1` (`examples/jsm/loaders/GLTFLoader.js`), con la línea `import … from 'three'` cambiada a `./three.module.min.js` | MIT (`vendor/LICENSE-three.txt`) | 2026-10-08 |
-| BufferGeometryUtils (lo pide GLTFLoader) | `vendor/BufferGeometryUtils.js` | Three.js Authors | npm `three@0.160.1` (`examples/jsm/utils/`), mismo cambio de import | MIT (`vendor/LICENSE-three.txt`) | 2026-10-08 |
-| Personaje, ropa (54 prendas), estudio, pasarela y jueces | `datos/prendas.json`, `src/escena/*.js` | Hechos para Noli (formas de Three.js descritas en JSON) | Este repo | La del repo | 2026-10-08 |
+| Three.js r160.1 (motor 3D) | `kit/3d/vendor/three.module.min.js` | Three.js Authors | npm `three@0.160.1` (`build/three.module.min.js`) | MIT, texto en `kit/3d/vendor/LICENSE-three.txt` | 2026-10-08 |
+| GLTFLoader (cargar .glb) | `kit/3d/vendor/GLTFLoader.js` | Three.js Authors | npm `three@0.160.1` (`examples/jsm/loaders/GLTFLoader.js`), con la línea `import … from 'three'` cambiada a `./three.module.min.js` | MIT (`kit/3d/vendor/LICENSE-three.txt`) | 2026-10-08 |
+| BufferGeometryUtils (lo pide GLTFLoader) | `kit/3d/vendor/BufferGeometryUtils.js` | Three.js Authors | npm `three@0.160.1` (`examples/jsm/utils/`), mismo cambio de import | MIT (`kit/3d/vendor/LICENSE-three.txt`) | 2026-10-08 |
+| Personaje, ropa (54 prendas), estudio, pasarela y jueces | `datos/prendas.json`, `src/escena/*.js`, `kit/3d/*.js` | Hechos para Noli (formas de Three.js descritas en JSON) | Este repo | La del repo | 2026-10-08 |
 | Tiara de estrellas | `modelos/tiara.glb` | Hecha para Noli con `herramientas/blender/tiara.py` (Blender 5.2.2) | Este repo | La del repo. Lo que se modela con Blender es de quien lo hace (la licencia GPL de Blender no aplica a los archivos que exporta) | 2026-10-08 |
 | Íconos (temas, categorías, moneda, estrellas…) | `src/ui/iconos.js`, `icono.svg` | Hechos para Noli (SVG) | Este repo | La del repo | 2026-10-08 |
 | Muñeca 2D y miniaturas | `src/ui/dibujo2d.js` | Hechos para Noli (SVG) | Este repo | La del repo | 2026-10-08 |

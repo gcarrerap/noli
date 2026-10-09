@@ -40,6 +40,11 @@ export function validarManifiesto(m, idCarpeta) {
   if (costo !== null && !(Number.isInteger(costo) && costo > 0 && costo <= 100)) errores.push(`${idCarpeta}: "costo" debe ser un entero de 1 a 100`);
   if (costo !== null && creditos !== "gasta") errores.push(`${idCarpeta}: "costo" solo va con "creditos": "gasta"`);
 
+  // Mundo del menú principal (#25): qué edificio tiene el juego ("torre", "arbol", "escenario", "portal"…, ver
+  // mundo/lugares.json → edificios). Si no se pone (o no existe), el mundo le pone un portal.
+  const lugar = m.lugar ?? null;
+  if (lugar !== null && !(txt(lugar) && ID.test(lugar))) errores.push(`${idCarpeta}: "lugar" debe ser el id de un edificio del mundo`);
+
   if (errores.length) return { errores };
   return {
     juego: {
@@ -55,6 +60,7 @@ export function validarManifiesto(m, idCarpeta) {
       version: m.version != null ? String(m.version) : "1",
       creditos,
       costo,
+      lugar,
     },
   };
 }

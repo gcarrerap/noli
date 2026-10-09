@@ -31,7 +31,7 @@ Cómo medir en un aparato: abrir el juego **solo** con `?fps` (en la TV, en su n
 
 ## Calidad que se ajusta sola
 
-`src/escena/escena.js`:
+`kit/3d/escena.js` (compartida con el mundo del menú principal, que usa las mismas reglas: ver `docs/MUNDO.md`):
 
 1. Empieza en **alta** (`pixelRatio` hasta 2, antialias) en teléfono y tableta, y en **media** (`pixelRatio` 1, sin antialias) en la TV. El antialias se decide al crear el renderer y no se puede cambiar después; en la TV no se usa porque dibuja a 1080p o 4K con una GPU de tele.
 2. Mide los fps cada segundo. **3 segundos seguidos por debajo de 26** → baja un nivel: alta → media → baja (`pixelRatio` 0.7).

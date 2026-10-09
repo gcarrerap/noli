@@ -1,8 +1,8 @@
 // El estudio: piso, paredes y los muebles de cada zona (percheros, estante de zapatos, tocador, vitrina, espejo y la
 // puerta del escenario), todo con formas sencillas. La posición de cada mueble sale de datos/zonas.json; aquí solo
 // se dibuja. Los choques los calcula src/movimiento.js con las mismas cajas. Ver docs/ESCENA-3D.md § El estudio.
-import * as THREE from "../../vendor/three.module.min.js";
-import { material } from "./materiales.js";
+import * as THREE from "../../../../kit/3d/vendor/three.module.min.js";
+import { material } from "../../../../kit/3d/materiales.js";
 
 const PALETA_ROPA = ["#ff7eb6", "#4c7dff", "#ffd23f", "#3cbf7e", "#8f5cf0", "#ff9a3c", "#2ec4c4", "#ef4343"];
 

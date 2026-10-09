@@ -8,9 +8,9 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 
 **Opciones.** *Three.js*: un archivo módulo de 670 KB, sin dependencias, la comunidad y los ejemplos más grandes; cargador glTF aparte. *Babylon.js*: más completo (física, editor), pero más pesado (varios MB) y pensado para usarse con empaquetador. *Canvas 2D o CSS 3D*: ligero, pero no da un estudio para caminar.
 
-**Decisión.** Three.js **r160.1**, copiado en `vendor/` (sin CDN en tiempo de ejecución, DESIGN §1). r160 porque: el `.min.js` usa JavaScript de 2018 (lo revisamos con un analizador: no usa `?.`, `??` ni campos de clase), y todavía funciona con **WebGL 1** (r163 lo quitó), que es lo que pueden tener las TVs más viejas.
+**Decisión.** Three.js **r160.1**, copiado en `vendor/` (desde #25 vive en `kit/3d/vendor/`, compartido con el mundo del menú principal; sin CDN en tiempo de ejecución, DESIGN §1). r160 porque: el `.min.js` usa JavaScript de 2018 (lo revisamos con un analizador: no usa `?.`, `??` ni campos de clase), y todavía funciona con **WebGL 1** (r163 lo quitó), que es lo que pueden tener las TVs más viejas.
 
-**Consecuencias.** 167 KB comprimidos de descarga la primera vez (después, del service worker). Para actualizar: cambiar los tres archivos de `vendor/` y su renglón en LICENCIAS.md, y revisar que siga siendo ES2018 y WebGL 1.
+**Consecuencias.** 167 KB comprimidos de descarga la primera vez (después, del service worker). Para actualizar: cambiar los tres archivos de `kit/3d/vendor/` y su renglón en LICENCIAS.md, y revisar que siga siendo ES2018 y WebGL 1.
 
 ## ADR 2 — Personaje de partes y ropa de formas, en lugar de un modelo con esqueleto (*skinned mesh*)
 

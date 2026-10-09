@@ -1,7 +1,7 @@
 // Formas: convierte una pieza de prendas.json ({ f: "tubo", a: "torso", y: [...], r: [...], ... }) en una malla de
 // Three.js. Las geometrías se guardan por sus medidas, así dos prendas con la misma forma comparten geometría.
 // Qué significa cada campo de cada forma: docs/ESCENA-3D.md § Formas (y ejemplos en docs/ASSETS.md).
-import * as THREE from "../../vendor/three.module.min.js";
+import * as THREE from "./vendor/three.module.min.js";
 import { material } from "./materiales.js";
 
 const RAD = Math.PI / 180;

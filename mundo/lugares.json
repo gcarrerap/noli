@@ -1,0 +1,52 @@
+{
+  "_ayuda": "Dónde vive cada juego en el mundo del menú principal (#25). Ver docs/MUNDO.md § Lugares. Un juego que no está en 'juegos' se pone solo en el siguiente sitio libre, con el edificio de su juego.json ('lugar') o un portal.",
+  "acercarse": 1.9,
+  "edificios": {
+    "torre": {"nombre": "Castillo de números", "radio": 2.4, "alto": 7.4},
+    "arbol": {"nombre": "Árbol de las letras", "radio": 1.8, "alto": 7.6},
+    "escenario": {"nombre": "Escenario", "radio": 2.7, "alto": 5.4},
+    "casita": {"nombre": "Casita", "radio": 1.9, "alto": 3.9},
+    "tienda": {"nombre": "Tiendita", "radio": 2.0, "alto": 3.0},
+    "fabrica": {"nombre": "Fábrica", "radio": 2.2, "alto": 4.4},
+    "huerto": {"nombre": "Granero y huerto", "radio": 1.9, "alto": 3.6},
+    "reloj": {"nombre": "Torre del reloj", "radio": 1.5, "alto": 6.5},
+    "cabana": {"nombre": "Cabaña del bosque", "radio": 1.85, "alto": 3.4},
+    "portal": {"nombre": "Portal mágico", "radio": 1.8, "alto": 4.6}
+  },
+  "sitios": [
+    {"id": "norte", "angulo": 0, "distancia": 13},
+    {"id": "noroeste", "angulo": -36, "distancia": 13},
+    {"id": "noreste", "angulo": 36, "distancia": 13},
+    {"id": "oeste", "angulo": -72, "distancia": 13},
+    {"id": "este", "angulo": 72, "distancia": 13},
+    {"id": "bosque-oeste-18", "angulo": -18, "distancia": 23},
+    {"id": "bosque-este-18", "angulo": 18, "distancia": 23},
+    {"id": "bosque-oeste-36", "angulo": -36, "distancia": 23},
+    {"id": "bosque-este-36", "angulo": 36, "distancia": 23},
+    {"id": "bosque-oeste-54", "angulo": -54, "distancia": 23},
+    {"id": "bosque-este-54", "angulo": 54, "distancia": 23},
+    {"id": "bosque-oeste-72", "angulo": -72, "distancia": 23},
+    {"id": "bosque-este-72", "angulo": 72, "distancia": 23},
+    {"id": "lejos-oeste-9", "angulo": -9, "distancia": 32},
+    {"id": "lejos-este-9", "angulo": 9, "distancia": 32},
+    {"id": "lejos-oeste-27", "angulo": -27, "distancia": 32},
+    {"id": "lejos-este-27", "angulo": 27, "distancia": 32},
+    {"id": "lejos-oeste-45", "angulo": -45, "distancia": 32},
+    {"id": "lejos-este-45", "angulo": 45, "distancia": 32},
+    {"id": "lejos-oeste-63", "angulo": -63, "distancia": 32},
+    {"id": "lejos-este-63", "angulo": 63, "distancia": 32}
+  ],
+  "juegos": {
+    "pasarela": {"sitio": "norte", "edificio": "escenario"},
+    "sumas-restas": {"sitio": "noroeste", "edificio": "torre"},
+    "spelling": {"sitio": "noreste", "edificio": "arbol"},
+    "fabrica-numeros": {"sitio": "oeste", "edificio": "fabrica"},
+    "robot-palabras": {"sitio": "este", "edificio": "fabrica"},
+    "reloj-dragon": {"sitio": "bosque-oeste-18", "edificio": "reloj"},
+    "huerto": {"sitio": "bosque-este-18", "edificio": "huerto"},
+    "pizzeria": {"sitio": "bosque-oeste-36", "edificio": "tienda"},
+    "tienda": {"sitio": "bosque-este-36", "edificio": "tienda"},
+    "puentes": {"sitio": "bosque-oeste-54", "edificio": "cabana"},
+    "mi-casita": {"sitio": "bosque-este-54", "edificio": "casita"}
+  }
+}

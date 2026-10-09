@@ -9,7 +9,7 @@ Issue: #1
 1. **Sin compilación.** Módulos ES nativos servidos como archivos estáticos (igual que el dominó y la pata).
 2. **El catálogo no conoce a los juegos por código.** Los lee de un registro (`minijuegos/catalogo.json`) y de un manifiesto por juego (`juego.json`). Agregar un juego no toca `src/`.
 3. **Cada juego es una isla.** Vive en su carpeta, con su HTML, su JS y su CSS, y corre en un `<iframe>`. No importa nada del catálogo salvo el kit (`kit/`). Así cada carpeta puede volverse un submódulo de git sin cambiar nada (§6).
-4. **Una sola forma de entrada.** Dedo, teclado, control de la TV y teléfono remoto se convierten en seis acciones: `arriba`, `abajo`, `izquierda`, `derecha`, `ok`, `atras`. Los juegos solo conocen esas seis (además del dedo dentro de su propia página).
+4. **Una sola forma de entrada.** Dedo, teclado, control de la TV y teléfono remoto se convierten en seis acciones: `arriba`, `abajo`, `izquierda`, `derecha`, `ok`, `atras`. Los juegos solo conocen esas seis (además del dedo dentro de su propia página). El control manda una séptima, `brincar`, que solo usa el mundo del menú principal (§13); a los juegos no les llega.
 5. **Dependencias en una sola dirección:** `ui → app → engine`, con `services` aparte y `kit` como hoja que cualquiera puede usar.
 6. **Un solo dueño para el estado** (`app/store.js`); la interfaz lee y pide acciones.
 
@@ -17,11 +17,12 @@ Issue: #1
 
 | Capa | Puede importar | Responsabilidad |
 |---|---|---|
-| `kit/` | nada | Lo que comparten catálogo y juegos: protocolo de mensajes, teclas → acciones, y el SDK de los juegos (`noli.js`). |
-| `src/engine/` | nada | Lógica pura: validar manifiestos, materias y filtros, moverse en la cuadrícula con flechas. |
+| `kit/` | nada | Lo que comparten catálogo y juegos: protocolo de mensajes, teclas → acciones, y el SDK de los juegos (`noli.js`). `kit/3d/`: Three.js y lo 3D que comparten el mundo (§13) y la Pasarela. |
+| `src/engine/` | `kit/3d/` puro (`fisica.js`) | Lógica pura: validar manifiestos, materias y filtros, moverse en la cuadrícula con flechas, y el mundo (§13: lugares, choques, caminos, letreros, cámara, 3D o 2D). |
 | `src/services/` | `engine/` | Lo único que lee la red (registro y manifiestos) y `localStorage`. Service worker y versión publicada. |
 | `src/app/` | `engine/`, `services/`, `kit/` | Store y acciones. `actions.entrada(accion)` es el punto único por donde entra el control. |
-| `src/ui/` | `app/`, `engine/`, `kit/` | Dibujar el catálogo, el reproductor (iframe) y el puente de mensajes con el juego. |
+| `src/ui/` | `app/`, `engine/`, `kit/` | Dibujar el menú (el mundo 3D o el catálogo 2D), el reproductor (iframe) y el puente de mensajes con el juego. |
+| `src/mundo/` | `engine/`, `kit/3d/` | La escena del mundo con Three.js. Se baja con `import()` solo si se usa el mundo. |
 
 ```
 noli/
@@ -30,7 +31,8 @@ noli/
 ├── kit/
 │   ├── protocolo.js           # mensajes catálogo ↔ juego (§4)
 │   ├── teclas.js              # teclas y botones de TV → acciones
-│   └── noli.js                # SDK para los juegos: alEntrar, terminar, salir
+│   ├── noli.js                # SDK para los juegos: alEntrar, terminar, salir
+│   └── 3d/                    # Three.js (vendor/) y lo 3D compartido: escena, avatar, formas, materiales, lote, física, joystick
 ├── minijuegos/
 │   ├── catalogo.json          # registro: { "juegos": ["id1", "id2", …] } en el orden del catálogo
 │   └── <id>/                  # un juego (posible submódulo)
@@ -40,12 +42,15 @@ noli/
 ├── src/
 │   ├── main.js                # arranque
 │   ├── version.js             # versión publicada (cámbiala en cada publicación)
-│   ├── engine/                # manifiesto.js, catalogo.js
+│   ├── engine/                # manifiesto.js, catalogo.js, mundo.js (§13)
+│   ├── mundo/                 # escena del mundo (§13): escena-mundo.js, edificios.js, vista.js
 │   ├── config.js              # FIREBASE_CONFIG (dominomx; script clásico)
 │   ├── services/              # catalogo-repo.js, prefs.js, updates.js, firebase.js, nube.js
 │   ├── app/                   # store.js, actions.js, updates.js, sync.js
-│   └── ui/                    # render.js, entrada.js, labels.js, screens/{catalogo,jugando}.js, components/
-├── styles/                    # tokens.css (colores, tema, escala TV), base.css, catalogo.css
+│   └── ui/                    # render.js, entrada.js, labels.js, screens/{mundo,catalogo,jugando}.js, components/
+├── mundo/                     # mundo.json y lugares.json (§13)
+├── docs/MUNDO.md              # el mundo del menú principal (§13)
+├── styles/                    # tokens.css (colores, tema, escala TV), base.css, catalogo.css, mundo.css
 └── tests/                     # node:test, sin dependencias
 ```
 
@@ -78,6 +83,7 @@ noli/
 | `version` | no | Versión propia del juego (útil cuando sea submódulo). |
 | `creditos` | no | Créditos (§12): `"gana"` (juego educativo: da créditos por sus estrellas y por el reto del día), `"gasta"` (los cobra, como la Pasarela) o nada (ni da ni gasta; por ejemplo `ejemplo`). |
 | `costo` | no | Solo con `"creditos": "gasta"`: entero de 1 a 100 que se muestra en la tarjeta del catálogo ("cuesta 3"). Es informativo: el juego cobra lo que pide con `Noli.gastar`. |
+| `lugar` | no | El edificio que quiere el juego en el mundo del menú principal (§13): `torre`, `arbol`, `escenario`, `casita`, `tienda`, `fabrica`, `huerto`, `reloj`, `cabana` o `portal` (ver `mundo/lugares.json → edificios`). `mundo/lugares.json → juegos` gana sobre él. Sin él, un portal mágico. |
 
 Un manifiesto roto no tumba el catálogo: ese juego se omite y el error sale en la consola. La prueba `tests/catalogo.test.js` revisa que todos los juegos del registro tengan carpeta, manifiesto válido y página de entrada, así que un PR con un juego mal registrado no pasa.
 
@@ -209,7 +215,7 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 1. Abrir un issue con la plantilla de juego (`.github/ISSUE_TEMPLATE/juego.md`): qué enseña, edad y cómo se juega con el dedo y con flechas.
 2. Crear `minijuegos/<id>/` con `juego.json`, `index.html` y su código. Usar `minijuegos/ejemplo/` como plantilla.
 3. Importar el kit, atender `alEntrar` (flechas + OK) para que se pueda jugar en la TV, y llamar `Noli.terminar({ estrellas })` al acabar.
-4. Agregar el id a `minijuegos/catalogo.json`.
+4. Agregar el id a `minijuegos/catalogo.json`. En el mundo (§13) aparece solo con un portal; para darle un edificio, una línea en `mundo/lugares.json`.
 5. `npm test`, cambiar `src/version.js` y abrir el PR que cierra el issue.
 
 Para juntar ese PR hace falta, además:
@@ -219,7 +225,7 @@ Para juntar ese PR hace falta, además:
 - Guía la primera vez, o pistas claras en cada paso, para que una niña de 7 años entienda cómo jugar sin ayuda.
 - Visto bueno de claridad de Ñoño (diseño del juego).
 
-**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que la guía de la primera vez o las pistas de cada paso van en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`. **Juegos en 3D:** ver la Pasarela (`minijuegos/pasarela/docs/`): Three.js copiado en la carpeta del juego, presupuesto de dibujos y triángulos, y un respaldo 2D para las TVs que no puedan. `diagnostico.html` dice si el aparato tiene WebGL. **Sin emojis para nada que importe:** el navegador de la TV LG no tiene emojis a color y salen en blanco y negro (#5); dibujar con SVG. **Sin `await` al nivel del módulo** (algunos navegadores de TV no lo soportan): usar `Noli.datos.then(…)`. Las pruebas de cada juego viven en su carpeta (`minijuegos/<id>/tests/*.test.js`) para que viajen con él si se vuelve submódulo.
+**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que la guía de la primera vez o las pistas de cada paso van en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`. **Juegos en 3D:** ver la Pasarela (`minijuegos/pasarela/docs/`) y el mundo (`docs/MUNDO.md`): Three.js r160.1 copiado en `kit/3d/vendor/` (sin CDN; un juego que quiera ser submódulo puede llevar su propia copia), presupuesto de dibujos y triángulos, y un respaldo 2D para las TVs que no puedan. `diagnostico.html` dice si el aparato tiene WebGL. **Sin emojis para nada que importe:** el navegador de la TV LG no tiene emojis a color y salen en blanco y negro (#5); dibujar con SVG. **Sin `await` al nivel del módulo** (algunos navegadores de TV no lo soportan): usar `Noli.datos.then(…)`. Las pruebas de cada juego viven en su carpeta (`minijuegos/<id>/tests/*.test.js`) para que viajen con él si se vuelve submódulo.
 
 ## 10. Juegos
 
@@ -230,7 +236,7 @@ Para juntar ese PR hace falta, además:
 | `spelling` | #8, #13, #15 | El juego es un **dictado**: dice la palabra con **grabaciones MP3** (`audio/`, voz neuronal en-US de Piper, hechas con `herramientas/grabar.py`, con 0.45 s de silencio al principio porque las TVs se comen el arranque del audio; `speechSynthesis` solo de respaldo) que suenan en cualquier navegador, incluidos DuckDuckGo y la LG y nunca la enseña antes de que conteste; botones Otra vez / Despacio / Frase (frase con hueco). **Prueba de nivel** la primera vez: 2 palabras por lista subiendo de 2 en 2, baja una al fallar; empieza en la primera lista que no domina (unas 8–14 palabras). 16 listas; se pasa con 18 de las últimas 20 en dictado. Práctica opcional: Escoge (faltas típicas como opciones, nunca palabras reales ni homófonos) y Arma (letras con trampas). Al fallar la deletrea en voz alta y marca las letras. Si la voz no suena: aviso y frase con hueco, y "Probar la voz" en papás. Reto del día con semilla de la fecha (spelling bee en dictado, detective, contrarreloj) y racha. "Atrás" borra la última letra. **Sonidos de CH** (`src/ch.js`, botón en el inicio): las tres maneras de sonar la *ch* en inglés (normal como *chips*, K como *school*, SH como *chef*). Una pantalla con tres tarjetas que dicen ejemplos al tocarlas y dos juegos de 10 palabras: "¿Cuál suena?" (oye la palabra y toca el sonido; cada botón muestra un ejemplo distinto de la palabra que suena, para no enseñar cómo se escribe) y "Escribe" (dictado). Banco de 133 palabras con frase, sin homófonos (*chute/shoot*, *chord/cord*) ni palabras con *tch*, en **5 niveles acumulativos** (1 = palabras que conoce un niño de 7 años: *chip, cheese, lunch, school, Christmas, chef, machine*; 5 = *chimpanzee, archive, technique*). Cada juego tiene su nivel y los dos empiezan en 1; sube con 8 de 10 y baja con 4 o menos, y con − y + en el menú se cambia a mano. Cada ronda mezcla los tres sonidos (4 del que más falla) y favorece las palabras que falló y las de su nivel. El progreso va en `pr.ch` (opcional, v2 sin cambios) y se ve por sonido y nivel en "Para papás". Al contestar se pinta la *ch* del color de su sonido. Los sonidos del banco se verificaron con el fonemizador de la voz (cada palabra tiene la *ch* que dice su grupo). |
 | `robot-palabras` | #36 | Clasifica palabras en inglés en cajas que se tocan (Pieza, Moverse, Cómo es), sin arrastrar. Un turno son 6 puertas: taller, laberinto u oración, según el nivel; la banda espera. El nivel 1 sube con 9 de los últimos 10 y los demás con 8, solo a la primera. Las palabras ambiguas solo salen en «a ___» o «I can ___». No hay tercera persona ni pasado antes de su nivel. Reto del día «Puerta secreta» (6 puertas, 4 a la primera), sin reloj. Piezas nuevas en orden fijo. Guía de 5 pasos: los de mirar duran de 2 a 3 s (un toque u OK avanza ya) y los de actuar solo con la caja de verdad. Instrucciones en español; cada palabra en inglés se oye con la grabación de Spelling o con la voz del sistema. `"creditos": "gana"`. |
 | `mi-casita` | #37 | Juego de premio (`"creditos": "gasta"`, `"costo": 3`). Cada visita trae una bolsa fija de monedas (no se ahorran ni se pasan a la siguiente) y se paga el precio exacto, sin cambio. La moneda es la que ella eligió en La Tienda (dólares por omisión); el dibujo es `piezaSvg` de La Tienda. Los créditos se ven con la estrella dorada del catálogo, distintas de las monedas de la casa. Tras 2 intentos fallidos se iluminan las monedas que sirven. La visita termina con «Terminar» o cuando ya no alcanza; si sale a la mitad, la de ese día sigue abierta y no se cobra otra vez. Los cuartos y muebles se abren por visitas, con una lista fija. La alfombra de 6 cuadros acepta 2 por 3 y 1 por 6; en pantalla se dice «3 cuadros de largo, 2 de ancho». En el teléfono se toca un cuadro y hay flechas de 64 px; en la TV las flechas mueven y OK abre «Dejar aquí», «Girar» y «Devolver». Guía de la lámpara que cuesta 6. «Solo mirar» es gratis. Sin reto ni racha. |
-| `pasarela` | #19 | **Primer juego 3D** (Three.js r160.1 copiado en su `vendor/`, WebGL 1, sin compilación) y **primero que gasta créditos** (`"creditos": "gasta"`, `"costo": 3`, §12). Personaje de partes y ropa descrita con formas en `datos/prendas.json` (54 prendas; una hecha en Blender, `modelos/tiara.glb`); todo lo ajustable en `datos/*.json`. Lógica pura en `src/` (puntuación de 3 jueces, progreso y desbloqueos, movimiento y choques, máquina de estados) con pruebas en Node, incluida armar cada prenda en 3D. Cámara fija, joystick o tocar el piso en el teléfono; flechas con impulso y "¿A dónde vamos?" en la TV. Baja la calidad sola y ofrece un **modo sencillo 2D** (SVG) si no hay WebGL o va lento; esa preferencia es lo único que guarda en `localStorage` (es del aparato). Documentación completa en `minijuegos/pasarela/docs/`. |
+| `pasarela` | #19 | **Primer juego 3D** (Three.js r160.1, WebGL 1, sin compilación; desde #25 en `kit/3d/vendor/`, compartido con el mundo del menú) y **primero que gasta créditos** (`"creditos": "gasta"`, `"costo": 3`, §12). Personaje de partes y ropa descrita con formas en `datos/prendas.json` (54 prendas; una hecha en Blender, `modelos/tiara.glb`); todo lo ajustable en `datos/*.json`. Lógica pura en `src/` (puntuación de 3 jueces, progreso y desbloqueos, movimiento y choques, máquina de estados) con pruebas en Node, incluida armar cada prenda en 3D. Cámara fija, joystick o tocar el piso en el teléfono; flechas con impulso y "¿A dónde vamos?" en la TV. Baja la calidad sola y ofrece un **modo sencillo 2D** (SVG) si no hay WebGL o va lento; esa preferencia es lo único que guarda en `localStorage` (es del aparato). Documentación completa en `minijuegos/pasarela/docs/`. |
 | `puentes` | #30 | Puentes para el Bosque: turnos de 6 cruces (1 o 2 fases). Centímetros primero y pulgadas desde el nivel 3; en Para papás se puede dejar una sola unidad. La regla no se arrastra: ◀ ▶ la mueven de uno en uno y OK o «Poner aquí» la deja. Si el cero no cae en la orilla, se enciende y no cuenta a la primera. Una sola tabla se elige y nada brilla; al juntar dos, «Cruzar» brilla. Nivel 6: troncos alineados a la izquierda, línea punteada y diferencia sombreada (el mismo estilo que «¿Cuántos más?»). Ojo de águila: 6 estimaciones, 4 a ±2, con referencia a la vista. Puente largo sin reloj. Sube con 8 de los últimos 10. Guía fija del hueco de 6. `"creditos": "gana"`. |
 | `pizzeria` | #31 | Pizzería Partida: turnos de 6 pedidos. Corta (tocar el corte ya es la respuesta), decora (OK en la rebanada pone o quita el ingrediente; Servir brilla solo cuando coincide), forma (lados y esquinas, una sola opción correcta) y bandeja (Filas − + y Columnas − +, sin arrastrar, hasta 5×5, luego cuenta fila por fila). Fracciones solo en palabras. Sube con 8 de los últimos 10. Reto del día sin reloj: Pizza gigante (8 pedidos, 5 bien). Propinas fijas y adornos en orden fijo. Cortes en JSON, medidos por área. `"creditos": "gana"`. |
 | `fabrica-numeros` | #28 | Arma el número de un camión con tres bandas (centenas, decenas, unidades). 8 niveles hasta 1000: sin ceros, con ceros, forma desarrollada y palabras, comparar y ordenar camiones, contar de 10 en 10 y de 100 en 100 cruzando la centena, sumar y restar reagrupando (al final, restas con cero en medio). Sube con 8 de los últimos 10 a la primera; en los niveles 3, 7 y 8 al menos 4 de esos 10 son del tipo difícil. Tres fallos seguidos no bajan de nivel: el siguiente pedido es más fácil y se marca la banda. El reagrupamiento lo dispara ella (máquina o subir otra vez); el total del camión no cambia. Turnos de 6 pedidos. Reto del día por cantidad (camión misterioso, línea de producción, pedido gigante) con racha. La fábrica del inicio crece y se adorna con piezas fijas. Lógica pura en `src/` con pruebas. |
@@ -315,3 +321,16 @@ if (r.ok) empezar(); else mostrarCuantosFaltan(3 - (r.saldo || 0));
 - Un juego no puede dar créditos (solo el catálogo, a partir de `terminar`) ni gastar si no declara `"gasta"`.
 
 Código: `src/engine/creditos.js` (lógica pura), `src/app/actions.js` (`terminar`, `gastar`, `regalarCreditos`), `src/app/sync.js` (`juntarCreditos`), `src/ui/components/creditos.js`, `kit/noli.js`. Pruebas: `tests/creditos.test.js`.
+
+## 13. El menú principal: un mundo mágico en 3D (#25)
+
+El menú principal es un **mundo en 3D**: un claro del bosque encantado con una plaza y una fuente en medio, de donde salen caminos hacia el edificio de cada juego (castillo de números, árbol de las letras, escenario, tiendita, fábrica, casita, granero, torre del reloj, cabaña, o un portal mágico para los que no tienen edificio propio). Noelia camina y **brinca**: hay plataformas (hongos gigantes, nenúfares, piedras flotantes, una escalera de cristal y un camino de nubes) con cristales mágicos para encontrar arriba. **Todos los juegos se alcanzan caminando, sin brincar.** Los cristales no dan créditos (esos se ganan en los juegos educativos, §12).
+
+- **El mismo método que la Pasarela:** Three.js sin compilación (`kit/3d/`, compartido), personaje de partes (el de la Pasarela, con su último atuendo), choques con formas sencillas en lógica pura probada en Node, lugares en JSON (`mundo/`), cámara que sigue y nunca gira, calidad que baja sola.
+- **Los juegos no se conocen por código** (§1): cada juego del catálogo cae solo en el siguiente sitio libre con un portal; darle un sitio fijo y un edificio es una línea en `mundo/lugares.json`.
+- **Entrada:** joystick y botón Brincar en el teléfono; flechas, OK (brinca, o entra en una puerta), botón rojo (brinca) y Atrás («¿A dónde vamos?») en la TV; Brincar en el teléfono como control. La acción `brincar` solo existe en el control y en el mundo.
+- **Respaldo:** el catálogo 2D de siempre (§5) cuando no hay WebGL, si la escena falla o si va muy lento y se acepta el menú sencillo (se recuerda en el aparato), y con `?menu2d`. Botones para cambiar entre los dos. Nunca pantalla en blanco.
+- **Memoria de la TV:** con un juego abierto, el mundo se libera en la TV y se vuelve a armar al regresar; en el teléfono solo se pausa.
+- **Guardar:** los cristales encontrados se guardan como los datos de un juego (id `_mundo`), así se sincronizan con la nube (§7).
+
+Todo el detalle (datos, cómo agregar edificios, sitios y plataformas, física, cámara, rendimiento y pruebas) está en [docs/MUNDO.md](docs/MUNDO.md).

@@ -9,6 +9,7 @@ function modoInicial() {
 
 export const state = {
   modo: modoInicial(),       // "tactil" (teléfono/tableta) o "tv" (pantalla grande, se juega con control)
+  vista: "2d",               // menú principal: "mundo" (3D, #25) o "2d" (la cuadrícula de tarjetas). main.js lo decide al arrancar
   cargando: true,
   juegos: [],                // manifiestos válidos, en el orden de catalogo.json
   errores: [],               // manifiestos que no se pudieron leer (se ven en la consola, no se le enseñan a Noelia)
