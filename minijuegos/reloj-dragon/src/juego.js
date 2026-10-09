@@ -13,7 +13,7 @@ import { pista } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA, INICIO_GUIA,
   esExplicacion, focoTrasExplicacion, estadoExplicacion, relojExplicacion,
-  efectoDialogoGuia, ignoraTrasCerrar, efectoAtrasGuia, seguirGuia,
+  efectoDialogoGuia, ignoraTrasCerrar, efectoAtrasGuia, seguirGuia, guiaBloqueada,
 } from "./guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, nivelDe, cumplirReto,
@@ -45,6 +45,9 @@ let focoSalir = "";
 let relojFocus = false;
 let fondoToque = false;
 let explicarGen = 0;
+let vozGen = 0;
+let pasoAparecio = 0;
+let vozSigue = false;
 let cerradoEn = 0;
 
 try {
@@ -75,9 +78,21 @@ function hablar(texto, alTerminar, alFallar, alEmpezar) {
 }
 
 // La explicación ya se dice en programarExplicacion, para enganchar el fin de la voz.
+function pasoCerrado() {
+  return guiaBloqueada({ ahora: Date.now(), aparecio: pasoAparecio, vozSigue });
+}
+
 function hablarPasoGuia() {
   if (!guia || esExplicacion(guia.paso)) return;
-  hablar(vozPaso(guia.paso, esTv()));
+  const mio = ++vozGen;
+  vozSigue = false;
+  hablar(vozPaso(guia.paso, esTv()), () => {
+    if (mio === vozGen) vozSigue = false;
+  }, () => {
+    if (mio === vozGen) vozSigue = false;
+  }, () => {
+    if (mio === vozGen) vozSigue = true;
+  });
 }
 
 const guardar = () => Noli.guardar(pr);
@@ -362,6 +377,8 @@ function luzGuia() {
 }
 
 function pintarGuia(focoId) {
+  pasoAparecio = Date.now();
+  vozSigue = false;
   const paso = guia.paso;
   const luz = luzGuia();
   const listoOn = paso === 4 && misma(guia.reloj, META_GUIA);
@@ -461,10 +478,13 @@ function programarExplicacion() {
   const paso = guia.paso;
   const linea = vozPaso(paso, esTv());
   const gen = ++explicarGen;
+  pasoAparecio = Date.now();
+  vozSigue = false;
   const t0 = performance.now();
   let vozEstado = estadoExplicacion();
   // La meta sale siempre de t0. Un onerror inmediato o tarde, o un onstart que no llega,
   // deja los 2 s. Si el temporizador avisa antes, se vuelve a pedir lo que falta.
+  const callo = () => { if (gen === explicarGen) vozSigue = false; };
   const revisar = (evento) => {
     if (gen !== explicarGen || !guia || guia.paso !== paso) return;
     if (overlay) return;
@@ -477,15 +497,18 @@ function programarExplicacion() {
     explicarGen++;
     seguirExplicacion();
   };
-  const alFallar = () => revisar("error");
-  callar();
-  const hablada = hablar(linea, () => revisar("end"), alFallar, () => revisar("start"));
+  const alFallar = () => { callo(); revisar("error"); };
+  const hablada = hablar(linea, () => { callo(); revisar("end"); }, alFallar, () => {
+    if (gen === explicarGen) vozSigue = true;
+    revisar("start");
+  });
   if (!hablada) vozEstado = relojExplicacion(vozEstado, "error", performance.now() - t0).estado;
   revisar("");
 }
 
 function seguirExplicacion() {
   if (!guia || !esExplicacion(guia.paso)) return;
+  if (pasoCerrado()) return;
   guia = aplicarGuia(guia, { tipo: "seguir", reloj: guia.reloj });
   pintarGuia(focoTrasExplicacion(guia.paso));
   hablarPasoGuia();
@@ -808,6 +831,8 @@ function preguntarSalir() {
   if (overlay) return;
   if (guia && efectoDialogoGuia(true) === "pausar") {
     explicarGen++;
+    vozGen++;
+    vozSigue = false;
     cortar();
     callar();
   }
@@ -878,6 +903,10 @@ function teclaPoner(accion) {
       seguirExplicacion();
       return true;
     }
+  }
+  if (guia && guia.paso === 0 && accion === "ok") {
+    const act = document.activeElement?.dataset?.act;
+    if (act === "escena" && pasoCerrado()) return true;
   }
   const ctrl = document.activeElement?.dataset?.ctrl;
   if ((accion === "arriba" || accion === "abajo") && (ctrl === "hora" || ctrl === "minutos")) {
@@ -963,6 +992,7 @@ $main.addEventListener("click", (ev) => {
   }
   if (act === "escena") {
     if (!guia) return;
+    if (guia.paso === 0 && pasoCerrado()) return;
     const antes = guia.paso;
     guia = aplicarGuia(guia, { tipo: "escena", reloj: guia.reloj });
     if (guia.paso !== antes) { pintarGuia("escena"); hablarPasoGuia(); }

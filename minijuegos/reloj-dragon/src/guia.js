@@ -9,6 +9,10 @@ export const INICIO_GUIA = { h: 1, m: 0 };
 // o solos: sin voz a los 2 s; con voz, cuando termina, y nunca más de 3 s.
 export const ESPERA_EXPLICAR_MS = 2000;
 export const ESPERA_VOZ_MAX_MS = 3000;
+/** Tras pintar un paso no entran OK ni toques: al menos 1 s. */
+export const GUIA_CIERRE_MS = 1000;
+/** A los 3 s el paso se abre aunque la voz siga. */
+export const GUIA_TOPE_MS = ESPERA_VOZ_MAX_MS;
 // Tras cerrar «¿Salir?» (fondo o Seguir) no entran toques ni OK: el segundo toque caería debajo.
 export const TRAS_CERRAR_MS = 400;
 
@@ -73,6 +77,16 @@ export function aceptaListoGuia(msTrasCerrar) {
 // Abrir «¿Salir?» pausa el paso. Seguir lo reinicia entero, sin cambiar de paso.
 export function efectoDialogoGuia(abierto) {
   return abierto ? "pausar" : "reiniciar";
+}
+
+// Tras pintar un paso no entran OK ni toques: al menos 1 s, o hasta que
+// acabe la frase, lo que dure más. A los 3 s se abre aunque la voz siga.
+// Comparte el instante con los 400 ms de «¿Salir?»: no se suman.
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
 }
 
 export function ignoraTrasCerrar(ms) {

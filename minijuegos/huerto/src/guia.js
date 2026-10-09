@@ -10,6 +10,10 @@ export const GUIA = {
 export const GUIA_TOQUE_MS = 2000;
 /** Tope de la espera cuando la voz del paso sigue sonando. */
 export const GUIA_VOZ_MAX_MS = 3000;
+/** Tras pintar un paso no entran OK ni toques: al menos 1 s. */
+export const GUIA_CIERRE_MS = 1000;
+/** A los 3 s el paso se abre aunque la voz siga. */
+export const GUIA_TOPE_MS = GUIA_VOZ_MAX_MS;
 /** Tras cerrar «¿Salir?», toques y OK no caen en lo de debajo. */
 export const GUARDIA_SALIR_MS = 400;
 
@@ -106,6 +110,16 @@ export function relojTrasEvento(estado, evento, transcurrido) {
   else if (s.termino) nombre = "fin";
   else if (s.arranco) nombre = "sigue";
   return { estado: s, ...esperaTrasVoz({ evento: nombre, transcurrido }) };
+}
+
+// Tras pintar un paso no entran OK ni toques: al menos 1 s, o hasta que
+// acabe la frase, lo que dure más. A los 3 s se abre aunque la voz siga.
+// Comparte el instante con los 400 ms de «¿Salir?»: no se suman.
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
 }
 
 /** En el teléfono, tocar lo oscuro de «¿Salir?» es Seguir. En la tele, no. */

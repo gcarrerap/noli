@@ -33,9 +33,12 @@ export function calentarVoces(sintesis) {
 
 if (typeof window !== "undefined") calentarVoces();
 
+let hablaToken = 0;
+
 export function callar() {
   const s = typeof window !== "undefined" ? window.speechSynthesis : null;
-  try { if (s && (s.speaking || s.pending)) s.cancel(); } catch { /* sin voz */ }
+  hablaToken++;
+  try { if (s) s.cancel(); } catch { /* sin voz */ }
 }
 
 // true si speak no falló en el acto. alTerminar solo corre si de verdad acabó.
@@ -59,19 +62,31 @@ export function decir(texto, lang, alTerminar, alFallar, alEmpezar) {
     fallo = true;
     if (typeof alFallar === "function") alFallar();
   };
+  const mio = ++hablaToken;
+  const u = new U(texto);
+  u.lang = lang || LANG;
+  u.rate = 0.92;
+  if (vozElegida) u.voice = vozElegida;
+  u.onstart = () => {
+    if (cerrado || mio !== hablaToken) return;
+    if (typeof alEmpezar === "function") alEmpezar();
+  };
+  u.onend = () => { if (mio === hablaToken) acabar(); };
+  u.onerror = () => { if (mio === hablaToken) fallar(); };
+  const lanzar = () => {
+    if (mio !== hablaToken) return;
+    try { s.speak(u); } catch { fallar(); }
+  };
   try {
+    // cancel() y speak() en el mismo turno hacen que Chrome diga la frase varias veces.
+    // Si cancel() no termina en el acto, se habla una sola vez en el turno siguiente.
     if (s.speaking || s.pending) s.cancel();
-    const u = new U(texto);
-    u.lang = lang || LANG;
-    u.rate = 0.92;
-    if (vozElegida) u.voice = vozElegida;
-    u.onstart = () => {
-      if (cerrado) return;
-      if (typeof alEmpezar === "function") alEmpezar();
-    };
-    u.onend = acabar;
-    u.onerror = fallar;
-    s.speak(u);
+    if (mio !== hablaToken) return false;
+    if (s.speaking || s.pending) {
+      setTimeout(lanzar, 0);
+      return true;
+    }
+    lanzar();
     return !fallo;
   } catch {
     return false;

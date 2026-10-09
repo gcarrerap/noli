@@ -19,7 +19,7 @@ import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA,
   esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS, ESPERA_VOZ_MAX_MS, esperaExplicar,
   TRAS_CERRAR_MS, debeAvanzarExplicacion, efectoDialogoGuia, ignoraTrasCerrar,
-  estadoExplicacion, relojExplicacion,
+  estadoExplicacion, relojExplicacion, guiaBloqueada, GUIA_CIERRE_MS,
   aceptaListoGuia, efectoAtrasGuia, seguirGuia,
 } from "../src/guia.js";
 import { decir } from "../src/voz.js";
@@ -305,6 +305,28 @@ test("tras cerrar ¿Salir? un toque de 90 a 300 ms no cae debajo", () => {
   assert.match(src, /act === "saltar"/);
   const rama = pointer.slice(pointer.indexOf("ignoraTrasCerrar"), pointer.indexOf("partida?.fase"));
   assert.equal(/tragar\s*=\s*true/.test(rama), false, "el cierre del diálogo no deja un trago para el toque siguiente");
+});
+
+test("un OK a los 100 ms no avanza; a los 1,1 s con la voz acabada sí", () => {
+  const epoca = 1.7e12;
+  const aparecio = epoca;
+  function alOk(paso, ahora, vozSigue) {
+    if (guiaBloqueada({ ahora, aparecio, vozSigue })) return paso;
+    return paso + 1;
+  }
+  assert.equal(GUIA_CIERRE_MS, 1000);
+  assert.equal(alOk(0, epoca + 100, false), 0, "a los 100 ms no avanza");
+  assert.equal(alOk(1, epoca + 1100, false), 2, "a los 1,1 s con la voz acabada sí");
+  assert.equal(alOk(1, epoca + 1100, true), 1, "si la voz sigue, todavía no");
+  assert.equal(guiaBloqueada({ ahora: epoca + 3000, aparecio, vozSigue: true }), false);
+  assert.equal(ignoraTrasCerrar(500), false, "los 400 ms ya pasaron");
+  assert.equal(guiaBloqueada({ ahora: epoca + 500, aparecio, vozSigue: false }), true, "el segundo del paso sigue, sin sumar");
+  const src = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const seguir = src.slice(src.indexOf("function seguirExplicacion"), src.indexOf("function listoGuia"));
+  const tecla = src.slice(src.indexOf("function teclaPoner"), src.indexOf("const IR"));
+  assert.match(seguir, /pasoCerrado\(\)/);
+  assert.match(tecla, /pasoCerrado\(\)/);
+  assert.match(src, /act === "escena"[\s\S]{0,180}pasoCerrado\(\)/);
 });
 
 test("con ¿Salir? abierto la guía no avanza sola y Seguir reinicia la espera", () => {
@@ -629,4 +651,29 @@ test("la corta no se queda colgada si la voz falla al momento o tarde", () => {
   assert.equal(simularExplicacion([{ t: 100, tipo: "start" }, { t: 2600, tipo: "end" }]), 2600);
   assert.equal(simularExplicacion([{ t: 100, tipo: "start" }, { t: 500, tipo: "end" }]), 2000);
   assert.equal(simularExplicacion([{ t: 4000, tipo: "error" }]), 2000, "sin onstart no se espera al error de los 4 s");
+});
+
+test("tras Seguir, La corta se dice una sola vez aunque cancel() tarde", async () => {
+  class Utterance { constructor(text) { this.text = text; } }
+  let n = 0;
+  const s = {
+    speaking: true,
+    pending: false,
+    getVoices: () => [{ lang: "es-MX" }],
+    addEventListener() {},
+    cancel() {},
+    speak() { n++; this.speaking = true; },
+  };
+  const antes = globalThis.window;
+  globalThis.window = { speechSynthesis: s, SpeechSynthesisUtterance: Utterance };
+  try {
+    decir("La corta dice la hora.", "es-MX");
+    decir("La corta dice la hora.", "es-MX");
+    decir("La corta dice la hora.", "es-MX");
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(n, 1);
+  } finally {
+    if (antes === undefined) delete globalThis.window;
+    else globalThis.window = antes;
+  }
 });

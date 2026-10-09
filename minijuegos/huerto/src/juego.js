@@ -1,6 +1,6 @@
 // Pantallas del Huerto. La lógica está en los otros módulos.
 import { Noli, moverFoco, focoInicial } from "../../../kit/noli.js";
-import { decir } from "./voz.js";
+import { decir, callar } from "./voz.js";
 import { clic, zumba, listo as sonidoListo, bien, desbloquear } from "./sonido.js";
 import { TEXTOS, capital } from "./textos.js";
 import { SEMILLAS, semillaNueva } from "./semillas.js";
@@ -12,7 +12,7 @@ import { pista, marcaPasoCompleto } from "./pista.js";
 import {
   GUIA, GUARDIA_SALIR_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
   topeGuia, efectoAtrasGuia, lineaGuia, cadenaFocoGuia, focoAlCerrarSalir,
-  relojTrasEvento, entradaTrasCerrar, toqueEnVelo,
+  relojTrasEvento, entradaTrasCerrar, toqueEnVelo, guiaBloqueada,
 } from "./guia.js";
 import {
   cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
@@ -44,6 +44,10 @@ let token = 0;
 let pistaToken = 0;
 let relojGuia = 0;
 let vozPasoGen = 0;
+let vozGen = 0;
+let pasoAparecio = 0;
+let vozSigue = false;
+let pasoMarcado = "";
 let cerradoEn = null;
 
 function hablar(texto, opts) {
@@ -65,8 +69,40 @@ function guardiaTrasSalir(tipo) {
 
 function callarPaso() {
   vozPasoGen++;
-  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
-  try { if (s) s.cancel(); } catch { /* sin voz */ }
+  vozGen++;
+  vozSigue = false;
+  callar();
+}
+
+function anotarPaso(id, forzar) {
+  if (!forzar && pasoMarcado === id) return;
+  pasoMarcado = id;
+  pasoAparecio = Date.now();
+  vozSigue = false;
+}
+
+function pasoCerrado() {
+  return guiaBloqueada({ ahora: Date.now(), aparecio: pasoAparecio, vozSigue });
+}
+
+function decirGuia(texto, opts) {
+  const mio = ++vozGen;
+  const o = opts && typeof opts === "object" ? opts : {};
+  const ok = hablar(texto, {
+    alEmpezar: () => {
+      if (mio === vozGen) vozSigue = true;
+      if (typeof o.alEmpezar === "function") o.alEmpezar();
+    },
+    alTerminar: () => {
+      if (mio === vozGen) vozSigue = false;
+      if (typeof o.alTerminar === "function") o.alTerminar();
+    },
+    alFallar: () => {
+      if (mio === vozGen) vozSigue = false;
+      if (typeof o.alFallar === "function") o.alFallar();
+    },
+  });
+  return ok;
 }
 
 function cargarArte() {
@@ -429,7 +465,7 @@ function rearmarPasoMostrar() {
     relojGuia = setTimeout(() => revisar(""), Math.max(0, plan.espera));
   };
   const alFallar = () => revisar("error");
-  const hablo = hablar(textoGuia("pedido", esTv()).leer, {
+  const hablo = decirGuia(textoGuia("pedido", esTv()).leer, {
     alEmpezar: () => revisar("start"),
     alTerminar: () => revisar("end"),
     alFallar,
@@ -517,6 +553,7 @@ function pintarJuego(focoId) {
   const e = partida.encargo;
   const guia = partida.modo === "guia";
   const paso = guia ? pasoGuia(estadoGuia()) : null;
+  if (guia) anotarPaso(paso);
   const coach = guia ? coachGuia() : null;
   const ayuda = guia ? null : pistaAhora();
   partida._flecha = ayuda && ayuda.flecha;
@@ -603,6 +640,7 @@ function htmlMuestra(controles) {
 
 function aceptarPedido() {
   if (!partida || partida.acepto || partida.saliendo) return;
+  if (pasoCerrado()) return;
   partida.acepto = true;
   partida.aviso = "";
   partida.t0 = Date.now();
@@ -610,7 +648,7 @@ function aceptarPedido() {
   relojGuia = 0;
   clic();
   pintarJuego(focoGuia(estadoGuia()));
-  hablar(textoGuia("filas", esTv()).leer);
+  decirGuia(textoGuia("filas", esTv()).leer);
 }
 
 function step(campo, delta) {
@@ -643,14 +681,15 @@ function step(campo, delta) {
   if (recien) sonidoListo();
   if (partida.modo === "guia") {
     const paso = pasoGuia(estadoGuia());
-    if (paso === "cada" && partida._dicho !== "cada") { partida._dicho = "cada"; hablar(textoGuia("cada", esTv()).leer); }
-    if (paso === "listo" && partida._dicho !== "listo") { partida._dicho = "listo"; hablar(textoGuia("listo", esTv()).leer); }
+    if (paso === "cada" && partida._dicho !== "cada") { partida._dicho = "cada"; decirGuia(textoGuia("cada", esTv()).leer); }
+    if (paso === "listo" && partida._dicho !== "listo") { partida._dicho = "listo"; decirGuia(textoGuia("listo", esTv()).leer); }
   }
 }
 
 function pulsarListo() {
   if (!partida || partida.saliendo || partida.espera) return;
   if (partida.fase !== "plantar" && partida.fase !== "giro2") return;
+  if (partida.modo === "guia" && listoGuiaActivo(estadoGuia()) && pasoCerrado()) return;
   if (partida.modo === "guia" && !listoGuiaActivo(estadoGuia())) return;
   const ok = coincide(partida.filas, partida.porFila, partida.encargo, partida.fase);
   if (!ok) {
@@ -678,7 +717,7 @@ function pulsarListo() {
     prepararOpciones();
     programarPista();
     pintarJuego("op-0");
-    if (partida.modo === "guia") hablar(textoGuia("abejas", esTv()).leer);
+    if (partida.modo === "guia") decirGuia(textoGuia("abejas", esTv()).leer);
     else hablar(e.sumaLeer || "Cuenta con la abeja.");
     return;
   }
@@ -690,6 +729,7 @@ function pulsarListo() {
 function elegirOpcion(n) {
   if (!partida || partida.saliendo || partida.espera) return;
   if (partida.fase !== "cosecha" && partida.fase !== "saltar") return;
+  if (partida.modo === "guia" && pasoGuia(estadoGuia()) === "abejas" && pasoCerrado()) return;
   const e = partida.encargo;
   const correcto = e.secuencia[partida.salto];
   if (n !== correcto) {
@@ -825,6 +865,7 @@ function seguirJugando() {
   partida.saliendo = false;
   cerradoEn = typeof performance !== "undefined" ? performance.now() : Date.now();
   const foco = focoAlCerrarSalir(guardado, partida.modo === "guia", estadoGuia());
+  if (partida.modo === "guia" && guiaAvanzaConToque(pasoGuia(estadoGuia()))) pasoMarcado = "";
   pintarJuego(foco || undefined);
   rearmarPasoMostrar();
 }

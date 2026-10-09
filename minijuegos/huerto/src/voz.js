@@ -41,6 +41,14 @@ export function calentarVoces(sintesis) {
 
 if (typeof window !== "undefined") calentarVoces();
 
+let hablaToken = 0;
+
+export function callar() {
+  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
+  hablaToken++;
+  try { if (s) s.cancel(); } catch { /* sin voz */ }
+}
+
 // true solo si speak no falló en el acto. Un error o un speak que no arranca
 // no llaman alTerminar: eso cerraba el paso en 1 ms. El juego espera entonces 2 s.
 // getVoices() vacío no es un fallo: se habla igual, sin elegir una voz.
@@ -65,19 +73,31 @@ export function decir(texto, { activo = true, alTerminar, alFallar, alEmpezar } 
     fallo = true;
     if (typeof alFallar === "function") alFallar();
   };
+  const mio = ++hablaToken;
+  const u = new U(limpio);
+  u.lang = LANG;
+  u.rate = 0.92;
+  if (vozElegida) u.voice = vozElegida;
+  u.onstart = () => {
+    if (cerrado || mio !== hablaToken) return;
+    if (typeof alEmpezar === "function") alEmpezar();
+  };
+  u.onend = () => { if (mio === hablaToken) terminar(); };
+  u.onerror = () => { if (mio === hablaToken) fallar(); };
+  const lanzar = () => {
+    if (mio !== hablaToken) return;
+    try { s.speak(u); } catch { fallar(); }
+  };
   try {
+    // cancel() y speak() en el mismo turno hacen que Chrome diga la frase varias veces.
+    // Si cancel() no termina en el acto, se habla una sola vez en el turno siguiente.
     if (s.speaking || s.pending) s.cancel();
-    const u = new U(limpio);
-    u.lang = LANG;
-    u.rate = 0.92;
-    if (vozElegida) u.voice = vozElegida;
-    u.onstart = () => {
-      if (cerrado) return;
-      if (typeof alEmpezar === "function") alEmpezar();
-    };
-    u.onend = terminar;
-    u.onerror = fallar;
-    s.speak(u);
+    if (mio !== hablaToken) return false;
+    if (s.speaking || s.pending) {
+      setTimeout(lanzar, 0);
+      return true;
+    }
+    lanzar();
     return !fallo;
   } catch {
     fallar();

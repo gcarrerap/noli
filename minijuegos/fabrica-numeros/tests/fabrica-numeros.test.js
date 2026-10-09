@@ -26,8 +26,8 @@ import { resolverAtras, accionAtras } from "../src/salida.js";
 import {
   guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia,
   esperaVozGuia, esperaTrasVoz, avanzaSoloGuia, relojDeGuia, toqueTrasSalir, resolverToqueGuia,
-  relojPasoVoz, entradaSolapada,
-  GUIA_VOZ_TOPE_MS, GUIA_VOZ_MIN_MS, GUIA_TRAS_SALIR_MS,
+  relojPasoVoz, entradaSolapada, guiaBloqueada,
+  GUIA_VOZ_TOPE_MS, GUIA_VOZ_MIN_MS, GUIA_TRAS_SALIR_MS, GUIA_CIERRE_MS,
 } from "../src/guia.js";
 import { decir } from "../src/voz.js";
 
@@ -660,7 +660,25 @@ test("¿Salir? pausa la guía y el toque de después no la salta", () => {
   assert.equal(entradaSolapada({ ms: epoca - (epoca - 200), pasoMs: 400 }), true);
   assert.equal(entradaSolapada({ ms: epoca - (epoca - 560), pasoMs: 400 }), false);
   assert.equal(entradaSolapada({ ms: epoca, pasoMs: 1000 }), false);
+});
+
+test("un OK a los 100 ms no avanza; a los 1,1 s con la voz acabada sí", () => {
+  const epoca = 1.7e12;
+  const aparecio = epoca;
+  function alOk(paso, ahora, vozSigue) {
+    if (guiaBloqueada({ ahora, aparecio, vozSigue })) return paso;
+    return paso + 1;
+  }
+  assert.equal(GUIA_CIERRE_MS, 1000);
+  assert.equal(alOk(0, epoca + 100, false), 0, "a los 100 ms no avanza");
+  assert.equal(alOk(0, epoca + 1100, false), 1, "a los 1,1 s con la voz acabada sí");
+  assert.equal(alOk(3, epoca + 1100, true), 3, "si la voz sigue, todavía no");
+  assert.equal(guiaBloqueada({ ahora: epoca + 3000, aparecio, vozSigue: true }), false);
+  assert.equal(toqueTrasSalir(500), false, "los 400 ms ya pasaron");
+  assert.equal(guiaBloqueada({ ahora: epoca + 500, aparecio, vozSigue: false }), true, "el segundo del paso sigue, sin sumar");
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const cuerpo = juego.slice(juego.indexOf("function avanzarGuia"), juego.indexOf("function guiaAvanza"));
+  assert.match(cuerpo, /pasoCerrado\(\)/);
   assert.match(juego, /relojDeGuia\(true\)/);
   assert.match(juego, /relojDeGuia\(false\)/);
   assert.match(juego, /entradaSolapada\(\{ ms: Date\.now\(\) - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS \}\)/);
@@ -789,6 +807,31 @@ test("el paso que solo se muestra no se queda colgado si la voz falla al momento
   assert.equal(relojPasoVoz(vivo.estado, "", 3000).avanzar, true);
   assert.equal(relojPasoVoz(vivo.estado, "end", 2600).avanzar, true);
   assert.equal(relojPasoVoz(vivo.estado, "end", 500).espera, 1500);
+});
+
+test("tras Seguir, ¡Igual! se dice una sola vez aunque cancel() tarde", async () => {
+  class Utterance { constructor(text) { this.text = text; } }
+  let n = 0;
+  const s = {
+    speaking: true,
+    pending: false,
+    getVoices: () => [{ lang: "es-ES" }],
+    addEventListener() {},
+    cancel() { /* Chrome no suelta speaking en el acto */ },
+    speak() { n++; this.speaking = true; },
+  };
+  const antes = globalThis.window;
+  globalThis.window = { speechSynthesis: s, SpeechSynthesisUtterance: Utterance };
+  try {
+    decir("¡Igual!", "es-ES");
+    decir("¡Igual!", "es-ES");
+    decir("¡Igual!", "es-ES");
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(n, 1);
+  } finally {
+    if (antes === undefined) delete globalThis.window;
+    else globalThis.window = antes;
+  }
 });
 
 test("la guía vista se conserva al cargar, sin subir la versión del progreso", () => {

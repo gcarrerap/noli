@@ -5,6 +5,10 @@
 
 /** Tope de un paso que solo se muestra: espera a la voz, y a los 3 s avanza igual. */
 export const GUIA_VOZ_TOPE_MS = 3000;
+/** Tras pintar un paso no entran OK ni toques: al menos 1 s. */
+export const GUIA_CIERRE_MS = 1000;
+/** A los 3 s el paso se abre aunque la voz siga. */
+export const GUIA_TOPE_MS = GUIA_VOZ_TOPE_MS;
 /** Sin voz, si falla o si no llega a sonar: el temporizador de 2 s. Nunca antes. */
 export const GUIA_VOZ_MIN_MS = 2000;
 /** Tras cerrar «¿Salir?», toques y OK no llegan al juego. Así un segundo toque no cae debajo. */
@@ -78,6 +82,16 @@ export function avanzaSoloGuia({ dialogo = false, empezo = false, error = false,
  */
 export function relojDeGuia(dialogoAbierto) {
   return dialogoAbierto ? "pausa" : "reiniciar";
+}
+
+// Tras pintar un paso no entran OK ni toques: al menos 1 s, o hasta que
+// acabe la frase, lo que dure más. A los 3 s se abre aunque la voz siga.
+// Comparte el instante con los 400 ms de «¿Salir?»: no se suman.
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
 }
 
 /** true mientras no hayan pasado unos 400 ms desde que se cerró el diálogo. */

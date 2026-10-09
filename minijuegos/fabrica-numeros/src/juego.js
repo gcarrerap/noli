@@ -24,7 +24,7 @@ import {
 import { resolverAtras, accionAtras } from "./salida.js";
 import {
   guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, relojPasoVoz,
-  relojDeGuia, entradaSolapada, resolverToqueGuia, GUIA_TRAS_SALIR_MS,
+  relojDeGuia, entradaSolapada, resolverToqueGuia, guiaBloqueada, GUIA_TRAS_SALIR_MS,
 } from "./guia.js";
 
 const $main = document.getElementById("juego");
@@ -57,6 +57,8 @@ let relojDiez = 0;
 let relojGuia = 0;
 let guiaVozToken = 0;
 let cerroSalir = 0;
+let pasoAparecio = 0;
+let vozSigue = false;
 
 function luego(fn, ms) {
   const t = ++token;
@@ -296,7 +298,10 @@ function limpiarRelojGuia() {
 function programarGuia() {
   if (relojDeGuia(saliendo) === "pausa") {
     limpiarRelojGuia();
-    if (esGuia() && guiaAvanzaConToque(partida.paso)) callar();
+    if (esGuia() && guiaAvanzaConToque(partida.paso)) {
+      vozSigue = false;
+      callar();
+    }
     return;
   }
   if (!esGuia() || !guiaAvanzaConToque(partida.paso)) {
@@ -308,10 +313,13 @@ function programarGuia() {
   const paso = partida.paso;
   const gen = ++guiaVozToken;
   partida.relojPaso = paso;
-  const t0 = Date.now();
+  pasoAparecio = Date.now();
+  vozSigue = false;
+  const t0 = pasoAparecio;
   let vozEstado = { arranco: false, error: false, termino: false, ms: 0 };
   // La meta sale de t0. onerror inmediato o tarde, o un onstart que no llega, son 2 s.
   // Si el temporizador se adelanta, se vuelve a armar con lo que falta.
+  const callo = () => { if (gen === guiaVozToken) vozSigue = false; };
   const revisar = (evento) => {
     if (gen !== guiaVozToken) return;
     if (saliendo) return;
@@ -327,14 +335,22 @@ function programarGuia() {
     if (!esGuia() || !partida || partida.paso !== paso) return;
     avanzarGuia();
   };
-  const alFallar = () => revisar("error");
-  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", () => revisar("end"), alFallar, () => revisar("start"));
+  const alFallar = () => { callo(); revisar("error"); };
+  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", () => { callo(); revisar("end"); }, alFallar, () => {
+    if (gen === guiaVozToken) vozSigue = true;
+    revisar("start");
+  });
   if (!empezo) vozEstado = relojPasoVoz(vozEstado, "error", Date.now() - t0).estado;
   revisar("");
 }
 
+function pasoCerrado() {
+  return guiaBloqueada({ ahora: Date.now(), aparecio: pasoAparecio, vozSigue });
+}
+
 function avanzarGuia() {
   if (!partida || partida.modo !== "guia") return;
+  if (guiaAvanzaConToque(partida.paso) && pasoCerrado()) return;
   limpiarRelojGuia();
   if (partida.paso >= 4) return terminarGuia();
   partida.paso += 1;
@@ -487,6 +503,11 @@ function pintar(focoId) {
     ${htmlFeedback()}`, "problema", focoId || defecto);
   if (guia) $main.classList.add("guia");
   if (guia && guiaAvanzaConToque(partida.paso)) $main.classList.add("guia-mira");
+  if (guia && partida.pasoPintado !== partida.paso) {
+    partida.pasoPintado = partida.paso;
+    pasoAparecio = Date.now();
+    vozSigue = false;
+  }
   programarGuia();
   programarPista();
 }
@@ -861,7 +882,10 @@ function abrirSalir() {
   limpiarDiez();
   if (relojDeGuia(true) === "pausa") {
     limpiarRelojGuia();
-    if (esGuia() && guiaAvanzaConToque(partida.paso)) callar();
+    if (esGuia() && guiaAvanzaConToque(partida.paso)) {
+      vozSigue = false;
+      callar();
+    }
   }
   if (partida && partida.espera) {
     esperaPendiente = true;
