@@ -20,7 +20,7 @@ export function siguientePaso(estado, objetivo) {
   for (const b of ["c", "d", "u"]) {
     if ((estado[b] || 0) === 10) {
       const que = NOMBRE[b][1];
-      return { texto: `¡10 ${que}! Toca Pegar.`, banda: b, listo: false, canje: "pegar" };
+      return { texto: `¡10 ${que}! Toca la máquina o sube otra vez.`, banda: b, listo: false, canje: "pegar" };
     }
   }
   if ((estado.mil || 0) !== (meta.mil || 0)) {
@@ -63,9 +63,24 @@ export function puedeHablarDeCanje(estado, pedido) {
   return exigeCanje(pedido);
 }
 
-export function pistaCorta(nivel) {
+export function glifoSubir(modo) {
+  return modo === "tv" ? "▲" : "+";
+}
+
+// En pantalla el control es + o ▲. La voz dice «sube», sin símbolos.
+export function textoEnPantalla(texto, modo = "tactil") {
+  return String(texto).replaceAll(" sube ", ` ${glifoSubir(modo)} `);
+}
+
+export function avisoDiez(banda, modo = "tactil") {
+  const que = banda === "c" ? "placas" : banda === "d" ? "barras" : "cubitos";
+  const frase = `¡10 ${que}! Toca la máquina o sube otra vez.`;
+  return { pantalla: textoEnPantalla(frase, modo), voz: frase };
+}
+
+export function pistaCorta(nivel, modo = "tactil") {
   const n = nivel | 0;
-  if (n <= 2) return "▲ pon piezas";
+  if (n <= 2) return `${glifoSubir(modo)} pon piezas`;
   if (n === 3) return "0 = banda vacía";
   if (n === 4) return "Escucha y arma";
   if (n === 5) return "Mira el número del camión";

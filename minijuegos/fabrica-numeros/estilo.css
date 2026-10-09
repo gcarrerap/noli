@@ -189,12 +189,18 @@ main{max-width:1100px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 
   .gira #engrane-izq,.gira #engrane-der{animation:none}
   .ficha.cae{animation:fade .2s linear forwards}
 }
-html[data-modo="tv"] .pedido{font-size:2rem}
-html[data-modo="tv"] .pm-btn{min-height:72px;min-width:72px}
-html[data-modo="tv"] .piezas.c img{width:34px;height:34px}
-html[data-modo="tv"] .piezas.c img.mil{width:calc(34px * 139 / 92)}
-html[data-modo="tv"] .piezas.d img{height:78px}
-html[data-modo="tv"] .banda{flex-basis:160px}
+html[data-modo="tv"] main{padding:28px 48px 36px;gap:.35rem;max-height:100dvh;overflow:hidden}
+html[data-modo="tv"] .pedido{font-size:1.55rem}
+html[data-modo="tv"] .total{font-size:1.45rem}
+html[data-modo="tv"] .camion-wrap{width:min(300px, 32vw)}
+html[data-modo="tv"] .pm-btn{min-height:64px;min-width:64px}
+html[data-modo="tv"] .piezas{min-height:48px}
+html[data-modo="tv"] .piezas.c img{width:28px;height:28px}
+html[data-modo="tv"] .piezas.c img.mil{width:calc(28px * 139 / 92)}
+html[data-modo="tv"] .piezas.d img{height:56px}
+html[data-modo="tv"] .cartel svg{height:40px}
+html[data-modo="tv"] .riel{height:28px}
+html[data-modo="tv"] .banda{flex-basis:140px;padding:6px;gap:2px}
 
 .barra-accion{display:contents}
 .maq-wrap{position:relative;display:flex;flex:0 0 auto}
@@ -205,7 +211,8 @@ html[data-modo="tv"] .banda{flex-basis:160px}
 .pista{min-height:1.35em;margin:0;font-weight:800;font-size:1.15rem}
 .con-ico{display:inline-flex;align-items:center;justify-content:center;gap:.35rem}
 .con-ico .ico{width:1.35em;height:1.35em;flex:none}
-.saltar{align-self:center}
+.saltar{min-height:64px;min-width:5.5em;padding:.2em .9em;border-radius:999px;background:var(--card);border:2px solid var(--line);font-weight:800;box-shadow:var(--sombra)}
+.p-problema.guia-mira .mesa{pointer-events:none}
 .pide{font-size:.72em;color:var(--muted);font-weight:800}
 .enviar.listo{flex-direction:row;gap:.35rem;box-shadow:0 0 0 4px var(--sol), 0 0 16px var(--sol);animation:pulso 1s ease-in-out infinite}
 .maquina-btn.pide-romper{box-shadow:0 0 0 4px var(--coral)}
