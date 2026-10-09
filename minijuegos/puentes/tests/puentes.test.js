@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { rngConSemilla } from "../src/rng.js";
 import {
   longitudReal, marcaAlFinal, confirmarCero, decirUnidad, hablaSegura, cerca, opcionesCerca,
-  combinacion, cruzarBrilla, cubosDe, seMidioBien, moverRegla, U_CM, U_IN,
+  combinacion, cruzarBrilla, cubosDe, seMidioBien, moverRegla, U_CM, U_IN, resultadoListo,
 } from "../src/medida.js";
 import {
   crearCruce, sumaValida, unidadDeCruce, planSuma, POR_TURNO, ZONAS, NIVELES_MAX,
@@ -21,9 +21,10 @@ import {
   marcarGuia, cicloUnidad, PARA_SUBIR, VENTANA,
 } from "../src/progreso.js";
 import { retoDelDia, retosCoherentes, estimaBien, META } from "../src/reto.js";
-import { resolverAtras, resolverEntrada, marcarIgnorar, TRAS_DIALOGO_MS, accionAtras } from "../src/salida.js";
+import { resolverAtras, resolverEntrada, marcarIgnorar, TRAS_DIALOGO_MS, accionAtras, entradaIgnorada } from "../src/salida.js";
 import { decir, interpretarVoz, elegirVoz, prepararVoces } from "../src/voz.js";
-import { htmlComparar } from "../src/escena.js";
+import { htmlComparar, posicionRegla, svgInline } from "../src/escena.js";
+import { notaReferencia, explicaBloques } from "../src/frases.js";
 
 const textos = JSON.parse(fs.readFileSync(new URL("../datos/textos.json", import.meta.url), "utf8"));
 const HOY = "2026-10-09";
@@ -133,6 +134,10 @@ test("los bloques mal medidos no cuentan como bien", () => {
   const hueco = cubosDe(4, "hueco");
   assert.ok(hueco.some((c) => c.coral));
   assert.ok(Math.max(...hueco.map((c) => c.x)) > 3);
+  assert.deepEqual(cubosDe(4, "bien").map((c) => c.x), [0, 1, 2, 3]);
+  assert.equal(explicaBloques("hueco", textos), "Había un hueco entre los bloques.");
+  assert.equal(explicaBloques("encimado", textos), "Había bloques encimados.");
+  assert.match(explicaBloques("bien", textos), /pegados/);
   let vioMal = false;
   for (let i = 0; i < 20; i++) {
     const c = crearCruce(1, rngConSemilla("bloques-" + i), { facil: false });
@@ -163,19 +168,50 @@ test("cm primero, pulgadas desde el 3, y Para papás deja una sola", () => {
   assert.equal(/\bmetros?\b|\bpies\b|\bpie\b/.test(sinCm), false);
 });
 
+test("la referencia sigue a la unidad y el desfase deja el 0 fuera del río", () => {
+  for (let i = 0; i < 12; i++) {
+    const c = crearCruce(4, rngConSemilla("ref-in-" + i), { indice: i, ajuste: "in" });
+    assert.equal(c.unidad, "in");
+    assert.ok(c.referencia === "tabla1in" || c.referencia === "clipin");
+    assert.equal(/centímetro/i.test(notaReferencia(c, textos, false)), false);
+    assert.match(notaReferencia(c, textos, true), /pulgada/);
+  }
+  const k = 2;
+  const n = 6;
+  const pos = posicionRegla({ anchoVb: 412, cero: 26, gapU: n * U_CM, desplaza: -k, unidadU: U_CM });
+  assert.equal(pos.left + (-k) * U_CM + k * U_CM, pos.left);
+  assert.equal(pos.left + (-k) * U_CM + (k + n) * U_CM, pos.left + n * U_CM);
+  const larga = textoPista({ nivel: 7, tipo: "desfase", longitud: 6, desplazaInicial: 2, unidad: "cm" }, "completa", textos, "leer");
+  assert.equal(larga, "Empieza en 2 y termina en 8. 8 menos 2 es 6.");
+  assert.equal(textoPista({ nivel: 2, tipo: "medir", longitud: 6, unidad: "cm" }, "frase", textos, "poner"), textos.pistaCero);
+  assert.equal(textoPista({ nivel: 2, tipo: "medir", longitud: 6, unidad: "cm" }, "frase", textos, "tabla"), "");
+  assert.equal(textoPista({ nivel: 2, tipo: "medir", longitud: 6, unidad: "cm" }, "completa", textos, "tabla").includes("orilla"), false);
+  assert.equal(resultadoListo(3, 6, "comparar"), "fallo");
+  assert.equal(resultadoListo(6, 6, "comparar"), "bien");
+  assert.equal(resultadoListo(3, 6, "leer"), "ignorar");
+  assert.match(svgInline('<text><tspan class="unidad"> in</tspan></text>'), /pulg\./);
+  assert.equal(/[^.]in\b/.test(svgInline('<text><tspan class="unidad"> in</tspan></text>')), false);
+});
+
 test("la guía del 6 y el diálogo de salir", () => {
   assert.equal(textoDeGuia(0, textos), "El conejo quiere cruzar.");
-  assert.equal(textoDeGuia(2, textos, "tv"), "Pulsa OK.");
-  assert.equal(vozDeGuia(2, textos, "tv"), "Pulsa OK.");
+  assert.equal(textoDeGuia(2, textos), "Mueve la regla: el 0 va en la orilla.");
+  assert.equal(textoDeGuia(2, textos, "tv"), "Mueve la regla con ◀ ▶ hasta el 0 y pulsa OK.");
+  assert.equal(vozDeGuia(2, textos, "tv"), "Mueve la regla con las flechas hasta el 0 y pulsa OK.");
+  assert.equal(/[◀▶▲▼]/.test(vozDeGuia(2, textos, "tv")), false);
   assert.equal(/\bcm\b|[▲+]/.test(vozDeGuia(5, textos, "tv")), false);
-  assert.equal(saltarAlcanzable(0), true);
+  assert.equal(saltarAlcanzable(0), false);
+  assert.equal(saltarAlcanzable(1), false);
   assert.equal(saltarAlcanzable(2), false);
+  assert.equal(saltarAlcanzable(3), false);
   assert.equal(focoDeGuia(2), "poner");
   assert.notEqual(focoDeGuia(0), "saltar");
 
   let reloj = crearReloj(0, 0);
-  assert.equal(responderGuia(reloj, 0, { tipo: "toque" }).accion, "avanzo");
-  assert.equal(responderGuia(reloj, 0, { tipo: "ok" }).accion, "avanzo");
+  assert.equal(responderGuia(reloj, 0, { tipo: "toque" }).accion, "nada");
+  assert.equal(responderGuia(reloj, 0, { tipo: "ok" }).accion, "nada");
+  assert.equal(responderGuia(reloj, GUIA_CIERRE_MS, { tipo: "toque" }).accion, "avanzo");
+  assert.equal(responderGuia(reloj, GUIA_CIERRE_MS, { tipo: "ok" }).accion, "avanzo");
   assert.equal(debeAvanzarSolo(reloj, GUIA_TOQUE_MS - 1), false);
   assert.equal(debeAvanzarSolo(reloj, GUIA_TOQUE_MS), true);
   assert.equal(debeAvanzarSolo(marcarVozEmpezada(reloj), GUIA_TOQUE_MS), false);
@@ -208,8 +244,11 @@ test("la guía del 6 y el diálogo de salir", () => {
   assert.equal(debeAvanzarSolo(sigue, 7000), true);
   assert.equal(responderGuia(sigue, 5399, { tipo: "toque" }).accion, "ignorar");
   assert.equal(responderGuia(sigue, 5399, { tipo: "ok" }).accion, "ignorar");
-  assert.equal(responderGuia(sigue, 5400, { tipo: "ok" }).accion, "avanzo");
-  assert.equal(limiteEntrada(sigue, "toque"), 5000 + TRAS_DIALOGO_MS);
+  assert.equal(responderGuia(sigue, 5400, { tipo: "ok" }).accion, "nada");
+  assert.equal(responderGuia(sigue, 5000 + GUIA_CIERRE_MS - 1, { tipo: "toque" }).accion, "nada");
+  assert.equal(responderGuia(sigue, 5000 + GUIA_CIERRE_MS, { tipo: "toque" }).accion, "avanzo");
+  assert.equal(limiteEntrada(sigue, "toque"), 5000 + GUIA_CIERRE_MS);
+  assert.equal(limiteEntrada(sigue, "ok"), 5000 + GUIA_CIERRE_MS);
 
   const accion = seguirDialogoGuia(abrirDialogoGuia(crearReloj(0, 2), 10), 5000);
   const suma = 5000 + TRAS_DIALOGO_MS + GUIA_CIERRE_MS;
@@ -260,8 +299,9 @@ test("un speechSynthesis que falla no termina el paso de mirar", () => {
     assert.equal(debeAvanzarSolo(aviso.reloj, 1999), false);
     assert.equal(debeAvanzarSolo(aviso.reloj, 2000), true);
     assert.equal(debeAvanzarSolo(aviso.reloj, 3000), true);
-    assert.equal(responderGuia(aviso.reloj, 50, { tipo: "toque" }).accion, "avanzo");
-    assert.equal(responderGuia(aviso.reloj, 50, { tipo: "ok" }).accion, "avanzo");
+    assert.equal(responderGuia(aviso.reloj, 50, { tipo: "toque" }).accion, "nada");
+    assert.equal(responderGuia(aviso.reloj, 50, { tipo: "ok" }).accion, "nada");
+    assert.equal(responderGuia(aviso.reloj, GUIA_CIERRE_MS, { tipo: "ok" }).accion, "avanzo");
   } finally {
     if (anterior === undefined) delete globalThis.window;
     else globalThis.window = anterior;
@@ -305,8 +345,9 @@ test("getVoices vacío no impide hablar y onend no adelanta el paso", () => {
     assert.equal(debeAvanzarSolo(aviso.reloj, 1999), false);
     assert.equal(debeAvanzarSolo(aviso.reloj, 2000), true);
     assert.equal(debeAvanzarSolo(aviso.reloj, 3000), true);
-    assert.equal(responderGuia(aviso.reloj, 20, { tipo: "toque" }).accion, "avanzo");
-    assert.equal(responderGuia(aviso.reloj, 20, { tipo: "ok" }).accion, "avanzo");
+    assert.equal(responderGuia(aviso.reloj, 20, { tipo: "toque" }).accion, "nada");
+    assert.equal(responderGuia(aviso.reloj, 20, { tipo: "ok" }).accion, "nada");
+    assert.equal(responderGuia(aviso.reloj, GUIA_CIERRE_MS, { tipo: "toque" }).accion, "avanzo");
 
     const paulina = { lang: "es-MX", name: "Paulina" };
     voces.push(paulina);
@@ -363,6 +404,30 @@ test("sin empezar tampoco cuenta como el final", () => {
     if (anterior === undefined) delete globalThis.window;
     else globalThis.window = anterior;
   }
+});
+
+test("los candados aguantan un Date.now de verdad", () => {
+  const epoca = 1_759_000_000_000;
+  assert.notEqual(epoca | 0, epoca);
+  const reloj = crearReloj(epoca, 0);
+  assert.equal(limiteEntrada(reloj, "ok"), epoca + GUIA_CIERRE_MS);
+  assert.equal(responderGuia(reloj, epoca + 173, { tipo: "ok" }).accion, "nada");
+  assert.equal(responderGuia(reloj, epoca + 173, { tipo: "toque" }).accion, "nada");
+  assert.equal(responderGuia(reloj, epoca + GUIA_CIERRE_MS - 1, { tipo: "ok" }).accion, "nada");
+  assert.equal(responderGuia(reloj, epoca + GUIA_CIERRE_MS, { tipo: "ok" }).accion, "avanzo");
+
+  const sigue = seguirDialogoGuia(abrirDialogoGuia(crearReloj(epoca, 1), epoca), epoca);
+  for (const ms of [90, 150, 300]) {
+    assert.equal(responderGuia(sigue, epoca + ms, { tipo: "toque" }).accion, "ignorar");
+    assert.equal(responderGuia(sigue, epoca + ms, { tipo: "ok" }).accion, "ignorar");
+  }
+  assert.equal(responderGuia(sigue, epoca + GUIA_CIERRE_MS, { tipo: "toque" }).accion, "avanzo");
+  assert.equal(entradaIgnorada(marcarIgnorar(epoca), epoca + 90, "toque"), true);
+  assert.equal(entradaIgnorada(marcarIgnorar(epoca), epoca + 150, "ok"), true);
+  assert.equal(entradaIgnorada(marcarIgnorar(epoca), epoca + 300, "toque"), true);
+  assert.equal(resolverEntrada({ ignorarHasta: marcarIgnorar(epoca), ahora: epoca + 90, tipo: "toque" }), "ignorar");
+  assert.equal(resolverEntrada({ ignorarHasta: marcarIgnorar(epoca), ahora: epoca + 400, tipo: "ok" }), "seguir");
+  assert.equal(entradaIgnorada(epoca | 0, epoca + 90, "toque"), false);
 });
 
 test("8 de 10 sube, la pista completa no es a la primera y la racha no baja el nivel", () => {

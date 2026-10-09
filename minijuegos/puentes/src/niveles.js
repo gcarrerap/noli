@@ -100,7 +100,7 @@ function cruceMedir(base, rnd, facil, tv) {
 function cruceEstima(base, rnd, facil, tv, libre) {
   const max = maxRegla(base.unidad, tv);
   const longitud = entre(rnd, 3, facil ? Math.min(8, max) : max);
-  const refs = ["cubito", "tabla10", "clip"];
+  const refs = base.unidad === "in" ? ["tabla1in", "clipin"] : ["cubito", "tabla10", "clip"];
   return {
     ...base,
     tipo: "estima",

@@ -4,7 +4,10 @@
 
 export function svgInline(texto) {
   if (!texto) return "";
-  return String(texto).replace(/<\?xml[^>]*>/g, "").trim();
+  return String(texto)
+    .replace(/<\?xml[^>]*>/g, "")
+    .replace(/(<tspan class="unidad"[^>]*>)\s*in(\s*<\/tspan>)/g, "$1 pulg.$2")
+    .trim();
 }
 
 export function conBrillo(svg, { brillo = false, marca = null } = {}) {
@@ -20,17 +23,20 @@ export function conBrillo(svg, { brillo = false, marca = null } = {}) {
 
 // Los dos troncos comparten el borde izquierdo. El porcentaje es el corto
 // respecto al largo, así la diferencia ocupa solo lo que sobra.
-export function htmlComparar({ corto, largo, svgCorto, svgLargo, svgDif, svgLinea }) {
+export function htmlComparar({ corto, largo, svgCorto, svgLargo, svgDif, svgLinea, etCorto = "", etLargo = "", flecha = "" }) {
   const mayor = Math.max(largo, 1);
   const cortoPct = Math.max(0, Math.min(100, (corto / mayor) * 100));
   const difPct = Math.max(0, 100 - cortoPct);
+  const leyenda = etLargo || etCorto ? `<p class="comp-leyenda"><span>${etLargo}</span><span>${etCorto}</span></p>` : "";
   return `<div class="comparar" data-estilo="cuantos-mas">
+    ${flecha}
     <div class="comp-fila"><div class="comp-barra larga" style="width:100%">${svgInline(svgLargo)}</div></div>
     <div class="comp-fila">
       <div class="comp-barra corta" style="width:${cortoPct}%">${svgInline(svgCorto)}</div>
       <div class="comp-dif" style="width:${difPct}%">${svgInline(svgDif)}</div>
     </div>
     <div class="comp-punteo" style="left:${cortoPct}%">${svgInline(svgLinea)}</div>
+    ${leyenda}
   </div>`;
 }
 

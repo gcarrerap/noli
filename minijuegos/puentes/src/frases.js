@@ -30,7 +30,16 @@ export function notaReferencia(cruce, textos, voz = false) {
   if (cruce.referencia === "clip") return voz ? t.refClipVoz : t.refClip;
   if (cruce.referencia === "tabla10") return voz ? t.refTablaVoz : t.refTabla;
   if (cruce.referencia === "cubito") return voz ? t.refCuboVoz : t.refCubo;
+  if (cruce.referencia === "tabla1in") return voz ? t.refTablaInVoz : t.refTablaIn;
+  if (cruce.referencia === "clipin") return voz ? t.refClipInVoz : t.refClipIn;
   return "";
+}
+
+export function explicaBloques(modo, textos) {
+  const t = textos || {};
+  if (modo === "hueco") return t.explicaHueco || "";
+  if (modo === "encimado") return t.explicaEncima || "";
+  return t.explicaBien || "";
 }
 
 export function nombreZona(zona, textos) {

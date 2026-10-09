@@ -45,22 +45,32 @@ export function pistaVisible(texto, { resuelto = false, revelado = false } = {})
   return texto || "";
 }
 
-export function textoPista(cruce, fase, textos) {
+function rellenar(texto, mapa) {
+  return Object.entries(mapa).reduce((s, [k, v]) => s.split(k).join(String(v)), String(texto || ""));
+}
+
+export function textoPista(cruce, fase, textos, faseJuego = "") {
   const t = textos || {};
   if (!cruce) return "";
   const n = cruce.nivel | 0;
+  const ceroYaPuesto = n === 2 && faseJuego && faseJuego !== "poner";
   if (n <= 1) return t.pistaBloques || "";
   if (fase === "frase") {
-    if (n === 2) return t.pistaCero || "";
+    if (n === 2) return ceroYaPuesto ? "" : (t.pistaCero || "");
     if (n === 7 || cruce.tipo === "desfase") return t.pistaEspacios || "";
     if (n === 5 || n === 6 || cruce.tipo === "juntar" || cruce.tipo === "comparar") return t.pistaBarras || "";
     if (cruce.tipo === "estima" || cruce.tipo === "arbol") return t.pistaEstima || "";
     return t.pistaMira || "";
   }
   if (fase === "encima") return t.pistaMiraAqui || "";
-  if (n === 2) return t.pistaCeroLarga || "";
+  if (n === 2) {
+    if (ceroYaPuesto) return rellenar(t.pistaMedida, { "{medida}": decirUnidad(cruce.longitud, cruce.unidad) });
+    return t.pistaCeroLarga || "";
+  }
   if (n === 7 || cruce.tipo === "desfase") {
-    return String(t.pistaEspaciosLarga || "").replace("{n}", decirUnidad(cruce.longitud, cruce.unidad));
+    const a = cruce.desplazaInicial | 0;
+    const b = a + (cruce.longitud | 0);
+    return rellenar(t.pistaEspaciosLarga, { "{a}": a, "{b}": b, "{n}": cruce.longitud | 0 });
   }
   if (n === 5 || cruce.tipo === "juntar") {
     const partes = (cruce.solucion || []).join(" y ");
@@ -80,7 +90,8 @@ export function vozPista(texto) {
 export function blancoFlecha(cruce, fase) {
   if (!cruce || fase === "frase") return "";
   const n = cruce.nivel | 0;
-  if (n === 2 || cruce.tipo === "desfase" || n === 7) return "cero";
+  if (n === 2) return "cero";
+  if (cruce.tipo === "desfase" || n === 7) return "marca";
   if (cruce.tipo === "juntar" || n === 5) return "tablas";
   if (cruce.tipo === "comparar" || n === 6) return "diferencia";
   if (cruce.tipo === "estima" || cruce.tipo === "arbol") return "referencia";

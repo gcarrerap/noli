@@ -30,7 +30,7 @@ export function marcarIgnorar(ahora, ms = TRAS_DIALOGO_MS) {
 
 export function entradaIgnorada(ignorarHasta, ahora, tipo) {
   if (tipo !== "toque" && tipo !== "ok") return false;
-  return ahora < (ignorarHasta | 0);
+  return ahora < (Number(ignorarHasta) || 0);
 }
 
 // Se revisa antes que cualquier otro handler.

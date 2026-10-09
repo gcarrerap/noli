@@ -2,11 +2,12 @@
 // o solos: al menos 2 s y como mucho 3 s. Si la voz de verdad termina
 // en ese hueco, también se avanza. Un error de voz, cero voces o una
 // frase que no empieza NO cuentan como el final: se usa el reloj.
-// Un toque o OK en un paso de mirar avanza enseguida.
+// El primer segundo no entra: ni un toque ni OK, tampoco en los de mirar.
 // Tras «¿Salir?», los 400 ms y el candado del paso empiezan juntos y no se suman.
-// Los de acción solo avanzan con la acción, y el primer segundo no entra.
+// Los de acción solo avanzan con la acción.
 // Con «¿Salir?» abierto el reloj y la espera de la voz se pausan.
 // Seguir los reinicia para el paso en curso.
+// Saltar se puede tocar, pero las flechas no llegan a él en ningún paso.
 
 import { TRAS_DIALOGO_MS } from "./salida.js";
 import { hablaSegura } from "./medida.js";
@@ -96,14 +97,18 @@ export function msHastaAvance(reloj, ahora) {
   return GUIA_TOQUE_MS - t;
 }
 
-// El candado de ~400 ms tras «¿Salir?» y el del paso (1 s en los de acción)
+// El candado de ~400 ms tras «¿Salir?» y el del paso (1 s en todos)
 // comparten el origen. No se suman: se abre cuando acaba el más largo.
-// En un paso de mirar, un toque o OK no espera ese segundo.
+// Date.now() no cabe en 32 bits: `| 0` lo dejaría en el pasado.
+export function enteroReloj(x) {
+  const n = Number(x);
+  return n || 0;
+}
+
 export function limiteEntrada(reloj, tipo) {
   if (!reloj) return 0;
-  const dialogo = reloj.ignorarHasta | 0;
-  const toqueLibre = esMirar(reloj.paso) && (tipo === "toque" || tipo === "ok");
-  const paso = (reloj.inicio | 0) + (toqueLibre ? 0 : GUIA_CIERRE_MS);
+  const dialogo = enteroReloj(reloj.ignorarHasta);
+  const paso = enteroReloj(reloj.inicio) + GUIA_CIERRE_MS;
   return Math.max(dialogo, paso);
 }
 
@@ -128,7 +133,7 @@ export function responderGuia(reloj, ahora, evento) {
   if (evento.tipo === "tiempo") {
     if (!debeAvanzarSolo(reloj, ahora)) return { accion: "nada", reloj };
   } else if (guiaBloqueada(reloj, ahora, evento.tipo)) {
-    if (ahora < (reloj.ignorarHasta | 0) && (evento.tipo === "toque" || evento.tipo === "ok" || evento.tipo === "poner" || evento.tipo === "elegir" || evento.tipo === "tabla")) {
+    if (ahora < enteroReloj(reloj.ignorarHasta) && (evento.tipo === "toque" || evento.tipo === "ok" || evento.tipo === "poner" || evento.tipo === "elegir" || evento.tipo === "tabla")) {
       return { accion: "ignorar", reloj };
     }
     return { accion: "nada", reloj };
@@ -152,9 +157,9 @@ export function focoDeGuia(paso) {
   return "guia-texto";
 }
 
-// En los pasos de acción las flechas no llegan a Saltar. Nunca es el foco inicial.
-export function saltarAlcanzable(paso) {
-  return esMirar(paso);
+// En toda la guía las flechas no llegan a Saltar. Se puede tocar igual.
+export function saltarAlcanzable() {
+  return false;
 }
 
 export function textoDeGuia(paso, textos, modo = "tactil") {

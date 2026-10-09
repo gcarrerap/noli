@@ -117,6 +117,14 @@ export function listoBrilla(valor, correcta) {
   return (valor | 0) === (correcta | 0);
 }
 
+// «Listo» bien sigue. En la comparación un número mal es un fallo, no un silencio.
+export function resultadoListo(valor, correcta, fase) {
+  if (fase === "estimaLibre") return cerca(valor, correcta) ? "bien" : "fallo";
+  if ((valor | 0) === (correcta | 0)) return "bien";
+  if (fase === "comparar") return "fallo";
+  return "ignorar";
+}
+
 export function suma(nums) {
   return (nums || []).reduce((s, n) => s + n, 0);
 }
