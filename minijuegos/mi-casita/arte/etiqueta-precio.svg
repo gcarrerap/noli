@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 158 72">
+<title>Etiqueta de precio (texto #precio)</title>
+<path d="M30 8h112a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H30L6 40z" fill="#fff" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<circle cx="26" cy="40" r="6" fill="#fff7ec" stroke="#2b2236" stroke-width="3.5"/>
+<text id="precio" x="90" y="54" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="38" text-anchor="middle" fill="#2b2236">$3</text>
+</svg>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+<title>Cuadro ocupado (rojo con rayas diagonales): ya hay algo ahí</title>
+<clipPath id="recorte-ocupado"><rect x="2" y="2" width="36" height="36" rx="4"/></clipPath><rect x="2" y="2" width="36" height="36" rx="4" fill="#ff4d4d" fill-opacity=".45"/><path clip-path="url(#recorte-ocupado)" d="M-10 10L10-10M-10 26L26-10M-10 42L42-10M6 46L46 6M22 46L46 22" stroke="#d61f2c" stroke-width="4.5" stroke-opacity=".8"/><rect x="2" y="2" width="36" height="36" rx="4" fill="none" stroke="#d61f2c" stroke-width="4"/>
+</svg>

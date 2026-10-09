@@ -1,0 +1,15 @@
+{
+  "_ayuda": "Bolsa fija de cada visita, según el nivel de dinero y la moneda de La Tienda. No es al azar y no se junta con la visita anterior. Alcanza para unos 3 muebles, y cada precio abierto en ese nivel se puede pagar exacto (lo prueban los tests).",
+  "1": {
+    "usd": { "penny": 6, "nickel": 4 },
+    "mxn": { "p1": 6, "p5": 4 }
+  },
+  "2": {
+    "usd": { "penny": 4, "nickel": 2, "dime": 4 },
+    "mxn": { "p1": 4, "p2": 2, "p5": 2, "p10": 4 }
+  },
+  "3": {
+    "usd": { "penny": 4, "nickel": 2, "dime": 3, "quarter": 2 },
+    "mxn": { "p1": 4, "p5": 2, "p10": 2, "b20": 1, "b50": 1 }
+  }
+}
