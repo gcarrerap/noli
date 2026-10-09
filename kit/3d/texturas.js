@@ -7,7 +7,7 @@
 //   {m} mitad entre {p} y {t} (sombras, centros de las manchas) · {c} color de la calcomanía (si no hay, {t})
 // Sin `document` (en las pruebas con Node) no hay texturas: las funciones devuelven null y la ropa sale lisa.
 import * as THREE from "./vendor/three.module.min.js";
-export { luz, tinta, mezcla, pintarSVG, interiorSVG } from "./pintar.js";
+export { luz, tinta, mezcla, pintarSVG, interiorSVG, pintarPixeles } from "./pintar.js";
 
 const cache = new Map();
 

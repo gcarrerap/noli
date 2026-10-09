@@ -11,7 +11,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { material } from "./materiales.js";
 import { crearPieza, reflejar } from "./formas.js";
-import { pintarSVG, texturaSVG, texturaImagen, texturaPixeles } from "./texturas.js";
+import { pintarSVG, pintarPixeles, texturaSVG, texturaImagen, texturaPixeles } from "./texturas.js";
 
 const RAD = Math.PI / 180;
 
@@ -184,7 +184,8 @@ function texturasDe(prenda, patronId, colorDe, idx) {
       if (!e) return null;
       if (e.svg) return texturaSVG(pintarSVG(e.svg, col));
       if (e.url) return texturaImagen(e.url);
-      if (e.pixeles) return texturaPixeles(e.id + "|" + e.pixeles.clave, e.pixeles.lado, e.pixeles.colores);
+      // Dibujo de Noelia (#81): si usa los colores de la prenda, la textura depende también de ellos
+      if (e.pixeles) return texturaPixeles(e.id + "|" + e.pixeles.clave + (e.pixeles.deLaPrenda ? "|" + col.p + col.s : ""), e.pixeles.lado, pintarPixeles(e.pixeles, col));
       return null;
     },
   };

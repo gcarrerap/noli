@@ -8,7 +8,7 @@ import { coloresDe, nivelDePrenda, esNuevo } from "../progreso.js";
 import { reloj } from "../partida.js";
 import { concuerda } from "../espanol.js";
 import { prendasDeZona, aceptaPatron } from "../datos.js";
-import { pintarSVG } from "../../../../kit/3d/pintar.js";
+import { pintarSVG, pintarPixeles } from "../../../../kit/3d/pintar.js";
 import { prendaDeDiseno, ajustesDe, variante, nombresSugeridos } from "../taller.js";
 
 /** Ícono de una zona: el suyo (zonas.json → icono), el de su acción o el de su categoría */
@@ -284,18 +284,18 @@ function filaColores(lista, sel, accion, idx, etiqueta) {
 }
 
 /** Muestra de un estampado (SVG pintado, PNG o pixeles) para los botones */
-function muestraEstampado(e) {
+function muestraEstampado(e, hex = "#ff7eb6") {
   if (!e) return `<svg viewBox="0 0 64 64"><path d="M14 14l36 36M50 14L14 50" stroke="#c9bba5" stroke-width="5" stroke-linecap="round"/></svg>`;
   if (e.svg) return pintarSVG(e.svg, { p: "#ffffff" });
   if (e.url) return `<img src="${esc(e.url)}" alt="">`;
-  if (e.pixeles) return `<svg viewBox="0 0 64 64">${miniPixeles(e.pixeles)}</svg>`;
+  if (e.pixeles) return `<svg viewBox="0 0 64 64">${miniPixeles(e.pixeles, hex)}</svg>`;
   return "";
 }
 
-function miniPixeles(px) {
+function miniPixeles(px, hex) {
   const k = 64 / px.lado;
   let r = "";
-  px.colores.forEach((c, i) => { if (c) r += `<rect x="${(i % px.lado) * k}" y="${Math.floor(i / px.lado) * k}" width="${k + 0.1}" height="${k + 0.1}" fill="${c}"/>`; });
+  pintarPixeles(px, { p: hex, s: "#ffffff" }).forEach((c, i) => { if (c) r += `<rect x="${(i % px.lado) * k}" y="${Math.floor(i / px.lado) * k}" width="${k + 0.1}" height="${k + 0.1}" fill="${c}"/>`; });
   return `<g shape-rendering="crispEdges">${r}</g>`;
 }
 
@@ -303,7 +303,8 @@ function miniPixeles(px) {
  * El panel del taller.
  * @param {{ idx, diseno, paso: string, ab, saldo: number|null, costo: number, libres: number, total: number, lugar: string|null, girar: boolean, faltan?: number|null }} o
  */
-export function taller({ idx, diseno, paso, ab, saldo, costo, libres, total, lugar, girar, faltan = null }) {
+export function taller({ idx, diseno, paso, ab, saldo, costo, libres, total, lugar, girar, faltan = null, dibujo = null, dibujos = 0 }) {
+  if (paso === "dibujo" && dibujo) return editorDibujo({ idx, ab, d: dibujo, hexP: (idx.colores.get(diseno.color) || {}).hex || "#ff7eb6", hexS: (idx.colores.get(diseno.secundario) || {}).hex || "#ffffff" });
   const molde = idx.moldes.get(diseno.molde);
   const prenda = prendaDeDiseno(diseno, idx);
   const iPaso = PASOS_TALLER.findIndex((x) => x.id === paso);
@@ -347,8 +348,10 @@ export function taller({ idx, diseno, paso, ab, saldo, costo, libres, total, lug
         }).join("")}</div>
         <div class="estampados" role="group" aria-label="Calcomanías">${[null, ...ests].map((e) => {
           const id = e ? e.id : "", on = (puesta || "") === id;
-          return `<button class="estampado${on ? " sel" : ""}" data-accion="t-estampado" data-estampado="${id}" data-foco aria-pressed="${on}" aria-label="${esc(e ? e.es : "sin calcomanía")}" title="${esc(e ? e.es + " · " + e.en : "ninguna")}">${muestraEstampado(e)}</button>`;
-        }).join("")}${ab.dibujar ? `<button class="estampado nuevo" data-accion="t-dibujar" data-foco aria-label="Dibujar una calcomanía" title="Dibujar">${icono("lapiz")}</button>` : ""}</div>` : `<p class="nota">A este molde no se le ponen calcomanías.</p>`}`;
+          return `<button class="estampado${on ? " sel" : ""}${e && e.propio ? " propio" : ""}" data-accion="t-estampado" data-estampado="${id}" data-foco aria-pressed="${on}" aria-label="${esc(e ? e.es : "sin calcomanía")}" title="${esc(e ? e.es + " · " + e.en : "ninguna")}">${muestraEstampado(e, hex)}</button>`;
+        }).join("")}<button class="estampado nuevo" data-accion="t-dibujar" data-foco aria-label="Dibujar mi estampado" title="Dibujar mi estampado">${icono("lapiz")}</button></div>
+        ${puesta && idx.estampados.get(puesta) && idx.estampados.get(puesta).propio ? `<div class="fila centro">${boton("t-editar-dibujo", "Cambiar mi dibujo", { clase: "chico", ico: "lapiz", extra: `data-estampado="${puesta}"` })}${boton("t-borrar-dibujo", "Borrar", { clase: "chico", ico: "borrador", extra: `data-estampado="${puesta}"` })}</div>` : ""}
+        <p class="nota chica centro">Tus dibujos: ${dibujos} de ${(idx.config.taller || {}).maxDibujos || 6}.</p>` : `<p class="nota">A este molde no se le ponen calcomanías.</p>`}`;
   } else if (paso === "nombre") {
     const max = (idx.config.taller || {}).maxTemas || 2;
     cuerpo = `<h3>¿Cómo se llama?</h3>
@@ -410,6 +413,46 @@ export function confirmarDescoser(p) {
     <h2 id="tDesc">¿Descoser «${esc(p.nombre || p.es)}»?</h2>
     <p>Se libera su espacio, pero <b>no regresan los créditos</b> y ya no la vas a tener.</p>
     <div class="fila">${boton("t-descoser-no", "No, me la quedo", { clase: "primario", inicial: true })}${boton("t-descoser-si", "Sí, descoser", { ico: "tijeras", extra: `data-prenda="${p.id}"` })}</div>
+  </div>`;
+}
+
+// ---------- Dibujar estampados (#81; src/pixeles.js) ----------
+
+const HERRAMIENTAS = [
+  { id: "lapiz", es: "Lápiz", ico: "lapiz" }, { id: "borrador", es: "Borrador", ico: "borrador" }, { id: "cubeta", es: "Rellenar", ico: "cubeta" },
+];
+
+/**
+ * El editor de pixeles: la cuadrícula, las herramientas, los colores (los de la prenda y los abiertos) y guardar.
+ * Cada celda es un botón (en la TV se pinta con flechas y OK); con el dedo se pinta arrastrando (juego.js).
+ */
+export function editorDibujo({ idx, ab, d, hexP, hexS }) {
+  const hexDe = (f) => (!f ? "" : f === "P" ? hexP : f === "S" ? hexS : (idx.colores.get(f) || {}).hex || "#2b2236");
+  const celdas = d.celdas.map((f, i) => `<button class="px" data-accion="d-px" data-i="${i}" data-foco${i === 0 ? '="inicial"' : ""} tabindex="-1" style="${f ? `--c:${hexDe(f)}` : ""}" aria-label="cuadro ${i + 1}"></button>`).join("");
+  const colorBtn = (f, etiqueta, hex) => `<button class="color${d.ficha === f ? " sel" : ""}${f === "P" || f === "S" ? " de-prenda" : ""}" data-accion="d-color" data-ficha="${f}" data-foco style="--c:${hex}" aria-pressed="${d.ficha === f}" aria-label="${esc(etiqueta)}" title="${esc(etiqueta)}">${f === "P" || f === "S" ? `<b>${f === "P" ? "1" : "2"}</b>` : ""}</button>`;
+  const colores = [colorBtn("P", "el color de la prenda (cambia con la prenda)", hexP), colorBtn("S", "el color de los detalles (cambia con la prenda)", hexS),
+    ...[...ab.colores].map((c) => { const cc = idx.colores.get(c); return cc ? colorBtn(c, `${cc.es} · ${cc.en}`, cc.hex) : ""; })].join("");
+  const herr = HERRAMIENTAS.map((h) => `<button class="herramienta${d.herramienta === h.id ? " sel" : ""}" data-accion="d-herramienta" data-herramienta="${h.id}" data-foco aria-pressed="${d.herramienta === h.id}" title="${h.es}"><i class="ico">${icono(h.ico)}</i><span>${h.es}</span></button>`).join("");
+  return `<div class="panel-cab"><h2>${icono("lapiz")}${d.id ? "Cambiar mi dibujo" : "Dibujar mi estampado"}</h2>
+      <span class="panel-botones"><button class="redondo" data-accion="d-cancelar" data-foco aria-label="Cancelar" title="Cancelar">${icono("cerrar")}</button></span></div>
+    <div class="taller-cuerpo editor">
+      <div class="herramientas" role="toolbar" aria-label="Herramientas">${herr}
+        <button class="herramienta${d.espejo ? " sel" : ""}" data-accion="d-espejo" data-foco aria-pressed="${!!d.espejo}" title="Espejo: pinta igual de los dos lados"><i class="ico">${icono("simetria")}</i><span>Espejo</span></button>
+        <button class="herramienta" data-accion="d-deshacer" data-foco ${d.historial.length ? "" : "disabled"} title="Deshacer"><i class="ico">${icono("girarIzq")}</i><span>Deshacer</span></button></div>
+      <div class="cuadricula-caja"><div class="cuadricula${d.espejo ? " con-espejo" : ""}" style="--n:${d.lado}" role="grid" aria-label="Cuadrícula para dibujar">${celdas}</div></div>
+      <div class="colores paleta" role="group" aria-label="Colores">${colores}</div>
+      <p class="nota chica centro">Los colores <b>1</b> y <b>2</b> cambian con la prenda.</p>
+      <div class="fila-nombre"><input id="d-nombre" class="campo" type="text" maxlength="${(idx.config.taller || {}).maxNombre || 18}" value="${esc(d.nombre)}" placeholder="Nombre de tu dibujo" data-foco autocomplete="off" enterkeyhint="done">
+        ${boton("d-guardar", "Guardar", { clase: "primario", ico: "palomita" })}</div>
+    </div>`;
+}
+
+/** ¿Borrar un dibujo? */
+export function confirmarBorrarDibujo(e, enUso) {
+  return `<div class="confirmar" role="dialog" aria-labelledby="tBorrar">
+    <h2 id="tBorrar">¿Borrar «${esc(e.es)}»?</h2>
+    <p>${enUso ? `Lo tienen <b>${enUso}</b> ${enUso === 1 ? "diseño" : "diseños"}: se quedarán sin esa calcomanía.` : "Ya no lo vas a poder usar."}</p>
+    <div class="fila">${boton("d-borrar-no", "No, me lo quedo", { clase: "primario", inicial: true })}${boton("d-borrar-si", "Sí, borrar", { ico: "borrador", extra: `data-estampado="${e.id}"` })}</div>
   </div>`;
 }
 

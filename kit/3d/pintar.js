@@ -35,3 +35,15 @@ export function interiorSVG(svg) {
   const i = svg.indexOf(">", svg.indexOf("<svg")), j = svg.lastIndexOf("</svg>");
   return i < 0 || j < 0 ? "" : svg.slice(i + 1, j);
 }
+
+/**
+ * Los colores de un dibujo en pixeles (#81) con los de la prenda: "P" → principal, "S" → secundario, "" → null
+ * (transparente), un id de color → su hex.
+ * @param {{ celdas: string[], hex: Object<string, string> }} px
+ * @param {{ p: string, s?: string }} col
+ * @returns {(string|null)[]}
+ */
+export function pintarPixeles(px, col) {
+  return px.celdas.map((f) => (!f ? null : f === "P" ? col.p : f === "S" ? col.s || "#ffffff" : px.hex[f] || "#2b2236"));
+}
+

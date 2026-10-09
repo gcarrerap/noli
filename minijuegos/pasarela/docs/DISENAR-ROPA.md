@@ -8,6 +8,8 @@
 4. Ponle nombre y escoge para qué temas es (uno o dos). ¡Los jueces se fijan!
 5. Cósela: cuesta **5 créditos**, que ganas en los otros juegos. Si no te alcanzan, tu diseño te espera guardado.
 
+¿Quieres una calcomanía que no existe? En el paso 3 toca el **lápiz** y **dibújala tú**, cuadrito por cuadrito: tienes lápiz, borrador, cubeta para rellenar y **espejo** (lo que pintas de un lado sale igual del otro, ¡perfecto para caritas!). Si pintas con los colores **1** y **2**, tu dibujo cambia de color con la ropa.
+
 Tus diseños quedan en el perchero **Mis diseños** (adelante a la derecha). Tienes 4 espacios y vas ganando más al subir de nivel.
 
 ¿Quieres algo que el taller todavía no tiene, como una capa, un moño gigante o un molde nuevo? Dibújalo en papel y lo hacemos con papá:
