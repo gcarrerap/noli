@@ -8,6 +8,13 @@ const MINUTOS = {
   35: "treinta y cinco", 40: "cuarenta", 45: "cuarenta y cinco", 50: "cincuenta", 55: "cincuenta y cinco",
 };
 
+// En la tele se pulsa OK; en el teléfono se toca Listo. La voz no lleva ¡.
+export function fraseBrilla(tv) {
+  return tv
+    ? { texto: "¡Brilla! Pulsa OK.", voz: "Brilla. Pulsa OK." }
+    : { texto: "¡Brilla! Toca Listo.", voz: "Brilla. Toca Listo." };
+}
+
 export function nombreHora(h) {
   const n = hora12(h);
   return n === 1 ? "la 1" : `las ${n}`;

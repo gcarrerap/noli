@@ -11,13 +11,13 @@ import {
 } from "../src/reloj.js";
 import {
   fraseMenosCuarto, horaMenosCuarto, decirHora, etiquetaIngles, frasePoner, vozPoner, fraseCuanto,
-  fraseExito, lineaDeAcierto, EXITOS,
+  fraseExito, lineaDeAcierto, EXITOS, fraseBrilla,
 } from "../src/frases.js";
 import { MOMENTOS, NIVELES, ALBUM, planDia, escenaDe, POR_TURNO } from "../src/niveles.js";
 import { pista } from "../src/pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA,
-  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS,
+  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS, efectoAtrasGuia, seguirGuia,
 } from "../src/guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, estrellasTurno, racha, textoRacha,
@@ -205,7 +205,48 @@ test("la guía de las 3:00 solo avanza cuando ella hace el paso", () => {
   assert.match(textoPaso(2, true), /▲/);
   assert.match(textoPaso(2, false), /\+/);
   assert.equal(SIN_SIMBOLO.test(vozPaso(2)), false);
-  for (let i = 0; i < PASOS.length; i++) assert.equal(SIN_SIMBOLO.test(vozPaso(i)), false);
+  for (let i = 0; i < PASOS.length; i++) {
+    assert.equal(SIN_SIMBOLO.test(vozPaso(i, false)), false);
+    assert.equal(SIN_SIMBOLO.test(vozPaso(i, true)), false);
+    assert.equal(/Toca/.test(textoPaso(i, true)), false);
+    assert.equal(/Toca/.test(vozPaso(i, true)), false);
+    assert.equal(/Pulsa OK/.test(textoPaso(i, false)), false);
+  }
+  assert.equal(textoPaso(4, false), fraseBrilla(false).texto);
+  assert.equal(textoPaso(4, true), "¡Brilla! Pulsa OK.");
+  assert.equal(vozPaso(4, false), "Brilla. Toca Listo.");
+  assert.equal(vozPaso(4, true), "Brilla. Pulsa OK.");
+});
+
+test("Atrás en cada paso de la guía abre ¿Salir? y Seguir no la marca como vista", () => {
+  assert.equal(efectoAtrasGuia(false), "preguntar");
+  assert.equal(efectoAtrasGuia(true), "seguir");
+  assert.notEqual(efectoAtrasGuia(false), "saltar");
+  assert.notEqual(efectoAtrasGuia(true), "salir");
+  for (let paso = 0; paso < PASOS.length; paso++) {
+    const g = { paso, reloj: { ...META_GUIA }, fin: false };
+    assert.equal(efectoAtrasGuia(false), "preguntar", `paso ${paso}`);
+    const quieta = seguirGuia(g);
+    assert.equal(quieta.paso, paso);
+    assert.equal(quieta.fin, false);
+    assert.equal(quieta.guardar, false);
+    assert.deepEqual(quieta.reloj, g.reloj);
+    const sinMarca = { paso, reloj: { h: 1, m: 0 }, fin: false };
+    const atras = aplicarGuia(sinMarca, { tipo: "atras", reloj: sinMarca.reloj });
+    assert.equal(atras.fin, false);
+    assert.equal(atras.paso, paso);
+    assert.equal(aplicarGuia(sinMarca, { tipo: "saltar" }).fin, true);
+    assert.equal(seguirGuia(sinMarca).guardar, false);
+  }
+  for (const act of ["saltar", "listo", "paso", "escena", "oir", "borrar"]) {
+    assert.equal(toqueEnPantalla({ fase: "", act, dialog: true }), "nada", act);
+  }
+  assert.equal(toqueEnPantalla({ fase: "", act: "seguir", dialog: true }), "seguir");
+  assert.equal(toqueEnPantalla({ fase: "", act: "salir-si", dialog: true }), "salir");
+  const src = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.equal(/if \(guia\) terminarGuia\(\)/.test(src), false);
+  assert.match(src, /efectoAtrasGuia\(false\) === "preguntar"/);
+  assert.match(src, /efectoAtrasGuia\(true\) === "seguir"/);
 });
 
 test("poner no arranca a las 12:00", () => {
@@ -281,6 +322,14 @@ test("pistas: el nivel 1 es el paso completo y menos cuarto sube hacia el 9", ()
   assert.match(pista({ nivel: 6, tipo: "leer", objetivo: { h: 7, m: 15 }, segundos: 0 }).texto, /corta/);
   assert.match(pista({ nivel: 7, tipo: "momento", objetivo: { parte: "noche" }, segundos: 0 }).texto, /cielo/);
   assert.match(pista({ nivel: 8, tipo: "cuanto", objetivo: { salto: "hora" }, segundos: 0 }).texto, /arco/);
+  const brillaTv = pista({ nivel: 1, tipo: "poner", objetivo: { h: 3, m: 0 }, actual: { h: 3, m: 0 }, tv: true });
+  assert.equal(brillaTv.texto, "¡Brilla! Pulsa OK.");
+  assert.equal(brillaTv.voz, "Brilla. Pulsa OK.");
+  const brillaTacto = pista({ nivel: 1, tipo: "poner", objetivo: { h: 3, m: 0 }, actual: { h: 3, m: 0 }, tv: false });
+  assert.equal(brillaTacto.texto, "¡Brilla! Toca Listo.");
+  assert.equal(brillaTacto.voz, "Brilla. Toca Listo.");
+  assert.equal(/Toca/.test(brillaTv.texto + brillaTv.voz), false);
+  assert.equal(/Pulsa/.test(brillaTacto.texto + brillaTacto.voz), false);
   assert.equal(GAG_MS <= 1500, true);
 });
 

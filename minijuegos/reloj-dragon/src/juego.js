@@ -12,7 +12,7 @@ import { NIVELES, ALBUM, MOMENTOS, planDia, POR_TURNO } from "./niveles.js";
 import { pista } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA, INICIO_GUIA,
-  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS,
+  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS, efectoAtrasGuia, seguirGuia,
 } from "./guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, nivelDe, cumplirReto,
@@ -333,7 +333,7 @@ function abrirGuia() {
   guia = guiaNueva();
   guiaBrillo = false;
   pintarGuia("escena");
-  hablar(vozPaso(0));
+  hablar(vozPaso(0, esTv()));
 }
 
 function terminarGuia() {
@@ -394,7 +394,7 @@ function moverRelojGuia(ctrl, dir) {
   if (guia.fin) return terminarGuia();
   if (guia.paso !== antes) {
     pintarGuia(ctrl);
-    hablar(vozPaso(guia.paso));
+    hablar(vozPaso(guia.paso, esTv()));
   } else refrescarGuia();
 }
 
@@ -423,7 +423,7 @@ function alFocoGuia(ctrl) {
   if (guia.fin) return terminarGuia();
   if (guia.paso !== antes) {
     pintarGuia(ctrl === "minutos" && guia.paso === 4 ? "listo" : ctrl);
-    hablar(vozPaso(guia.paso));
+    hablar(vozPaso(guia.paso, esTv()));
   }
 }
 
@@ -458,7 +458,7 @@ function seguirExplicacion() {
   if (!guia || !esExplicacion(guia.paso)) return;
   guia = aplicarGuia(guia, { tipo: "seguir", reloj: guia.reloj });
   pintarGuia(focoTrasExplicacion(guia.paso));
-  hablar(vozPaso(guia.paso));
+  hablar(vozPaso(guia.paso, esTv()));
 }
 
 function listoGuia() {
@@ -776,6 +776,7 @@ function saltarFase() {
 
 function preguntarSalir() {
   if (overlay) return;
+  if (guia) cortar();
   if (partida && atrasEnEspera(partida.fase) === "salir") {
     partida.queda = Math.max(0, (partida.faseHasta || 0) - performance.now());
     cortar();
@@ -799,6 +800,13 @@ function cerrarSalir() {
   const el = (focoSalir && $main.querySelector(`[data-foco-id="${focoSalir}"]`)) || $main.querySelector("[data-foco]");
   el?.focus({ preventScroll: true });
   focoSalir = "";
+  if (guia) {
+    const quieta = seguirGuia(guia);
+    guia.paso = quieta.paso;
+    guia.fin = quieta.fin;
+    if (esExplicacion(guia.paso)) programarExplicacion();
+    return;
+  }
   const plan = alCerrarEspera(partida?.fase, partida?.queda);
   if (plan.hacer === "manos") ensenarManos();
   else if (plan.hacer === "siguiente") avanzar();
@@ -854,8 +862,7 @@ function teclaPoner(accion) {
     return true;
   }
   if (accion === "atras") {
-    if (guia) terminarGuia();
-    else preguntarSalir();
+    if (!guia || efectoAtrasGuia(false) === "preguntar") preguntarSalir();
     return true;
   }
   return true;
@@ -909,7 +916,7 @@ $main.addEventListener("click", (ev) => {
     return;
   }
   if (act === "oir") {
-    if (guia) hablar(vozPaso(guia.paso));
+    if (guia) hablar(vozPaso(guia.paso, esTv()));
     else if (partida) hablar(partida.fase ? "" : partida.escena.voz);
     return;
   }
@@ -917,7 +924,7 @@ $main.addEventListener("click", (ev) => {
     if (!guia) return;
     const antes = guia.paso;
     guia = aplicarGuia(guia, { tipo: "escena", reloj: guia.reloj });
-    if (guia.paso !== antes) { pintarGuia("escena"); hablar(vozPaso(guia.paso)); }
+    if (guia.paso !== antes) { pintarGuia("escena"); hablar(vozPaso(guia.paso, esTv())); }
     return;
   }
   if (act === "saltar") { terminarGuia(); return; }
@@ -973,12 +980,15 @@ $main.addEventListener("pointercancel", soltar);
 Noli.alEntrar((accion) => {
   document.documentElement.classList.add("teclado");
   if (overlay) {
-    if (accion === "atras") { cerrarSalir(); return true; }
     const dlg = $main.querySelector(".dialogo") || $main;
+    if (accion === "atras") {
+      if (efectoAtrasGuia(true) === "seguir") cerrarSalir();
+      return true;
+    }
     if (moverFoco(accion, dlg)) return true;
     if (accion === "ok") {
       const e = document.activeElement;
-      if (e && $main.contains(e)) e.click();
+      if (e && dlg.contains(e)) e.click();
       return true;
     }
     return true;

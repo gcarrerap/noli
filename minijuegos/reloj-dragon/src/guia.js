@@ -1,5 +1,7 @@
 // Guía de la primera vez. Ejemplo fijo: poner las 3:00.
-// Cada paso avanza solo cuando ella hace esa acción. Saltar o Atrás la cierra.
+// Cada paso avanza solo cuando ella hace esa acción.
+// Saltar la marca como vista. Atrás abre «¿Salir?» y no la guarda.
+import { fraseBrilla } from "./frases.js";
 
 export const META_GUIA = { h: 3, m: 0 };
 export const INICIO_GUIA = { h: 1, m: 0 };
@@ -11,18 +13,37 @@ export const PASOS = [
   { id: "corta", luz: "horario", texto: "La corta dice la hora.", voz: "La corta dice la hora." },
   { id: "sube", luz: "hora", voz: "Sube la corta al 3." },
   { id: "larga", luz: "minutero", texto: "La larga, en el 12.", voz: "La larga, en el 12." },
-  { id: "listo", luz: "listo", texto: "¡Brilla! Toca Listo.", voz: "Brilla. Toca Listo." },
+  { id: "listo", luz: "listo" },
 ];
 
 export function textoPaso(paso, tv) {
   const p = PASOS[paso];
   if (!p) return "";
   if (p.id === "sube") return `${tv ? "▲▼" : "+ −"} Sube la corta al 3.`;
+  if (p.id === "listo") return fraseBrilla(!!tv).texto;
   return p.texto;
 }
 
-export function vozPaso(paso) {
-  return PASOS[paso]?.voz || "";
+export function vozPaso(paso, tv) {
+  const p = PASOS[paso];
+  if (!p) return "";
+  if (p.id === "listo") return fraseBrilla(!!tv).voz;
+  return p.voz || "";
+}
+
+// Atrás abre «¿Salir?». El segundo Atrás lo cierra. No salta la guía ni la guarda.
+export function efectoAtrasGuia(dialogoAbierto) {
+  return dialogoAbierto ? "seguir" : "preguntar";
+}
+
+// Seguir vuelve al mismo paso, sin marcar la guía como vista.
+export function seguirGuia(estado) {
+  return {
+    paso: estado.paso,
+    reloj: { ...estado.reloj },
+    fin: false,
+    guardar: false,
+  };
 }
 
 export function guiaNueva() {

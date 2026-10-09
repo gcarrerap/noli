@@ -148,7 +148,7 @@ main.p-inicio{justify-content:center}
 .controles{display:flex; gap:6px; align-items:center; justify-content:center; width:100%; flex:none; min-width:0}
 .par{display:flex; flex-direction:column; align-items:center; gap:2px; border-radius:18px; padding:2px; flex:none}
 .etiq{
-  font-weight:800; font-size:.8rem; line-height:1; color:var(--fg);
+  font-weight:800; font-size:max(16px, 1rem); line-height:1; color:var(--fg); white-space:nowrap;
   background:var(--card); padding:.2em .5em; border-radius:999px;
 }
 .flecha{

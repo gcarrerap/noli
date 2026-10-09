@@ -1,7 +1,7 @@
 // Pistas por nivel. Desde el 2 salen en escalera: frase, flecha a los 20 s,
 // paso completo a los 40 s o después de un error. La voz no lleva símbolos.
 import { misma, hora12 } from "./reloj.js";
-import { marcaLarga, vozNumero, PARTES, OPCIONES_CUANTO } from "./frases.js";
+import { marcaLarga, vozNumero, PARTES, OPCIONES_CUANTO, fraseBrilla } from "./frases.js";
 
 function escalera(t, a, b, c) {
   const base = { mostrarMinutos: false };
@@ -56,7 +56,7 @@ function pasoCompleto(objetivo, actual, tv) {
       luz: "minutos",
     };
   }
-  return { texto: "¡Brilla! Toca Listo.", voz: "Brilla. Toca Listo.", luz: "listo" };
+  return { ...fraseBrilla(tv), luz: "listo" };
 }
 
 function fraseCorta(objetivo) {
@@ -106,7 +106,7 @@ export function pista(estado) {
 
   const mostrar = nivel >= 5 && (!dominado || t >= 20);
   if (actual && misma(actual, objetivo)) {
-    return { texto: "¡Brilla! Toca Listo.", voz: "Brilla. Toca Listo.", luz: "listo", mostrarMinutos: mostrar };
+    return { ...fraseBrilla(tv), luz: "listo", mostrarMinutos: mostrar };
   }
   const completo = pasoCompleto(objetivo, actual || objetivo, tv);
   if (nivel <= 1) return { ...completo, mostrarMinutos: false };
