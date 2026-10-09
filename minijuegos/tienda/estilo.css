@@ -10,8 +10,25 @@
   --sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.3)}}
 *{box-sizing:border-box}
 html{font-size:clamp(15px, 2.3vmin, 22px)}
-html[data-modo="tv"]{font-size:clamp(18px, 3.1vmin, 40px)}
+html[data-modo="tv"]{font-size:clamp(18px, 2.6vmin, 32px)}
 html[data-modo="tv"] .cab{position:relative;top:auto;left:auto;right:auto;padding-left:0}
+/* En 720p y en 1080p el texto grande empujaba la moneda y las respuestas fuera de la pantalla. */
+html[data-modo="tv"] main{gap:.4rem;padding-top:8px;padding-bottom:12px}
+html[data-modo="tv"] .titulo{font-size:1.7rem}
+html[data-modo="tv"] .fachada svg{width:4.6rem}
+html[data-modo="tv"] .boton.grande{min-height:3rem;font-size:1.15rem;padding:.35em .9em}
+html[data-modo="tv"] .menu{gap:.4rem}
+html[data-modo="tv"] .persona svg{width:4.8rem}
+html[data-modo="tv"] .burbuja{font-size:1rem;padding:.4rem .75rem}
+html[data-modo="tv"] .producto{padding:.25rem .5rem .3rem}
+html[data-modo="tv"] .producto svg{width:2.5rem;height:2.5rem}
+html[data-modo="tv"] .pregunta{font-size:1.3rem;margin:0}
+html[data-modo="tv"] .op{min-height:3.15rem;font-size:1.4rem}
+html[data-modo="tv"] .mostrador{min-height:3.2rem;padding:.3rem .5rem}
+html[data-modo="tv"] .pieza{width:calc(2.6rem * var(--tam, 1))}
+html[data-modo="tv"] .pieza.billete{width:calc(5.2rem * var(--tam, 1))}
+html[data-modo="tv"] .ficha{min-height:3.3rem;width:calc(3.3rem * var(--tam, 1))}
+html[data-modo="tv"] .ficha.billete{width:5.2rem}
 body{margin:0;min-height:100dvh;background:
   radial-gradient(circle at 20% 0%, #ffe7c2 0%, transparent 42%),
   var(--bg);color:var(--fg);font-family:"Nunito",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -20,7 +37,10 @@ main{max-width:980px;margin:0 auto;padding:max(12px, env(safe-area-inset-top)) 1
 main.p-inicio,main.p-fin,main.p-finReto,main.p-retoIntro,main.p-salir{justify-content:center}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 :focus{outline:none}
-html.teclado :focus-visible{outline:5px solid var(--foco);outline-offset:4px;box-shadow:0 0 0 12px var(--halo)}
+/* :focus y no :focus-visible: en el catálogo las flechas llegan por mensaje, sin tecla dentro del juego,
+   y el anillo tiene que verse igual en la TV. */
+html.teclado :focus,
+html[data-modo="tv"] :focus{outline:5px solid var(--foco);outline-offset:4px;box-shadow:0 0 0 12px var(--halo)}
 
 .titulo{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:2.2rem;margin:.15em 0 0;line-height:1.1}
 .titulo.chico{font-size:1.7rem}
