@@ -1,14 +1,14 @@
 // Safari de Datos: pantallas. La lógica está en los otros módulos.
 // Se juega con el dedo o con flechas, OK y Atrás. Sin await al nivel del módulo.
 import { Noli, moverFoco, focoInicial } from "../../../kit/noli.js";
-import { ANIMALES, ORDEN, animal, colorDe, COLOR_HEX, nombreEs, fraseIngles } from "./animales.js";
+import { ANIMALES, ORDEN, animal, colorDe, COLOR_HEX, nombreEs, fraseIngles, fraseLlego } from "./animales.js";
 import { TEXTOS, textoGuia, vozGuia, vozLeyenda } from "./textos.js";
 import { hablar, callar, cuentaComoFin } from "./voz.js";
 import { clic, listo as sonidoListo, bien, desbloquear } from "./sonido.js";
 import { IGNORAR_MS, resolverToque, alCerrarDialogo } from "./salida.js";
 import {
   guiaNueva, aplicarGuia, debeAvanzarSolo, abrirSalirGuia, seguirSalirGuia, anotarVoz,
-  instanteAuto, esMirar, focoGuia, saltarAlcanzable, listoGuiaActivo, numerosGuiaActivos,
+  instanteAuto, esMirar, focoGuia, listoGuiaActivo, numerosGuiaActivos,
   palitosGuia, guardarAlTerminar, OPCIONES_GUIA_CONTEO, OPCIONES_GUIA_MAS,
   GUIA_MONOS, GUIA_JIRAFAS, TRAS_GUIA_MS,
 } from "./guia.js";
@@ -20,7 +20,7 @@ import {
 import { pista, marcaPasoCompleto, FLECHA_S, COMPLETA_S } from "./pista.js";
 import {
   nuevo, cargar, anotarElemento, cerrarVisita, abrirAnimal, quiereFacil, marcarGuia,
-  ponerVoz, fechaLocal, cumplirReto, racha, semana, resumen, dominio,
+  ponerVoz, fechaLocal, cumplirReto, racha, semana, resumen, dominio, VENTANA,
 } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
 import { rngConSemilla } from "./rng.js";
@@ -44,6 +44,11 @@ let partida = null;
 let ignorarGlobal = 0;
 let relojGuia = 0;
 let relojPista = 0;
+let relojMuestra = 0;
+let relojOpciones = 0;
+let finVista = null;
+const MUESTRA_MS = 1500;
+const OPCIONES_LOCK_MS = 1000;
 let vozToken = 0;
 let cajaSvg = "";
 let sonoListo = false;
@@ -57,11 +62,16 @@ function cargarCaja() {
 }
 
 function saliendoAhora() {
-  return !!(guia && guia.saliendo) || !!(partida && partida.saliendo);
+  return !!(guia && guia.saliendo) || !!(partida && partida.saliendo) || !!(finVista && finVista.saliendo);
 }
 
 function hastaIgnorar() {
-  return Math.max(ignorarGlobal || 0, (guia && guia.ignorarHasta) || 0, (partida && partida.ignorarHasta) || 0);
+  return Math.max(
+    ignorarGlobal || 0,
+    (guia && guia.ignorarHasta) || 0,
+    (partida && partida.ignorarHasta) || 0,
+    (finVista && finVista.ignorarHasta) || 0,
+  );
 }
 
 function resolverAct(act) {
@@ -138,24 +148,47 @@ function cabezasDe(id, n) {
   return `<div class="cabezas">${s}</div>`;
 }
 
+function indicesMarcados(opts, cantidades) {
+  const f = opts.flecha;
+  if (f === "barras") return cantidades.map((_, i) => i);
+  if (f === "alta") {
+    let m = 0;
+    cantidades.forEach((c, i) => { if (c > cantidades[m]) m = i; });
+    return cantidades.length ? [m] : [];
+  }
+  if (f === "baja" && opts.dif) return [opts.dif.bajo];
+  if (f && String(f).startsWith("barra-")) return [+String(f).slice(6)];
+  return [];
+}
+
 function svgVertical(ids, cantidades, eje, opts) {
-  const vbH = eje === 20 ? 624 : 324;
+  const ejeH = eje === 20 ? 624 : 324;
+  const pie = 40;
+  const vbH = ejeH + pie;
+  const base = eje === 20 ? 600 : 300;
   const barras = geometriaBarras(cantidades, eje);
+  const marcados = new Set(indicesMarcados(opts, cantidades));
   let capas = "";
   barras.forEach((b, i) => {
     const id = ids[i];
     const n = Math.max(0, cantidades[i] | 0);
     const hex = COLOR_HEX[colorDe(i)];
+    const luz = opts.luces ? ` class="g${i % 2}"` : "";
     if ((opts.modo || "barras") === "dibujos") {
       for (let u = 0; u < n; u++) {
-        capas += `<image href="img/cabeza-${id}.svg" x="${b.x}" y="${b.base - (u + 1) * UNIDAD}" width="${b.ancho}" height="${UNIDAD - 2}"/>`;
+        capas += `<image${luz} href="img/cabeza-${id}.svg" x="${b.x}" y="${b.base - (u + 1) * UNIDAD}" width="${b.ancho}" height="${UNIDAD - 2}"/>`;
       }
     } else {
       for (let u = 0; u < n; u++) {
         const y = b.base - (u + 1) * UNIDAD;
-        capas += `<rect x="${b.x}" y="${y + 1}" width="${b.ancho}" height="${UNIDAD - 3}" rx="4" fill="${hex}" stroke="#2b2236" stroke-width="2"/>`;
+        capas += `<rect${luz} x="${b.x}" y="${y + 1}" width="${b.ancho}" height="${UNIDAD - 3}" rx="4" fill="${hex}" stroke="#2b2236" stroke-width="2"/>`;
       }
     }
+    if (marcados.has(i)) {
+      capas += `<image href="img/flecha-pista.svg" x="${b.x + b.ancho / 2 - 14}" y="${Math.max(-8, b.y - 32)}" width="28" height="28"/>`;
+    }
+    const cx = b.x + b.ancho / 2;
+    capas += `<text x="${cx}" y="${base + 28}" text-anchor="middle" font-family="Nunito, sans-serif" font-size="18" font-weight="800" fill="#2b2236">${esc(nombreEs(id))}</text>`;
   });
   if (opts.dif && opts.linea) {
     const g = geometriaDiferencia(cantidades, opts.dif.bajo, opts.dif.alto, eje);
@@ -164,21 +197,24 @@ function svgVertical(ids, cantidades, eje, opts) {
       capas += `<image href="img/diferencia.svg" x="${g.sombra.x}" y="${g.sombra.y}" width="${g.sombra.w}" height="${g.sombra.h}" preserveAspectRatio="none"/>`;
     }
   }
+  const botones = ids.map((id, i) => `<button type="button" class="leer tapa" data-act="leer" data-que="ingles" data-id="${id}"${foco("nombre-" + i)}><span>${esc(nombreEs(id))}</span><small>${esc(animal(id).en)}</small></button>`).join("");
   return `<div class="grafica-svg${opts.luces ? " luces" : ""}"><svg class="eje eje-${eje}" viewBox="0 -14 410 ${vbH}" preserveAspectRatio="xMidYMax meet" role="img">
-    <image href="img/eje-${eje === 20 ? 20 : 10}.svg" x="0" y="-14" width="410" height="${vbH}"/>
+    <image href="img/eje-${eje === 20 ? 20 : 10}.svg" x="0" y="-14" width="410" height="${ejeH}"/>
     ${capas}
-  </svg></div>`;
+  </svg><div class="nombres-bajo" style="--n:${ids.length}"><span></span>${botones}</div></div>`;
 }
 
-function htmlHorizontal(ids, cantidades) {
-  return `<div class="tabla">${ids.map((id, i) => {
-    const celdas = Array.from({ length: cantidades[i] }, () => `<i style="background:${COLOR_HEX[colorDe(i)]}"></i>`).join("");
-    return `<div class="fila-h"><img src="img/cabeza-${id}.svg" alt=""><div class="unidades">${celdas}</div></div>`;
+function htmlHorizontal(ids, cantidades, opts) {
+  const marcados = new Set(indicesMarcados(opts || {}, cantidades));
+  return `<div class="tabla${opts && opts.luces ? " luces" : ""}">${ids.map((id, i) => {
+    const celdas = Array.from({ length: cantidades[i] }, () => `<i class="g${i % 2}" style="background:${COLOR_HEX[colorDe(i)]}"></i>`).join("");
+    const flecha = marcados.has(i) ? " con-flecha" : "";
+    return `<div class="fila-h tono-${colorDe(i)}${flecha}"><img src="img/cabeza-${id}.svg" alt=""><div class="unidades">${celdas}</div></div>`;
   }).join("")}</div>`;
 }
 
 function lecturas(modo) {
-  const ley = vozLeyenda(modo === "dibujos" ? "dibujos" : "barras");
+  const ley = vozLeyenda(modo === "dibujos" ? "dibujos" : modo === "palitos" ? "palitos" : "barras");
   return `<div class="lecturas">
     <button type="button" class="leer" data-act="leer" data-que="titulo"${foco("titulo")}>${esc(TEXTOS.tituloGrafica)}</button>
     <button type="button" class="leer" data-act="leer" data-que="ejey"${foco("eje-y")}>${esc(TEXTOS.ejeY)}</button>
@@ -200,14 +236,14 @@ function filaControl(id, i, valor, editable, flecha, extra) {
     ? `<button type="button" class="pm" data-act="barra" data-i="${i}" data-delta="1" aria-label="Subir"><img src="img/boton-mas.svg" alt=""><span class="signo-tv">+</span></button>`
     : `<span class="pm"></span>`;
   const tab = editable ? ` tabindex="0"${foco("barra-" + i)}` : "";
-  return `<div class="fila-barra${flecha ? " con-flecha" : ""}"${tab}>${menos}<div class="medio">
+  return `<div class="fila-barra tono-${colorDe(i)}${flecha ? " con-flecha" : ""}"${tab}>${menos}<div class="medio">
     <button type="button" class="nom" data-act="leer" data-que="ingles" data-id="${id}"${foco("nombre-" + i)}>${esc(nombreEs(id))}<small>${esc(a.en)}</small></button>
     ${extra || ""}<div class="pista-num">${valor}</div>
   </div>${mas}</div>`;
 }
 
-function opcionesHtml(opciones, frases) {
-  return `<div class="opciones${frases ? " frases" : ""}">${opciones.map((op, i) => {
+function opcionesHtml(opciones, frases, marcar) {
+  return `<div class="opciones${frases ? " frases" : ""}${marcar ? " con-flecha" : ""}">${opciones.map((op, i) => {
     const obj = op && typeof op === "object";
     const valor = obj ? op.id : op;
     const texto = obj ? op.texto : (typeof op === "number" ? String(op) : nombreEs(op));
@@ -239,8 +275,9 @@ function graficaDe(ids, cantidades, eje, modo, horizontal, pistaAhora) {
     dif: null,
   };
   if (opts.linea && pistaAhora && pistaAhora._dif) opts.dif = pistaAhora._dif;
-  if (horizontal) return htmlHorizontal(ids, cantidades) + nombresHtml(ids);
-  return svgVertical(ids, cantidades, eje || 10, opts) + nombresHtml(ids);
+  opts.flecha = pistaAhora && pistaAhora.flecha;
+  if (horizontal) return htmlHorizontal(ids, cantidades, opts) + nombresHtml(ids);
+  return svgVertical(ids, cantidades, eje || 10, opts);
 }
 
 // ---------- Guía ----------
@@ -275,8 +312,17 @@ function empezarPasoGuia() {
     activo: pr.voz !== false,
     onEstado(estado) {
       if (token !== vozToken || !guia || guia.saliendo || guia.fin) return;
-      // onerror o una frase que no llega a onend: no es el fin. Sigue el reloj.
-      if (!cuentaComoFin(estado)) return;
+      if (estado === "hablando") {
+        guia = anotarVoz(guia, "hablando", Date.now());
+        programarAutoGuia();
+        return;
+      }
+      // onerror o una frase que no llega a onend: no es el fin. El reloj queda en 2 s.
+      if (!cuentaComoFin(estado)) {
+        guia = anotarVoz(guia, estado, Date.now());
+        programarAutoGuia();
+        return;
+      }
       guia = anotarVoz(guia, "termino", Date.now());
       if (!esMirar(guia.paso)) return;
       if (debeAvanzarSolo(guia, Date.now())) avanzarGuia("tiempo");
@@ -309,8 +355,24 @@ function avanzarGuia(tipo, extra) {
   if (cambio) empezarPasoGuia();
 }
 
+function programarOpcionesGuia() {
+  clearTimeout(relojOpciones);
+  if (!guia || !guia.opcionesDesde || guia.saliendo) return;
+  const espera = guia.opcionesDesde - Date.now();
+  if (espera <= 0) {
+    guia = { ...guia, opcionesDesde: 0 };
+    return;
+  }
+  relojOpciones = setTimeout(() => {
+    if (!guia || guia.saliendo) return;
+    guia = { ...guia, opcionesDesde: 0 };
+    pintarGuia();
+  }, espera);
+}
+
 function pintarGuia() {
   if (!guia) return;
+  programarOpcionesGuia();
   pantalla = "guia";
   $main.className = "p-guia";
   if (guia.paso === "listo" && listoGuiaActivo(guia) && !sonoListo) {
@@ -319,9 +381,9 @@ function pintarGuia() {
   }
   const quiere = guia.saliendo ? "seguir" : focoGuia(guia);
   focoQuiere = quiere;
-  const saltar = saltarAlcanzable(guia.paso) && !guia.saliendo
-    ? `<button type="button" class="boton saltar" data-act="saltar"${foco("saltar")}>${esc(TEXTOS.saltar)}</button>`
-    : "<span></span>";
+  const saltar = guia.saliendo
+    ? "<span></span>"
+    : `<button type="button" class="boton saltar" data-act="saltar">${esc(TEXTOS.saltar)}</button>`;
   const frase = guia.mal ? "Mira otra vez. " + textoGuia(guia.paso, esTv()) : textoGuia(guia.paso, esTv());
   const mirar = esMirar(guia.paso);
   let zona = "";
@@ -336,7 +398,7 @@ function pintarGuia() {
     }).join("");
     zona = `<div class="recinto sobre"><img class="fondo" src="img/recinto-selva.svg" alt=""><div class="manada" style="--cols:${cols}">${monos}</div></div>`;
     controles = `<div class="palitos-vivo">${htmlPalitos(palitosGuia(guia))}</div>`;
-    if (numerosGuiaActivos(guia)) controles += opcionesHtml(OPCIONES_GUIA_CONTEO, false);
+    if (numerosGuiaActivos(guia, Date.now())) controles += opcionesHtml(OPCIONES_GUIA_CONTEO, false);
   } else if (guia.paso === "grafica" || guia.paso === "subir" || guia.paso === "listo" || guia.paso === "mas") {
     const ids = ["mono", "jirafa"];
     const cs = guia.barras.slice();
@@ -345,11 +407,9 @@ function pintarGuia() {
     if (guia.paso === "subir" || guia.paso === "listo") {
       controles = filaControl("mono", 0, cs[0], guia.paso === "subir", false, cabezasDe("mono", cs[0]))
         + filaControl("jirafa", 1, cs[1], false, false, cabezasDe("jirafa", cs[1]));
-      if (guia.paso === "listo") controles += botonListo(true);
+      controles += botonListo(guia.paso === "listo");
     } else if (guia.paso === "mas") {
       controles = opcionesHtml(OPCIONES_GUIA_MAS, true);
-    } else {
-      controles = nombresHtml(ids);
     }
   }
   pintar(`
@@ -394,6 +454,9 @@ function pistaDe() {
   const p = pista(e, estadoPista(), {
     nivel: partida.visita.nivel, segundos: segundosElem(), errores: partida.elem.errores, tv: esTv(),
   });
+  if (partida.elem.fase === "muestra" && e.clase === "diferencia") {
+    return { ...p, linea: true, sombra: true, flecha: "baja", _dif: indicesDe(e) };
+  }
   if (e.clase === "diferencia") p._dif = indicesDe(e);
   return p;
 }
@@ -452,8 +515,42 @@ function prepararElem() {
   programarPista();
 }
 
+function enMuestra() {
+  return !!(partida && partida.elem && partida.elem.fase === "muestra");
+}
+
+function programarMuestra() {
+  clearTimeout(relojMuestra);
+  if (!partida || !partida.elem || partida.elem.fase !== "muestra" || partida.saliendo) return;
+  const espera = Math.max(0, (partida.elem.muestraHasta || 0) - Date.now());
+  relojMuestra = setTimeout(() => {
+    if (!partida || !partida.elem || partida.elem.fase !== "muestra" || partida.saliendo) return;
+    if (Date.now() < partida.elem.muestraHasta) { programarMuestra(); return; }
+    partida.elem.fase = "";
+    partida.i++;
+    if (partida.i >= partida.visita.elementos.length) terminarPartida();
+    else { prepararElem(); pintarJuego(); }
+  }, espera);
+}
+
+function programarOpcionesJuego() {
+  clearTimeout(relojOpciones);
+  if (guia || !partida || !partida.elem || !partida.elem.opcionesDesde || partida.saliendo) return;
+  const espera = partida.elem.opcionesDesde - Date.now();
+  if (espera <= 0) {
+    partida.elem.opcionesDesde = 0;
+    return;
+  }
+  relojOpciones = setTimeout(() => {
+    if (!partida || !partida.elem || partida.saliendo) return;
+    partida.elem.opcionesDesde = 0;
+    pintarJuego("op-0");
+  }, espera);
+}
+
 function acertar(ok) {
   const e = elemActual();
+  if (enMuestra()) return;
   const seg = segundosElem();
   const p = pistaDe();
   const vio = marcaPasoCompleto(partida.visita.nivel, p.paso, seg);
@@ -466,6 +563,13 @@ function acertar(ok) {
       guardar();
     }
     bien();
+    if (e.clase === "diferencia") {
+      partida.elem.fase = "muestra";
+      partida.elem.muestraHasta = Date.now() + MUESTRA_MS;
+      pintarJuego();
+      programarMuestra();
+      return;
+    }
     partida.i++;
     if (partida.i >= partida.visita.elementos.length) { terminarPartida(); return; }
     prepararElem();
@@ -509,9 +613,9 @@ function zonaGraficaElem(e, p) {
   if (e.modo === "palitos" && e.tipo !== "grafica") {
     const ids = e.categorias.map((c) => c.id);
     const filas = ids.map((id, i) => `<div class="fila-tabla"><img class="cabeza" src="img/cabeza-${id}.svg" alt=""><div class="palitos-vivo">${htmlPalitos(e.categorias[i].cantidad)}</div><button type="button" class="nom" data-act="leer" data-que="ingles" data-id="${id}"${foco("nombre-" + i)}>${esc(nombreEs(id))}<small>${esc(animal(id).en)}</small></button></div>`).join("");
-    return lecturas("barras") + `<div class="tabla">${filas}</div>`;
+    return lecturas("palitos") + `<div class="tabla">${filas}</div>`;
   }
-  if (e.tipo === "grafica" && e.modo === "palitos") return lecturas("barras");
+  if (e.tipo === "grafica" && e.modo === "palitos") return lecturas("palitos");
   const ids = (e.categorias || []).map((c) => c.id);
   const cs = e.tipo === "grafica" || (e.tipo === "detective" && e.error === "altura")
     ? partida.elem.alturas
@@ -533,7 +637,8 @@ function controlesElem(e, p) {
   if (e.tipo === "contar") {
     const n = partida.elem.marcados.filter(Boolean).length;
     let html = `<div class="palitos-vivo">${htmlPalitos(n)}</div>`;
-    if (partida.elem.marcados.every(Boolean)) html += opcionesHtml(e.opciones, false);
+    const esperaNum = partida.elem.opcionesDesde && Date.now() < partida.elem.opcionesDesde;
+    if (partida.elem.marcados.every(Boolean) && !esperaNum) html += opcionesHtml(e.opciones, false, p.flecha === "opciones");
     return html;
   }
   if (e.tipo === "grafica" || (e.tipo === "detective" && e.error === "altura")) {
@@ -554,7 +659,7 @@ function controlesElem(e, p) {
     html += botonListo(brilla);
     return html;
   }
-  if (e.opciones) return opcionesHtml(e.opciones, e.opciones.some((o) => o && typeof o === "object"));
+  if (e.opciones) return opcionesHtml(e.opciones, e.opciones.some((o) => o && typeof o === "object"), flecha === "opciones");
   return "";
 }
 
@@ -564,6 +669,9 @@ function focoDeJuego(e) {
   if (e.tipo === "contar") {
     const i = partida.elem.marcados.findIndex((m) => !m);
     if (i >= 0) return "animal-" + i;
+    if (partida.elem.opcionesDesde && Date.now() < partida.elem.opcionesDesde) {
+      return "animal-" + (partida.elem.marcados.length - 1);
+    }
     return "op-0";
   }
   if (e.tipo === "grafica" || (e.tipo === "detective" && e.error === "altura")) {
@@ -591,6 +699,7 @@ function pintarJuego(conservar) {
     <div class="mesa"><div class="zona-grafica">${zonaGraficaElem(e, p)}</div><div class="controles">${controlesElem(e, p)}</div></div>
     ${dialogo()}
   `, quiere);
+  programarOpcionesJuego();
 }
 
 function empezarVisita(n) {
@@ -628,6 +737,7 @@ function terminarPartida() {
     guardar();
     if (cumplido && !antes) Noli.terminar({ estrellas: 3, reto: true });
     partida = null;
+    finVista = { tipo: "reto", hecha, puntos, cumplido, saliendo: false, ignorarHasta: 0 };
     pintarFinReto(hecha, puntos, cumplido);
     return;
   }
@@ -640,19 +750,29 @@ function terminarPartida() {
   Noli.terminar({ estrellas: r.estrellas });
   const comidas = pedidoComida(hecha.visita.categorias);
   partida = null;
-  pintarFin(r, abierto.nuevo, comidas);
+  finVista = { tipo: "visita", r, nuevoId: abierto.nuevo, comidas, nivel: hecha.visita.nivel, saliendo: false, ignorarHasta: 0 };
+  pintarFin(r, abierto.nuevo, comidas, hecha.visita.nivel);
 }
 
-function pintarFin(r, nuevoId, comidas) {
+function repintarFin() {
+  if (!finVista) return;
+  if (finVista.tipo === "reto") pintarFinReto(finVista.hecha, finVista.puntos, finVista.cumplido);
+  else pintarFin(finVista.r, finVista.nuevoId, finVista.comidas, finVista.nivel);
+}
+
+function pintarFin(r, nuevoId, comidas, nivelN) {
   pantalla = "fin";
   $main.className = "p-fin";
+  const dm = dominio(pr, nivelN || pr.nivel);
   const subio = r.subio ? `<div class="subio"><b>Subiste al nivel ${r.subio}</b><span>${esc(nivel(r.subio).nombre)}</span></div>` : "";
-  const animalNuevo = nuevoId ? `<img class="nuevo" src="img/animal-${nuevoId}.svg" alt=""><p class="pedido">Llegó ${esc(nombreEs(nuevoId))}.</p>` : "";
+  const animalNuevo = nuevoId ? `<img class="nuevo" src="img/animal-${nuevoId}.svg" alt=""><p class="pedido">${esc(fraseLlego(nuevoId))}</p>` : "";
   const cajas = comidas.map(([id, n]) => `<div class="comida"><img src="img/comida-${id}.svg" alt=""><div class="caja">${htmlCaja(n)}</div><span>${esc(COMIDA[id] || id)}</span></div>`).join("");
-  focoQuiere = "otra";
+  focoQuiere = finVista && finVista.saliendo ? "seguir" : "otra";
   pintar(`
     <h1 class="titulo">${esc(TEXTOS.pedido)}</h1>
     ${estrellasHtml(r.estrellas, true)}
+    <p class="dominio${dm.aciertos >= 8 ? " ok" : ""}">${dm.aciertos} de ${VENTANA}</p>
+    <div class="barra marca8" style="width:min(420px,100%)"><i style="width:${Math.min(100, Math.round(100 * dm.aciertos / VENTANA))}%"></i><b></b></div>
     ${subio}
     ${animalNuevo}
     <div class="comidas">${cajas}</div>
@@ -660,7 +780,8 @@ function pintarFin(r, nuevoId, comidas) {
       <button type="button" class="boton grande primario" data-act="otra"${foco("otra")}>${esc(TEXTOS.otra)}</button>
       <button type="button" class="boton grande" data-act="a-inicio"${foco("a-inicio")}>${esc(TEXTOS.regresar)}</button>
     </div>
-  `, "otra");
+    ${dialogo()}
+  `, focoQuiere);
 }
 
 function pintarFinReto(hecha, puntos, cumplido) {
@@ -676,7 +797,8 @@ function pintarFinReto(hecha, puntos, cumplido) {
       ${cumplido ? "" : `<button type="button" class="boton grande primario" data-act="reto-jugar"${foco("reto-jugar")}>${esc(TEXTOS.otraVez)}</button>`}
       <button type="button" class="boton grande${cumplido ? " primario" : ""}" data-act="a-inicio"${foco("a-inicio")}>${esc(TEXTOS.regresar)}</button>
     </div>
-  `, focoQuiere);
+    ${dialogo()}
+  `, finVista && finVista.saliendo ? "seguir" : focoQuiere);
 }
 
 function introReto() {
@@ -706,6 +828,7 @@ function inicio(quiere) {
   pantalla = "inicio";
   partida = null;
   guia = null;
+  finVista = null;
   $main.className = "p-inicio";
   const nv = nivel(pr.elegido || pr.nivel);
   const dm = dominio(pr, pr.elegido || pr.nivel);
@@ -714,8 +837,8 @@ function inicio(quiere) {
   pintar(`
     <h1 class="titulo">${esc(TEXTOS.titulo)}</h1>
     ${zoo()}
-    <p class="dominio${dm.listo ? " ok" : ""}">${esc(nv.nombre)} · ${dm.aciertos} de ${Math.max(dm.intentos, 10)}</p>
-    <div class="barra" style="width:min(420px,100%)"><i style="width:${Math.round(100 * dm.aciertos / 10)}%"></i></div>
+    <p class="dominio${dm.listo ? " ok" : ""}">${esc(nv.nombre)} · ${dm.aciertos} de ${VENTANA}</p>
+    <div class="barra marca8" style="width:min(420px,100%)"><i style="width:${Math.min(100, Math.round(100 * dm.aciertos / VENTANA))}%"></i><b></b></div>
     <p class="racha">${racha(pr, hoy()) ? "Racha: " + racha(pr, hoy()) : esc(TEXTOS.rachaVacia)}</p>
     <div class="menu menu-inicio">
       <button type="button" class="boton grande primario principal" data-act="jugar"${foco("jugar")}>${esc(TEXTOS.jugar)}<small>${esc(nv.nombre)}</small></button>
@@ -772,9 +895,16 @@ function papas() {
 // ---------- Acciones ----------
 
 function abrirDialogo() {
+  if (pantalla === "fin" && finVista) {
+    if (finVista.saliendo) return;
+    finVista.saliendo = true;
+    repintarFin();
+    return;
+  }
   if (guia) {
     if (guia.saliendo) return;
     pararRelojGuia();
+    clearTimeout(relojOpciones);
     guia = abrirSalirGuia(guia, Date.now());
     pintarGuia();
     return;
@@ -782,13 +912,27 @@ function abrirDialogo() {
   if (!partida || partida.saliendo) return;
   pararPista();
   callar();
+  clearTimeout(relojMuestra);
+  clearTimeout(relojOpciones);
   if (partida.elem && !partida.elem.pausaDesde) partida.elem.pausaDesde = Date.now();
+  if (partida.elem && partida.elem.fase === "muestra") {
+    partida.elem.muestraRestante = Math.max(0, (partida.elem.muestraHasta || 0) - Date.now());
+  }
+  if (partida.elem && partida.elem.opcionesDesde) {
+    partida.elem.opcionesRestante = Math.max(0, partida.elem.opcionesDesde - Date.now());
+  }
   partida.saliendo = true;
   pintarJuego("seguir");
 }
 
 function seguir() {
   const ahora = Date.now();
+  if (finVista && finVista.saliendo) {
+    finVista.saliendo = false;
+    finVista.ignorarHasta = ahora + IGNORAR_MS;
+    repintarFin();
+    return;
+  }
   if (guia && guia.saliendo) {
     guia = seguirSalirGuia(guia, ahora);
     pintarGuia();
@@ -803,6 +947,15 @@ function seguir() {
       partida.elem.pausedMs += ahora - partida.elem.pausaDesde;
       partida.elem.pausaDesde = 0;
     }
+    if (partida.elem && partida.elem.fase === "muestra") {
+      const rest = partida.elem.muestraRestante || 0;
+      partida.elem.muestraHasta = ahora + Math.max(rest, IGNORAR_MS);
+      programarMuestra();
+    }
+    if (partida.elem && partida.elem.opcionesRestante != null) {
+      partida.elem.opcionesDesde = ahora + partida.elem.opcionesRestante;
+      partida.elem.opcionesRestante = null;
+    }
     pintarJuego();
     programarPista();
   }
@@ -815,6 +968,9 @@ function salirMenu() {
   const eraGuia = !!guia;
   guia = null;
   partida = null;
+  finVista = null;
+  clearTimeout(relojMuestra);
+  clearTimeout(relojOpciones);
   if (eraGuia) ignorarGlobal = Date.now() + IGNORAR_MS;
   inicio();
 }
@@ -826,7 +982,9 @@ function leer(que, id) {
   else if (que === "ejex") texto = TEXTOS.ejeXVoz;
   else if (que === "leyenda") {
     const e = elemActual();
-    const modo = e && (e.modo === "dibujos" || (partida && partida.visita.modo === "dibujos")) ? "dibujos" : "barras";
+    let modo = "barras";
+    if (e && e.modo === "palitos") modo = "palitos";
+    else if (e && (e.modo === "dibujos" || (partida && partida.visita.modo === "dibujos"))) modo = "dibujos";
     texto = vozLeyenda(guia && guia.paso ? "barras" : modo);
   } else if (que === "ingles") texto = fraseIngles(id);
   if (!texto) return;
@@ -834,6 +992,7 @@ function leer(que, id) {
 }
 
 function alBarra(i, delta) {
+  if (enMuestra()) return;
   if (guia) {
     avanzarGuia("barra", { indice: i, delta });
     return;
@@ -855,7 +1014,8 @@ function alMarcar(i) {
   partida.elem.marcados[i] = true;
   clic();
   const falta = partida.elem.marcados.findIndex((m) => !m);
-  pintarJuego(falta >= 0 ? "animal-" + falta : "op-0");
+  if (falta < 0) partida.elem.opcionesDesde = Date.now() + OPCIONES_LOCK_MS;
+  pintarJuego(falta >= 0 ? "animal-" + falta : "animal-" + i);
 }
 
 function alOpcion(valor) {
@@ -865,7 +1025,8 @@ function alOpcion(valor) {
     return;
   }
   const e = elemActual();
-  if (!e) return;
+  if (!e || enMuestra()) return;
+  if (partida.elem && partida.elem.opcionesDesde && Date.now() < partida.elem.opcionesDesde) return;
   if (e.tipo === "contar") {
     if (!partida.elem.marcados.every(Boolean)) return;
     acertar(conteoCorrecto(e, valor));
@@ -875,6 +1036,7 @@ function alOpcion(valor) {
 }
 
 function alListo() {
+  if (enMuestra()) return;
   if (guia) { avanzarGuia("listo"); return; }
   if (!coincidenAhora()) return;
   acertar(true);
@@ -891,6 +1053,43 @@ function barraEnfocada() {
   return m ? +m[1] : -1;
 }
 
+function irFoco(id) {
+  const el = $main.querySelector(`[data-foco-id="${id}"]`);
+  if (!el || el.disabled) return false;
+  el.focus();
+  focoQuiere = id;
+  return true;
+}
+
+// En la tele, izquierda y derecha cambian de fila. Abajo en la última fila
+// llega a Listo, y arriba en Listo vuelve a la última fila.
+function navegarBarras(accion) {
+  const e = elemActual();
+  const construye = guia
+    ? guia.paso === "subir" || guia.paso === "listo"
+    : !!(e && (e.tipo === "grafica" || (e.tipo === "detective" && e.error === "altura")));
+  if (!construye) return false;
+  if (accion !== "arriba" && accion !== "abajo" && accion !== "izquierda" && accion !== "derecha") return false;
+  const filas = [...$main.querySelectorAll(".fila-barra[data-foco-id]")];
+  if (!filas.length) return false;
+  const via = resolverAct(accion);
+  if (via !== "juego") return true;
+  const i = barraEnfocada();
+  if (idFoco() === "listo") {
+    if (accion === "arriba") return irFoco(filas[filas.length - 1].dataset.focoId) || true;
+    return false;
+  }
+  if (i < 0) return false;
+  if (accion === "izquierda") return irFoco(filas[Math.max(0, i - 1)].dataset.focoId) || true;
+  if (accion === "derecha") return irFoco(filas[Math.min(filas.length - 1, i + 1)].dataset.focoId) || true;
+  if (accion === "abajo" && i === filas.length - 1 && irFoco("listo")) return true;
+  if (accion === "arriba" || accion === "abajo") {
+    alBarra(i, accion === "arriba" ? 1 : -1);
+    return true;
+  }
+  return true;
+}
+
 $main.addEventListener("pointerup", (ev) => {
   if (!guia || guia.saliendo || !esMirar(guia.paso)) return;
   if (ev.target.closest("[data-act], .dialogo")) return;
@@ -899,6 +1098,10 @@ $main.addEventListener("pointerup", (ev) => {
 }, true);
 
 $main.addEventListener("click", (ev) => {
+  if (ev.target.classList && ev.target.classList.contains("salir-velo")) {
+    seguir();
+    return;
+  }
   const t = ev.target.closest("[data-act]");
   if (!t || !$main.contains(t) || t.disabled) return;
   const act = t.dataset.act;
@@ -925,7 +1128,7 @@ $main.addEventListener("click", (ev) => {
     const n = +t.dataset.n;
     if (n >= 1 && n <= pr.nivel) { pr = { ...pr, elegido: n }; guardar(); inicio(); }
   } else if (act === "saltar") {
-    if (guia && saltarAlcanzable(guia.paso)) cerrarGuia("saltar");
+    if (guia) avanzarGuia("saltar");
   } else if (act === "mirar") avanzarGuia("toque");
   else if (act === "seguir") seguir();
   else if (act === "salir") salirMenu();
@@ -940,9 +1143,14 @@ $main.addEventListener("click", (ev) => {
 
 Noli.alEntrar((accion) => {
   document.documentElement.classList.add("teclado");
-  if ((pantalla === "juego" || pantalla === "guia") && accion === "atras") {
+  if ((pantalla === "juego" || pantalla === "guia" || pantalla === "fin") && accion === "atras") {
     if (saliendoAhora()) seguir();
     else abrirDialogo();
+    return true;
+  }
+  if (accion === "ok" && saliendoAhora()) {
+    if (idFoco() === "salir") salirMenu();
+    else seguir();
     return true;
   }
   if (accion === "ok") {
@@ -952,23 +1160,11 @@ Noli.alEntrar((accion) => {
     if (via === "salir") { salirMenu(); return true; }
     if (guia && !guia.saliendo && esMirar(guia.paso)) {
       const id = idFoco();
-      const lee = id === "saltar" || id === "titulo" || id === "eje-y" || id === "eje-x" || id === "leyenda" || id.startsWith("nombre-");
+      const lee = id === "titulo" || id === "eje-y" || id === "eje-x" || id === "leyenda" || id.startsWith("nombre-");
       if (!lee) { avanzarGuia("ok"); return true; }
     }
-    const i = barraEnfocada();
-    if (i >= 0 && (guia ? guia.paso === "subir" : true) && document.activeElement && document.activeElement.classList.contains("fila-barra")) {
-      return true;
-    }
   }
-  if ((accion === "arriba" || accion === "abajo") && barraEnfocada() >= 0) {
-    const via = resolverAct(accion);
-    if (via !== "juego") return true;
-    const enSubir = guia ? guia.paso === "subir" : !!(elemActual() && (elemActual().tipo === "grafica" || (elemActual().tipo === "detective" && elemActual().error === "altura")));
-    if (enSubir) {
-      alBarra(barraEnfocada(), accion === "arriba" ? 1 : -1);
-      return true;
-    }
-  }
+  if (navegarBarras(accion)) return true;
   if (moverFoco(accion, $main)) return true;
   if (accion === "ok") {
     const e = document.activeElement;

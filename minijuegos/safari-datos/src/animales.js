@@ -45,3 +45,16 @@ export function conArticulo(id) {
   const a = animal(id);
   return `${a.art} ${a.es}`;
 }
+
+// Plural del artículo: la jirafa → las jirafas; el mono → los monos.
+export function los(id) {
+  return animal(id).art === "la" ? "las" : "los";
+}
+
+export function cuantosDe(id) {
+  return animal(id).art === "la" ? "Cuántas" : "Cuántos";
+}
+
+export function fraseLlego(id) {
+  return `Llegó ${conArticulo(id)}.`;
+}

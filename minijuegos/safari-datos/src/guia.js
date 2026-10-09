@@ -36,9 +36,9 @@ export function esAccion(paso) {
   return !esMirar(paso);
 }
 
-// Saltar solo entra en las flechas de un paso de mirar, y nunca recibe el foco solo.
-export function saltarAlcanzable(paso) {
-  return esMirar(paso);
+// Saltar está en el encabezado en todos los pasos, pero nunca entra en las flechas.
+export function saltarAlcanzable() {
+  return false;
 }
 
 export function pausaDePaso(msVoz) {
@@ -102,8 +102,10 @@ export function palitosGuia(g) {
   return (g.marcados || []).filter(Boolean).length;
 }
 
-export function numerosGuiaActivos(g) {
-  return g.paso === "contar" && g.marcados.every(Boolean);
+export function numerosGuiaActivos(g, ahora = Infinity) {
+  if (!g || g.paso !== "contar" || !g.marcados.every(Boolean)) return false;
+  if (g.opcionesDesde && ahora < g.opcionesDesde) return false;
+  return true;
 }
 
 export function listoGuiaActivo(g) {
@@ -116,6 +118,7 @@ export function focoGuia(g) {
   if (g.paso === "contar") {
     const i = g.marcados.findIndex((m) => !m);
     if (i >= 0) return "animal-" + i;
+    if (g.opcionesDesde) return "animal-" + (g.marcados.length - 1);
     return "op-0";
   }
   if (g.paso === "subir") return "barra-0";
@@ -126,11 +129,13 @@ export function focoGuia(g) {
 // Momento en que un paso de mirar avanza solo.
 // Voz terminada de verdad: a los 2 s (o al tope de 3 si la frase sigue).
 // Error, sin voces o sin empezar: solo el tope de 3 s.
+// A los 2 s, salvo que la voz esté sonando de verdad: entonces el tope es 3 s.
+// Un error o una frase que no empieza no alargan la espera.
 export function instanteAuto(g) {
   if (!g || g.fin || g.saliendo || !esMirar(g.paso) || g.autoHasta == null) return null;
   const inicio = g.aparecio ?? (g.autoHasta - MIRAR_MAX_MS);
-  if (g.vozEstado === "termino") return inicio + MIRAR_MIN_MS;
-  return g.autoHasta;
+  if (g.vozEstado === "hablando") return inicio + MIRAR_MAX_MS;
+  return inicio + MIRAR_MIN_MS;
 }
 
 export function debeAvanzarSolo(g, ahora) {
@@ -155,15 +160,18 @@ export function abrirSalirGuia(g, ahora) {
   return { ...g, saliendo: true, pausadoEn: ahora };
 }
 
-// Reinicia la espera de la voz y el avance solo del paso actual.
-// No continúa lo que faltaba: vuelve a contar desde cero.
+// Reinicia la voz y el avance solo. El candado del paso no vuelve a empezar:
+// se guarda lo que faltaba al abrir «¿Salir?». Si ya había pasado, no se suma.
 export function seguirSalirGuia(g, ahora) {
+  const ancla = g.pausadoEn == null ? ahora : g.pausadoEn;
+  const restante = Math.max(0, (g.bloqueoHasta || 0) - ancla);
   return {
     ...g,
     saliendo: false,
     pausadoEn: null,
     ignorarHasta: ahora + IGNORAR_MS,
     ...tiemposDePaso(g.paso, ahora),
+    bloqueoHasta: ahora + restante,
   };
 }
 
@@ -187,10 +195,13 @@ function aplicarContar(g, evento, ahora) {
     if (i < 0 || i > 2 || g.marcados[i]) return g;
     const marcados = g.marcados.slice();
     marcados[i] = true;
-    return { ...g, marcados, mal: false };
+    const next = { ...g, marcados, mal: false };
+    if (marcados.every(Boolean)) return { ...next, opcionesDesde: ahora + BLOQUEO_MIN_MS };
+    return next;
   }
   if (evento.tipo === "numero") {
     if (!g.marcados.every(Boolean)) return g;
+    if (g.opcionesDesde && ahora < g.opcionesDesde) return g;
     if (evento.n !== GUIA_MONOS) return { ...g, elegido: evento.n, mal: true };
     return conTiempos({ ...g, elegido: GUIA_MONOS }, "grafica", ahora);
   }
@@ -235,10 +246,10 @@ export function aplicarGuia(g, evento, ahora) {
     if (!debeAvanzarSolo(g, ahora)) return g;
     return avanzarMirar(g, ahora);
   }
-  // En mirar, el toque y OK avanzan al momento: no esperan los 2–3 s del reloj.
-  // Sí se ignoran justo después de cerrar «¿Salir?».
+  // En mirar, el toque y OK avanzan sin esperar los 2–3 s de la voz,
+  // pero sí el candado de 1 s del paso y los 400 ms tras «¿Salir?».
   if (esMirar(g.paso) && (evento.tipo === "toque" || evento.tipo === "ok")) {
-    if (ahora < (g.ignorarHasta || 0)) return g;
+    if (bloqueada(g, ahora)) return g;
     return avanzarMirar(g, ahora);
   }
   if (bloqueada(g, ahora)) return g;

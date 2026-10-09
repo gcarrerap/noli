@@ -1,11 +1,12 @@
 // Todas las frases que ve o oye Noelia, en un solo lugar.
-import { animal, conArticulo, nombreEs } from "./animales.js";
+import { animal, conArticulo, cuantosDe, los, nombreEs } from "./animales.js";
 
 export const TEXTOS = {
   titulo: "Safari de Datos",
   mas: "¿De qué animal hay más?",
   leyenda: "Cada dibujo es 1 animal",
   leyendaBarra: "Cada cuadro es 1 animal",
+  leyendaPalito: "Cada palito es 1 animal",
   tituloGrafica: "Animales del zoológico",
   ejeY: "Cuántos",
   ejeYVoz: "Cuántos animales",
@@ -40,19 +41,25 @@ export const TEXTOS = {
 };
 
 export function textoContar(id) {
-  return `Cuenta los ${animal(id).plural}.`;
+  return `Cuenta ${los(id)} ${animal(id).plural}.`;
 }
 
 export function textoCuantos(id) {
-  return `¿Cuántos ${animal(id).plural} hay?`;
+  return `¿${cuantosDe(id)} ${animal(id).plural} hay?`;
 }
 
 export function textoDiferencia(idMayor, idMenor) {
-  return `¿Cuántos más ${animal(idMayor).plural} que ${animal(idMenor).plural}?`;
+  return `¿${cuantosDe(idMayor)} ${animal(idMayor).plural} más que ${los(idMenor)} ${animal(idMenor).plural}?`;
 }
 
 export function textoTotalDos(idA, idB) {
-  return `¿Cuántos ${animal(idA).plural} y ${animal(idB).plural} hay en total?`;
+  const a = animal(idA);
+  const b = animal(idB);
+  if (a.art === b.art) {
+    const q = a.art === "la" ? "Cuántas" : "Cuántos";
+    return `¿${q} ${a.plural} y ${b.plural} hay en total?`;
+  }
+  return `¿Cuántos animales hay: ${los(idA)} ${a.plural} y ${los(idB)} ${b.plural}?`;
 }
 
 export function textoTotalTodos() {
@@ -64,7 +71,7 @@ export function textoFalta(id) {
 }
 
 export function textoBarraMal(id) {
-  return `La barra de los ${animal(id).plural} está mal.`;
+  return `La barra de ${los(id)} ${animal(id).plural} está mal.`;
 }
 
 export function textoGuia(paso, tv) {
@@ -85,7 +92,9 @@ export function vozGuia(paso, tv) {
 }
 
 export function vozLeyenda(modo) {
-  return modo === "dibujos" ? TEXTOS.leyenda : TEXTOS.leyendaBarra;
+  if (modo === "dibujos") return TEXTOS.leyenda;
+  if (modo === "palitos") return TEXTOS.leyendaPalito;
+  return TEXTOS.leyendaBarra;
 }
 
 export function opcionAnimal(id) {

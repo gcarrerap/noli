@@ -1,7 +1,7 @@
 // Pistas por escalera. En el nivel 1 el paso va completo.
 // Desde el 2: frase, flecha a los 20 s y paso completo a los 40 s o tras un error.
 // Ese paso completo (a los 40 s) ya no cuenta como a la primera.
-import { animal } from "./animales.js";
+import { animal, los } from "./animales.js";
 
 export const FLECHA_S = 20;
 export const COMPLETA_S = 40;
@@ -16,91 +16,104 @@ function escalon(nivel, segundos, errores) {
 }
 
 function fraseBarra(id, meta, actual, tv) {
-  const plural = animal(id).plural;
+  const grupo = `${los(id)} ${animal(id).plural}`;
   if (meta > actual) {
     return tv
       ? { texto: `Pulsa arriba hasta ${meta}.`, leer: `Pulsa arriba hasta ${meta}.` }
-      : { texto: `Sube los ${plural} hasta ${meta}.`, leer: `Sube los ${plural} hasta ${meta}.` };
+      : { texto: `Sube ${grupo} hasta ${meta}.`, leer: `Sube ${grupo} hasta ${meta}.` };
   }
   return tv
     ? { texto: `Pulsa abajo hasta ${meta}.`, leer: `Pulsa abajo hasta ${meta}.` }
-    : { texto: `Baja los ${plural} hasta ${meta}.`, leer: `Baja los ${plural} hasta ${meta}.` };
+    : { texto: `Baja ${grupo} hasta ${meta}.`, leer: `Baja ${grupo} hasta ${meta}.` };
 }
 
-function pistaContar(elemento, estado, paso, tv) {
-  const plural = animal(elemento.id).plural;
-  if (paso === "corto") return { paso, texto: "Toca cada animal.", leer: "Toca cada animal.", flecha: null, linea: false };
+function frase(texto) {
+  return { texto, leer: texto };
+}
+
+function pistaContar(elemento, estado, paso, tv, errores) {
+  const corto = tv ? "Pulsa OK en cada animal." : "Toca cada animal.";
   const i = (estado.marcados || []).findIndex((m) => !m);
+  if (paso === "corto") return { paso, ...frase(corto), flecha: null, linea: false };
   if (paso === "flecha") {
-    return { paso, texto: "Toca cada animal.", leer: "Toca cada animal.", flecha: i >= 0 ? "animal-" + i : "opciones", linea: false };
+    return { paso, ...frase(corto), flecha: i >= 0 ? "animal-" + i : "opciones", linea: false };
   }
-  const como = tv ? `Pulsa OK en cada ${animal(elemento.id).es}.` : `Toca cada ${animal(elemento.id).es}.`;
-  return {
-    paso,
-    texto: `${como} Escoge el ${elemento.cantidad}.`,
-    leer: `${como} Escoge el ${elemento.cantidad}.`,
-    flecha: null,
-    linea: false,
-    plural,
-  };
+  const como = tv ? `Pulsa OK en cada ${animal(elemento.id).es}` : `Toca cada ${animal(elemento.id).es}`;
+  const proc = `${como} y cuenta las rayitas.`;
+  if ((errores | 0) > 0) return { paso, ...frase(`${proc} Escoge el ${elemento.cantidad}.`), flecha: "opciones", linea: false };
+  return { paso, ...frase(proc), flecha: null, linea: false };
 }
 
-function pistaGrafica(elemento, estado, paso, tv) {
+function pistaGrafica(elemento, estado, paso, tv, errores) {
   const metas = elemento.categorias.map((c) => c.cantidad);
   const alturas = estado.alturas || metas.map(() => 0);
+  if (metas.every((m, k) => alturas[k] === m)) {
+    const listo = tv ? "¡Brilla! Pulsa OK." : "¡Brilla! Toca Listo.";
+    return { paso, ...frase(listo), flecha: "listo", linea: false };
+  }
   let i = metas.findIndex((m, k) => alturas[k] !== m);
   if (i < 0) i = 0;
-  if (paso === "corto") return { paso, texto: "Iguala cada animal.", leer: "Iguala cada animal.", flecha: null, linea: false };
-  if (paso === "flecha") return { paso, texto: "Mira esta barra.", leer: "Mira esta barra.", flecha: "barra-" + i, linea: false };
-  const frase = fraseBarra(elemento.categorias[i].id, metas[i], alturas[i] || 0, tv);
-  return { paso, ...frase, flecha: "barra-" + i, linea: false };
+  if ((errores | 0) > 0) {
+    const dicha = fraseBarra(elemento.categorias[i].id, metas[i], alturas[i] || 0, tv);
+    return { paso: "completo", ...dicha, flecha: "barra-" + i, linea: false };
+  }
+  if (paso === "corto") return { paso, ...frase("Iguala cada animal."), flecha: null, linea: false };
+  if (paso === "flecha") return { paso, ...frase("Mira esta barra."), flecha: "barra-" + i, linea: false };
+  const proc = tv ? "Pulsa arriba o abajo hasta que coincida." : "Sube o baja hasta que coincida.";
+  return { paso, ...frase(proc), flecha: "barra-" + i, linea: false };
 }
 
-function pistaPregunta(elemento, paso) {
+function pistaPregunta(elemento, paso, errores) {
+  const dio = (errores | 0) > 0;
   if (elemento.clase === "diferencia") {
-    if (paso === "corto") return { paso, texto: "Compara las dos barras.", leer: "Compara las dos barras.", flecha: null, linea: false };
-    if (paso === "flecha") return { paso, texto: "Mira la barra corta.", leer: "Mira la barra corta.", flecha: "baja", linea: true, sombra: false };
-    return { paso, texto: `Son ${elemento.correcta} más.`, leer: `Son ${elemento.correcta} más.`, flecha: "baja", linea: true, sombra: true };
+    if (!dio && paso === "corto") return { paso, ...frase("Compara las dos barras."), flecha: null, linea: false };
+    if (!dio && paso === "flecha") return { paso, ...frase("Mira la barra corta."), flecha: "baja", linea: true, sombra: false };
+    if (!dio) return { paso, ...frase("Compara las dos barras."), flecha: "baja", linea: true, sombra: false };
+    return { paso, ...frase(`Son ${elemento.correcta} más.`), flecha: "baja", linea: true, sombra: true };
   }
   if (elemento.clase === "total" || elemento.clase === "total-todos") {
-    if (paso === "corto") return { paso, texto: "Junta los números.", leer: "Junta los números.", flecha: null, linea: false, luces: false };
-    if (paso === "flecha") return { paso, texto: "Suma una y luego la otra.", leer: "Suma una y luego la otra.", flecha: "barras", linea: false, luces: true };
-    return { paso, texto: `Son ${elemento.correcta}.`, leer: `Son ${elemento.correcta}.`, flecha: "barras", linea: false, luces: true };
+    if (!dio && paso === "corto") return { paso, ...frase("Junta los números."), flecha: null, linea: false, luces: false };
+    if (!dio) return { paso, ...frase("Suma una y luego la otra."), flecha: "barras", linea: false, luces: true };
+    return { paso, ...frase(`Son ${elemento.correcta}.`), flecha: "barras", linea: false, luces: true };
   }
   if (elemento.clase === "mas") {
-    if (paso === "corto") return { paso, texto: "Busca la barra más alta.", leer: "Busca la barra más alta.", flecha: null, linea: false };
-    if (paso === "flecha") return { paso, texto: "Mira la más alta.", leer: "Mira la más alta.", flecha: "alta", linea: false };
+    if (!dio && paso === "flecha") return { paso, ...frase("Mira la más alta."), flecha: "alta", linea: false };
+    if (!dio) return { paso, ...frase("Busca la barra más alta."), flecha: paso === "completo" ? "alta" : null, linea: false };
     const nombre = animal(elemento.correcta).plural;
-    return { paso, texto: `Hay más ${nombre}.`, leer: `Hay más ${nombre}.`, flecha: "alta", linea: false };
+    return { paso, ...frase(`Hay más ${nombre}.`), flecha: "alta", linea: false };
   }
-  if (paso !== "completo") return { paso, texto: "Mira la gráfica.", leer: "Mira la gráfica.", flecha: paso === "flecha" ? "opciones" : null, linea: false };
-  return { paso, texto: `Es ${elemento.correcta}.`, leer: `Es ${elemento.correcta}.`, flecha: null, linea: false };
+  if (!dio) {
+    return { paso, ...frase("Mira la gráfica y cuenta."), flecha: paso === "flecha" || paso === "completo" ? "opciones" : null, linea: false };
+  }
+  return { paso, ...frase(`Es ${elemento.correcta}.`), flecha: "opciones", linea: false };
 }
 
-function pistaDetective(elemento, paso) {
+function pistaDetective(elemento, paso, errores) {
   const id = elemento.error === "falta"
     ? elemento.falta
     : elemento.realIds[elemento.errorIndice] || elemento.realIds[0];
-  const otra = `Cuenta otra vez los ${animal(id).plural}.`;
-  if (paso === "corto") return { paso, texto: "Mira la gráfica.", leer: "Mira la gráfica.", flecha: null, linea: false };
-  if (paso === "flecha") return { paso, texto: otra, leer: otra, flecha: elemento.error === "altura" ? "barra-" + elemento.errorIndice : "opciones", linea: false };
-  if (elemento.error === "altura") {
-    const frase = `Los ${animal(id).plural} son ${elemento.real[elemento.errorIndice]}.`;
-    return { paso, texto: frase, leer: frase, flecha: "barra-" + elemento.errorIndice, linea: false };
+  const otra = `Cuenta otra vez ${los(id)} ${animal(id).plural}.`;
+  if (paso === "corto") return { paso, ...frase("Mira la gráfica."), flecha: null, linea: false };
+  if (paso === "flecha") return { paso, ...frase(otra), flecha: elemento.error === "altura" ? "barra-" + elemento.errorIndice : "opciones", linea: false };
+  if (elemento.error === "altura" && (errores | 0) > 0) {
+    const dicha = `${los(id).charAt(0).toUpperCase()}${los(id).slice(1)} ${animal(id).plural} son ${elemento.real[elemento.errorIndice]}.`;
+    return { paso, ...frase(dicha), flecha: "barra-" + elemento.errorIndice, linea: false };
   }
-  if (elemento.error === "etiquetas") return { paso, texto: "Los nombres están cambiados.", leer: "Los nombres están cambiados.", flecha: null, linea: false };
-  return { paso, texto: `Falta ${animal(elemento.falta).art} ${animal(elemento.falta).es}.`, leer: `Falta ${animal(elemento.falta).art} ${animal(elemento.falta).es}.`, flecha: null, linea: false };
+  if (elemento.error === "altura") return { paso, ...frase(otra), flecha: "barra-" + elemento.errorIndice, linea: false };
+  if (elemento.error === "etiquetas") return { paso, ...frase("Los nombres están cambiados."), flecha: null, linea: false };
+  return { paso, ...frase(`Falta ${animal(elemento.falta).art} ${animal(elemento.falta).es}.`), flecha: null, linea: false };
 }
 
 export function pista(elemento, estado, opts = {}) {
   const paso = escalon(opts.nivel || 1, opts.segundos || 0, opts.errores || 0);
   const tv = !!opts.tv;
+  const errores = opts.errores || 0;
   const vacio = { paso: "nada", texto: "", leer: "", flecha: null, linea: false, sombra: false, luces: false };
-  if (!elemento || (estado && estado.fase === "muestra")) return vacio;
-  if (elemento.tipo === "contar") return { sombra: false, luces: false, ...pistaContar(elemento, estado || {}, paso, tv) };
-  if (elemento.tipo === "grafica") return { sombra: false, luces: false, ...pistaGrafica(elemento, estado || {}, paso, tv) };
-  if (elemento.tipo === "pregunta") return { sombra: false, luces: false, ...pistaPregunta(elemento, paso, tv) };
-  if (elemento.tipo === "detective") return { sombra: false, luces: false, ...pistaDetective(elemento, paso, tv) };
+  if (!elemento) return vacio;
+  if (elemento.tipo === "contar") return { sombra: false, luces: false, ...pistaContar(elemento, estado || {}, paso, tv, errores) };
+  if (elemento.tipo === "grafica") return { sombra: false, luces: false, ...pistaGrafica(elemento, estado || {}, paso, tv, errores) };
+  if (elemento.tipo === "pregunta") return { sombra: false, luces: false, ...pistaPregunta(elemento, paso, errores) };
+  if (elemento.tipo === "detective") return { sombra: false, luces: false, ...pistaDetective(elemento, paso, errores) };
   return vacio;
 }
 

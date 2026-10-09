@@ -1,6 +1,6 @@
 // Visitas del safari. Puro: el azar entra por `rnd`.
 // No hay nivel de escala de 2: en su lugar va la tabla de conteo.
-import { animal } from "./animales.js";
+import { animal, los } from "./animales.js";
 import { entre, revolver } from "./rng.js";
 import {
   TEXTOS, textoBarraMal, textoContar, textoCuantos, textoDiferencia, textoFalta, textoTotalDos, textoTotalTodos,
@@ -188,8 +188,12 @@ function preguntasDe(n, categorias, rnd, modo, horizontal) {
   if (n === 2) return [pregMas(categorias, rnd, base)];
   const pares = paresDistintos(categorias);
   if (n === 3) {
-    const p1 = pares[Math.floor(rnd() * pares.length)];
-    const p2 = pares[Math.floor(rnd() * pares.length)];
+    const i1 = Math.floor(rnd() * pares.length);
+    const i2 = pares.length > 1
+      ? (i1 + 1 + Math.floor(rnd() * (pares.length - 1))) % pares.length
+      : i1;
+    const p1 = pares[i1];
+    const p2 = pares[i2];
     return [
       pregCuantos(categorias[0], rnd, base),
       pregMas(categorias, rnd, base),
@@ -268,7 +272,7 @@ function itemDetective(categorias, tipo, rnd) {
       mostrado,
       errorIndice: i,
       texto: TEXTOS.arregla,
-      leer: `Cuenta otra vez los ${animal(realIds[i]).plural}.`,
+      leer: `Cuenta otra vez ${los(realIds[i])} ${animal(realIds[i]).plural}.`,
     };
   }
   if (tipo === "etiquetas") {
@@ -365,7 +369,7 @@ function repartirSuma(rnd, n, suma) {
 
 export function crearCenso(rnd, nivelActual) {
   const def = nivel(nivelActual);
-  const ids = def.animales.slice(0, Math.min(4, def.animales.length));
+  const ids = revolver(rnd, def.animales.slice()).slice(0, Math.min(4, def.animales.length));
   const n = ids.length;
   const suma = entre(rnd, Math.max(12, n * 2), 20);
   const cs = repartirSuma(rnd, n, suma);
@@ -409,8 +413,8 @@ export function crearVisita(nivelN, rnd, opts = {}) {
       horizontal: horizontal && def.modo === "barras",
       categorias,
       alturasIniciales: categorias.map(() => 0),
-      texto: def.modo === "palitos" ? "Escribe el número de cada fila." : "Arma la gráfica.",
-      leer: def.modo === "palitos" ? "Escribe el número de cada fila." : "Arma la gráfica.",
+      texto: def.modo === "palitos" ? "Pon el número de cada fila." : "Arma la gráfica.",
+      leer: def.modo === "palitos" ? "Pon el número de cada fila." : "Arma la gráfica.",
     });
   }
   const pregs = preguntasDe(n, categorias, rnd, def.modo, horizontal && n === 2);

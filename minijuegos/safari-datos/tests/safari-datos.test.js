@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { rngConSemilla } from "../src/rng.js";
-import { ORDEN, animal, fraseIngles } from "../src/animales.js";
-import { TEXTOS, textoGuia, vozGuia, vozLeyenda } from "../src/textos.js";
+import { ORDEN, animal, fraseIngles, fraseLlego } from "../src/animales.js";
+import { TEXTOS, textoGuia, vozGuia, vozLeyenda, textoContar, textoCuantos, textoDiferencia } from "../src/textos.js";
 import { limpiarHabla, hablar, cuentaComoFin, prepararVoces, elegirVoz } from "../src/voz.js";
 import { IGNORAR_MS, efectoAtras, resolverToque, alCerrarDialogo } from "../src/salida.js";
 import { controlesCaben, eje20Cabe, animalesEnFila, CONTROL_PX, TV_MARGEN } from "../src/medidas.js";
@@ -64,7 +64,7 @@ test("contar marca con palito y solo el 3 avanza; Listo espera su paso", () => {
   assert.equal(g.paso, "contar");
   assert.equal(debeAvanzarSolo(g, 99999), false);
   assert.equal(saltarAlcanzable("contar"), false);
-  assert.equal(saltarAlcanzable("cuidar"), true);
+  assert.equal(saltarAlcanzable("cuidar"), false);
   const t = g.bloqueoHasta;
   assert.equal(aplicarGuia(g, { tipo: "numero", n: 3 }, t).paso, "contar");
   g = aplicarGuia(g, { tipo: "marcar", i: 0 }, t);
@@ -73,11 +73,16 @@ test("contar marca con palito y solo el 3 avanza; Listo espera su paso", () => {
   g = aplicarGuia(g, { tipo: "marcar", i: 1 }, t);
   g = aplicarGuia(g, { tipo: "marcar", i: 2 }, t);
   assert.equal(palitosGuia(g), GUIA_MONOS);
-  assert.equal(numerosGuiaActivos(g), true);
+  assert.equal(numerosGuiaActivos(g, t), false);
+  assert.equal(focoGuia(g), "animal-2");
+  assert.equal(aplicarGuia(g, { tipo: "numero", n: 3 }, t).paso, "contar");
+  const cuando = g.opcionesDesde;
+  assert.equal(numerosGuiaActivos(g, cuando), true);
+  g = { ...g, opcionesDesde: 0 };
   assert.deepEqual(OPCIONES_GUIA_CONTEO, [2, 3, 4]);
   assert.notEqual(OPCIONES_GUIA_CONTEO[0], 3);
   assert.equal(focoGuia(g), "op-0");
-  g = aplicarGuia(g, { tipo: "numero", n: 2 }, t);
+  g = aplicarGuia(g, { tipo: "numero", n: 2 }, cuando);
   assert.equal(g.paso, "contar");
   assert.equal(g.mal, true);
   g = aplicarGuia(g, { tipo: "ok" }, t);
@@ -116,8 +121,10 @@ test("¿Salir? pausa el avance y la voz, y Seguir los reinicia", () => {
   let g = guiaNueva(0);
   assert.equal(g.autoHasta, 3000);
   assert.equal(g.vozHasta, 3000);
-  assert.equal(debeAvanzarSolo(g, 2999), false);
-  assert.equal(debeAvanzarSolo(g, 3000), true);
+  assert.equal(debeAvanzarSolo(g, 1999), false);
+  assert.equal(debeAvanzarSolo(g, 2000), true);
+  assert.equal(debeAvanzarSolo(anotarVoz(g, "hablando", 100), 2000), false);
+  assert.equal(debeAvanzarSolo(anotarVoz(g, "hablando", 100), 3000), true);
 
   g = abrirSalirGuia(g, 2900);
   assert.equal(g.saliendo, true);
@@ -137,16 +144,22 @@ test("¿Salir? pausa el avance y la voz, y Seguir los reinicia", () => {
   assert.equal(g.saliendo, false);
   assert.equal(g.autoHasta, 2900 + 3000);
   assert.equal(g.vozHasta, 2900 + 3000);
-  assert.equal(g.bloqueoHasta, 2900 + 1000);
+  assert.equal(g.bloqueoHasta, 2900);
   assert.equal(g.ignorarHasta, 2900 + IGNORAR_MS);
   assert.equal(IGNORAR_MS, 400);
-  assert.equal(finCandado(g), 2900 + 1000);
+  assert.equal(finCandado(g), 2900 + IGNORAR_MS);
   assert.notEqual(finCandado(g), 2900 + IGNORAR_MS + 1000);
-  assert.equal(bloqueada(g, 2900 + 999), true);
-  assert.equal(bloqueada(g, 2900 + 1000), false);
+  assert.equal(bloqueada(g, 2900 + 399), true);
+  assert.equal(bloqueada(g, 2900 + 400), false);
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 2900 + 650).paso, "contar");
+  let fresco = abrirSalirGuia(guiaNueva(0), 400);
+  fresco = seguirSalirGuia(fresco, 700);
+  assert.equal(fresco.bloqueoHasta, 700 + 600);
+  assert.equal(fresco.autoHasta, 700 + 3000);
+  assert.equal(aplicarGuia(fresco, { tipo: "ok" }, 700 + 500).paso, "cuidar");
   assert.equal(debeAvanzarSolo(g, 2900 + 100), false);
-  assert.equal(debeAvanzarSolo(g, 2900 + 2999), false);
-  assert.equal(debeAvanzarSolo(g, 2900 + 3000), true);
+  assert.equal(debeAvanzarSolo(g, 2900 + 1999), false);
+  assert.equal(debeAvanzarSolo(g, 2900 + 2000), true);
   assert.equal(bloqueada(g, 2900 + 200), true);
   assert.equal(aplicarGuia(g, { tipo: "ok" }, 2900 + 200).paso, "cuidar");
   assert.equal(resolverToque({ saliendo: false, ignorarHasta: g.ignorarHasta, ahora: 2900 + 399, act: "ok" }), "nada");
@@ -161,9 +174,10 @@ test("Saltar guarda la guía; en mirar OK avanza al momento y en acción el bloq
   assert.equal(s.guardada, true);
   const g = guiaNueva(0);
   assert.equal(bloqueada(g, 500), true);
-  assert.equal(aplicarGuia(g, { tipo: "ok" }, 0).paso, "contar");
-  assert.equal(aplicarGuia(g, { tipo: "toque" }, 100).paso, "contar");
-  const contando = aplicarGuia(g, { tipo: "ok" }, 500);
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 0).paso, "cuidar");
+  assert.equal(aplicarGuia(g, { tipo: "toque" }, 100).paso, "cuidar");
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 1000).paso, "contar");
+  const contando = aplicarGuia(g, { tipo: "ok" }, 1000);
   assert.equal(contando.paso, "contar");
   assert.equal(aplicarGuia(contando, { tipo: "marcar", i: 0 }, 500).marcados[0], false);
   assert.equal(aplicarGuia(contando, { tipo: "marcar", i: 0 }, contando.bloqueoHasta).marcados[0], true);
@@ -207,12 +221,15 @@ test("un error de voz no cierra el paso de mirar: cae al reloj de 2 a 3 s", () =
   let g = anotarVoz(guiaNueva(0), mal.estado, 80);
   assert.equal(g.vozEstado, "fallo");
   assert.equal(g.bloqueoHasta, 1000);
-  assert.equal(instanteAuto(g), 3000);
-  assert.equal(debeAvanzarSolo(g, MIRAR_MIN_MS), false);
-  assert.equal(debeAvanzarSolo(g, MIRAR_MAX_MS - 1), false);
-  assert.equal(debeAvanzarSolo(g, MIRAR_MAX_MS), true);
-  assert.equal(aplicarGuia(g, { tipo: "tiempo" }, MIRAR_MIN_MS).paso, "cuidar");
-  assert.equal(aplicarGuia(g, { tipo: "ok" }, 50).paso, "contar");
+  assert.equal(instanteAuto(g), MIRAR_MIN_MS);
+  assert.equal(debeAvanzarSolo(g, MIRAR_MIN_MS - 1), false);
+  assert.equal(debeAvanzarSolo(g, MIRAR_MIN_MS), true);
+  assert.equal(aplicarGuia(g, { tipo: "tiempo" }, MIRAR_MIN_MS).paso, "contar");
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, 50).paso, "cuidar");
+  const hablando = anotarVoz(guiaNueva(0), "hablando", 100);
+  assert.equal(instanteAuto(hablando), MIRAR_MAX_MS);
+  assert.equal(debeAvanzarSolo(hablando, MIRAR_MIN_MS), false);
+  assert.equal(debeAvanzarSolo(hablando, MIRAR_MAX_MS), true);
 
   const nuncaLista = [];
   const nunca = vozFalsa(() => { /* speak no dispara onstart ni onend */ });
@@ -221,8 +238,8 @@ test("un error de voz no cierra el paso de mirar: cae al reloj de 2 a 3 s", () =
   assert.equal(cuentaComoFin(callado.estado), false);
   assert.equal(nuncaLista.includes("termino"), false);
   assert.equal(anotarVoz(guiaNueva(0), "fallo").vozEstado, "fallo");
-  assert.equal(debeAvanzarSolo(guiaNueva(0), MIRAR_MIN_MS), false);
-  assert.equal(debeAvanzarSolo(guiaNueva(0), MIRAR_MAX_MS), true);
+  assert.equal(debeAvanzarSolo(guiaNueva(0), MIRAR_MIN_MS - 1), false);
+  assert.equal(debeAvanzarSolo(guiaNueva(0), MIRAR_MIN_MS), true);
 
   const bienLista = [];
   const bien = vozFalsa((u) => { u.onstart(); u.onend(); });
@@ -288,6 +305,12 @@ test("no hay escala de 2: el nivel 5 es la tabla de conteo", () => {
   assert.deepEqual(ORDEN, ["mono", "leon", "jirafa", "elefante", "cebra", "hipopotamo", "pinguino", "flamenco"]);
   assert.equal(animalNuevoDeNivel(2), "elefante");
   assert.equal(fraseIngles("jirafa"), "Jirafa. giraffe.");
+  assert.equal(textoContar("jirafa"), "Cuenta las jirafas.");
+  assert.equal(textoContar("mono"), "Cuenta los monos.");
+  assert.equal(textoCuantos("jirafa"), "¿Cuántas jirafas hay?");
+  assert.equal(textoDiferencia("jirafa", "mono"), "¿Cuántas jirafas más que los monos?");
+  assert.equal(fraseLlego("elefante"), "Llegó el elefante.");
+  assert.equal(fraseLlego("cebra"), "Llegó la cebra.");
 });
 
 test("cada visita cabe, la gráfica coincide con los conteos y la pregunta sale de la gráfica", () => {
@@ -340,6 +363,14 @@ test("cada visita cabe, la gráfica coincide con los conteos y la pregunta sale 
         if (e.tipo === "detective") {
           assert.equal(unSoloError(e), true, JSON.stringify({ error: e.error, mostrado: e.mostrado, real: e.real }));
           assert.equal(ejeDe(e.real) === 10 || ejeDe(e.real) === 20, true);
+        }
+      }
+      if (n === 3) {
+        const difs = v.elementos.filter((e) => e.clase === "diferencia");
+        for (let d = 1; d < difs.length; d++) {
+          const antes = [...difs[d - 1].par].sort().join();
+          const ahora = [...difs[d].par].sort().join();
+          assert.notEqual(ahora, antes);
         }
       }
     }
@@ -429,7 +460,11 @@ test("la pista del nivel 1 es el paso entero y a los 40 s ya no es a la primera"
   const e = crearVisita(1, rngConSemilla("p"), {}).elementos.find((x) => x.tipo === "contar");
   const corta = pista(e, { marcados: [false] }, { nivel: 1, segundos: 0, errores: 0, tv: true });
   assert.equal(corta.paso, "completo");
-  assert.match(corta.leer, /Escoge el/);
+  assert.match(corta.leer, /cuenta las rayitas/);
+  assert.doesNotMatch(corta.leer, /Escoge el/);
+  const trasError = pista(e, { marcados: [false] }, { nivel: 1, segundos: 0, errores: 1, tv: false });
+  assert.match(trasError.leer, /Escoge el/);
+  assert.match(trasError.leer, /Toca cada/);
   assert.doesNotMatch(corta.leer, SIMBOLO);
   const e2 = crearVisita(3, rngConSemilla("p3"), {}).elementos.find((x) => x.clase === "diferencia");
   const c = pista(e2, {}, { nivel: 3, segundos: 0, errores: 0 });
@@ -440,15 +475,18 @@ test("la pista del nivel 1 es el paso entero y a los 40 s ya no es a la primera"
   assert.equal(f.linea, true);
   const full = pista(e2, {}, { nivel: 3, segundos: 40, errores: 0 });
   assert.equal(full.paso, "completo");
-  assert.equal(full.sombra, true);
+  assert.equal(full.sombra, false);
+  assert.doesNotMatch(full.leer, /\d/);
   assert.equal(marcaPasoCompleto(3, "completo", 40), true);
   assert.equal(marcaPasoCompleto(1, "completo", 40), false);
   assert.equal(marcaPasoCompleto(3, "completo", 39), false);
   const mal = pista(e2, {}, { nivel: 3, segundos: 1, errores: 1 });
   assert.equal(mal.paso, "completo");
+  assert.equal(mal.sombra, true);
+  assert.match(mal.leer, /Son /);
   const det = crearVisita(6, rngConSemilla("pd"), { hechosDetective: 0 }).elementos[0];
   const pd = pista(det, {}, { nivel: 6, segundos: 20, errores: 0 });
-  assert.match(pd.texto, /Cuenta otra vez los/);
+  assert.match(pd.texto, /Cuenta otra vez l/);
 });
 
 test("8 de 10 sube, la racha no se arma con un fallo y el animal nuevo va en orden", () => {
@@ -491,13 +529,17 @@ test("8 de 10 sube, la racha no se arma con un fallo y el animal nuevo va en ord
 });
 
 test("el censo suma como mucho 20 y las opciones de conteo no se repiten", () => {
+  const ordenes = new Set();
   for (let i = 0; i < 12; i++) {
-    const c = crearCenso(rngConSemilla("censo-" + i), 1 + (i % 6));
+    const c = crearCenso(rngConSemilla("censo-" + i), 4);
     assert.equal(c.elementos.length, 6);
     assert.ok(c.suma <= 20 && c.suma >= 12);
     assert.ok(c.categorias.every((x) => x.cantidad >= 2 && x.cantidad <= 20));
     assert.equal(c.modo, "censo");
+    assert.equal(c.elementos.filter((e) => e.tipo === "contar" && e.mixto).length >= 1, true);
+    ordenes.add(c.categorias.map((x) => x.id).join(","));
   }
+  assert.ok(ordenes.size > 1);
   const ops = opcionesConteo(4, rngConSemilla(3), [9]);
   assert.equal(ops.length, 3);
   assert.ok(ops.includes(4));
