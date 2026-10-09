@@ -1,6 +1,6 @@
 // Pantallas del Huerto. La lógica está en los otros módulos.
 import { Noli, moverFoco, focoInicial } from "../../../kit/noli.js";
-import { decir } from "./voz.js";
+import { decir, callar } from "./voz.js";
 import { clic, zumba, listo as sonidoListo, bien, desbloquear } from "./sonido.js";
 import { TEXTOS, capital } from "./textos.js";
 import { SEMILLAS, semillaNueva } from "./semillas.js";
@@ -10,9 +10,9 @@ import {
 } from "./niveles.js";
 import { pista, marcaPasoCompleto } from "./pista.js";
 import {
-  GUIA, GUIA_VOZ_MAX_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
+  GUIA, GUARDIA_SALIR_MS, pasoGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
   topeGuia, efectoAtrasGuia, lineaGuia, cadenaFocoGuia, focoAlCerrarSalir,
-  relojPasoMostrar, esperaTrasVoz, entradaTrasCerrar, toqueEnVelo,
+  relojTrasEvento, entradaTrasCerrar, toqueEnVelo, guiaBloqueada,
 } from "./guia.js";
 import {
   cargar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, encargoDeSlot,
@@ -44,29 +44,70 @@ let token = 0;
 let pistaToken = 0;
 let relojGuia = 0;
 let vozPasoGen = 0;
+let vozGen = 0;
+let pasoAparecio = 0;
+let vozSigue = false;
+let pasoMarcado = "";
 let cerradoEn = null;
 
 function hablar(texto, opts) {
   if (!vozOn()) return false;
   const o = opts && typeof opts === "object" ? opts : {};
-  return decir(texto, { activo: true, alTerminar: o.alTerminar, alFallar: o.alFallar });
-}
-
-function vozSigue() {
-  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
-  return !!(s && (s.speaking || s.pending));
+  return decir(texto, {
+    activo: true,
+    alTerminar: o.alTerminar,
+    alFallar: o.alFallar,
+    alEmpezar: o.alEmpezar,
+  });
 }
 
 function guardiaTrasSalir(tipo) {
   if (cerradoEn == null) return false;
   const ahora = typeof performance !== "undefined" ? performance.now() : Date.now();
-  return entradaTrasCerrar({ ms: ahora - cerradoEn, tipo }) === "ignorar";
+  return entradaTrasCerrar({ ms: ahora - cerradoEn, tipo, pasoMs: GUARDIA_SALIR_MS }) === "ignorar";
 }
 
 function callarPaso() {
   vozPasoGen++;
-  const s = typeof window !== "undefined" ? window.speechSynthesis : null;
-  try { if (s) s.cancel(); } catch { /* sin voz */ }
+  vozGen++;
+  vozSigue = false;
+  callar();
+}
+
+function anotarPaso(id, forzar) {
+  if (!forzar && pasoMarcado === id) return;
+  pasoMarcado = id;
+  pasoAparecio = Date.now();
+  vozSigue = false;
+}
+
+function pasoCerrado() {
+  return guiaBloqueada({ ahora: Date.now(), aparecio: pasoAparecio, vozSigue });
+}
+
+function decirGuia(texto, opts) {
+  const mio = ++vozGen;
+  const o = opts && typeof opts === "object" ? opts : {};
+  let cerro = false;
+  const ok = hablar(texto, {
+    alEmpezar: () => {
+      if (mio === vozGen) vozSigue = true;
+      if (typeof o.alEmpezar === "function") o.alEmpezar();
+    },
+    alTerminar: () => {
+      cerro = true;
+      if (mio === vozGen) vozSigue = false;
+      if (typeof o.alTerminar === "function") o.alTerminar();
+    },
+    alFallar: () => {
+      cerro = true;
+      if (mio === vozGen) vozSigue = false;
+      if (typeof o.alFallar === "function") o.alFallar();
+    },
+  });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (ok && !cerro && mio === vozGen) vozSigue = true;
+  return ok;
 }
 
 function cargarArte() {
@@ -402,72 +443,51 @@ function ahoraMs() {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
-// Aplica el reloj del paso que solo se muestra. Un error no lo adelanta.
-function aplicarEspera(evento, t0, gen) {
-  if (gen !== vozPasoGen) return;
-  if (!partida || partida.modo !== "guia" || partida.saliendo || !guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
-    clearTimeout(relojGuia);
-    relojGuia = 0;
-    return;
-  }
-  const plan = esperaTrasVoz({ evento, transcurrido: ahoraMs() - t0 });
-  clearTimeout(relojGuia);
-  relojGuia = 0;
-  if (plan.avanzar) {
-    avanzarPedidoSiSigue();
-    return;
-  }
-  if (!plan.correr) return;
-  relojGuia = setTimeout(() => {
-    relojGuia = 0;
-    if (gen !== vozPasoGen) return;
-    avanzarPedidoSiSigue();
-  }, plan.espera);
-}
-
 // El paso que solo se muestra vuelve a esperar la voz desde cero.
+// onerror inmediato o tarde, o un onstart que no llega, usan 2 s desde t0.
+// Si el temporizador se adelanta, se vuelve a armar con lo que falta.
 function rearmarPasoMostrar() {
   if (!partida || partida.modo !== "guia" || partida.saliendo) return;
   if (!guiaAvanzaConToque(pasoGuia(estadoGuia()))) return;
   const gen = ++vozPasoGen;
   const t0 = ahoraMs();
-  let fallo = false;
-  const hablo = hablar(textoGuia("pedido", esTv()).leer, {
-    alTerminar: () => {
-      if (fallo) return;
-      aplicarEspera("fin", t0, gen);
-    },
-    alFallar: () => {
-      fallo = true;
-      aplicarEspera("error", t0, gen);
-    },
-  });
-  if (fallo) return;
-  aplicarEspera(hablo ? "sigue" : "sin-voces", t0, gen);
-}
-
-function programarToqueGuia(msVoz) {
-  const activo = partida && partida.modo === "guia" && !partida.saliendo && guiaAvanzaConToque(pasoGuia(estadoGuia()));
-  if (!activo) {
+  let vozEstado = { arranco: false, error: false, termino: false };
+  const revisar = (evento) => {
+    if (gen !== vozPasoGen) return;
+    if (!partida || partida.modo !== "guia" || partida.saliendo || !guiaAvanzaConToque(pasoGuia(estadoGuia()))) {
+      clearTimeout(relojGuia);
+      relojGuia = 0;
+      return;
+    }
+    const plan = relojTrasEvento(vozEstado, evento || "", ahoraMs() - t0);
+    vozEstado = plan.estado;
     clearTimeout(relojGuia);
     relojGuia = 0;
-    return;
-  }
-  if (relojGuia && msVoz == null) return;
+    if (plan.avanzar) {
+      // El reloj ya decidió (acabó, falló o no arrancó). Si vozSigue siguiera,
+      // el cierre entre 1 s y 3 s se tragaría este avance de 2 s.
+      vozSigue = false;
+      avanzarPedidoSiSigue();
+      return;
+    }
+    relojGuia = setTimeout(() => revisar(""), Math.max(0, plan.espera));
+  };
+  const alFallar = () => revisar("error");
+  const hablo = decirGuia(textoGuia("pedido", esTv()).leer, {
+    alEmpezar: () => revisar("start"),
+    alTerminar: () => revisar("end"),
+    alFallar,
+  });
+  if (!hablo) vozEstado = relojTrasEvento(vozEstado, "error", ahoraMs() - t0).estado;
+  revisar("");
+}
+
+// Pintar no rearma el reloj del pedido: si lo hiciera, un repintado sumaría otra espera.
+function programarToqueGuia() {
+  const activo = partida && partida.modo === "guia" && !partida.saliendo && guiaAvanzaConToque(pasoGuia(estadoGuia()));
+  if (activo) return;
   clearTimeout(relojGuia);
-  const voz = msVoz == null ? vozSigue() : Number(msVoz) > 0;
-  const plan = relojPasoMostrar({ dialog: false, transcurrido: 0, vozSigue: voz });
-  const gen = vozPasoGen;
-  if (!plan.correr) {
-    relojGuia = 0;
-    if (plan.avanzar) avanzarPedidoSiSigue();
-    return;
-  }
-  relojGuia = setTimeout(() => {
-    relojGuia = 0;
-    if (gen !== vozPasoGen) return;
-    avanzarPedidoSiSigue();
-  }, plan.espera);
+  relojGuia = 0;
 }
 
 function empezarTemporada() {
@@ -541,6 +561,7 @@ function pintarJuego(focoId) {
   const e = partida.encargo;
   const guia = partida.modo === "guia";
   const paso = guia ? pasoGuia(estadoGuia()) : null;
+  if (guia) anotarPaso(paso);
   const coach = guia ? coachGuia() : null;
   const ayuda = guia ? null : pistaAhora();
   partida._flecha = ayuda && ayuda.flecha;
@@ -627,6 +648,7 @@ function htmlMuestra(controles) {
 
 function aceptarPedido() {
   if (!partida || partida.acepto || partida.saliendo) return;
+  if (pasoCerrado()) return;
   partida.acepto = true;
   partida.aviso = "";
   partida.t0 = Date.now();
@@ -634,7 +656,7 @@ function aceptarPedido() {
   relojGuia = 0;
   clic();
   pintarJuego(focoGuia(estadoGuia()));
-  hablar(textoGuia("filas", esTv()).leer);
+  decirGuia(textoGuia("filas", esTv()).leer);
 }
 
 function step(campo, delta) {
@@ -667,14 +689,15 @@ function step(campo, delta) {
   if (recien) sonidoListo();
   if (partida.modo === "guia") {
     const paso = pasoGuia(estadoGuia());
-    if (paso === "cada" && partida._dicho !== "cada") { partida._dicho = "cada"; hablar(textoGuia("cada", esTv()).leer); }
-    if (paso === "listo" && partida._dicho !== "listo") { partida._dicho = "listo"; hablar(textoGuia("listo", esTv()).leer); }
+    if (paso === "cada" && partida._dicho !== "cada") { partida._dicho = "cada"; decirGuia(textoGuia("cada", esTv()).leer); }
+    if (paso === "listo" && partida._dicho !== "listo") { partida._dicho = "listo"; decirGuia(textoGuia("listo", esTv()).leer); }
   }
 }
 
 function pulsarListo() {
   if (!partida || partida.saliendo || partida.espera) return;
   if (partida.fase !== "plantar" && partida.fase !== "giro2") return;
+  if (partida.modo === "guia" && listoGuiaActivo(estadoGuia()) && pasoCerrado()) return;
   if (partida.modo === "guia" && !listoGuiaActivo(estadoGuia())) return;
   const ok = coincide(partida.filas, partida.porFila, partida.encargo, partida.fase);
   if (!ok) {
@@ -702,7 +725,7 @@ function pulsarListo() {
     prepararOpciones();
     programarPista();
     pintarJuego("op-0");
-    if (partida.modo === "guia") hablar(textoGuia("abejas", esTv()).leer);
+    if (partida.modo === "guia") decirGuia(textoGuia("abejas", esTv()).leer);
     else hablar(e.sumaLeer || "Cuenta con la abeja.");
     return;
   }
@@ -714,6 +737,7 @@ function pulsarListo() {
 function elegirOpcion(n) {
   if (!partida || partida.saliendo || partida.espera) return;
   if (partida.fase !== "cosecha" && partida.fase !== "saltar") return;
+  if (partida.modo === "guia" && pasoGuia(estadoGuia()) === "abejas" && pasoCerrado()) return;
   const e = partida.encargo;
   const correcto = e.secuencia[partida.salto];
   if (n !== correcto) {
@@ -849,6 +873,7 @@ function seguirJugando() {
   partida.saliendo = false;
   cerradoEn = typeof performance !== "undefined" ? performance.now() : Date.now();
   const foco = focoAlCerrarSalir(guardado, partida.modo === "guia", estadoGuia());
+  if (partida.modo === "guia" && guiaAvanzaConToque(pasoGuia(estadoGuia()))) pasoMarcado = "";
   pintarJuego(foco || undefined);
   rearmarPasoMostrar();
 }

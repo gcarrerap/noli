@@ -25,9 +25,11 @@ import {
 import { resolverAtras, accionAtras } from "../src/salida.js";
 import {
   guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia,
-  esperaVozGuia, relojDeGuia, toqueTrasSalir, resolverToqueGuia,
-  GUIA_VOZ_TOPE_MS, GUIA_TRAS_SALIR_MS,
+  esperaVozGuia, esperaTrasVoz, avanzaSoloGuia, relojDeGuia, toqueTrasSalir, resolverToqueGuia,
+  relojPasoVoz, entradaSolapada, guiaBloqueada,
+  GUIA_VOZ_TOPE_MS, GUIA_VOZ_MIN_MS, GUIA_TRAS_SALIR_MS, GUIA_CIERRE_MS,
 } from "../src/guia.js";
+import { decir } from "../src/voz.js";
 
 const muchos = (n, sub, rnd, k = 200, extra = {}) => Array.from({ length: k }, () => crearPedido(n, rnd, { sub, ...extra }));
 const HOY = "2026-10-09";
@@ -562,10 +564,12 @@ test("la guía no avanza sin las piezas y Enviar no responde antes del final", (
   assert.equal(vozDeGuia(4, "tv"), "Pulsa OK");
   assert.equal(/[▲+]/.test([0, 1, 2, 3, 4].map((p) => vozDeGuia(p, "tv")).join(" ")), false);
   assert.equal(GUIA_VOZ_TOPE_MS, 3000);
+  assert.equal(GUIA_VOZ_MIN_MS, 2000);
   assert.equal(esperaVozGuia(0), 3000);
   assert.equal(esperaVozGuia(undefined), 3000);
-  assert.equal(esperaVozGuia(1500), 1500);
+  assert.equal(esperaVozGuia(1500), 2000, "una frase de menos de 2 s no adelanta el paso");
   assert.equal(esperaVozGuia(2000), 2000);
+  assert.equal(esperaVozGuia(2600), 2600);
   assert.equal(esperaVozGuia(9000), 3000);
   const diez = avisoDiez("u", "tactil");
   assert.equal(diez.pantalla, "¡10 cubitos! Toca la máquina o toca + otra vez.");
@@ -582,7 +586,7 @@ test("la guía no avanza sin las piezas y Enviar no responde antes del final", (
   assert.equal(repetirAvisoDiez({ fase: "completa", paso: { texto: "Pon 1 cubito" } }), true);
   assert.equal(repetirAvisoDiez(null), true);
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
-  assert.match(juego, /esperaVozGuia/);
+  assert.match(juego, /relojPasoVoz/);
   assert.doesNotMatch(juego, /GUIA_TOQUE_MS/);
 });
 
@@ -642,12 +646,76 @@ test("¿Salir? pausa la guía y el toque de después no la salta", () => {
   assert.equal(toqueTrasSalir(399), true);
   assert.equal(toqueTrasSalir(400), false);
   assert.equal(toqueTrasSalir(2500), false);
+  assert.equal(entradaSolapada({ ms: 560, pasoMs: 400 }), false, "560 ms no sigue cerrado");
+  assert.equal(entradaSolapada({ ms: 200, pasoMs: 400 }), true);
+  assert.equal(entradaSolapada({ ms: 399, pasoMs: 400 }), true);
+  assert.equal(entradaSolapada({ ms: 900, pasoMs: 1000 }), true);
+  assert.equal(entradaSolapada({ ms: 1000, pasoMs: 1000 }), false);
+  assert.equal(entradaSolapada({ ms: 1200, pasoMs: 1000 }), false, "400 y 1000 no suman 1400");
+  assert.equal(entradaSolapada({ ms: Number.NaN, pasoMs: 400 }), false);
+  const epoca = 1.7e12;
+  assert.equal(toqueTrasSalir(epoca - (epoca - 200)), true);
+  assert.equal(toqueTrasSalir(epoca - (epoca - 560)), false);
+  assert.equal(toqueTrasSalir(epoca), false);
+  assert.equal(entradaSolapada({ ms: epoca - (epoca - 200), pasoMs: 400 }), true);
+  assert.equal(entradaSolapada({ ms: epoca - (epoca - 560), pasoMs: 400 }), false);
+  assert.equal(entradaSolapada({ ms: epoca, pasoMs: 1000 }), false);
+});
+
+test("un OK a los 100 ms no avanza; a los 1,1 s con la voz acabada sí", () => {
+  const epoca = 1.7e12;
+  const aparecio = epoca;
+  function alOk(paso, ahora, vozSigue) {
+    if (guiaBloqueada({ ahora, aparecio, vozSigue })) return paso;
+    return paso + 1;
+  }
+  assert.equal(GUIA_CIERRE_MS, 1000);
+  assert.equal(alOk(0, epoca + 100, false), 0, "a los 100 ms no avanza");
+  assert.equal(alOk(0, epoca + 1100, false), 1, "a los 1,1 s con la voz acabada sí");
+  assert.equal(alOk(3, epoca + 1100, true), 3, "si la voz sigue, todavía no");
+  assert.equal(guiaBloqueada({ ahora: epoca + 3000, aparecio, vozSigue: true }), false);
+  assert.equal(toqueTrasSalir(500), false, "los 400 ms ya pasaron");
+  assert.equal(guiaBloqueada({ ahora: epoca + 500, aparecio, vozSigue: false }), true, "el segundo del paso sigue, sin sumar");
   const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const cuerpo = juego.slice(juego.indexOf("function avanzarGuia"), juego.indexOf("function guiaAvanza"));
+  assert.match(cuerpo, /pasoCerrado\(\)/);
   assert.match(juego, /relojDeGuia\(true\)/);
   assert.match(juego, /relojDeGuia\(false\)/);
-  assert.match(juego, /toqueTrasSalir/);
+  assert.match(juego, /entradaSolapada\(\{ ms: Date\.now\(\) - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS \}\)/);
   assert.match(juego, /resolverToqueGuia/);
   assert.match(juego, /callar\(\)/);
+  const boton = juego.slice(juego.indexOf('class="saltar"'), juego.indexOf("Saltar</button>") + 16);
+  assert.match(boton, /tabindex="-1"/);
+  assert.equal(boton.includes("data-foco"), false);
+  assert.match(boton, /data-ir="saltar-guia"/);
+  assert.match(juego, /"saltar-guia": terminarGuia/);
+});
+
+test("una frase de 2,5 s no se corta al segundo: el OK cada 50 ms espera a la voz", () => {
+  const epoca = 1.7e12;
+  const aparecio = epoca;
+  const DURACION = 2500;
+  function alOk(paso, dt) {
+    const vozSigue = dt < DURACION;
+    if (guiaBloqueada({ ahora: epoca + dt, aparecio, vozSigue })) return paso;
+    return paso + 1;
+  }
+  let paso = 0;
+  for (let dt = 0; dt < DURACION; dt += 50) {
+    const sigue = alOk(paso, dt);
+    assert.equal(sigue, paso, "a los " + dt + " ms la voz sigue");
+    paso = sigue;
+  }
+  assert.equal(alOk(paso, 1000), 0, "al segundo exacto la frase de 2,5 s sigue");
+  assert.equal(alOk(paso, 1100), 0, "a los 1,1 s la voz no ha acabado ni ha fallado");
+  assert.equal(alOk(paso, 2450), 0);
+  assert.equal(alOk(paso, 2500), 1, "a los 2,5 s la voz acabó");
+  assert.equal(guiaBloqueada({ ahora: epoca + 1100, aparecio, vozSigue: false }), false, "si la voz falló, a los 1,1 s sí entra");
+  assert.equal(guiaBloqueada({ ahora: epoca + 3000, aparecio, vozSigue: true }), false, "a los 3 s se abre aunque siga");
+  assert.equal(guiaBloqueada({ ahora: epoca + 2999, aparecio, vozSigue: true }), true);
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /guiaBloqueada\(\{ ahora: Date\.now\(\), aparecio: pasoAparecio, vozSigue \}\)/);
+  assert.match(juego, /speak\(\) aceptó la frase/);
 });
 
 test("el dominio de 8 de 10 cruza turnos: cerrar el turno no vacía la ventana", () => {
@@ -662,6 +730,135 @@ test("el dominio de 8 de 10 cruza turnos: cerrar el turno no vacía la ventana",
   assert.equal(cerrado.pr.niveles[2].ultimos.length, 10);
   assert.equal(dominio(cerrado.pr, 2).aciertos, 8);
   assert.equal(dominio(cerrado.pr, 2).listo, true);
+});
+
+function conSintesis(modo, fn) {
+  class Utterance {
+    constructor(text) { this.text = text; }
+  }
+  const voces = modo === "sin-voces" ? [] : [{ lang: "es-ES", name: "es" }];
+  let ultima = null;
+  let alCambiar = null;
+  const s = {
+    speaking: false,
+    pending: false,
+    getVoices: () => voces,
+    addEventListener(tipo, cb) { if (tipo === "voiceschanged") alCambiar = cb; },
+    cancel() { this.speaking = false; },
+    speak(u) {
+      ultima = u;
+      this.speaking = true;
+      if (modo === "error") {
+        u.onerror?.({ error: "not-allowed" });
+        u.onend?.();
+      } else if (modo === "sin-voces") u.onend?.();
+    },
+  };
+  const antes = globalThis.window;
+  globalThis.window = { speechSynthesis: s, SpeechSynthesisUtterance: Utterance };
+  try { return fn({ ultima: () => ultima, voces, cambiado: () => alCambiar }); }
+  finally {
+    if (antes === undefined) delete globalThis.window;
+    else globalThis.window = antes;
+  }
+}
+
+test("si la voz falla, no hay voces o no acaba, la guía espera el temporizador", () => {
+  conSintesis("error", () => {
+    let acabo = 0;
+    let fallo = 0;
+    assert.equal(decir("Arma el 23", "es-ES", () => { acabo++; }, () => { fallo++; }), false);
+    assert.equal(acabo, 0, "onerror no es una frase terminada");
+    assert.equal(fallo, 1);
+  });
+  assert.equal(avanzaSoloGuia({ empezo: true, error: true, termino: true, ms: 40, transcurrido: 1999 }), false);
+  assert.equal(avanzaSoloGuia({ empezo: true, error: true, transcurrido: 2000 }), true);
+  assert.equal(avanzaSoloGuia({ dialogo: true, empezo: true, error: true, transcurrido: 5000 }), false);
+  assert.equal(esperaTrasVoz({ empezo: true, error: true, ms: 40 }), GUIA_VOZ_MIN_MS);
+
+  conSintesis("sin-voces", (api) => {
+    let acabo = 0;
+    let fallo = 0;
+    assert.equal(decir("Arma el 23", "es-ES", () => { acabo++; }, () => { fallo++; }), true);
+    assert.equal(acabo, 1, "getVoices() vacío no calla la frase");
+    assert.equal(fallo, 0);
+    assert.equal(api.ultima().text, "Arma el 23");
+    assert.equal(api.ultima().voice, undefined);
+    assert.match(api.ultima().lang, /^es/);
+    api.voces.push({ lang: "es-ES", name: "es" });
+    api.cambiado()();
+    decir("Arma el 23", "es-ES", () => { acabo++; }, () => { fallo++; });
+    assert.equal(api.ultima().voice, api.voces[0]);
+  });
+  assert.equal(avanzaSoloGuia({ empezo: false, transcurrido: 1999 }), false);
+  assert.equal(avanzaSoloGuia({ empezo: false, transcurrido: 2000 }), true);
+  assert.equal(esperaTrasVoz({ empezo: false }), 2000);
+
+  conSintesis("nunca", () => {
+    let acabo = 0;
+    let fallo = 0;
+    assert.equal(decir("Arma el 23", "es-ES", () => { acabo++; }, () => { fallo++; }), true);
+    assert.equal(acabo, 0, "sin onend no avanza por la voz");
+    assert.equal(fallo, 0);
+  });
+  assert.equal(avanzaSoloGuia({ empezo: true, transcurrido: 1999 }), false);
+  assert.equal(avanzaSoloGuia({ empezo: true, transcurrido: 2999 }), false);
+  assert.equal(avanzaSoloGuia({ empezo: true, transcurrido: 3000 }), true);
+  assert.equal(avanzaSoloGuia({ empezo: true, termino: true, ms: 2600, transcurrido: 2599 }), false);
+  assert.equal(avanzaSoloGuia({ empezo: true, termino: true, ms: 2600, transcurrido: 2600 }), true);
+  assert.equal(avanzaSoloGuia({ empezo: true, termino: true, ms: 1500, transcurrido: 1500 }), false);
+  assert.equal(resolverToqueGuia({ paso: 0 }), "mostrar", "un toque sigue adelantando");
+  assert.equal(resolverToqueGuia({ paso: 3 }), "mostrar");
+  const juego = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /alFallar/);
+  assert.match(juego, /relojPasoVoz/);
+  assert.match(juego, /revisar\("start"\)/);
+  assert.match(juego, /relojDeGuia\(false\) === "reiniciar"/);
+});
+
+test("el paso que solo se muestra no se queda colgado si la voz falla al momento o tarde", () => {
+  assert.equal(guiaAvanzaConToque(0), true);
+  assert.equal(guiaAvanzaConToque(3), true);
+  const cero = { arranco: false, error: false, termino: false, ms: 0 };
+  const inmediato = relojPasoVoz(cero, "error", 0);
+  assert.equal(inmediato.avanzar, false);
+  assert.equal(inmediato.espera, 2000);
+  assert.equal(relojPasoVoz(inmediato.estado, "end", 0).espera, 2000);
+  assert.equal(relojPasoVoz(inmediato.estado, "", 1990).espera, 10);
+  assert.equal(relojPasoVoz(inmediato.estado, "", 2000).avanzar, true);
+  const vivo = relojPasoVoz(cero, "start", 80);
+  assert.equal(relojPasoVoz(vivo.estado, "", 2500).espera, 500);
+  assert.equal(relojPasoVoz(vivo.estado, "error", 2500).avanzar, true);
+  assert.equal(relojPasoVoz(vivo.estado, "error", 900).espera, 1100);
+  assert.equal(relojPasoVoz(cero, "", 2000).avanzar, true, "sin onstart son 2 s");
+  assert.equal(relojPasoVoz(vivo.estado, "", 3000).avanzar, true);
+  assert.equal(relojPasoVoz(vivo.estado, "end", 2600).avanzar, true);
+  assert.equal(relojPasoVoz(vivo.estado, "end", 500).espera, 1500);
+});
+
+test("tras Seguir, ¡Igual! se dice una sola vez aunque cancel() tarde", async () => {
+  class Utterance { constructor(text) { this.text = text; } }
+  let n = 0;
+  const s = {
+    speaking: true,
+    pending: false,
+    getVoices: () => [{ lang: "es-ES" }],
+    addEventListener() {},
+    cancel() { /* Chrome no suelta speaking en el acto */ },
+    speak() { n++; this.speaking = true; },
+  };
+  const antes = globalThis.window;
+  globalThis.window = { speechSynthesis: s, SpeechSynthesisUtterance: Utterance };
+  try {
+    decir("¡Igual!", "es-ES");
+    decir("¡Igual!", "es-ES");
+    decir("¡Igual!", "es-ES");
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(n, 1);
+  } finally {
+    if (antes === undefined) delete globalThis.window;
+    else globalThis.window = antes;
+  }
 });
 
 test("la guía vista se conserva al cargar, sin subir la versión del progreso", () => {

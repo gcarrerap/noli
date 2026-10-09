@@ -5,20 +5,75 @@
 
 /** Tope de un paso que solo se muestra: espera a la voz, y a los 3 s avanza igual. */
 export const GUIA_VOZ_TOPE_MS = 3000;
+/** Mínimo antes de un OK o un toque. Si la voz sigue, se espera más. */
+export const GUIA_CIERRE_MS = 1000;
+/** A los 3 s el paso se abre aunque la voz siga. */
+export const GUIA_TOPE_MS = GUIA_VOZ_TOPE_MS;
+/** Sin voz, si falla o si no llega a sonar: el temporizador de 2 s. Nunca antes. */
+export const GUIA_VOZ_MIN_MS = 2000;
 /** Tras cerrar «¿Salir?», toques y OK no llegan al juego. Así un segundo toque no cae debajo. */
 export const GUIA_TRAS_SALIR_MS = 400;
 
 const VOZ = ["Arma el 23", "Pon 2 barras", "Pon 3 cubitos", "¡Igual!", "Toca Enviar"];
 
 /**
- * Cuánto esperar antes de avanzar solo.
- * msVoz es lo que duró la frase. Sin voz, o si no llegó a sonar, el tope.
- * Si sonó, ese tiempo, y nunca más del tope.
+ * Cuánto duró una frase que sí sonó, para el avance solo.
+ * Menos de 2 s se queda en 2 s. Más de 3 s se queda en el tope.
+ * 0 significa que todavía no acabó: el tope, no el temporizador corto.
  */
 export function esperaVozGuia(msVoz) {
   const v = Number(msVoz);
   if (!Number.isFinite(v) || v <= 0) return GUIA_VOZ_TOPE_MS;
-  return Math.min(v, GUIA_VOZ_TOPE_MS);
+  return Math.min(GUIA_VOZ_TOPE_MS, Math.max(GUIA_VOZ_MIN_MS, v));
+}
+
+/**
+ * Espera del avance solo. Un error, sin onstart o si no arrancó: 2 s.
+ * Mientras habla (onstart) y no avisa: el tope de 3 s. Al acabar de verdad: entre 2 y 3 s.
+ * `empezo` significa que onstart ya llegó, no que speak() devolvió true.
+ */
+export function esperaTrasVoz({ empezo = false, error = false, termino = false, ms = 0 } = {}) {
+  if (!empezo || error) return GUIA_VOZ_MIN_MS;
+  if (!termino) return GUIA_VOZ_TOPE_MS;
+  const v = Number(ms);
+  if (!Number.isFinite(v) || v <= 0) return GUIA_VOZ_MIN_MS;
+  return esperaVozGuia(v);
+}
+
+// Reloj del paso que solo se muestra, medido desde que el paso apareció.
+// El orden de onerror, onstart y onend no cambia la meta: un error se queda en 2 s.
+// Si el aviso llega antes, se devuelve lo que falta y el temporizador sigue.
+export function relojPasoVoz(estado, evento, transcurrido) {
+  const s = {
+    arranco: !!estado?.arranco,
+    error: !!estado?.error,
+    termino: !!estado?.termino,
+    ms: Number(estado?.ms) || 0,
+  };
+  if (evento === "error") s.error = true;
+  else if (!s.error && evento === "start") s.arranco = true;
+  else if (!s.error && evento === "end") {
+    s.arranco = true;
+    s.termino = true;
+    const d = Number(transcurrido);
+    s.ms = Number.isFinite(d) && d > 0 ? d : 0;
+  }
+  const meta = esperaTrasVoz({
+    empezo: s.arranco && !s.error,
+    error: s.error || !s.arranco,
+    termino: s.termino && !s.error,
+    ms: s.ms,
+  });
+  const t = Number(transcurrido);
+  const pasado = Number.isFinite(t) && t > 0 ? t : 0;
+  if (pasado >= meta) return { estado: s, avanzar: true, espera: 0 };
+  return { estado: s, avanzar: false, espera: meta - pasado };
+}
+
+/** true cuando ya toca avanzar solo. Con el diálogo abierto, nunca. */
+export function avanzaSoloGuia({ dialogo = false, empezo = false, error = false, termino = false, ms = 0, transcurrido = 0 } = {}) {
+  if (dialogo) return false;
+  return transcurrido >= esperaTrasVoz({ empezo, error, termino, ms });
 }
 
 /**
@@ -29,11 +84,33 @@ export function relojDeGuia(dialogoAbierto) {
   return dialogoAbierto ? "pausa" : "reiniciar";
 }
 
+// El paso acepta OK o un toque solo después de 1 s Y (la voz acabó, la voz
+// falló, o ya pasaron 3 s). No es un cierre fijo de 1 s: una frase de 2,5 s
+// sigue cerrada al segundo. Comparte el instante con los 400 ms de «¿Salir?».
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
+}
+
 /** true mientras no hayan pasado unos 400 ms desde que se cerró el diálogo. */
 export function toqueTrasSalir(ms) {
   const t = Number(ms);
   if (!Number.isFinite(t)) return false;
   return t >= 0 && t < GUIA_TRAS_SALIR_MS;
+}
+
+/**
+ * El cierre del diálogo y el del paso comparten el mismo instante.
+ * Vale el mayor de los dos, no la suma: 400 y 400 siguen siendo 400, y un toque a los 560 ms entra.
+ */
+export function entradaSolapada({ ms = 0, pasoMs = 0 } = {}) {
+  if (toqueTrasSalir(ms)) return true;
+  const t = Number(ms);
+  const paso = Number(pasoMs);
+  if (!Number.isFinite(t) || !(paso > 0)) return false;
+  return t >= 0 && t < paso;
 }
 
 /**

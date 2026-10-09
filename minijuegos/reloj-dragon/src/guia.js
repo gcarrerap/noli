@@ -9,31 +9,84 @@ export const INICIO_GUIA = { h: 1, m: 0 };
 // o solos: sin voz a los 2 s; con voz, cuando termina, y nunca más de 3 s.
 export const ESPERA_EXPLICAR_MS = 2000;
 export const ESPERA_VOZ_MAX_MS = 3000;
+/** Mínimo antes de un OK o un toque. Si la voz sigue, se espera más. */
+export const GUIA_CIERRE_MS = 1000;
+/** A los 3 s el paso se abre aunque la voz siga. */
+export const GUIA_TOPE_MS = ESPERA_VOZ_MAX_MS;
 // Tras cerrar «¿Salir?» (fondo o Seguir) no entran toques ni OK: el segundo toque caería debajo.
 export const TRAS_CERRAR_MS = 400;
 
 // Espera del avance solo. Un toque o OK no pasan por aquí.
-// Sin voz: 2 s. Con voz todavía hablando: el tope de 3 s. Al terminar, lo que duró, con ese tope.
-export function esperaExplicar({ voz = false, termino = false, ms = 0 } = {}) {
-  if (!voz) return ESPERA_EXPLICAR_MS;
+// Sin onstart, si falla o si no arrancó: 2 s. Mientras habla: el tope de 3 s.
+// Al terminar de verdad: lo que duró, nunca antes de 2 s y nunca más de 3 s.
+// `voz` aquí significa que onstart ya llegó, no que speak() devolvió true.
+export function esperaExplicar({ voz = false, termino = false, error = false, ms = 0 } = {}) {
+  if (!voz || error) return ESPERA_EXPLICAR_MS;
   if (!termino) return ESPERA_VOZ_MAX_MS;
   const t = Number(ms);
   if (!Number.isFinite(t) || t <= 0) return ESPERA_EXPLICAR_MS;
-  return Math.min(ESPERA_VOZ_MAX_MS, t);
+  return Math.min(ESPERA_VOZ_MAX_MS, Math.max(ESPERA_EXPLICAR_MS, t));
+}
+
+export function estadoExplicacion() {
+  return { arranco: false, error: false, termino: false, ms: 0 };
+}
+
+// Un evento de la voz y lo que falta para avanzar, medido desde el inicio del paso.
+// Un error inmediato o tarde, o la falta de onstart, dejan los 2 s de ese inicio.
+// Si el aviso llega antes de la meta, se devuelve lo que falta: el reloj no se suelta.
+export function relojExplicacion(estado, evento, transcurrido) {
+  const s = {
+    arranco: !!estado?.arranco,
+    error: !!estado?.error,
+    termino: !!estado?.termino,
+    ms: Number(estado?.ms) || 0,
+  };
+  if (evento === "error") s.error = true;
+  else if (!s.error && evento === "start") s.arranco = true;
+  else if (!s.error && evento === "end") {
+    s.arranco = true;
+    s.termino = true;
+    const d = Number(transcurrido);
+    s.ms = Number.isFinite(d) && d > 0 ? d : 0;
+  }
+  const meta = esperaExplicar({
+    voz: s.arranco && !s.error,
+    termino: s.termino && !s.error,
+    error: s.error || !s.arranco,
+    ms: s.ms,
+  });
+  const t = Number(transcurrido);
+  const pasado = Number.isFinite(t) && t > 0 ? t : 0;
+  if (pasado >= meta) return { estado: s, avanzar: true, espera: 0 };
+  return { estado: s, avanzar: false, espera: meta - pasado };
 }
 
 // Con el diálogo abierto el avance solo no corre, aunque hayan pasado más de 2 s.
-export function debeAvanzarExplicacion({ dialog = false, transcurrido = 0, voz = false, termino = false, msVoz = 0 } = {}) {
+export function debeAvanzarExplicacion({ dialog = false, transcurrido = 0, voz = false, termino = false, error = false, msVoz = 0 } = {}) {
   if (dialog) return false;
-  const espera = termino
-    ? esperaExplicar({ voz: true, termino: true, ms: msVoz })
-    : esperaExplicar({ voz });
-  return transcurrido >= espera;
+  return transcurrido >= esperaExplicar({ voz, termino, error, ms: msVoz });
+}
+
+// Listo en el último paso. Solo cierran los 400 ms tras «¿Salir?».
+// El paso no añade otro cierre encima, así un toque a los 560 ms sí entra.
+export function aceptaListoGuia(msTrasCerrar) {
+  return !ignoraTrasCerrar(msTrasCerrar);
 }
 
 // Abrir «¿Salir?» pausa el paso. Seguir lo reinicia entero, sin cambiar de paso.
 export function efectoDialogoGuia(abierto) {
   return abierto ? "pausar" : "reiniciar";
+}
+
+// El paso acepta OK o un toque solo después de 1 s Y (la voz acabó, la voz
+// falló, o ya pasaron 3 s). No es un cierre fijo de 1 s: una frase de 2,5 s
+// sigue cerrada al segundo. Comparte el instante con los 400 ms de «¿Salir?».
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
 }
 
 export function ignoraTrasCerrar(ms) {

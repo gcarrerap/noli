@@ -23,8 +23,8 @@ import {
 } from "./pista.js";
 import { resolverAtras, accionAtras } from "./salida.js";
 import {
-  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, esperaVozGuia,
-  relojDeGuia, toqueTrasSalir, resolverToqueGuia,
+  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, relojPasoVoz,
+  relojDeGuia, entradaSolapada, resolverToqueGuia, guiaBloqueada, GUIA_TRAS_SALIR_MS,
 } from "./guia.js";
 
 const $main = document.getElementById("juego");
@@ -57,6 +57,8 @@ let relojDiez = 0;
 let relojGuia = 0;
 let guiaVozToken = 0;
 let cerroSalir = 0;
+let pasoAparecio = 0;
+let vozSigue = false;
 
 function luego(fn, ms) {
   const t = ++token;
@@ -296,7 +298,10 @@ function limpiarRelojGuia() {
 function programarGuia() {
   if (relojDeGuia(saliendo) === "pausa") {
     limpiarRelojGuia();
-    if (esGuia() && guiaAvanzaConToque(partida.paso)) callar();
+    if (esGuia() && guiaAvanzaConToque(partida.paso)) {
+      vozSigue = false;
+      callar();
+    }
     return;
   }
   if (!esGuia() || !guiaAvanzaConToque(partida.paso)) {
@@ -306,36 +311,52 @@ function programarGuia() {
   if (partida.relojPaso === partida.paso && relojGuia) return;
   clearTimeout(relojGuia);
   const paso = partida.paso;
-  const token = ++guiaVozToken;
+  const gen = ++guiaVozToken;
   partida.relojPaso = paso;
-  const t0 = Date.now();
-  const seguir = () => {
-    if (token !== guiaVozToken) return;
-    guiaVozToken++;
+  pasoAparecio = Date.now();
+  vozSigue = false;
+  const t0 = pasoAparecio;
+  let vozEstado = { arranco: false, error: false, termino: false, ms: 0 };
+  // La meta sale de t0. onerror inmediato o tarde, o un onstart que no llega, son 2 s.
+  // Si el temporizador se adelanta, se vuelve a armar con lo que falta.
+  let cerro = false;
+  const callo = () => { if (gen === guiaVozToken) vozSigue = false; };
+  const revisar = (evento) => {
+    if (gen !== guiaVozToken) return;
+    if (saliendo) return;
+    const plan = relojPasoVoz(vozEstado, evento || "", Date.now() - t0);
+    vozEstado = plan.estado;
     clearTimeout(relojGuia);
-    relojGuia = 0;
-    if (saliendo || !esGuia() || !partida || partida.paso !== paso) return;
-    avanzarGuia();
-  };
-  relojGuia = setTimeout(seguir, esperaVozGuia(0));
-  decir(vozDeGuia(paso, modoJuego()), "es-ES", () => {
-    if (token !== guiaVozToken) return;
-    const pasoMs = Date.now() - t0;
-    // Un cierre al instante es un aparato sin voz: se queda el tope de 3 s.
-    if (pasoMs < 200) return;
-    const falta = esperaVozGuia(pasoMs) - pasoMs;
-    if (falta > 30) {
-      clearTimeout(relojGuia);
-      relojGuia = setTimeout(seguir, falta);
+    if (!plan.avanzar) {
+      relojGuia = setTimeout(() => revisar(""), Math.max(0, plan.espera));
       return;
     }
-    clearTimeout(relojGuia);
-    seguir();
+    guiaVozToken++;
+    relojGuia = 0;
+    if (!esGuia() || !partida || partida.paso !== paso) return;
+    // El reloj ya decidió (acabó, falló o no arrancó). Si vozSigue siguiera,
+    // el cierre entre 1 s y 3 s se tragaría este avance de 2 s.
+    vozSigue = false;
+    avanzarGuia();
+  };
+  const alFallar = () => { cerro = true; callo(); revisar("error"); };
+  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", () => { cerro = true; callo(); revisar("end"); }, alFallar, () => {
+    if (gen === guiaVozToken) vozSigue = true;
+    revisar("start");
   });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (empezo && !cerro && gen === guiaVozToken) vozSigue = true;
+  if (!empezo) vozEstado = relojPasoVoz(vozEstado, "error", Date.now() - t0).estado;
+  revisar("");
+}
+
+function pasoCerrado() {
+  return guiaBloqueada({ ahora: Date.now(), aparecio: pasoAparecio, vozSigue });
 }
 
 function avanzarGuia() {
   if (!partida || partida.modo !== "guia") return;
+  if (guiaAvanzaConToque(partida.paso) && pasoCerrado()) return;
   limpiarRelojGuia();
   if (partida.paso >= 4) return terminarGuia();
   partida.paso += 1;
@@ -459,7 +480,7 @@ function pintar(focoId) {
   const flechaMaq = info && (info.fase === "flecha" || info.fase === "completa") && info.paso.canje === "pegar" ? FLECHA : "";
   const defecto = guia ? focoDeGuia() : (p.pistaBanda ? "banda-" + p.pistaBanda : "banda-u");
   mostrar(`
-    <header class="cab"><span>${esc(etiqueta())}</span>${guia ? `<button type="button" class="saltar" data-foco data-foco-id="saltar-guia" data-act="ir" data-ir="saltar-guia">Saltar</button>` : puntos}</header>
+    <header class="cab"><span>${esc(etiqueta())}</span>${guia ? `<button type="button" class="saltar" tabindex="-1" data-act="ir" data-ir="saltar-guia">Saltar</button>` : puntos}</header>
     <p class="pedido">${esc(p.texto)}</p>
     ${p.pistas ? `<ul class="pistas">${p.pistas.map((x) => `<li>${esc(x.texto)}</li>`).join("")}</ul>` : ""}
     ${p.leer ? `<button type="button" class="boton oir" ${foco} data-foco-id="oir" data-act="oir">Oír</button>` : ""}
@@ -488,6 +509,11 @@ function pintar(focoId) {
     ${htmlFeedback()}`, "problema", focoId || defecto);
   if (guia) $main.classList.add("guia");
   if (guia && guiaAvanzaConToque(partida.paso)) $main.classList.add("guia-mira");
+  if (guia && partida.pasoPintado !== partida.paso) {
+    partida.pasoPintado = partida.paso;
+    pasoAparecio = Date.now();
+    vozSigue = false;
+  }
   programarGuia();
   programarPista();
 }
@@ -862,7 +888,10 @@ function abrirSalir() {
   limpiarDiez();
   if (relojDeGuia(true) === "pausa") {
     limpiarRelojGuia();
-    if (esGuia() && guiaAvanzaConToque(partida.paso)) callar();
+    if (esGuia() && guiaAvanzaConToque(partida.paso)) {
+      vozSigue = false;
+      callar();
+    }
   }
   if (partida && partida.espera) {
     esperaPendiente = true;
@@ -1061,7 +1090,7 @@ $main.addEventListener("click", (ev) => {
     else if (efecto === "salir") cerrarSalir(true);
     return;
   }
-  if (toqueTrasSalir(Date.now() - cerroSalir)) return;
+  if (entradaSolapada({ ms: Date.now() - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS })) return;
   if (esGuia() && resolverToqueGuia({ paso: partida.paso, ir }) === "mostrar") {
     avanzarGuia();
     return;
@@ -1096,7 +1125,7 @@ Noli.alEntrar((accion) => {
     }
     return true;
   }
-  if (accion === "ok" && toqueTrasSalir(Date.now() - cerroSalir)) return true;
+  if (accion === "ok" && entradaSolapada({ ms: Date.now() - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS })) return true;
   if (pantalla === "problema" && partida) {
     const banda = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.banda;
     if (banda && (accion === "arriba" || accion === "abajo")) {

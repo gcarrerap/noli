@@ -12,8 +12,8 @@ import { NIVELES, ALBUM, MOMENTOS, planDia, POR_TURNO } from "./niveles.js";
 import { pista } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA, INICIO_GUIA,
-  esExplicacion, focoTrasExplicacion, esperaExplicar, debeAvanzarExplicacion,
-  efectoDialogoGuia, ignoraTrasCerrar, efectoAtrasGuia, seguirGuia,
+  esExplicacion, focoTrasExplicacion, estadoExplicacion, relojExplicacion,
+  efectoDialogoGuia, ignoraTrasCerrar, efectoAtrasGuia, seguirGuia, guiaBloqueada,
 } from "./guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, nivelDe, cumplirReto,
@@ -45,6 +45,9 @@ let focoSalir = "";
 let relojFocus = false;
 let fondoToque = false;
 let explicarGen = 0;
+let vozGen = 0;
+let pasoAparecio = 0;
+let vozSigue = false;
 let cerradoEn = 0;
 
 try {
@@ -69,15 +72,32 @@ function arte() {
       .catch(() => { cache[n] = ""; })));
 }
 
-function hablar(texto, alTerminar) {
+function hablar(texto, alTerminar, alFallar, alEmpezar) {
   if (!pr.voz || !texto) return false;
-  return decir(texto, "es-MX", alTerminar);
+  return decir(texto, "es-MX", alTerminar, alFallar, alEmpezar);
 }
 
 // La explicación ya se dice en programarExplicacion, para enganchar el fin de la voz.
+function pasoCerrado() {
+  return guiaBloqueada({ ahora: Date.now(), aparecio: pasoAparecio, vozSigue });
+}
+
 function hablarPasoGuia() {
   if (!guia || esExplicacion(guia.paso)) return;
-  hablar(vozPaso(guia.paso, esTv()));
+  const mio = ++vozGen;
+  vozSigue = false;
+  let cerro = false;
+  const hablada = hablar(vozPaso(guia.paso, esTv()), () => {
+    cerro = true;
+    if (mio === vozGen) vozSigue = false;
+  }, () => {
+    cerro = true;
+    if (mio === vozGen) vozSigue = false;
+  }, () => {
+    if (mio === vozGen) vozSigue = true;
+  });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (hablada && !cerro && mio === vozGen) vozSigue = true;
 }
 
 const guardar = () => Noli.guardar(pr);
@@ -362,6 +382,8 @@ function luzGuia() {
 }
 
 function pintarGuia(focoId) {
+  pasoAparecio = Date.now();
+  vozSigue = false;
   const paso = guia.paso;
   const luz = luzGuia();
   const listoOn = paso === 4 && misma(guia.reloj, META_GUIA);
@@ -371,7 +393,7 @@ function pintarGuia(focoId) {
   pantalla = "guia";
   $main.innerHTML = `
     <div class="tira guia-top">
-      <button type="button" class="boton saltar" data-foco data-foco-id="saltar" data-ctrl="saltar" data-act="saltar">Saltar</button>
+      <button type="button" class="boton saltar" tabindex="-1" data-act="saltar">Saltar</button>
       <button type="button" class="escena-guia${luz === "escena" ? " luz" : ""}" data-luz="escena" data-foco${focoId === "escena" ? '="inicial"' : ""} data-foco-id="escena" data-ctrl="escena" data-act="escena" aria-label="El dragón come">
         <img alt="" src="img/escena-comida.svg">
       </button>
@@ -461,32 +483,43 @@ function programarExplicacion() {
   const paso = guia.paso;
   const linea = vozPaso(paso, esTv());
   const gen = ++explicarGen;
+  pasoAparecio = Date.now();
+  vozSigue = false;
   const t0 = performance.now();
-  let acortada = false;
-  let vozLista = false;
-  let msVoz = 0;
-  const avanzar = () => {
+  let vozEstado = estadoExplicacion();
+  // La meta sale siempre de t0. Un onerror inmediato o tarde, o un onstart que no llega,
+  // deja los 2 s. Si el temporizador avisa antes, se vuelve a pedir lo que falta.
+  let cerro = false;
+  const callo = () => { if (gen === explicarGen) vozSigue = false; };
+  const revisar = (evento) => {
     if (gen !== explicarGen || !guia || guia.paso !== paso) return;
-    const transcurrido = performance.now() - t0;
-    if (!debeAvanzarExplicacion({ dialog: overlay, transcurrido, voz: hablada, termino: vozLista, msVoz })) return;
+    if (overlay) return;
+    const plan = relojExplicacion(vozEstado, evento || "", performance.now() - t0);
+    vozEstado = plan.estado;
+    if (!plan.avanzar) {
+      luego(revisar, plan.espera);
+      return;
+    }
     explicarGen++;
+    // El reloj ya decidió (acabó, falló o no arrancó). Si vozSigue siguiera,
+    // el cierre entre 1 s y 3 s se tragaría este avance de 2 s.
+    vozSigue = false;
     seguirExplicacion();
   };
-  const alAcabar = () => {
-    if (gen !== explicarGen || overlay) return;
-    acortada = true;
-    vozLista = true;
-    msVoz = performance.now() - t0;
-    const falta = esperaExplicar({ voz: true, termino: true, ms: msVoz }) - msVoz;
-    luego(avanzar, falta > 40 ? falta : 0);
-  };
-  callar();
-  const hablada = hablar(linea, alAcabar);
-  if (!acortada) luego(avanzar, esperaExplicar({ voz: hablada }));
+  const alFallar = () => { cerro = true; callo(); revisar("error"); };
+  const hablada = hablar(linea, () => { cerro = true; callo(); revisar("end"); }, alFallar, () => {
+    if (gen === explicarGen) vozSigue = true;
+    revisar("start");
+  });
+  // speak() aceptó la frase: se espera aunque onstart aún no haya llegado.
+  if (hablada && !cerro && gen === explicarGen) vozSigue = true;
+  if (!hablada) vozEstado = relojExplicacion(vozEstado, "error", performance.now() - t0).estado;
+  revisar("");
 }
 
 function seguirExplicacion() {
   if (!guia || !esExplicacion(guia.paso)) return;
+  if (pasoCerrado()) return;
   guia = aplicarGuia(guia, { tipo: "seguir", reloj: guia.reloj });
   pintarGuia(focoTrasExplicacion(guia.paso));
   hablarPasoGuia();
@@ -809,6 +842,8 @@ function preguntarSalir() {
   if (overlay) return;
   if (guia && efectoDialogoGuia(true) === "pausar") {
     explicarGen++;
+    vozGen++;
+    vozSigue = false;
     cortar();
     callar();
   }
@@ -854,7 +889,7 @@ function cerrarSalir() {
 
 // ---------- Teclas ----------
 
-const CICLO = ["saltar", "escena", "hora", "minutos", "listo", "borrar", "oir"];
+const CICLO = ["escena", "hora", "minutos", "listo", "borrar", "oir"];
 
 function controlEl(id) {
   return $main.querySelector(`[data-foco][data-ctrl="${id}"]`);
@@ -879,6 +914,10 @@ function teclaPoner(accion) {
       seguirExplicacion();
       return true;
     }
+  }
+  if (guia && guia.paso === 0 && accion === "ok") {
+    const act = document.activeElement?.dataset?.act;
+    if (act === "escena" && pasoCerrado()) return true;
   }
   const ctrl = document.activeElement?.dataset?.ctrl;
   if ((accion === "arriba" || accion === "abajo") && (ctrl === "hora" || ctrl === "minutos")) {
@@ -964,6 +1003,7 @@ $main.addEventListener("click", (ev) => {
   }
   if (act === "escena") {
     if (!guia) return;
+    if (guia.paso === 0 && pasoCerrado()) return;
     const antes = guia.paso;
     guia = aplicarGuia(guia, { tipo: "escena", reloj: guia.reloj });
     if (guia.paso !== antes) { pintarGuia("escena"); hablarPasoGuia(); }
@@ -989,7 +1029,6 @@ $main.addEventListener("pointerdown", (ev) => {
   }
   fondoToque = false;
   if (ignoraTrasCerrar(performance.now() - cerradoEn)) {
-    tragar = true;
     ev.preventDefault();
     return;
   }

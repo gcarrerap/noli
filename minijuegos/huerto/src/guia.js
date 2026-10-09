@@ -10,6 +10,10 @@ export const GUIA = {
 export const GUIA_TOQUE_MS = 2000;
 /** Tope de la espera cuando la voz del paso sigue sonando. */
 export const GUIA_VOZ_MAX_MS = 3000;
+/** Mínimo antes de un OK o un toque. Si la voz sigue, se espera más. */
+export const GUIA_CIERRE_MS = 1000;
+/** A los 3 s el paso se abre aunque la voz siga. */
+export const GUIA_TOPE_MS = GUIA_VOZ_MAX_MS;
 /** Tras cerrar «¿Salir?», toques y OK no caen en lo de debajo. */
 export const GUARDIA_SALIR_MS = 400;
 
@@ -78,12 +82,44 @@ export function relojPasoMostrar({ dialog = false, transcurrido = 0, vozSigue = 
 }
 
 /**
- * Reloj tras hablar. "sigue": la frase todavía suena (tope 3 s).
+ * Reloj tras hablar. "sigue": onstart ya llegó y la frase todavía suena (tope 3 s).
  * "fin", "error" o "sin-voces": no se adelanta sola antes de los 2 s.
  */
 export function esperaTrasVoz({ evento = "sigue", transcurrido = 0 } = {}) {
   const sigue = evento === "sigue";
   return relojPasoMostrar({ transcurrido, vozSigue: sigue });
+}
+
+// Eventos "start", "end" y "error", medidos desde que el paso apareció.
+// Sin onstart no se usa el tope de 3 s. Un error, inmediato o tarde, vuelve a los 2 s.
+// Si el aviso llega antes de la meta, se devuelve lo que falta.
+export function relojTrasEvento(estado, evento, transcurrido) {
+  const s = {
+    arranco: !!estado?.arranco,
+    error: !!estado?.error,
+    termino: !!estado?.termino,
+  };
+  if (evento === "error") s.error = true;
+  else if (!s.error && evento === "start") s.arranco = true;
+  else if (!s.error && evento === "end") {
+    s.arranco = true;
+    s.termino = true;
+  }
+  let nombre = "sin-voces";
+  if (s.error) nombre = "error";
+  else if (s.termino) nombre = "fin";
+  else if (s.arranco) nombre = "sigue";
+  return { estado: s, ...esperaTrasVoz({ evento: nombre, transcurrido }) };
+}
+
+// El paso acepta OK o un toque solo después de 1 s Y (la voz acabó, la voz
+// falló, o ya pasaron 3 s). No es un cierre fijo de 1 s: una frase de 2,5 s
+// sigue cerrada al segundo. Comparte el instante con los 400 ms de «¿Salir?».
+export function guiaBloqueada({ ahora = 0, aparecio = 0, vozSigue = false } = {}) {
+  const t = ahora - aparecio;
+  if (t < GUIA_CIERRE_MS) return true;
+  if (t >= GUIA_TOPE_MS) return false;
+  return !!vozSigue;
 }
 
 /** En el teléfono, tocar lo oscuro de «¿Salir?» es Seguir. En la tele, no. */
@@ -92,11 +128,17 @@ export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
   return "seguir";
 }
 
-/** Toque u OK justo después de Seguir. Atrás y las flechas siguen. */
-export function entradaTrasCerrar({ ms = 0, tipo = "toque" } = {}) {
+/**
+ * Toque u OK justo después de Seguir. Atrás y las flechas siguen.
+ * pasoMs, si viene, comparte el mismo instante que los 400 ms: vale el mayor, no la suma.
+ */
+export function entradaTrasCerrar({ ms = 0, tipo = "toque", pasoMs = 0 } = {}) {
   if (tipo !== "toque" && tipo !== "ok") return "pasar";
   const t = Number(ms);
-  if (!Number.isFinite(t) || t < GUARDIA_SALIR_MS) return "ignorar";
+  const paso = Number(pasoMs);
+  const extra = Number.isFinite(paso) && paso > 0 ? paso : 0;
+  const limite = Math.max(GUARDIA_SALIR_MS, extra);
+  if (!Number.isFinite(t) || t < limite) return "ignorar";
   return "pasar";
 }
 
