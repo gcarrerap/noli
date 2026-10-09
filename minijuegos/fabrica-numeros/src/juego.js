@@ -23,8 +23,8 @@ import {
 } from "./pista.js";
 import { resolverAtras, accionAtras } from "./salida.js";
 import {
-  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, esperaTrasVoz,
-  relojDeGuia, toqueTrasSalir, resolverToqueGuia,
+  guiaEnviarActivo, guiaAvanzaConToque, guiaBandaLista, textoDeGuia, vozDeGuia, relojPasoVoz,
+  relojDeGuia, entradaSolapada, resolverToqueGuia, GUIA_TRAS_SALIR_MS,
 } from "./guia.js";
 
 const $main = document.getElementById("juego");
@@ -306,37 +306,31 @@ function programarGuia() {
   if (partida.relojPaso === partida.paso && relojGuia) return;
   clearTimeout(relojGuia);
   const paso = partida.paso;
-  const token = ++guiaVozToken;
+  const gen = ++guiaVozToken;
   partida.relojPaso = paso;
   const t0 = Date.now();
-  let cerrado = false;
-  const seguir = () => {
-    if (token !== guiaVozToken) return;
-    guiaVozToken++;
+  let vozEstado = { arranco: false, error: false, termino: false, ms: 0 };
+  // La meta sale de t0. onerror inmediato o tarde, o un onstart que no llega, son 2 s.
+  // Si el temporizador se adelanta, se vuelve a armar con lo que falta.
+  const revisar = (evento) => {
+    if (gen !== guiaVozToken) return;
+    if (saliendo) return;
+    const plan = relojPasoVoz(vozEstado, evento || "", Date.now() - t0);
+    vozEstado = plan.estado;
     clearTimeout(relojGuia);
+    if (!plan.avanzar) {
+      relojGuia = setTimeout(() => revisar(""), Math.max(0, plan.espera));
+      return;
+    }
+    guiaVozToken++;
     relojGuia = 0;
-    if (saliendo || !esGuia() || !partida || partida.paso !== paso) return;
+    if (!esGuia() || !partida || partida.paso !== paso) return;
     avanzarGuia();
   };
-  const en = (ms) => {
-    clearTimeout(relojGuia);
-    relojGuia = setTimeout(seguir, Math.max(0, ms));
-  };
-  const alAcabar = () => {
-    if (token !== guiaVozToken || saliendo) return;
-    cerrado = true;
-    const pasoMs = Date.now() - t0;
-    const falta = esperaTrasVoz({ empezo: true, termino: true, ms: pasoMs }) - pasoMs;
-    en(falta > 30 ? falta : 0);
-  };
-  const alFallar = () => {
-    if (token !== guiaVozToken || saliendo) return;
-    cerrado = true;
-    const pasoMs = Date.now() - t0;
-    en(esperaTrasVoz({ empezo: true, error: true }) - pasoMs);
-  };
-  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", alAcabar, alFallar);
-  if (!cerrado) en(esperaTrasVoz({ empezo, error: !empezo }));
+  const alFallar = () => revisar("error");
+  const empezo = decir(vozDeGuia(paso, modoJuego()), "es-ES", () => revisar("end"), alFallar, () => revisar("start"));
+  if (!empezo) vozEstado = relojPasoVoz(vozEstado, "error", Date.now() - t0).estado;
+  revisar("");
 }
 
 function avanzarGuia() {
@@ -1066,7 +1060,7 @@ $main.addEventListener("click", (ev) => {
     else if (efecto === "salir") cerrarSalir(true);
     return;
   }
-  if (toqueTrasSalir(Date.now() - cerroSalir)) return;
+  if (entradaSolapada({ ms: Date.now() - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS })) return;
   if (esGuia() && resolverToqueGuia({ paso: partida.paso, ir }) === "mostrar") {
     avanzarGuia();
     return;
@@ -1101,7 +1095,7 @@ Noli.alEntrar((accion) => {
     }
     return true;
   }
-  if (accion === "ok" && toqueTrasSalir(Date.now() - cerroSalir)) return true;
+  if (accion === "ok" && entradaSolapada({ ms: Date.now() - cerroSalir, pasoMs: GUIA_TRAS_SALIR_MS })) return true;
   if (pantalla === "problema" && partida) {
     const banda = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.banda;
     if (banda && (accion === "arriba" || accion === "abajo")) {

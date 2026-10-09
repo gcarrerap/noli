@@ -78,12 +78,34 @@ export function relojPasoMostrar({ dialog = false, transcurrido = 0, vozSigue = 
 }
 
 /**
- * Reloj tras hablar. "sigue": la frase todavía suena (tope 3 s).
+ * Reloj tras hablar. "sigue": onstart ya llegó y la frase todavía suena (tope 3 s).
  * "fin", "error" o "sin-voces": no se adelanta sola antes de los 2 s.
  */
 export function esperaTrasVoz({ evento = "sigue", transcurrido = 0 } = {}) {
   const sigue = evento === "sigue";
   return relojPasoMostrar({ transcurrido, vozSigue: sigue });
+}
+
+// Eventos "start", "end" y "error", medidos desde que el paso apareció.
+// Sin onstart no se usa el tope de 3 s. Un error, inmediato o tarde, vuelve a los 2 s.
+// Si el aviso llega antes de la meta, se devuelve lo que falta.
+export function relojTrasEvento(estado, evento, transcurrido) {
+  const s = {
+    arranco: !!estado?.arranco,
+    error: !!estado?.error,
+    termino: !!estado?.termino,
+  };
+  if (evento === "error") s.error = true;
+  else if (!s.error && evento === "start") s.arranco = true;
+  else if (!s.error && evento === "end") {
+    s.arranco = true;
+    s.termino = true;
+  }
+  let nombre = "sin-voces";
+  if (s.error) nombre = "error";
+  else if (s.termino) nombre = "fin";
+  else if (s.arranco) nombre = "sigue";
+  return { estado: s, ...esperaTrasVoz({ evento: nombre, transcurrido }) };
 }
 
 /** En el teléfono, tocar lo oscuro de «¿Salir?» es Seguir. En la tele, no. */
@@ -92,11 +114,17 @@ export function toqueEnVelo({ tv = false, enDialogo = false } = {}) {
   return "seguir";
 }
 
-/** Toque u OK justo después de Seguir. Atrás y las flechas siguen. */
-export function entradaTrasCerrar({ ms = 0, tipo = "toque" } = {}) {
+/**
+ * Toque u OK justo después de Seguir. Atrás y las flechas siguen.
+ * pasoMs, si viene, comparte el mismo instante que los 400 ms: vale el mayor, no la suma.
+ */
+export function entradaTrasCerrar({ ms = 0, tipo = "toque", pasoMs = 0 } = {}) {
   if (tipo !== "toque" && tipo !== "ok") return "pasar";
   const t = Number(ms);
-  if (!Number.isFinite(t) || t < GUARDIA_SALIR_MS) return "ignorar";
+  const paso = Number(pasoMs);
+  const extra = Number.isFinite(paso) && paso > 0 ? paso : 0;
+  const limite = Math.max(GUARDIA_SALIR_MS, extra);
+  if (!Number.isFinite(t) || t < limite) return "ignorar";
   return "pasar";
 }
 

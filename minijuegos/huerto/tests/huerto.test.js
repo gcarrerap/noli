@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { rngConSemilla } from "../src/rng.js";
 import { TEXTOS, preguntaPar } from "../src/textos.js";
 import { limpiarHabla, decir } from "../src/voz.js";
@@ -14,6 +15,7 @@ import {
   GUIA, pasoGuia, saltosGuia, textoGuia, guiaAvanzaConToque, listoGuiaActivo, focoGuia,
   topeGuia, efectoAtrasGuia, GUIA_TOQUE_MS, GUIA_VOZ_MAX_MS, GUARDIA_SALIR_MS, esperaAutoGuia,
   cadenaFocoGuia, focoAlCerrarSalir, relojPasoMostrar, esperaTrasVoz, entradaTrasCerrar, toqueEnVelo,
+  relojTrasEvento,
 } from "../src/guia.js";
 import {
   nuevo, cargar, registrar, anotarEncargo, dominio, cerrarTemporada, quiereFacil, planSlots, estrellasTemporada,
@@ -238,14 +240,20 @@ test("si la voz falla, no hay voces o no acaba, el paso no se va antes de 2 s", 
 
   termino = 0;
   fallo = 0;
-  let speakLlamado = false;
+  let ultima = null;
+  const voces = [];
+  let alCambiar = null;
   conVoz({
     speechSynthesis: {
       speaking: false,
       pending: false,
-      getVoices: () => [],
+      getVoices: () => voces,
+      addEventListener(tipo, cb) { if (tipo === "voiceschanged") alCambiar = cb; },
       cancel() {},
-      speak() { speakLlamado = true; },
+      speak(u) {
+        ultima = u;
+        u.onend();
+      },
     },
     SpeechSynthesisUtterance: Frase,
   }, () => {
@@ -253,11 +261,18 @@ test("si la voz falla, no hay voces o no acaba, el paso no se va antes de 2 s", 
       alTerminar: () => { termino++; },
       alFallar: () => { fallo++; },
     });
+    assert.equal(hablo, true);
+    assert.equal(termino, 1, "getVoices() vacío no calla la frase");
+    assert.equal(fallo, 0);
+    assert.equal(ultima.text, "Planta 2 filas de 3.");
+    assert.equal(ultima.voice, undefined);
+    assert.match(ultima.lang, /^es/);
+    voces.push({ lang: "es-ES", name: "es" });
+    alCambiar();
+    termino = 0;
+    decir("Planta 2 filas de 3.", { alTerminar: () => { termino++; } });
+    assert.equal(ultima.voice, voces[0]);
   });
-  assert.equal(hablo, false);
-  assert.equal(speakLlamado, false);
-  assert.equal(termino, 0);
-  assert.equal(fallo, 1);
   assert.equal(esperaTrasVoz({ evento: "sin-voces", transcurrido: 0 }).avanzar, false);
   assert.equal(esperaTrasVoz({ evento: "sin-voces", transcurrido: 0 }).espera, 2000);
 
@@ -332,6 +347,36 @@ test("tras cerrar ¿Salir? un toque o OK no pasa durante 400 ms", () => {
   assert.equal(entradaTrasCerrar({ ms: 0, tipo: "atras" }), "pasar");
   assert.equal(entradaTrasCerrar({ ms: 10, tipo: "arriba" }), "pasar");
   assert.equal(entradaTrasCerrar({ ms: Number.NaN, tipo: "toque" }), "ignorar");
+  assert.equal(entradaTrasCerrar({ ms: 560, tipo: "toque", pasoMs: 400 }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: 200, tipo: "ok", pasoMs: 400 }), "ignorar");
+  assert.equal(entradaTrasCerrar({ ms: 999, tipo: "toque", pasoMs: 1000 }), "ignorar");
+  assert.equal(entradaTrasCerrar({ ms: 1000, tipo: "toque", pasoMs: 1000 }), "pasar");
+  assert.equal(entradaTrasCerrar({ ms: 1200, tipo: "ok", pasoMs: 1000 }), "pasar", "400 y 1000 no suman 1400");
+  assert.equal(entradaTrasCerrar({ ms: 0, tipo: "atras", pasoMs: 1000 }), "pasar");
+});
+
+test("el pedido no se queda colgado si la voz falla al momento o tarde", () => {
+  assert.equal(pasoGuia({ fase: "plantar", acepto: false, filas: 1, porFila: 1 }), "pedido");
+  assert.equal(guiaAvanzaConToque("pedido"), true);
+  const cero = { arranco: false, error: false, termino: false };
+  const inmediato = relojTrasEvento(cero, "error", 0);
+  assert.equal(inmediato.avanzar, false);
+  assert.equal(inmediato.espera, 2000);
+  assert.equal(relojTrasEvento(inmediato.estado, "end", 0).espera, 2000);
+  assert.equal(relojTrasEvento(inmediato.estado, "", 1990).espera, 10);
+  assert.equal(relojTrasEvento(inmediato.estado, "", 2000).avanzar, true);
+  const vivo = relojTrasEvento(cero, "start", 80);
+  assert.equal(relojTrasEvento(vivo.estado, "", 2500).espera, 500);
+  assert.equal(relojTrasEvento(vivo.estado, "error", 2500).avanzar, true);
+  assert.equal(relojTrasEvento(vivo.estado, "error", 900).espera, 1100);
+  assert.equal(relojTrasEvento(cero, "", 2000).avanzar, true, "sin onstart son 2 s");
+  assert.equal(relojTrasEvento(vivo.estado, "", 3000).avanzar, true);
+  assert.equal(relojTrasEvento(vivo.estado, "end", 2600).avanzar, true);
+  assert.equal(relojTrasEvento(vivo.estado, "end", 500).espera, 1500);
+  const juego = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juego, /relojTrasEvento/);
+  assert.match(juego, /pasoMs: GUARDIA_SALIR_MS/);
+  assert.match(juego, /alFallar/);
 });
 
 test("ver el paso completo a los 40 s no cuenta como primer intento", () => {

@@ -12,7 +12,7 @@ import { NIVELES, ALBUM, MOMENTOS, planDia, POR_TURNO } from "./niveles.js";
 import { pista } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA, INICIO_GUIA,
-  esExplicacion, focoTrasExplicacion, esperaExplicar, debeAvanzarExplicacion,
+  esExplicacion, focoTrasExplicacion, estadoExplicacion, relojExplicacion,
   efectoDialogoGuia, ignoraTrasCerrar, efectoAtrasGuia, seguirGuia,
 } from "./guia.js";
 import {
@@ -69,9 +69,9 @@ function arte() {
       .catch(() => { cache[n] = ""; })));
 }
 
-function hablar(texto, alTerminar, alFallar) {
+function hablar(texto, alTerminar, alFallar, alEmpezar) {
   if (!pr.voz || !texto) return false;
-  return decir(texto, "es-MX", alTerminar, alFallar);
+  return decir(texto, "es-MX", alTerminar, alFallar, alEmpezar);
 }
 
 // La explicación ya se dice en programarExplicacion, para enganchar el fin de la voz.
@@ -462,38 +462,26 @@ function programarExplicacion() {
   const linea = vozPaso(paso, esTv());
   const gen = ++explicarGen;
   const t0 = performance.now();
-  let acortada = false;
-  let vozLista = false;
-  let vozFallo = false;
-  let msVoz = 0;
-  const avanzar = () => {
+  let vozEstado = estadoExplicacion();
+  // La meta sale siempre de t0. Un onerror inmediato o tarde, o un onstart que no llega,
+  // deja los 2 s. Si el temporizador avisa antes, se vuelve a pedir lo que falta.
+  const revisar = (evento) => {
     if (gen !== explicarGen || !guia || guia.paso !== paso) return;
-    const transcurrido = performance.now() - t0;
-    if (!debeAvanzarExplicacion({
-      dialog: overlay, transcurrido, voz: hablada && !vozFallo, termino: vozLista, error: vozFallo || !hablada, msVoz,
-    })) return;
+    if (overlay) return;
+    const plan = relojExplicacion(vozEstado, evento || "", performance.now() - t0);
+    vozEstado = plan.estado;
+    if (!plan.avanzar) {
+      luego(revisar, plan.espera);
+      return;
+    }
     explicarGen++;
     seguirExplicacion();
   };
-  const alAcabar = () => {
-    if (gen !== explicarGen || overlay || vozFallo) return;
-    acortada = true;
-    vozLista = true;
-    msVoz = performance.now() - t0;
-    const falta = esperaExplicar({ voz: true, termino: true, ms: msVoz }) - msVoz;
-    luego(avanzar, falta > 40 ? falta : 0);
-  };
-  const alFallar = () => {
-    if (gen !== explicarGen || overlay || vozFallo) return;
-    vozFallo = true;
-    acortada = true;
-    const transcurrido = performance.now() - t0;
-    const falta = esperaExplicar({ error: true }) - transcurrido;
-    luego(avanzar, falta > 0 ? falta : 0);
-  };
+  const alFallar = () => revisar("error");
   callar();
-  const hablada = hablar(linea, alAcabar, alFallar);
-  if (!acortada) luego(avanzar, esperaExplicar({ voz: hablada && !vozFallo, error: vozFallo || !hablada }));
+  const hablada = hablar(linea, () => revisar("end"), alFallar, () => revisar("start"));
+  if (!hablada) vozEstado = relojExplicacion(vozEstado, "error", performance.now() - t0).estado;
+  revisar("");
 }
 
 function seguirExplicacion() {

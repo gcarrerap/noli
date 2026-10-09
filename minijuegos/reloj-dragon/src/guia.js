@@ -13,14 +13,49 @@ export const ESPERA_VOZ_MAX_MS = 3000;
 export const TRAS_CERRAR_MS = 400;
 
 // Espera del avance solo. Un toque o OK no pasan por aquí.
-// Sin voz, si falla o si no arrancó: 2 s. Mientras habla: el tope de 3 s.
+// Sin onstart, si falla o si no arrancó: 2 s. Mientras habla: el tope de 3 s.
 // Al terminar de verdad: lo que duró, nunca antes de 2 s y nunca más de 3 s.
+// `voz` aquí significa que onstart ya llegó, no que speak() devolvió true.
 export function esperaExplicar({ voz = false, termino = false, error = false, ms = 0 } = {}) {
   if (!voz || error) return ESPERA_EXPLICAR_MS;
   if (!termino) return ESPERA_VOZ_MAX_MS;
   const t = Number(ms);
   if (!Number.isFinite(t) || t <= 0) return ESPERA_EXPLICAR_MS;
   return Math.min(ESPERA_VOZ_MAX_MS, Math.max(ESPERA_EXPLICAR_MS, t));
+}
+
+export function estadoExplicacion() {
+  return { arranco: false, error: false, termino: false, ms: 0 };
+}
+
+// Un evento de la voz y lo que falta para avanzar, medido desde el inicio del paso.
+// Un error inmediato o tarde, o la falta de onstart, dejan los 2 s de ese inicio.
+// Si el aviso llega antes de la meta, se devuelve lo que falta: el reloj no se suelta.
+export function relojExplicacion(estado, evento, transcurrido) {
+  const s = {
+    arranco: !!estado?.arranco,
+    error: !!estado?.error,
+    termino: !!estado?.termino,
+    ms: Number(estado?.ms) || 0,
+  };
+  if (evento === "error") s.error = true;
+  else if (!s.error && evento === "start") s.arranco = true;
+  else if (!s.error && evento === "end") {
+    s.arranco = true;
+    s.termino = true;
+    const d = Number(transcurrido);
+    s.ms = Number.isFinite(d) && d > 0 ? d : 0;
+  }
+  const meta = esperaExplicar({
+    voz: s.arranco && !s.error,
+    termino: s.termino && !s.error,
+    error: s.error || !s.arranco,
+    ms: s.ms,
+  });
+  const t = Number(transcurrido);
+  const pasado = Number.isFinite(t) && t > 0 ? t : 0;
+  if (pasado >= meta) return { estado: s, avanzar: true, espera: 0 };
+  return { estado: s, avanzar: false, espera: meta - pasado };
 }
 
 // Con el diálogo abierto el avance solo no corre, aunque hayan pasado más de 2 s.
