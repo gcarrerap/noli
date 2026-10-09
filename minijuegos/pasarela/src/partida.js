@@ -2,7 +2,7 @@
 // (src/ui/juego.js) dibuja la pantalla y hace lo que cada estado pide (cobrar, caminar, desfilar…).
 // Diagrama y explicación: docs/ARQUITECTURA.md.
 //
-//   inicio ──jugar──▶ cobrando ──cobrado──▶ tema ──listo──▶ estudio ──pasarela | tiempo──▶ pasarela ──fin──▶ calificacion
+//   inicio ──jugar──▶ cobrando ──cobrado──▶ tema ──listo──▶ estudio ──pasarela | tiempo──▶ pasarela ──llego──▶ posando ──fin──▶ calificacion
 //     │  ▲                │                                    │                                             │
 //     │  │           sin-creditos ──▶ faltan ──libre──▶ libre  │                                          continuar
 //     │  │                              │                │      │                                             ▼
@@ -17,7 +17,8 @@ export const TRANSICIONES = {
   tema:         { listo: "estudio" },
   estudio:      { pasarela: "pasarela", tiempo: "pasarela", salir: "inicio" },
   libre:        { salir: "inicio" },
-  pasarela:     { fin: "calificacion" },
+  pasarela:     { llego: "posando" },
+  posando:      { fin: "calificacion" },   // escoge poses y bailes al final de la pasarela
   calificacion: { continuar: "desbloqueo", "sin-desbloqueo": "inicio" },
   desbloqueo:   { continuar: "inicio" },
   closet:       { salir: "inicio" },

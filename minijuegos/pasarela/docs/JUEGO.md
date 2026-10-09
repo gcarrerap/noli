@@ -5,9 +5,10 @@
 1. En el inicio se ve el saldo y el costo. **"¡A la pasarela!"** cobra `config.costo` créditos (3) con `Noli.gastar`. Si no alcanzan: "Te faltan N créditos", con "Ir a jugar" (regresa al catálogo) y "Mientras, probarme ropa".
 2. Sale un **tema** al azar entre los abiertos, sin repetir el anterior.
 3. La ropa vuelve a la **de base** (solo se queda el peinado) y empieza el **estudio**: `config.tiempoEstudio` = 150 s. A los 30 s finales (`avisoTiempo`) el reloj se pone rojo. Al llegar a 0 se va sola a la pasarela; también se puede ir antes (botón dorado o la puerta roja).
-4. **Pasarela:** desfila y hace una pose.
-5. **Calificación:** tres jueces, de 1 a 5 estrellas cada uno, un comentario positivo cada uno y un **consejo**. Se ve el atuendo en inglés y los puntos de estilo ganados.
-6. Si subió de nivel: lo que se abrió (ropa, colores, tema).
+4. **Pasarela:** desfila hasta el final.
+5. **Poses:** al final de la pasarela escoge poses y bailes (los que tenga abiertos), uno o varios, y "¡Listo!".
+6. **Calificación:** tres jueces, de 1 a 5 estrellas cada uno, un comentario positivo cada uno y un **consejo**. Se ve el atuendo en inglés y los puntos de estilo ganados.
+7. Si subió de nivel: lo que se abrió (ropa, colores, tema o pose).
 
 **Probador libre** (sin créditos): igual que el estudio, sin tema, sin reloj, sin pasarela y sin puntos. Se puede estar ahí todo lo que quiera.
 
@@ -20,13 +21,13 @@
 | Primer día de escuela | escuela 3, casual 2 | pijama, elegante, playa | azul, rojo, blanco, verde, amarillo, café | Principiante |
 | Día de deportes | deportivo 3, casual 1 | elegante, princesa, pijama | rojo, azul, blanco, negro, verde, naranja | Principiante |
 | Pijamada | pijama 3, casual 1 | elegante, deportivo, playa | rosa, lila, celeste, blanco, morado | Principiante |
-| Invierno en la nieve | frío 3, aventura 1 | playa, verano | blanco, celeste, azul, rojo, plateado | Con estilo |
-| Princesa del castillo | princesa 3, elegante 2, brillo 2 | deportivo, pijama, playa | rosa, lila, dorado, celeste, morado | Creativa |
+| Invierno en la nieve | frío 3, aventura 1 | playa, verano | blanco, celeste, azul, rojo, plateado | Curiosa |
+| Princesa del castillo | princesa 3, elegante 2, brillo 2 | deportivo, pijama, playa | rosa, lila, dorado, celeste, morado | Divertida |
 | Primavera en el jardín | flores 3, verano 1, casual 1 | frío, rock | verde, rosa, amarillo, lila, blanco | Diseñadora |
-| Campamento en el bosque | aventura 3, casual 1, frío 1 | elegante, princesa, brillo | verde, café, naranja, azul, rojo | Modelo |
-| Estrella de rock | rock 3, brillo 2, fiesta 1 | pijama, princesa, flores | negro, morado, rojo, plateado, rosa | Estrella |
-| Noche de gala | elegante 3, brillo 2 | deportivo, pijama, playa, casual | negro, dorado, plateado, morado, rojo | Superestrella |
-| Hada del bosque | magia 3, flores 2, brillo 1 | deportivo, rock | verde, lila, turquesa, rosa, dorado | Ícono de la moda |
+| Campamento en el bosque | aventura 3, casual 1, frío 1 | elegante, princesa, brillo | verde, café, naranja, azul, rojo | Superestrella |
+| Estrella de rock | rock 3, brillo 2, fiesta 1 | pijama, princesa, flores | negro, morado, rojo, plateado, rosa | Leyenda |
+| Noche de gala | elegante 3, brillo 2 | deportivo, pijama, playa, casual | negro, dorado, plateado, morado, rojo | Maestra del estilo |
+| Hada del bosque | magia 3, flores 2, brillo 1 | deportivo, rock | verde, lila, turquesa, rosa, dorado | Reina de la pasarela |
 
 (Datos en `datos/temas.json`; nivel en `datos/desbloqueos.json`.)
 
@@ -120,39 +121,108 @@ Siempre hay uno **positivo** por juez (nunca se regaña) y, si hay algo que mejo
 
 ## Puntos de estilo, niveles y desbloqueos
 
-Los puntos de cada pasarela (3 a 15) se **suman** y **nunca se pierden ni se gastan**. Cada nivel de `datos/desbloqueos.json` abre prendas, colores (para todas las prendas que los acepten) y temas:
+Los puntos de cada pasarela (3 a 15) se **suman** y **nunca se pierden ni se gastan**. Cada nivel de `datos/desbloqueos.json` abre **poco: de 1 a 3 cosas** (prendas, colores para todas las prendas que los acepten, temas y poses de la pasarela), y los niveles se van espaciando (#26: antes cada nivel abría hasta 11 prendas y se ganaba ropa en casi cada pasarela):
 
 | Nivel | Puntos | Abre |
 |---|---|---|
-| Principiante | 0 | El clóset inicial: 2 peinados, 3 de arriba (con la pijama), 3 de abajo, 1 vestido, 2 zapatos, 3 accesorios; 7 colores; 5 temas |
-| Con estilo | 8 | Ropa de frío y de playa (11 prendas), verde y celeste, Invierno |
-| Creativa | 20 | Chongos, trenza, sudadera, blusa de princesa, vestido de fiesta, zapatillas, corona, bufanda; morado; Princesa |
-| Diseñadora | 35 | Rizos, camisa, tutú, leggings, vestido de princesa, collar, bolsa, flor; lila; Jardín |
-| Modelo | 55 | Chongo de bailarina, top de brillos, falda larga, mameluco, botas, moño; naranja; Campamento |
-| Estrella | 80 | Pelo suelto, chaqueta de cuero, zapatos de ballet; turquesa; Rock |
-| Superestrella | 110 | Vestido de gala, varita; plateado; Gala |
-| Ícono de la moda | 145 | Vestido de hada, alas, tiara de estrellas (Blender); dorado; Hada |
+| Principiante | 0 | El clóset inicial: 14 prendas (2 peinados, 3 de arriba, 3 de abajo, 1 vestido, 2 zapatos, 3 accesorios), 7 colores, 5 temas y 3 poses |
+| Aprendiz | 16 | suéter, gorra, color verde |
+| Con estilo | 33 | pantalón de mezclilla, pose dar una vuelta |
+| Curiosa | 51 | chamarra de invierno, gorro de invierno, tema Invierno en la nieve |
+| Creativa | 71 | botas de nieve, pantalón de nieve, color celeste |
+| Coqueta | 93 | rubor, labial |
+| Chispa | 116 | traje de baño, sombrero de playa, pose corazón |
+| Original | 140 | coletas, reloj |
+| Brillante | 166 | pantuflas de conejo, pecas, color morado |
+| Atrevida | 194 | vestido de fiesta, aretes de perla |
+| Divertida | 223 | blusa de princesa, corona, tema Princesa del castillo |
+| Elegante | 253 | zapatillas de fiesta, sombra de ojos, pose baile de brazos |
+| Glamorosa | 285 | dos chongos, pulsera, color lila |
+| Artista | 319 | sudadera, bufanda |
+| Diseñadora | 354 | trenza larga, flor en el pelo, tema Primavera en el jardín |
+| Modelo | 390 | falda larga, brillitos, pose baile de lado a lado |
+| Fotogénica | 428 | vestido de princesa, aretes de estrella |
+| Fashionista | 468 | camisa de botones, collar de perlas, color naranja |
+| Estrella | 509 | falda de tutú, corazón pintado, pose reverencia |
+| Estrella brillante | 551 | leggings, reloj deportivo |
+| Superestrella | 595 | botas, arracadas, tema Campamento en el bosque |
+| Celebridad | 641 | rizos, bolsa, pose saltar |
+| Ícono | 688 | pijama de una pieza, collar de corazón, color turquesa |
+| Ícono de la moda | 736 | top de brillos, moño, estrella pintada |
+| Leyenda | 786 | chaqueta de cuero, chongo de bailarina, tema Estrella de rock |
+| Leyenda dorada | 838 | zapatos de ballet, pestañas largas, pose lanzar un beso |
+| Diva | 891 | pelo largo suelto, varita mágica, color plateado |
+| Maestra del estilo | 945 | vestido de gala, tema Noche de gala, pose baile del robot |
+| Gran diseñadora | 1001 | vestido de hada, alas de hada, color dorado |
+| Reina de la pasarela | 1059 | tiara de estrellas, tema Hada del bosque, pose pensativa |
 
-Al subir de nivel sale la pantalla de desbloqueo. Lo nuevo se marca **"¡Nuevo!"** en el panel (y un punto en los colores) hasta que se ve: al cerrar el panel de ese mueble queda como visto. Lo del clóset inicial nunca sale como nuevo. Las prendas bloqueadas se ven en gris con candado y dicen en qué nivel se abren y con cuántos puntos.
+Al subir de nivel sale la pantalla de desbloqueo. Lo nuevo se marca **"¡Nuevo!"** en el panel (y un punto en los colores; "¡Nueva!" en las poses) hasta que se ve: al cerrar el panel de ese mueble (o al terminar de posar) queda como visto. Lo del clóset inicial nunca sale como nuevo. Las prendas bloqueadas se ven en gris con candado y dicen en qué nivel se abren y con cuántos puntos.
 
 ### La curva
 
-Meta del issue: **algo nuevo cada 1–3 pasarelas al principio, más espaciado después.** `herramientas/simular-curva.mjs` simula 200 jugadoras de cada estilo, con temas al azar como en el juego (`node minijuegos/pasarela/herramientas/simular-curva.mjs --md`). Pasarelas (mediana) para llegar a cada nivel:
+Meta (#26): **algo nuevo cada 2 pasarelas al principio, cada vez más espaciado después**, para que la ropa nueva se sienta como un premio. Puntos para cada nivel: el salto empieza en 16 y crece 1.5 por nivel (`round(14 + 1.5 × nivel)`). `herramientas/simular-curva.mjs` simula 200 jugadoras de cada estilo, con temas al azar como en el juego (`node minijuegos/pasarela/herramientas/simular-curva.mjs --md`). Pasarelas (mediana) para llegar a cada nivel:
 
 | Nivel | Puntos | Pasarelas (con cuidado) | Pasarelas (a medias) | Pasarelas (al azar) |
 |---|---|---|---|---|
 | Principiante | 0 | 0 | 0 | 0 |
-| Con estilo | 8 | 1 | 1 | 1 |
-| Creativa | 20 | 2 | 2 | 3 |
-| Diseñadora | 35 | 3 | 4 | 5 |
-| Modelo | 55 | 4 | 6 | 7 |
-| Estrella | 80 | 6 | 8 | 10 |
-| Superestrella | 110 | 8 | 10 | 14 |
-| Ícono de la moda | 145 | 11 | 14 | 18 |
+| Aprendiz | 16 | 2 | 2 | 2 |
+| Con estilo | 33 | 3 | 4 | 4 |
+| Curiosa | 51 | 4 | 5 | 6 |
+| Creativa | 71 | 6 | 7 | 9 |
+| Coqueta | 93 | 8 | 9 | 11 |
+| Chispa | 116 | 9 | 12 | 14 |
+| Original | 140 | 11 | 14 | 17 |
+| Brillante | 166 | 14 | 16 | 20 |
+| Atrevida | 194 | 16 | 19 | 23 |
+| Divertida | 223 | 18 | 22 | 27 |
+| Elegante | 253 | 20 | 25 | 31 |
+| Glamorosa | 285 | 23 | 27 | 35 |
+| Artista | 319 | 25 | 31 | 39 |
+| Diseñadora | 354 | 28 | 34 | 43 |
+| Modelo | 390 | 30 | 37 | 48 |
+| Fotogénica | 428 | 33 | 41 | 52 |
+| Fashionista | 468 | 36 | 44 | 57 |
+| Estrella | 509 | 39 | 48 | 62 |
+| Estrella brillante | 551 | 42 | 52 | 67 |
+| Superestrella | 595 | 45 | 56 | 73 |
+| Celebridad | 641 | 48 | 60 | 78 |
+| Ícono | 688 | 51 | 64 | 84 |
+| Ícono de la moda | 736 | 55 | 68 | 90 |
+| Leyenda | 786 | 58 | 73 | 96 |
+| Leyenda dorada | 838 | 62 | 77 | 103 |
+| Diva | 891 | 65 | 82 | 109 |
+| Maestra del estilo | 945 | 69 | 87 | 116 |
+| Gran diseñadora | 1001 | 73 | 92 | 123 |
+| Reina de la pasarela | 1059 | 77 | 97 | 131 |
 
-Puntos por pasarela en promedio: con cuidado 14.6 · a medias 11.0 · al azar 7.9.
+Puntos por pasarela en promedio: con cuidado 14.3 · a medias 11.0 · al azar 8.1. Mediana de 200 jugadoras simuladas por estilo.
 
-**Por qué así:** la primera pasarela siempre abre algo (8 puntos se alcanzan hasta vistiéndose al azar), para que entienda de inmediato que desfilar abre ropa. Los saltos crecen poco a poco (de 1 a 3–4 pasarelas). Vestirse "con cuidado" se nota (casi el doble de rápido que al azar), así que poner atención al tema sí paga, pero quien juega al azar también avanza. A 3 créditos por pasarela, todo el clóset cuesta unos 40 créditos (unas 14 partidas buenas de los juegos educativos) para quien juega "a medias". Si se siente muy rápido, subir los últimos niveles en `desbloqueos.json` y volver a correr el simulador.
+**Por qué así:** el primer nivel llega en la segunda pasarela aun vistiéndose al azar, para que entienda pronto que desfilar abre cosas. Después, un nivel cada 2 pasarelas al principio y cada 4–5 al final. Vestirse "con cuidado" se nota (todo en ≈ 77 pasarelas contra ≈ 131 al azar), así que poner atención al tema sí paga. A 3 créditos por pasarela, abrir todo cuesta unos 290 créditos para quien juega "a medias": semanas de practicar sumas y spelling. Si se siente lento o rápido, cambiar los `puntos` en `desbloqueos.json` (o mover cosas entre niveles) y volver a correr el simulador; la prueba revisa que cada nivel abra de 1 a 3 cosas y que los saltos no se achiquen.
+
+## Poses y bailes
+
+Al llegar al final de la pasarela aparece **"¡Escoge tu pose!"** con las poses abiertas (`datos/poses.json`). Cada toque hace esa pose o baile; se pueden hacer varias seguidas. **"¡Listo!"** (o 25 segundos sin escoger) termina: los jueces aplauden y sale la calificación. Las poses no cambian la calificación (son para lucirse). Al principio hay 3 (manos en la cintura, saludar, estrella) y 9 más se abren con los niveles; las nuevas dicen "¡Nueva!".
+
+| Pose | Inglés | Tipo |
+|---|---|---|
+| Manos en la cintura | Hands on hips | pose |
+| Saludar | Wave | pose |
+| Estrella | Star | pose |
+| Dar una vuelta | Spin | baile (con ritmo) |
+| Corazón | Heart | pose |
+| Baile de brazos | Arm dance | baile (con ritmo) |
+| Baile de lado a lado | Side to side | baile (con ritmo) |
+| Reverencia | Curtsy | pose |
+| Saltar | Jump | baile (con ritmo) |
+| Lanzar un beso | Blow a kiss | pose |
+| Baile del robot | Robot dance | baile (con ritmo) |
+| Pensativa | Thinking | pose |
+
+## Maquillaje y joyería
+
+Además de la ropa hay **maquillaje** (categoría `maquillaje`: rubor, labial, sombra de ojos, pestañas largas, pecas, brillitos, corazón y estrella pintados) y **joyería** (accesorios de orejas, cuello y muñeca: aretes de perla, arracadas, aretes de estrella, collar de perlas, collar de corazón, reloj, reloj deportivo, pulsera). Van **uno por lugar** (`config.json → lugares`): mejillas, ojos, labios y pintura en la cara; orejas, cuello, muñeca, y los de antes (cabeza, cara, abrigo, mano, espalda). Para los jueces cuentan como **detalles** (igual que los accesorios). En el estudio están en dos muebles nuevos: el **tocador de maquillaje** (derecha) y la **joyería** (izquierda).
+
+![Maquillaje y joyería](img/maquillaje-joyas.jpg)
 
 ## Qué se guarda
 
@@ -163,11 +233,11 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
   v: 1,                    // versión del formato; leerProgreso() convierte o descarta lo que no entienda
   puntos: 41,              // puntos de estilo acumulados
   pasarelas: 4,            // pasarelas con tema
-  vistos: ["a-camiseta", "c:rosa", "t:playa", …],   // lo que ya no brilla como nuevo (prendas, "c:" colores, "t:" temas)
+  vistos: ["a-camiseta", "c:rosa", "t:playa", "o:vuelta", …],   // lo que ya no brilla como nuevo (prendas, "c:" colores, "t:" temas, "o:" poses)
   atuendos: [              // el clóset: los últimos config.maxAtuendosGuardados (12), el más nuevo primero
     { fecha: 1760000000000, tema: "playa", estrellas: [5, 5, 5], puntos: 15,
       atuendo: { peinado: { id: "p-cola", color: "cafe" }, arriba: {…}, abajo: {…}, vestido: null, zapatos: {…},
-                 accesorios: { cara: { id: "x-lentes", color: "rosa" } } } }
+                 accesorios: { cara: { id: "x-lentes", color: "rosa" }, labios: { id: "m-labial", color: "rojo" } } } }   // accesorios y maquillaje, por lugar
   ],
   piel: 0,                 // índice en config.tonosPiel
   ultimo: { … },           // el último atuendo (para el probador libre y el peinado de la siguiente pasarela)

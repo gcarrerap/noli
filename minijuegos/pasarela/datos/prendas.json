@@ -1,5 +1,5 @@
 {
-  "_ayuda": "Ropa de la Pasarela. Cada prenda se arma con piezas (formas sencillas) pegadas a una parte del cuerpo (ancla). Cómo agregar una: docs/ASSETS.md. Formas, anclas y medidas del cuerpo: docs/ESCENA-3D.md. genero/plural: para los comentarios en español (el/la/los/las). en: nombre en inglés; enPlural: true si en inglés va sin 'a' (shorts, sneakers). etiquetas: con qué temas va (config.json). colores: los que puede tener (los que se ven dependen del nivel, desbloqueos.json). secundario: color fijo de los detalles (id de colores.json o #hex). lugar: solo accesorios. dibujo2d: figura del modo sencillo (src/ui/dibujo2d.js).",
+  "_ayuda": "Ropa de la Pasarela. Cada prenda se arma con piezas (formas sencillas) pegadas a una parte del cuerpo (ancla). Cómo agregar una: docs/ASSETS.md. Formas, anclas y medidas del cuerpo: docs/ESCENA-3D.md. genero/plural: para los comentarios en español (el/la/los/las). en: nombre en inglés; enPlural: true si en inglés va sin 'a' (shorts, sneakers). etiquetas: con qué temas va (config.json). colores: los que puede tener (los que se ven dependen del nivel, desbloqueos.json). secundario: color fijo de los detalles (id de colores.json o #hex). lugar: solo accesorios y maquillaje (uno por lugar; config.json → lugares). dibujo2d: figura del modo sencillo (src/ui/dibujo2d.js).",
   "prendas": [
     { "id": "p-melena", "categoria": "peinado", "es": "melena corta", "genero": "f", "en": "short hair", "enPlural": true,
       "etiquetas": ["casual", "escuela", "deportivo"], "colores": ["cafe", "negro", "amarillo", "naranja", "rosa", "morado", "celeste"], "dibujo2d": "melena",
@@ -378,7 +378,7 @@
         { "f": "anillo", "a": "cabeza", "pos": [0, 0.5, 0], "radio": 0.115, "n": 6, "pieza": { "f": "cono", "r": 0.028, "alto": 0.07, "col": "p" } },
         { "f": "octaedro", "a": "cabeza", "pos": [0, 0.43, 0.118], "r": 0.025, "col": "s" }
       ] },
-    { "id": "x-bufanda", "categoria": "accesorio", "lugar": "cuello", "es": "bufanda", "genero": "f", "en": "scarf",
+    { "id": "x-bufanda", "categoria": "accesorio", "lugar": "abrigo", "es": "bufanda", "genero": "f", "en": "scarf",
       "etiquetas": ["frio"], "colores": ["rojo", "azul", "rosa", "morado", "verde", "amarillo", "blanco", "turquesa", "naranja"], "secundario": "blanco", "dibujo2d": "bufanda",
       "piezas": [
         { "f": "toro", "a": "cuello", "pos": [0, 0.02, 0], "r": 0.085, "grosor": 0.042, "rot": [90, 0, 0], "col": "p" },
@@ -420,6 +420,96 @@
     { "id": "x-tiara", "categoria": "accesorio", "lugar": "cabeza", "es": "tiara de estrellas", "genero": "f", "en": "star tiara",
       "etiquetas": ["princesa", "brillo", "magia", "fiesta"], "colores": ["dorado", "plateado", "rosa", "lila", "celeste"], "secundario": "rosa", "brillo": true, "dibujo2d": "tiara",
       "modelo": "modelos/tiara.glb", "ancla": "cabeza" },
+    { "id": "x-aretes-perla", "categoria": "accesorio", "lugar": "orejas", "es": "aretes de perla", "genero": "m", "plural": true, "en": "pearl earrings", "enPlural": true,
+      "etiquetas": ["elegante", "princesa", "fiesta"], "colores": ["blanco", "rosa", "lila", "dorado", "celeste"], "brillo": true, "dibujo2d": "aretes-perla",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0.212, 0.125, 0.0], "r": 0.02, "col": "p", "espejo": true }
+      ] },
+    { "id": "x-arracadas", "categoria": "accesorio", "lugar": "orejas", "es": "arracadas", "genero": "f", "plural": true, "en": "hoop earrings", "enPlural": true,
+      "etiquetas": ["rock", "fiesta", "casual"], "colores": ["dorado", "plateado", "rosa", "negro", "turquesa"], "brillo": true, "dibujo2d": "arracadas",
+      "piezas": [
+        { "f": "toro", "a": "cabeza", "pos": [0.218, 0.1, 0.0], "r": 0.03, "grosor": 0.006, "rot": [0, 90, 0], "col": "p", "espejo": true }
+      ] },
+    { "id": "x-aretes-estrella", "categoria": "accesorio", "lugar": "orejas", "es": "aretes de estrella", "genero": "m", "plural": true, "en": "star earrings", "enPlural": true,
+      "etiquetas": ["magia", "fiesta", "brillo"], "colores": ["dorado", "plateado", "rosa", "celeste", "lila", "amarillo"], "brillo": true, "dibujo2d": "aretes-estrella",
+      "piezas": [
+        { "f": "octaedro", "a": "cabeza", "pos": [0.218, 0.115, 0.0], "r": 0.026, "esc": [0.4, 1, 1], "col": "p", "espejo": true }
+      ] },
+    { "id": "x-collar-corazon", "categoria": "accesorio", "lugar": "cuello", "es": "collar de corazón", "genero": "m", "en": "heart necklace",
+      "etiquetas": ["fiesta", "casual", "flores"], "colores": ["rojo", "rosa", "morado", "turquesa", "dorado", "plateado"], "secundario": "dorado", "dibujo2d": "collar-corazon",
+      "piezas": [
+        { "f": "toro", "a": "cuello", "pos": [0, -0.02, 0.015], "r": 0.082, "grosor": 0.006, "rot": [70, 0, 0], "col": "s" },
+        { "f": "esfera", "a": "cuello", "pos": [0.013, -0.075, 0.13], "r": 0.016, "col": "p" },
+        { "f": "esfera", "a": "cuello", "pos": [-0.013, -0.075, 0.13], "r": 0.016, "col": "p" },
+        { "f": "cono", "a": "cuello", "pos": [0, -0.093, 0.13], "r": 0.026, "alto": 0.03, "rot": [180, 0, 0], "col": "p" }
+      ] },
+    { "id": "x-reloj", "categoria": "accesorio", "lugar": "muneca", "es": "reloj", "genero": "m", "en": "watch",
+      "etiquetas": ["escuela", "casual", "elegante"], "colores": ["cafe", "negro", "rosa", "azul", "dorado", "plateado", "rojo"], "secundario": "blanco", "dibujo2d": "reloj",
+      "piezas": [
+        { "f": "toro", "a": "antebrazoD", "pos": [0, -0.14, 0], "r": 0.043, "grosor": 0.011, "rot": [90, 0, 0], "col": "p" },
+        { "f": "disco", "a": "antebrazoD", "pos": [0, -0.14, 0.048], "r": 0.024, "alto": 0.012, "rot": [90, 0, 0], "col": "s" }
+      ] },
+    { "id": "x-reloj-deportivo", "categoria": "accesorio", "lugar": "muneca", "es": "reloj deportivo", "genero": "m", "en": "sports watch",
+      "etiquetas": ["deportivo", "aventura"], "colores": ["negro", "verde", "naranja", "azul", "rosa", "turquesa"], "secundario": "#2b2236", "dibujo2d": "reloj",
+      "piezas": [
+        { "f": "toro", "a": "antebrazoD", "pos": [0, -0.14, 0], "r": 0.044, "grosor": 0.014, "rot": [90, 0, 0], "col": "p" },
+        { "f": "caja", "a": "antebrazoD", "pos": [0, -0.14, 0.05], "tam": [0.05, 0.055, 0.016], "col": "s" }
+      ] },
+    { "id": "x-pulsera", "categoria": "accesorio", "lugar": "muneca", "es": "pulsera", "genero": "f", "en": "bracelet",
+      "etiquetas": ["fiesta", "playa", "verano"], "colores": ["rosa", "turquesa", "amarillo", "morado", "dorado", "plateado", "verde"], "brillo": true, "dibujo2d": "pulsera",
+      "piezas": [
+        { "f": "anillo", "a": "antebrazoI", "pos": [0, -0.14, 0], "radio": 0.046, "n": 9, "pieza": { "f": "esfera", "r": 0.014, "col": "p" } }
+      ] },
+
+    { "id": "m-rubor", "categoria": "maquillaje", "lugar": "mejillas", "es": "rubor", "genero": "m", "en": "blush", "enPlural": true,
+      "etiquetas": ["fiesta", "elegante", "princesa"], "colores": ["rosa", "rojo", "naranja", "lila"], "dibujo2d": "rubor",
+      "piezas": [
+        { "f": "plano", "a": "cabeza", "pos": [0.118, 0.13, 0.176], "tam": [0.075, 0.055], "rot": [0, 32, 0], "col": "p", "opacidad": 0.6, "espejo": true }
+      ] },
+    { "id": "m-labial", "categoria": "maquillaje", "lugar": "labios", "es": "labial", "genero": "m", "en": "lipstick", "enPlural": true,
+      "etiquetas": ["elegante", "fiesta", "princesa", "rock"], "colores": ["rojo", "rosa", "morado", "naranja", "lila", "negro"], "dibujo2d": "labial",
+      "piezas": [
+        { "f": "toro", "a": "cabeza", "pos": [0, 0.12, 0.196], "r": 0.035, "grosor": 0.013, "arco": 180, "rot": [0, 0, 180], "col": "p" }
+      ] },
+    { "id": "m-sombra", "categoria": "maquillaje", "lugar": "ojos", "es": "sombra de ojos", "genero": "f", "en": "eyeshadow", "enPlural": true,
+      "etiquetas": ["fiesta", "elegante", "rock", "magia"], "colores": ["morado", "lila", "celeste", "rosa", "turquesa", "dorado", "verde"], "brillo": true, "dibujo2d": "sombra",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0.076, 0.24, 0.172], "r": 0.042, "esc": [1.35, 0.6, 0.5], "col": "p", "opacidad": 0.85, "espejo": true }
+      ] },
+    { "id": "m-pestanas", "categoria": "maquillaje", "lugar": "ojos", "es": "pestañas largas", "genero": "f", "plural": true, "en": "long eyelashes", "enPlural": true,
+      "etiquetas": ["elegante", "princesa", "fiesta"], "colores": ["negro", "cafe", "morado", "azul"], "dibujo2d": "pestanas",
+      "piezas": [
+        { "f": "caja", "a": "cabeza", "pos": [0.06, 0.242, 0.19], "tam": [0.008, 0.026, 0.006], "rot": [0, 0, 25], "col": "p", "espejo": true },
+        { "f": "caja", "a": "cabeza", "pos": [0.075, 0.246, 0.19], "tam": [0.008, 0.028, 0.006], "col": "p", "espejo": true },
+        { "f": "caja", "a": "cabeza", "pos": [0.09, 0.242, 0.188], "tam": [0.008, 0.026, 0.006], "rot": [0, 0, -25], "col": "p", "espejo": true }
+      ] },
+    { "id": "m-pecas", "categoria": "maquillaje", "lugar": "pintura", "es": "pecas", "genero": "f", "plural": true, "en": "freckles", "enPlural": true,
+      "etiquetas": ["casual", "verano", "aventura", "playa"], "colores": ["cafe", "naranja", "rosa"], "dibujo2d": "pecas",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0.1, 0.155, 0.182], "r": 0.007, "col": "p", "espejo": true },
+        { "f": "esfera", "a": "cabeza", "pos": [0.125, 0.145, 0.172], "r": 0.007, "col": "p", "espejo": true },
+        { "f": "esfera", "a": "cabeza", "pos": [0.11, 0.13, 0.18], "r": 0.007, "col": "p", "espejo": true },
+        { "f": "esfera", "a": "cabeza", "pos": [0.135, 0.12, 0.168], "r": 0.007, "col": "p", "espejo": true }
+      ] },
+    { "id": "m-brillitos", "categoria": "maquillaje", "lugar": "pintura", "es": "brillitos", "genero": "m", "plural": true, "en": "face glitter", "enPlural": true,
+      "etiquetas": ["magia", "fiesta", "brillo"], "colores": ["dorado", "plateado", "rosa", "celeste", "lila"], "brillo": true, "dibujo2d": "brillitos",
+      "piezas": [
+        { "f": "octaedro", "a": "cabeza", "pos": [0.135, 0.16, 0.165], "r": 0.012, "col": "p", "espejo": true },
+        { "f": "octaedro", "a": "cabeza", "pos": [0.115, 0.135, 0.178], "r": 0.009, "col": "p", "espejo": true },
+        { "f": "octaedro", "a": "cabeza", "pos": [0.145, 0.125, 0.16], "r": 0.008, "col": "p", "espejo": true }
+      ] },
+    { "id": "m-corazon", "categoria": "maquillaje", "lugar": "pintura", "es": "corazón pintado", "genero": "m", "en": "painted heart",
+      "etiquetas": ["fiesta", "flores", "casual"], "colores": ["rojo", "rosa", "morado", "turquesa", "azul"], "dibujo2d": "corazon-pintado",
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [-0.108, 0.152, 0.176], "r": 0.013, "esc": [1, 1, 0.4], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [-0.13, 0.152, 0.168], "r": 0.013, "esc": [1, 1, 0.4], "col": "p" },
+        { "f": "cono", "a": "cabeza", "pos": [-0.119, 0.134, 0.174], "r": 0.021, "alto": 0.022, "rot": [180, -32, 0], "esc": [1, 1, 0.4], "col": "p" }
+      ] },
+    { "id": "m-estrella", "categoria": "maquillaje", "lugar": "pintura", "es": "estrella pintada", "genero": "f", "en": "painted star",
+      "etiquetas": ["deportivo", "rock", "magia"], "colores": ["azul", "amarillo", "dorado", "morado", "rojo", "turquesa"], "dibujo2d": "estrella-pintada",
+      "piezas": [
+        { "f": "octaedro", "a": "cabeza", "pos": [-0.12, 0.15, 0.172], "r": 0.026, "esc": [1, 1, 0.3], "rot": [0, -32, 45], "col": "p" }
+      ] },
     { "id": "x-flor", "categoria": "accesorio", "lugar": "cabeza", "es": "flor en el pelo", "genero": "f", "en": "hair flower",
       "etiquetas": ["flores", "verano", "magia"], "colores": ["rosa", "amarillo", "rojo", "lila", "blanco", "naranja", "celeste"], "secundario": "amarillo", "dibujo2d": "flor",
       "piezas": [

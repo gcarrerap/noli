@@ -7,7 +7,7 @@
 En una hoja, dibuja la prenda **de frente**. Ponle:
 
 - **Su nombre** en español y, si lo sabes, en inglés (si no, lo buscamos juntos).
-- **Qué es:** ¿peinado, ropa de arriba, ropa de abajo, vestido, zapatos o accesorio?
+- **Qué es:** ¿peinado, ropa de arriba, ropa de abajo, vestido, zapatos, accesorio, joya (aretes, collar, reloj, pulsera) o maquillaje (rubor, labial, sombra, pecas, una carita pintada)?
 - **Sus colores:** ¿de qué colores puede ser? ¿Tiene detalles de otro color (botones, moño, rayas)?
 - **¿Para qué tema va?** Playa, fiesta, escuela, deportes, pijamada, nieve, princesa, jardín, campamento, rock, gala, hada… ¿o un tema nuevo?
 - **¿Brilla?**
@@ -36,4 +36,4 @@ Después de que papá la sube, aparece en su perchero con **¡Nuevo!**. Pruébat
 
 ---
 
-*Para papá:* los pasos con detalle están en [ASSETS.md](ASSETS.md) (con formas, sin programas) y, para piezas especiales, la parte de Blender. Un tema nuevo va en `datos/temas.json` (ASSETS.md § C).
+*Para papá:* los pasos con detalle están en [ASSETS.md](ASSETS.md) (con formas, sin programas) y, para piezas especiales, la parte de Blender. Un tema nuevo va en `datos/temas.json` (ASSETS.md § E); el maquillaje y las joyas, en ASSETS.md § C, y las poses y bailes nuevos, en § D.

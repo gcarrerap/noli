@@ -78,8 +78,44 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 
 **Consecuencias.** Hay que vestirse cada vez (es el juego); el peinado favorito no se pierde.
 
-## ADR 9 — Curva de desbloqueo
+## ADR 9 — Curva de desbloqueo (reemplazada por ADR 10)
 
 **Decisión.** 8 niveles (0, 8, 20, 35, 55, 80, 110, 145 puntos), con algo nuevo en la primera pasarela siempre y saltos que crecen. Revisada con `herramientas/simular-curva.mjs` ([JUEGO.md](JUEGO.md#la-curva)).
 
 **Consecuencias.** Todo el clóset se abre en 11–18 pasarelas (≈ 40 créditos). Después los puntos siguen sumando ("¡Ya tienes todo el clóset!"); un issue futuro puede agregar más niveles y ropa.
+
+## ADR 10 — Menos cosas por nivel y niveles más espaciados (#26)
+
+**Contexto.** Al jugarla, Noelia ganaba demasiada ropa en cada pasarela: el ADR 9 abría hasta 11 prendas por nivel y todo el clóset en 11–18 pasarelas. La ropa nueva dejaba de sentirse como premio.
+
+**Decisión.** 30 niveles que abren **de 1 a 3 cosas** cada uno (prendas, colores, temas o poses), con saltos que crecen: `round(14 + 1.5 × nivel)` puntos (16, 17, 18, 20…). El primer nivel llega en la segunda pasarela aun vistiéndose al azar. Todo se abre en ≈ 77 pasarelas con cuidado, ≈ 97 a medias y ≈ 131 al azar (`herramientas/simular-curva.mjs`).
+
+**Consecuencias.** Abrir todo cuesta ≈ 290 créditos jugando "a medias": semanas de practicar. La prueba revisa que cada nivel abra de 1 a 3 cosas y que los saltos no se achiquen. Se ajusta moviendo los `puntos` en `desbloqueos.json`.
+
+## ADR 11 — Maquillaje y joyería como "lugares", no como ranuras nuevas
+
+**Contexto.** Se pidió maquillaje (rubor, labial, sombra, pestañas, pecas, brillitos, caritas pintadas) y más accesorios (aretes, collares, relojes, pulseras).
+
+**Opciones.** Una ranura nueva por cosa en el atuendo (`atuendo.labios`, `atuendo.orejas`…), o el mecanismo de los accesorios: **uno por lugar**.
+
+**Decisión.** Una categoría nueva, `maquillaje`. El maquillaje y los accesorios usan el mismo mecanismo de lugares (`config.lugares`: orejas, cuello, muñeca, mejillas, ojos, labios, pintura…) y se guardan juntos en `accesorios[lugar]`. Hay dos muebles nuevos en el estudio (tocador de maquillaje y joyería), y la propiedad `lugares` de una zona reparte los accesorios entre la vitrina y la joyería. Para los jueces cuentan como detalles.
+
+**Consecuencias.** El formato guardado no cambió (`v: 1`): los atuendos viejos siguen sirviendo. Un lugar nuevo es una línea en `config.json` más un mueble que lo ofrezca.
+
+## ADR 12 — La cámara enfoca lo que se prueba, con la imagen corrida
+
+**Contexto.** Al probarse zapatos, el panel tapaba los pies; en el teléfono el panel ocupa la mitad de abajo.
+
+**Opciones.** Achicar el panel (menos prendas a la vista), mover al personaje, o mover la cámara: acercarla a la parte del cuerpo que importa y **correr la imagen** para que esa parte quede en lo que se ve.
+
+**Decisión.** Cada zona dice su `enfoque` (cara, cabeza, alto, torso, cuerpo, piernas, pies). La cámara calcula la distancia para que esa parte quepa en lo libre y usa `camera.setViewOffset` para correr la imagen sin girar la cámara (no se deforma). El personaje se puede girar a mano.
+
+**Consecuencias.** Lo que se prueba siempre se ve, en el teléfono y en la TV, sin achicar el panel. Una zona nueva solo escoge su `enfoque`.
+
+## ADR 13 — Poses escogidas por Noelia, varias seguidas
+
+**Contexto.** Antes la pose final era una al azar. Se pidió poder escoger poses o bailes.
+
+**Decisión.** Al llegar al final de la pasarela aparece "¡Escoge tu pose!" con las abiertas (`datos/poses.json`). Puede hacer varias seguidas; "¡Listo!" o 25 s sin escoger terminan. Las poses **no cambian la calificación**: son para lucirse, y no castigan a quien no sabe cuál escoger. Empieza con 3 y las demás se abren con los niveles.
+
+**Consecuencias.** El desfile dura lo que ella quiera. En la TV se escoge con flechas y OK.

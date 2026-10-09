@@ -36,7 +36,8 @@ En `datos/prendas.json`, copia la prenda más parecida a la nueva y pégala en s
   "colores": ["blanco", "azul", "rojo"],      // los que puede tener (colores.json); el primero es el de la miniatura
   "secundario": "azul",            // color fijo de los detalles (las piezas con "col": "s")
   // "brillo": true,               // brilla (lentejuelas, metal)
-  // "lugar": "cabeza",            // SOLO accesorios: cabeza | cara | cuello | mano | espalda (uno por lugar)
+  // "lugar": "cabeza",            // SOLO accesorios y maquillaje (uno por lugar): cabeza | cara | cuello | abrigo | orejas | muneca | mano | espalda
+                                   //   maquillaje: mejillas | ojos | labios | pintura
   "dibujo2d": "camisa",            // figura del modo sencillo y de la miniatura (src/ui/dibujo2d.js → FIGURAS)
   "piezas": [
     // el cuerpo de la blusa: un tubo en el torso, de y 0.42 (hombros) a −0.05 (cadera), radio 0.168, 74 % de fondo
@@ -175,7 +176,23 @@ blender --background --python minijuegos/pasarela/herramientas/blender/tiara.py
 
 ---
 
-## C. Temas, colores y niveles
+## C. Maquillaje y joyería
+
+- **Maquillaje:** `"categoria": "maquillaje"` con `"lugar"` `mejillas`, `ojos`, `labios` o `pintura` (caritas pintadas). Va pegado al ancla `cabeza`, casi sobre la piel: la cabeza es una esfera de radio 0.21 con centro en y 0.19 y la cara mira a +z, así que el rubor va en `pos` `[0.118, 0.13, 0.176]` con espejo y girado 32° hacia el lado (`m-rubor` en `prendas.json`). Usa formas planas (`plano`, `disco` muy delgado, `esfera` aplastada con `esc`) a 1 o 2 milímetros de la piel: más adentro se pierden en la cabeza; más afuera flotan. Revísalo en el probador de frente y de lado.
+- **Joyería:** accesorios con `"lugar"` `orejas` (ancla `cabeza`, `pos` ≈ `[0.212, 0.125, 0]` con espejo, como `x-aretes-perla`), `cuello` (ancla `cuello`) o `muneca` (ancla `antebrazoD`, `pos` ≈ `[0, −0.14, 0]`, como `x-reloj`).
+- **Qué mueble la ofrece:** la zona con esa categoría y, si la zona tiene `"lugares"`, solo de esos lugares (la vitrina de accesorios no enseña joyas; la joyería sí). `revisarDatos` revisa que cada lugar tenga un mueble.
+- **Enfoque:** al abrir el mueble, la cámara enfoca lo que diga su `enfoque` en `zonas.json` (`cara` para el maquillaje, `alto` para la joyería). Ver ESCENA-3D.md § Enfocar lo que se prueba.
+- **Dibujo 2D:** el maquillaje va en la capa `frente`, encima de la cara (ojos en y ≈ 72, mejillas en x 72 y 128, boca en y ≈ 92).
+
+## D. Poses y bailes
+
+1. Agrega la pose a `datos/poses.json`: `id`, `es`, `en` y `"baile": true` si se mueve con ritmo.
+2. Dibújala en `kit/3d/avatar.js → posturas()`: un `case` que devuelve los ángulos de las articulaciones en radianes (`"brazoI.z": 2.4` sube de lado el brazo izquierdo). Parte de `quieto` (`{ ...quieto, … }`) para que lo demás regrese a su lugar. Agrégala a `POSES_3D` (y a `BAILES` si es baile).
+3. Modo sencillo: una animación CSS para `.muneca2d.pose-<id>` en `estilo.css`.
+4. Ábrela en un nivel (`"poses": [...]` en `desbloqueos.json`).
+5. Mírala en el probador (botón "Postura") y corre `npm test` (revisa que `poses.json` y `POSES_3D` coincidan).
+
+## E. Temas, colores y niveles
 
 - **Tema nuevo** (`temas.json`): `id`, `nombre`, `para` ("perfecto para **un día de playa**"), `frase`, `icono` (un ícono de `src/ui/iconos.js`; agrega uno SVG si no hay), `etiquetas` con peso 1–3, `evitar`, `colores`. Ábrelo en un nivel. La prueba revisa que los temas del primer nivel se puedan vestir con el clóset inicial.
 - **Color nuevo** (`colores.json`): `id`, `es`, `en`, `hex`. Ábrelo en un nivel y agrégalo a los `colores` de las prendas que lo acepten.

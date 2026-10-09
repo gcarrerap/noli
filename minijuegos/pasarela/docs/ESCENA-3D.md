@@ -66,8 +66,12 @@ Hechas con código (no hay esqueleto ni `AnimationMixer`): `posturas(modo)` da e
 | `quieto` | Brazos un poco abiertos, cabeza que se mueve apenas, respira (torso 1.2 %) |
 | `caminar` | Muslos ±0.55 rad, rodillas que se doblan al levantar, brazos opuestos, rebote |
 | `desfilar` | Pasos más cortos, cadera y torso que se balancean, cabeza arriba |
-| `cintura` · `saludo` · `estrella` | Poses finales de la pasarela (una al azar) |
-| `vuelta` | Brazos abiertos mientras gira frente al espejo |
+| `vuelta` | Brazos abiertos mientras gira (espejo y la pose "dar una vuelta") |
+| Poses de la pasarela | `cintura`, `saludo`, `estrella`, `corazon`, `reverencia`, `beso`, `pensar` (posturas quietas o con un gesto que se repite) |
+| Bailes de la pasarela | `baile-brazos`, `baile-lado`, `baile-salto`, `robot`: se mueven con ritmo, así que su postura se pone directo en cada cuadro (sin suavizar, si no pierden el ritmo). `baile-lado` y `baile-salto` también mueven el cuerpo (`cuerpo.x`, `cuerpo.y`) |
+| `brinco` | En el aire (el mundo del menú principal) |
+
+`POSES_3D` (en `kit/3d/avatar.js`) lista las poses que sabe hacer el personaje; la prueba revisa que sean las mismas que `datos/poses.json`.
 
 ## Las formas de la ropa (`formas.js`)
 
@@ -123,14 +127,36 @@ La cámara **nunca gira** (no marea): sigue al personaje con suavizado (`1 − 0
 |---|---|
 | Estudio, pantalla ancha | 3.6 m arriba y 5.4 m atrás; mira 0.6 m adelante del personaje |
 | Estudio, teléfono parado | 5.2 m arriba, 6.6 m atrás y ángulo de 62° (más ancho), para ver muebles a los lados |
-| Inicio y probador (panel abierto) | De frente; con pantalla ancha se corre 0.62 m para que el personaje quede a la izquierda del panel; en el teléfono mira más abajo para que el personaje quede arriba del panel |
+| Inicio | De frente, el cuerpo entero, en la parte de la pantalla que la tarjeta no tapa |
+| Probador (panel abierto) | De frente, **enfocando la parte del cuerpo de la zona** (`zonas.json → enfoque`), en la parte que el panel no tapa (ver abajo). Se puede **girar** al personaje |
+| Escogiendo poses | Al final de la pasarela, corrida para que el menú de poses no tape al personaje |
 | Pasarela | Al final de la pasarela, un poco a la derecha para ver a los jueces |
 
 Al cambiar de lugar (estudio ↔ pasarela) la cámara salta sin viajar.
 
+### Enfocar lo que se prueba (#26)
+
+Cada zona dice qué parte del cuerpo enseñar (`enfoque` en `zonas.json`). `vista3d.js → ENFOQUES` da, para cada una, la altura del centro y cuánto alto hay que ver (metros):
+
+| Enfoque | Centro (y) | Alto que se ve | Zonas |
+|---|---|---|---|
+| `cara` | 1.42 | 0.75 | Maquillaje |
+| `cabeza` | 1.47 | 0.8 | Peinados |
+| `alto` | 1.2 | 1.15 | Joyería (orejas, cuello y muñecas) |
+| `torso` | 1.05 | 1.15 | Ropa de arriba |
+| `cuerpo` | 0.88 | 1.95 | Vestidos, Accesorios, Espejo |
+| `piernas` | 0.5 | 1.15 | Ropa de abajo |
+| `pies` | 0.2 | 0.9 | Zapatos |
+
+`tapado()` calcula qué parte de la pantalla queda libre: en el teléfono el panel tapa la mitad de abajo (se ve el 44 % de arriba); en pantalla ancha tapa la derecha (hasta 620 px). La cámara se aleja lo justo para que el alto (y el ancho) de la parte enfocada quepa en lo libre, y la imagen se **corre** con `camara.setViewOffset` (`escena.correr(dx, dy)` en `kit/3d/escena.js`) para que lo enfocado quede en el centro de lo libre, no en el centro de la pantalla. A los pies se les mira un poco desde arriba. El corrimiento se suaviza igual que la cámara.
+
+**Girar:** en el probador el personaje mira a la cámara más el giro que Noelia le dé: arrastrando el dedo o el ratón sobre la escena (0.6° por píxel, sigue al dedo) o con los dos botones curvos del panel (±45°, suavizado; los que sirven en la TV). Al cerrar el panel el giro vuelve a 0.
+
+**Espejo:** la vuelta frente a la cámara dura 1.8 s (0.8 s con `prefers-reduced-motion`); mientras gira se esconden el aviso de abajo, los letreros y el joystick, para que nada tape al personaje.
+
 ## La pasarela (`pasarela.js`)
 
-Está en z = −30 (lejos del estudio): pasarela de 7 m con 14 focos que parpadean, telón morado con estrellas y la mesa de los jueces. Los **jueces son personajes** como el de Noelia (`crearAvatar`) con ropa fija del mismo `prendas.json`. El desfile dura 4.4 s (2.2 s con `prefers-reduced-motion`), luego una pose de 2.2 s y los jueces saludan. Fondo y niebla cambian a morado de noche; el estudio se oculta.
+Está en z = −30 (lejos del estudio): pasarela de 7 m con 14 focos que parpadean, telón morado con estrellas y la mesa de los jueces. Los **jueces son personajes** como el de Noelia (`crearAvatar`) con ropa fija del mismo `prendas.json`. El desfile dura 4.4 s (2.2 s con `prefers-reduced-motion`). Al llegar al final, Noelia escoge poses y bailes (`posar(id)`); "dar una vuelta" gira todo el personaje. Al terminar (`terminarDesfile()`), los jueces saludan. Fondo y niebla cambian a morado de noche; el estudio se oculta.
 
 ## Prendas de Blender (`modelos.js`)
 

@@ -47,11 +47,12 @@ function vestir(tema, ab, estilo, rnd) {
   if (vestido && (vVestido > vSeparado || (estilo === "al azar" && rnd() < 0.3))) a = poner(a, vestido, color(vestido));
   else { if (arriba) a = poner(a, arriba, color(arriba)); if (abajo) a = poner(a, abajo, color(abajo)); }
   if (estilo !== "al azar" || rnd() < 0.5) { const acc = escoger(de("accesorio")); if (acc && (estilo === "con cuidado" || rnd() < 0.6)) a = poner(a, acc, color(acc)); }
+  if (estilo === "con cuidado" || rnd() < 0.3) { const m = escoger(de("maquillaje")); if (m) a = poner(a, m, color(m)); }
   return a;
 }
 
 const ESTILOS = ["con cuidado", "a medias", "al azar"];
-const VECES = 200, MAX = 80;
+const VECES = 200, MAX = 200;
 const resultados = {};
 for (const estilo of ESTILOS) {
   const llegadas = idx.niveles.map(() => []);

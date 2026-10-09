@@ -130,7 +130,7 @@ export function crearAvatar(op) {
   /**
    * Mueve las articulaciones. Cada modo tiene una postura (o un ciclo); la postura actual se acerca poco a poco a la
    * nueva, así los cambios se ven suaves (no saltan).
-   * @param {"quieto"|"caminar"|"desfilar"|"cintura"|"saludo"|"estrella"|"vuelta"|"brinco"} modo  ("brinco": en el aire, en el
+   * @param {string} modo "quieto", "caminar", "desfilar", una pose de POSES_3D (la Pasarela) o "brinco" (en el aire, en el
    *   mundo del menú principal)
    * @param {number} dt segundos desde el cuadro anterior
    * @param {number} [velocidad] 0 a 1 (qué tan rápido camina), para el ciclo de pasos
@@ -145,9 +145,10 @@ export function crearAvatar(op) {
     for (const [clave, valor] of Object.entries(obj)) {
       const [parte, eje] = clave.split(".");
       const destino = parte === "cuerpo" ? cuerpo : a[parte];
-      const prop = eje === "y" && parte === "cuerpo" ? "position" : "rotation";
+      const prop = parte === "cuerpo" ? "position" : "rotation"; // "cuerpo" se mueve (salta, se mece); lo demás gira
       const actual = destino[prop][eje];
-      destino[prop][eje] = camina && clave in CICLO ? valor : actual + (valor - actual) * k;
+      const directo = camina ? clave in CICLO : BAILES.has(modo); // ciclos y bailes, sin suavizar (si no, pierden ritmo)
+      destino[prop][eje] = directo ? valor : actual + (valor - actual) * k;
     }
     // Respira
     a.torso.scale.y = 1 + Math.sin(t * 2.2) * 0.012;
@@ -155,6 +156,15 @@ export function crearAvatar(op) {
 
   return { raiz, anclas: a, sombra, vestir, ponerPiel, animar, CUERPO };
 }
+
+/**
+ * Poses y bailes de la pasarela que sabe hacer el personaje (los mismos ids que datos/poses.json; lo revisa la prueba).
+ * "vuelta" además gira todo el personaje: eso lo hace la vista (src/ui/vista3d.js).
+ */
+export const POSES_3D = ["cintura", "saludo", "estrella", "vuelta", "corazon", "baile-brazos", "baile-lado", "reverencia",
+  "baile-salto", "beso", "robot", "pensar"];
+// Bailes: se mueven con ritmo, así que su postura se pone directo en cada cuadro
+const BAILES = new Set(["baile-brazos", "baile-lado", "baile-salto", "robot"]);
 
 // Articulaciones que en el ciclo de caminar se ponen directo (sin suavizar), para que el paso no se vea "lento"
 const CICLO = { "musloI.x": 1, "musloD.x": 1, "piernaI.x": 1, "piernaD.x": 1, "brazoI.x": 1, "brazoD.x": 1, "cuerpo.y": 1 };
@@ -165,8 +175,10 @@ function posturas(modo, f, t) {
   const quieto = {
     "brazoI.x": 0, "brazoD.x": 0, "brazoI.z": 0.12, "brazoD.z": -0.12, "antebrazoI.x": -0.1, "antebrazoD.x": -0.1,
     "antebrazoI.z": 0, "antebrazoD.z": 0, "musloI.x": 0, "musloD.x": 0, "musloI.z": 0, "musloD.z": 0, "piernaI.x": 0, "piernaD.x": 0,
-    "cadera.z": 0, "torso.y": 0, "cabeza.x": 0, "cabeza.z": Math.sin(t * 0.9) * 0.03, "cuerpo.y": 0,
+    "cadera.z": 0, "torso.y": 0, "torso.x": 0, "cabeza.x": 0, "cabeza.y": 0, "cabeza.z": Math.sin(t * 0.9) * 0.03, "cuerpo.y": 0, "cuerpo.x": 0,
+    "brazoI.y": 0, "brazoD.y": 0,
   };
+  const b = Math.sin(t * 6), rb = Math.abs(b); // ritmo de los bailes (≈ 1 tiempo por segundo)
   switch (modo) {
     case "caminar": return { ...quieto,
       "musloI.x": s * 0.55, "musloD.x": -s * 0.55, "piernaI.x": Math.max(0, -c) * 0.7, "piernaD.x": Math.max(0, c) * 0.7,
@@ -180,6 +192,26 @@ function posturas(modo, f, t) {
     case "saludo": return { ...quieto, "brazoD.z": -2.5, "antebrazoD.z": -0.3 + Math.sin(t * 9) * 0.45, "cabeza.z": 0.1, "brazoI.z": 0.2 };
     case "estrella": return { ...quieto, "brazoI.z": 2.4, "brazoD.z": -2.4, "musloI.z": 0.22, "musloD.z": -0.22, "cabeza.x": -0.12 };
     case "vuelta": return { ...quieto, "brazoI.z": 1.2, "brazoD.z": -1.2 };
+    // ---- Poses y bailes de la pasarela (datos/poses.json) ----
+    // Corazón con las manos frente al pecho (los brazos son cortos para llegar arriba de la cabeza)
+    case "corazon": return { ...quieto, "brazoI.x": -1.0, "brazoD.x": -1.0, "brazoI.z": 0.35, "brazoD.z": -0.35, "antebrazoI.z": -1.6, "antebrazoD.z": 1.6,
+      "antebrazoI.x": -0.5, "antebrazoD.x": -0.5, "cabeza.z": 0.12 };
+    case "baile-brazos": return { ...quieto, "brazoI.z": 1.3 + b * 1.1, "brazoD.z": -1.3 + b * 1.1, "antebrazoI.z": 0.4, "antebrazoD.z": -0.4,
+      "cuerpo.y": rb * 0.03, "cabeza.z": b * 0.12, "cadera.z": b * 0.05 };
+    case "baile-lado": return { ...quieto, "cuerpo.x": Math.sin(t * 3) * 0.12, "cadera.z": Math.sin(t * 3) * 0.12, "torso.y": Math.sin(t * 3) * 0.2,
+      "brazoI.z": 0.8 + Math.sin(t * 3) * 0.5, "brazoD.z": -0.8 + Math.sin(t * 3) * 0.5, "antebrazoI.z": 0.9, "antebrazoD.z": -0.9,
+      "musloI.z": Math.max(0, Math.sin(t * 3)) * 0.15, "musloD.z": Math.min(0, Math.sin(t * 3)) * 0.15, "cabeza.z": -Math.sin(t * 3) * 0.1 };
+    case "reverencia": return { ...quieto, "torso.x": 0.45, "cabeza.x": 0.2, "brazoI.z": 0.55, "brazoD.z": -0.55, "brazoI.x": -0.3, "brazoD.x": -0.3,
+      "piernaD.x": 0.6, "musloD.x": -0.15, "cuerpo.y": -0.05 };
+    case "baile-salto": return { ...quieto, "cuerpo.y": Math.abs(Math.sin(t * 5)) * 0.18, "brazoI.z": 2.5 - Math.abs(Math.sin(t * 5)) * 0.7,
+      "brazoD.z": -2.5 + Math.abs(Math.sin(t * 5)) * 0.7, "musloI.x": -Math.abs(Math.cos(t * 5)) * 0.3, "musloD.x": -Math.abs(Math.cos(t * 5)) * 0.3,
+      "piernaI.x": Math.abs(Math.cos(t * 5)) * 0.55, "piernaD.x": Math.abs(Math.cos(t * 5)) * 0.55 };
+    case "beso": { const k = Math.max(0, Math.sin(t * 2.4)); return { ...quieto, "brazoD.x": -1.25 - k * 0.3, "antebrazoD.x": -1.5 + k * 1.2, "brazoD.z": -0.15,
+      "cabeza.z": 0.08, "cabeza.x": -0.05 }; }
+    case "robot": { const k = Math.floor(t * 2.5) % 2; return { ...quieto, "brazoI.x": k ? -1.57 : 0, "antebrazoI.x": k ? 0 : -1.57, "brazoD.x": k ? 0 : -1.57,
+      "antebrazoD.x": k ? -1.57 : 0, "torso.y": k ? 0.3 : -0.3, "cabeza.y": k ? -0.3 : 0.3, "brazoI.z": 0.15, "brazoD.z": -0.15 }; }
+    case "pensar": return { ...quieto, "brazoD.x": -0.7, "brazoD.z": -0.15, "antebrazoD.x": -2.3, "antebrazoD.z": 0.35, "brazoI.x": -0.35,
+      "antebrazoI.x": -1.35, "antebrazoI.z": -0.5, "cabeza.z": 0.15, "cabeza.x": 0.1 };
     // En el aire: brazos arriba, rodillas dobladas hacia el frente (el cuerpo lo sube la física, no la postura)
     case "brinco": return { ...quieto, "brazoI.z": 2.2, "brazoD.z": -2.2, "antebrazoI.z": 0.3, "antebrazoD.z": -0.3,
       "musloI.x": -0.75, "musloD.x": -0.35, "piernaI.x": 1.1, "piernaD.x": 0.6, "cabeza.x": -0.1, "cabeza.z": 0 };

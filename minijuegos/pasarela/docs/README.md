@@ -14,13 +14,17 @@ Lo educativo: los temas y los comentarios se leen (frases cortas en español) y 
 | Ir a un mueble | Tocar su letrero, o el botón del mapa "Ir a…" | OK lejos de un mueble abre "¿A dónde vamos?" y camina sola |
 | Abrir la ropa | Tocar el aviso "Ver ropa de arriba" al acercarse | OK junto al mueble |
 | Escoger | Tocar la prenda (otra vez = quitarla) y luego el color | Flechas entre prendas y colores, OK escoge |
+| Girar al personaje (con un panel abierto) | Arrastrar el dedo sobre el personaje, o las flechas curvas del panel | Las flechas curvas del panel (giran 45°) |
 | Cerrar el panel | La palomita | Atrás |
+| Posar al final de la pasarela | Tocar poses y bailes (varios seguidos), luego "¡Listo!" | Flechas entre poses, OK, y OK en "¡Listo!" |
 | Ir a la pasarela | Botón dorado arriba a la derecha, o caminar a la puerta roja | OK en la puerta |
 | Salir | La casita del catálogo, o Atrás en el inicio | Atrás (en una pasarela, primero pregunta) |
 
 En la TV el Magic Remote de LG también sirve como puntero: sus clics son como tocar.
 
 **Sin créditos** se puede entrar al **probador libre**: caminar y probarse toda la ropa abierta, sin tema, sin tiempo y sin puntos. **Mi clóset** guarda los últimos 12 atuendos (con su tema, estrellas y la frase en inglés) y "Ponérmelo" los vuelve a poner. **Mi piel** cambia el tono de piel del personaje.
+
+Además de la ropa hay **maquillaje** (tocador de maquillaje, a la derecha) y **joyería** (aretes, collares, relojes y pulseras, a la izquierda). Al abrir un panel, la cámara enfoca la parte del cuerpo de lo que se prueba (la cara en el maquillaje, los pies en los zapatos) en la parte de la pantalla que el panel no tapa. Al final de la pasarela, Noelia **escoge poses y bailes**; empieza con 3 y se abren más con los niveles. Cada nivel abre poco (de 1 a 3 cosas) y los niveles se van espaciando: la ropa nueva es un premio ([JUEGO.md](JUEGO.md#puntos-de-estilo-niveles-y-desbloqueos)).
 
 Si el aparato no tiene WebGL o va muy lento, el juego ofrece el **modo sencillo** (2D): la misma ropa, sin caminar (los muebles son botones) y una pasarela animada. Ver [RENDIMIENTO.md](RENDIMIENTO.md).
 
@@ -42,12 +46,13 @@ minijuegos/pasarela/
 ├── icono.svg             la tarjeta del catálogo
 ├── datos/                TODO lo que se puede cambiar sin tocar código
 │   ├── config.json       costo, tiempo, categorías, etiquetas, tonos de piel, movimiento
-│   ├── prendas.json      la ropa (54 prendas): nombres es/en, etiquetas, colores, piezas 3D
+│   ├── prendas.json      la ropa (70 prendas: ropa, accesorios, joyería y maquillaje): nombres es/en, etiquetas, colores, piezas 3D
 │   ├── temas.json        los 12 temas: qué etiquetas y colores piden
 │   ├── colores.json      la paleta (15 colores con nombre en español e inglés)
-│   ├── desbloqueos.json  los 8 niveles de estilo y qué abre cada uno
+│   ├── desbloqueos.json  los 30 niveles de estilo y qué abre cada uno
 │   ├── zonas.json        el estudio: muebles, dónde se para el personaje
-│   └── jueces.json       los tres jueces y qué le importa a cada uno
+│   ├── jueces.json       los tres jueces y qué le importa a cada uno
+│   └── poses.json        poses y bailes del final de la pasarela
 ├── src/                  lógica pura (sin Three.js ni DOM): se prueba en Node
 │   ├── datos.js          revisar e indexar los JSON
 │   ├── atuendo.js        poner y quitar ropa, la frase en inglés

@@ -5,7 +5,7 @@
 //     v: 1,                         // versión del formato (leerProgreso convierte versiones viejas)
 //     puntos: 0,                    // puntos de estilo acumulados (nunca bajan)
 //     pasarelas: 0,                 // cuántas pasarelas con tema ha hecho
-//     vistos: [ids],                // prendas, colores ("c:rosa") y temas ("t:playa") que ya vio (lo demás abierto brilla como nuevo)
+//     vistos: [ids],                // prendas, colores ("c:rosa"), temas ("t:playa") y poses ("o:vuelta") que ya vio (lo demás abierto brilla como nuevo)
 //     atuendos: [{ fecha, tema, atuendo, estrellas: [e1, e2, e3], puntos }],   // los últimos, el más nuevo primero
 //     piel: 0,                      // tono de piel del personaje (índice en config.tonosPiel)
 //     ultimo: null | atuendo,       // lo último que se puso (para empezar con eso)
@@ -49,14 +49,15 @@ export function nivelDe(puntos, niveles) {
 
 /**
  * Lo abierto hasta el nivel i (inclusive).
- * @returns {{ prendas: Set<string>, colores: Set<string>, temas: Set<string> }}
+ * @returns {{ prendas: Set<string>, colores: Set<string>, temas: Set<string>, poses: Set<string> }}
  */
 export function abiertosHasta(i, niveles) {
-  const r = { prendas: new Set(), colores: new Set(), temas: new Set() };
+  const r = { prendas: new Set(), colores: new Set(), temas: new Set(), poses: new Set() };
   for (const n of niveles.slice(0, i + 1)) {
     for (const x of n.prendas || []) r.prendas.add(x);
     for (const x of n.colores || []) r.colores.add(x);
     for (const x of n.temas || []) r.temas.add(x);
+    for (const x of n.poses || []) r.poses.add(x);
   }
   return r;
 }
@@ -79,17 +80,18 @@ export function nivelDePrenda(id, niveles) {
  * @param {{ tema: string, atuendo: object, jueces: {estrellas}[], puntos: number }} pasarela
  * @param {number} ahora ms
  * @param {object} idx
- * @returns {{ progreso: object, subio: boolean, nivel: object, nuevos: { prendas: string[], colores: string[], temas: string[] } }}
+ * @returns {{ progreso: object, subio: boolean, nivel: object, nuevos: { prendas: string[], colores: string[], temas: string[], poses: string[] } }}
  */
 export function registrarPasarela(progreso, pasarela, ahora, idx) {
   const antes = nivelDe(progreso.puntos, idx.niveles);
   const puntos = progreso.puntos + pasarela.puntos;
   const despues = nivelDe(puntos, idx.niveles);
-  const nuevos = { prendas: [], colores: [], temas: [] };
+  const nuevos = { prendas: [], colores: [], temas: [], poses: [] };
   for (const n of idx.niveles.slice(antes.i + 1, despues.i + 1)) {
     nuevos.prendas.push(...(n.prendas || []));
     nuevos.colores.push(...(n.colores || []));
     nuevos.temas.push(...(n.temas || []));
+    nuevos.poses.push(...(n.poses || []));
   }
   const foto = { fecha: ahora, tema: pasarela.tema, atuendo: pasarela.atuendo, estrellas: pasarela.jueces.map((j) => j.estrellas), puntos: pasarela.puntos };
   const max = idx.config.maxAtuendosGuardados || 12;
@@ -101,7 +103,7 @@ export function registrarPasarela(progreso, pasarela, ahora, idx) {
   };
 }
 
-/** ¿Es nuevo (abierto y todavía no lo ve)? clave: id de prenda, "c:color" o "t:tema" */
+/** ¿Es nuevo (abierto y todavía no lo ve)? clave: id de prenda, "c:color", "t:tema" u "o:pose" */
 export const esNuevo = (progreso, clave) => !progreso.vistos.includes(clave);
 
 /** Marca como vistas unas claves (devuelve progreso nuevo; si no cambia nada, el mismo). */
@@ -113,7 +115,7 @@ export function marcarVistos(progreso, claves) {
 /** Claves de todo lo del primer nivel: se marcan vistas al empezar (lo del clóset inicial no brilla como nuevo). */
 export function clavesIniciales(niveles) {
   const n = niveles[0];
-  return [...(n.prendas || []), ...(n.colores || []).map((c) => "c:" + c), ...(n.temas || []).map((t) => "t:" + t)];
+  return [...(n.prendas || []), ...(n.colores || []).map((c) => "c:" + c), ...(n.temas || []).map((t) => "t:" + t), ...(n.poses || []).map((o) => "o:" + o)];
 }
 
 /**

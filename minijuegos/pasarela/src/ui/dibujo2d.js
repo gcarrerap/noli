@@ -11,6 +11,8 @@ const B = 'stroke="#2b2236" stroke-width="2.2" stroke-linejoin="round" stroke-li
 const RECORTES = {
   peinado: "40 0 120 130", arriba: "40 100 120 130", abajo: "40 180 120 150", vestido: "20 100 160 240", zapatos: "50 285 100 70",
   cabeza: "35 -10 130 120", cara: "50 40 100 70", cuello: "50 90 100 90", mano: "20 150 160 110", espalda: "10 90 180 160",
+  abrigo: "50 90 100 90", orejas: "40 40 120 80", muneca: "10 170 180 80",
+  mejillas: "50 45 100 65", ojos: "55 45 90 50", labios: "65 70 70 45", pintura: "50 45 100 65",
 };
 
 /**
@@ -88,6 +90,22 @@ const FIGURAS = {
   alas: { atras: (p) => `<g fill="${p}" opacity=".7" ${B}><ellipse cx="54" cy="140" rx="36" ry="26" transform="rotate(-30 54 140)"/><ellipse cx="146" cy="140" rx="36" ry="26" transform="rotate(30 146 140)"/><ellipse cx="62" cy="186" rx="22" ry="15" transform="rotate(25 62 186)"/><ellipse cx="138" cy="186" rx="22" ry="15" transform="rotate(-25 138 186)"/></g>` },
   varita: { frente: (p, s) => `<path d="M48 214L30 172" stroke="${s}" stroke-width="5" stroke-linecap="round"/><path d="M28 154l4 9 10 1-8 6 3 10-9-5-9 5 3-10-8-6 10-1z" fill="${p}" ${B}/>` },
   tiara: { frente: (p, s) => `<path d="M58 52c6-30 78-30 84 0" fill="none" stroke="${p}" stroke-width="6" stroke-linecap="round"/><g fill="${s}" ${B}><path d="M100 4l4 9 10 1-7.5 6.5 2 10L100 25l-8.5 5.5 2-10L86 14l10-1z"/><path d="M76 16l2.5 5 5.5.6-4 3.6 1.2 5.4L76 28l-5 2.6 1-5.4-4-3.6 5.6-.6zM124 16l2.5 5 5.5.6-4 3.6 1.2 5.4-5.2-2.6-5 2.6 1-5.4-4-3.6 5.6-.6z"/></g>` },
+  // ---- Joyería ----
+  "aretes-perla": { frente: (p) => `<g fill="${p}" ${B}><circle cx="56" cy="88" r="5"/><circle cx="144" cy="88" r="5"/></g>` },
+  arracadas: { frente: (p) => `<g fill="none" stroke="${p}" stroke-width="3"><circle cx="56" cy="92" r="8"/><circle cx="144" cy="92" r="8"/></g>` },
+  "aretes-estrella": { frente: (p) => `<g fill="${p}" ${B}><path d="M56 82l2.4 5 5.4.6-4 3.6 1.2 5.4L56 94l-5 2.6 1.2-5.4-4-3.6 5.4-.6zM144 82l2.4 5 5.4.6-4 3.6 1.2 5.4-5-2.6-5 2.6 1.2-5.4-4-3.6 5.4-.6z"/></g>` },
+  "collar-corazon": { frente: (p, s) => `<path d="M80 120c6 16 34 16 40 0" fill="none" stroke="${s}" stroke-width="2.5"/><path d="M100 146l-8-8a5 5 0 0 1 8-6 5 5 0 0 1 8 6z" fill="${p}" ${B}/>` },
+  reloj: { frente: (p, s) => `<rect x="140" y="204" width="12" height="10" rx="2" fill="${p}" ${B}/><circle cx="146" cy="209" r="3.5" fill="${s}" ${B}/>` },
+  pulsera: { frente: (p) => `<g fill="${p}" ${B}>${[48, 53, 58, 63].map((x) => `<circle cx="${x - 2}" cy="${206 + (x - 48) * 0.2}" r="3"/>`).join("")}</g>` },
+  // ---- Maquillaje (sobre la cara: ojos en x 83 y 117, y 72; boca y 92; cachetes y 88) ----
+  rubor: { frente: (p) => `<g fill="${p}" opacity=".6"><ellipse cx="72" cy="88" rx="10" ry="7"/><ellipse cx="128" cy="88" rx="10" ry="7"/></g>` },
+  labial: { frente: (p) => `<path d="M91 91q9 10 18 0" fill="none" stroke="${p}" stroke-width="5" stroke-linecap="round"/>` },
+  sombra: { frente: (p) => `<g fill="${p}" opacity=".75"><ellipse cx="83" cy="63" rx="10" ry="5"/><ellipse cx="117" cy="63" rx="10" ry="5"/></g>` },
+  pestanas: { frente: (p) => `<g stroke="${p}" stroke-width="2.4" stroke-linecap="round"><path d="M77 64l-3-5M83 63v-6M89 64l3-5M111 64l-3-5M117 63v-6M123 64l3-5"/></g>` },
+  pecas: { frente: (p) => `<g fill="${p}">${[[70, 84], [76, 88], [68, 91], [130, 84], [124, 88], [132, 91]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8"/>`).join("")}</g>` },
+  brillitos: { frente: (p) => `<g fill="${p}">${[[70, 82], [77, 90], [130, 82], [123, 90]].map(([x, y]) => `<path d="M${x} ${y - 4}l2 4-2 4-2-4z"/>`).join("")}</g>` },
+  "corazon-pintado": { frente: (p) => `<path d="M128 96l-7-7a4.5 4.5 0 0 1 7-5.5 4.5 4.5 0 0 1 7 5.5z" fill="${p}"/>` },
+  "estrella-pintada": { frente: (p) => `<path d="M128 80l2.6 5.4 5.8.7-4.3 4 1.1 5.8-5.2-2.9-5.2 2.9 1.1-5.8-4.3-4 5.8-.7z" fill="${p}"/>` },
   mono: { frente: (p) => `<path d="M100 26l-22-12v24zM100 26l22-12v24z" fill="${p}" ${B}/><circle cx="100" cy="26" r="6" fill="${p}" ${B}/>` },
   flor: { frente: (p, s) => `<g fill="${p}" ${B}>${[0, 72, 144, 216, 288].map((a) => `<circle cx="${140 + Math.cos((a * Math.PI) / 180) * 8}" cy="${34 + Math.sin((a * Math.PI) / 180) * 8}" r="7"/>`).join("")}</g><circle cx="140" cy="34" r="5" fill="${s}" ${B}/>` },
 };
@@ -155,7 +173,7 @@ export function miniPrenda(prenda, color, idx) {
   const f = FIGURAS[prenda.dibujo2d];
   const [p, s] = colores(prenda, color, idx);
   const c = cuerpo("#ece6f5", "#f4f0f8", true);
-  const recorte = RECORTES[prenda.categoria === "accesorio" ? prenda.lugar : prenda.categoria] || "0 0 200 360";
+  const recorte = RECORTES[prenda.lugar || prenda.categoria] || "0 0 200 360";
   let dentro = "";
   if (f) {
     if (prenda.categoria === "peinado") dentro = f.atras(p, s) + c.cabeza + f.pelo(p, s);

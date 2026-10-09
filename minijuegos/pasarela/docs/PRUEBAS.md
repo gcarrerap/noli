@@ -40,7 +40,12 @@ Abrir `https://gcarrerap.github.io/noli/` (en la TV, `?modo=tv`). Para tener cr�
 - [ ] Tocar el piso: camina hasta ahí. Tocar un letrero: camina y abre el panel.
 - [ ] Panel: el personaje se ve arriba, de frente; tocar una prenda se la pone; otra vez se la quita; colores; la bocina dice el nombre en inglés.
 - [ ] Prendas bloqueadas: candado y "Se abre en el nivel…".
-- [ ] Espejo: da una vuelta.
+- [ ] Espejo: da una vuelta y no hay ningún letrero, aviso ni joystick encima del personaje.
+- [ ] Zapatos: la cámara enseña los pies arriba del panel. Maquillaje: la cara. Joyería: orejas, cuello y muñecas. Peinados: la cabeza.
+- [ ] Girar: arrastrando el dedo sobre el personaje y con los botones curvos del panel; al cerrar el panel vuelve de frente.
+- [ ] Maquillaje (rubor, labial…) y joyas (aretes, collares, reloj, pulsera) se ven en la cara y el cuerpo, y en el modo sencillo.
+- [ ] Al final de la pasarela: "¡Escoge tu pose!"; cada pose o baile se ve, se pueden hacer varias, "¡Listo!" sigue a la calificación.
+- [ ] Cada pasarela abre poco (de 1 a 3 cosas) y no en todas sube de nivel.
 - [ ] El reloj llega a 0 y se va sola a la pasarela.
 - [ ] Pasarela: desfile, pose, jueces; calificación con comentarios que tienen sentido; frase en inglés.
 - [ ] Al subir de nivel: pantalla de desbloqueo; lo nuevo con "¡Nuevo!" hasta que lo veo.
@@ -59,7 +64,8 @@ Abrir `https://gcarrerap.github.io/noli/` (en la TV, `?modo=tv`). Para tener cr�
 - [ ] OK lejos de un mueble: "¿A dónde vamos?"; escoger uno camina solo y abre el panel.
 - [ ] Panel: el foco empieza en la primera prenda; flechas entre prendas y colores; Atrás cierra el panel.
 - [ ] Atrás en el estudio: "¿Salir de esta pasarela?"; Atrás otra vez = seguir jugando.
-- [ ] Atrás durante el desfile: no pasa nada.
+- [ ] Atrás durante el desfile y escogiendo poses: no pasa nada. Las poses se escogen con flechas y OK.
+- [ ] Panel: los botones curvos giran al personaje (OK sobre ellos).
 - [ ] Atrás en el inicio: regresa al catálogo.
 - [ ] Todo se lee desde el sillón (3 m).
 - [ ] Magic Remote (LG): apuntar y hacer clic en letreros, prendas y botones.

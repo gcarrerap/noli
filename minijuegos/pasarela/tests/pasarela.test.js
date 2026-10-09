@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const raiz = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { revisarDatos, indexar, ARCHIVOS, ANCLAS } = await import("../src/datos.js");
+const { revisarDatos, indexar, ARCHIVOS, ANCLAS, prendasDeZona, ENFOQUES: ENFOQUES_DATOS } = await import("../src/datos.js");
 const A = await import("../src/atuendo.js");
 const { calificar, componentes, encaje, estrellasNoli, estrellasJuez, comentar } = await import("../src/puntuacion.js");
 const PR = await import("../src/progreso.js");
@@ -164,24 +164,26 @@ test("puntuación: los comentarios concuerdan en género y número", () => {
 
 test("progreso: niveles, lo abierto y lo que falta", () => {
   assert.equal(PR.nivelDe(0, idx.niveles).nombre, "Principiante");
-  assert.deepEqual(PR.nivelDe(7, idx.niveles).siguiente, { nombre: "Con estilo", puntos: 8, faltan: 1 });
-  assert.equal(PR.nivelDe(8, idx.niveles).i, 1);
+  assert.deepEqual(PR.nivelDe(15, idx.niveles).siguiente, { nombre: "Aprendiz", puntos: 16, faltan: 1 });
+  assert.equal(PR.nivelDe(16, idx.niveles).i, 1);
   assert.equal(PR.nivelDe(99999, idx.niveles).siguiente, null);
-  const ab = PR.abiertos(20, idx.niveles);
-  assert.ok(ab.prendas.has("x-corona") && ab.temas.has("princesa") && ab.colores.has("morado"));
-  assert.ok(!ab.prendas.has("v-gala"));
+  const ab = PR.abiertos(51, idx.niveles); // Curiosa
+  assert.ok(ab.prendas.has("x-gorro") && ab.temas.has("invierno") && ab.colores.has("verde") && ab.poses.has("vuelta"));
+  assert.ok(!ab.prendas.has("v-gala") && !ab.poses.has("robot"));
+  assert.deepEqual([...PR.abiertosHasta(0, idx.niveles).poses], ["cintura", "saludo", "estrella"]);
   assert.deepEqual(PR.coloresDe(idx.prendas.get("a-camiseta"), PR.abiertosHasta(0, idx.niveles)), ["blanco", "rosa", "azul", "amarillo", "rojo", "negro"]);
 });
 
 test("progreso: registrar una pasarela suma puntos, guarda la foto y dice qué se abrió", () => {
-  const pr = { ...PR.progresoNuevo(), puntos: 5 };
+  const pr = { ...PR.progresoNuevo(), puntos: 20 };
   const r = calificar(PLAYA, idx.temas.get("playa"), idx);
   const reg = PR.registrarPasarela(pr, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: r.puntos }, 123, idx);
-  assert.equal(reg.progreso.puntos, 20); assert.equal(reg.progreso.pasarelas, 1);
-  assert.equal(reg.subio, true); assert.equal(reg.nivel.nombre, "Creativa");
-  assert.ok(reg.nuevos.prendas.includes("a-sueter") && reg.nuevos.prendas.includes("x-corona"), "abre dos niveles de una vez");
-  assert.deepEqual(reg.nuevos.temas, ["invierno", "princesa"]);
+  assert.equal(reg.progreso.puntos, 35); assert.equal(reg.progreso.pasarelas, 1);
+  assert.equal(reg.subio, true); assert.equal(reg.nivel.nombre, "Con estilo");
+  assert.deepEqual(reg.nuevos, { prendas: ["b-pantalon"], colores: [], temas: [], poses: ["vuelta"] });
   assert.deepEqual(reg.progreso.atuendos[0], { fecha: 123, tema: "playa", atuendo: PLAYA, estrellas: [5, 5, 5], puntos: 15 });
+  const sin = PR.registrarPasarela({ ...PR.progresoNuevo(), puntos: 35 }, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 3 }, 1, idx);
+  assert.equal(sin.subio, false);
   // El clóset guarda solo los últimos
   let p = PR.progresoNuevo();
   for (let i = 0; i < 20; i++) p = PR.registrarPasarela(p, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 3 }, i, idx).progreso;
@@ -210,12 +212,19 @@ test("progreso: escoger tema no repite el último", () => {
   assert.equal(PR.escogerTema(["playa"], "playa", Math.random), "playa");
 });
 
-test("progreso: la curva de desbloqueo da algo nuevo pronto (herramientas/simular-curva.mjs)", () => {
-  // Con un atuendo regular (unos 9 puntos) el segundo nivel llega en la primera pasarela y el tercero antes de la cuarta
-  assert.ok(idx.niveles[1].puntos <= 9);
-  assert.ok(idx.niveles[2].puntos <= 27);
-  // Cada nivel abre algo
-  for (const n of idx.niveles) assert.ok((n.prendas || []).length + (n.colores || []).length + (n.temas || []).length > 0, n.nombre);
+test("progreso: cada nivel abre poco (1 a 3 cosas) y los niveles se espacian cada vez más (#26)", () => {
+  let antes = 0;
+  for (const [i, n] of idx.niveles.entries()) {
+    if (i === 0) continue;
+    const cuantas = ["prendas", "colores", "temas", "poses"].reduce((s, k) => s + (n[k] || []).length, 0);
+    assert.ok(cuantas >= 1 && cuantas <= 3, `${n.nombre} abre ${cuantas}`);
+    const salto = n.puntos - idx.niveles[i - 1].puntos;
+    assert.ok(salto >= antes, `${n.nombre}: el salto no se achica`);
+    assert.ok(salto >= 15, `${n.nombre}: más de una pasarela perfecta`);
+    antes = salto;
+  }
+  // El primer nivel sí llega pronto (2 pasarelas regulares, herramientas/simular-curva.mjs)
+  assert.ok(idx.niveles[1].puntos <= 22);
 });
 
 // ---------- Movimiento ----------
@@ -314,4 +323,50 @@ test("3D: el modelo de Blender (modelos/tiara.glb) existe y es un GLB", () => {
     assert.equal(b.toString("ascii", 0, 4), "glTF", p.modelo);
     assert.ok(b.length < 200000, `${p.modelo}: ${b.length} bytes`);
   }
+});
+
+// ---------- #26: maquillaje, joyería, zonas, poses ----------
+
+test("#26: maquillaje y joyería: uno por lugar, conviven con los demás accesorios", () => {
+  let a = vestir([["x-lentes", "rosa"], ["m-labial", "rojo"], ["m-rubor", "rosa"], ["x-aretes-perla", "blanco"], ["x-reloj", "cafe"]]);
+  assert.deepEqual(Object.keys(a.accesorios).sort(), ["cara", "labios", "mejillas", "muneca", "orejas"]);
+  a = A.poner(a, idx.prendas.get("x-pulsera"), "rosa"); // misma muñeca: reemplaza al reloj
+  assert.equal(a.accesorios.muneca.id, "x-pulsera");
+  a = A.poner(a, idx.prendas.get("m-pecas"), "cafe");
+  a = A.poner(a, idx.prendas.get("m-brillitos"), "dorado"); // misma "pintura": reemplaza
+  assert.equal(a.accesorios.pintura.id, "m-brillitos");
+  assert.match(A.fraseIngles(a, idx), /red lipstick/);
+  // El maquillaje cuenta como detalle para los jueces
+  const fiesta = idx.temas.get("cumple");
+  const k = componentes(vestir([["m-brillitos", "dorado"], ["m-labial", "rosa"]]), fiesta, idx);
+  assert.equal(k.detalles, 1);
+});
+
+test("#26: cada zona enseña solo lo suyo y todo tiene una zona", () => {
+  const z = (id) => D.zonas.zonas.find((x) => x.id === id);
+  const joyeria = prendasDeZona(z("joyeria"), idx).map((p) => p.lugar);
+  assert.ok(joyeria.length >= 6 && joyeria.every((l) => ["orejas", "cuello", "muneca"].includes(l)));
+  assert.ok(prendasDeZona(z("accesorios"), idx).every((p) => !["orejas", "cuello", "muneca"].includes(p.lugar)));
+  assert.ok(prendasDeZona(z("maquillaje"), idx).length >= 6);
+  const vistas = new Set(D.zonas.zonas.flatMap((zn) => prendasDeZona(zn, idx).map((p) => p.id)));
+  for (const p of D.prendas.prendas) assert.ok(vistas.has(p.id), `${p.id} aparece en alguna zona`);
+  for (const zn of D.zonas.zonas.filter((x) => x.categorias)) assert.ok(zn.enfoque, `${zn.id} tiene enfoque`);
+  assert.equal(z("zapatos").enfoque, "pies");
+});
+
+test("#26: las poses existen en el personaje 3D y en el modo sencillo", async () => {
+  const { POSES_3D } = await import("../../../kit/3d/avatar.js");
+  const css = fs.readFileSync(path.join(raiz, "estilo.css"), "utf8");
+  for (const o of D.poses.poses) {
+    assert.ok(POSES_3D.includes(o.id), `${o.id} en avatar.js`);
+    assert.ok(css.includes(".pose-" + o.id), `${o.id} en estilo.css (modo sencillo)`);
+    assert.ok(o.es && o.en);
+  }
+  assert.equal(siguiente("pasarela", "llego"), "posando");
+  assert.equal(siguiente("posando", "fin"), "calificacion");
+});
+
+test("#26: la cámara tiene un enfoque para cada zona", async () => {
+  const { ENFOQUES } = await import("../src/ui/vista3d.js");
+  for (const e of ENFOQUES_DATOS) assert.ok(ENFOQUES[e], e);
 });
