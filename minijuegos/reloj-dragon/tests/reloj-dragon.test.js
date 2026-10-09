@@ -18,6 +18,7 @@ import { pista } from "../src/pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA,
   esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS, ESPERA_VOZ_MAX_MS, esperaExplicar,
+  TRAS_CERRAR_MS, debeAvanzarExplicacion, efectoDialogoGuia, ignoraTrasCerrar,
   efectoAtrasGuia, seguirGuia,
 } from "../src/guia.js";
 import {
@@ -261,8 +262,54 @@ test("Atrás en cada paso de la guía abre ¿Salir? y Seguir no la marca como vi
   assert.equal(/if \(guia\) terminarGuia\(\)/.test(src), false);
   assert.match(src, /efectoAtrasGuia\(false\) === "preguntar"/);
   assert.match(src, /efectoAtrasGuia\(true\) === "seguir"/);
+  assert.equal(toqueEnPantalla({ fase: "bien", dialog: true, fondo: true }), "seguir");
+  assert.equal(toqueEnPantalla({ fase: "manos", dialog: true, fondo: true }), "seguir");
+  assert.equal(toqueEnPantalla({ fase: "", dialog: true, fondo: true, act: "ir" }), "seguir");
   assert.match(src, /fondoToque/);
   assert.match(src, /esperaExplicar\(/);
+  const click = src.slice(src.indexOf('addEventListener("click"'), src.indexOf('addEventListener("pointerdown"'));
+  assert.equal(/if \(partida\?\.fase\) return/.test(click), false);
+  assert.match(click, /toqueEnPantalla\(/);
+});
+
+test("tras cerrar ¿Salir? un toque de 90 a 300 ms no cae debajo", () => {
+  assert.equal(TRAS_CERRAR_MS, 400);
+  for (const ms of [0, 90, 300, 399]) assert.equal(ignoraTrasCerrar(ms), true, String(ms));
+  assert.equal(ignoraTrasCerrar(400), false);
+  assert.equal(ignoraTrasCerrar(401), false);
+  assert.equal(ignoraTrasCerrar(-1), false);
+  assert.equal(ignoraTrasCerrar(Number.NaN), false);
+  const src = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  const pointer = src.slice(src.indexOf('addEventListener("pointerdown"'), src.indexOf('addEventListener("pointermove"'));
+  const teclas = src.slice(src.indexOf("Noli.alEntrar"), src.indexOf("setInterval"));
+  assert.ok(pointer.indexOf("ignoraTrasCerrar") >= 0 && pointer.indexOf("ignoraTrasCerrar") < pointer.indexOf("saltarFase()"));
+  assert.match(teclas, /accion === "ok" && ignoraTrasCerrar/);
+  assert.ok(teclas.indexOf("ignoraTrasCerrar") < teclas.indexOf("saltarFase()"));
+  assert.match(src, /cerradoEn = performance\.now\(\)/);
+});
+
+test("con ¿Salir? abierto la guía no avanza sola y Seguir reinicia la espera", () => {
+  assert.equal(efectoDialogoGuia(true), "pausar");
+  assert.equal(efectoDialogoGuia(false), "reiniciar");
+  assert.equal(debeAvanzarExplicacion({ dialog: true, transcurrido: 5000 }), false);
+  assert.equal(debeAvanzarExplicacion({ dialog: true, transcurrido: 5000, voz: true, termino: true, msVoz: 2600 }), false);
+  assert.equal(debeAvanzarExplicacion({ transcurrido: 1999 }), false);
+  assert.equal(debeAvanzarExplicacion({ transcurrido: 2000 }), true);
+  assert.equal(debeAvanzarExplicacion({ transcurrido: 2599, voz: true, termino: true, msVoz: 2600 }), false);
+  assert.equal(debeAvanzarExplicacion({ transcurrido: 2600, voz: true, termino: true, msVoz: 2600 }), true, "al acabar la voz de 2,6 s sí avanza");
+  assert.equal(debeAvanzarExplicacion({ transcurrido: 2999, voz: true }), false);
+  assert.equal(debeAvanzarExplicacion({ transcurrido: 3000, voz: true }), true);
+  for (const paso of [1, 3]) {
+    const quieta = seguirGuia({ paso, reloj: { h: 1, m: 0 }, fin: false });
+    assert.equal(quieta.paso, paso);
+    assert.equal(quieta.fin, false);
+    assert.equal(quieta.guardar, false);
+  }
+  const src = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(src, /efectoDialogoGuia\(true\) === "pausar"/);
+  assert.match(src, /efectoDialogoGuia\(false\) === "reiniciar"/);
+  assert.match(src, /debeAvanzarExplicacion\(/);
+  assert.match(src, /termino: vozLista/);
 });
 
 test("poner no arranca a las 12:00", () => {

@@ -9,6 +9,8 @@ export const INICIO_GUIA = { h: 1, m: 0 };
 // o solos: sin voz a los 2 s; con voz, cuando termina, y nunca más de 3 s.
 export const ESPERA_EXPLICAR_MS = 2000;
 export const ESPERA_VOZ_MAX_MS = 3000;
+// Tras cerrar «¿Salir?» (fondo o Seguir) no entran toques ni OK: el segundo toque caería debajo.
+export const TRAS_CERRAR_MS = 400;
 
 // Espera del avance solo. Un toque o OK no pasan por aquí.
 // Sin voz: 2 s. Con voz todavía hablando: el tope de 3 s. Al terminar, lo que duró, con ese tope.
@@ -18,6 +20,25 @@ export function esperaExplicar({ voz = false, termino = false, ms = 0 } = {}) {
   const t = Number(ms);
   if (!Number.isFinite(t) || t <= 0) return ESPERA_EXPLICAR_MS;
   return Math.min(ESPERA_VOZ_MAX_MS, t);
+}
+
+// Con el diálogo abierto el avance solo no corre, aunque hayan pasado más de 2 s.
+export function debeAvanzarExplicacion({ dialog = false, transcurrido = 0, voz = false, termino = false, msVoz = 0 } = {}) {
+  if (dialog) return false;
+  const espera = termino
+    ? esperaExplicar({ voz: true, termino: true, ms: msVoz })
+    : esperaExplicar({ voz });
+  return transcurrido >= espera;
+}
+
+// Abrir «¿Salir?» pausa el paso. Seguir lo reinicia entero, sin cambiar de paso.
+export function efectoDialogoGuia(abierto) {
+  return abierto ? "pausar" : "reiniciar";
+}
+
+export function ignoraTrasCerrar(ms) {
+  const t = Number(ms);
+  return Number.isFinite(t) && t >= 0 && t < TRAS_CERRAR_MS;
 }
 
 export const PASOS = [

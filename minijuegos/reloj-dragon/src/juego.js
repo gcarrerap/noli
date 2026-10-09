@@ -12,7 +12,8 @@ import { NIVELES, ALBUM, MOMENTOS, planDia, POR_TURNO } from "./niveles.js";
 import { pista } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA, INICIO_GUIA,
-  esExplicacion, focoTrasExplicacion, esperaExplicar, efectoAtrasGuia, seguirGuia,
+  esExplicacion, focoTrasExplicacion, esperaExplicar, debeAvanzarExplicacion,
+  efectoDialogoGuia, ignoraTrasCerrar, efectoAtrasGuia, seguirGuia,
 } from "./guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, nivelDe, cumplirReto,
@@ -44,6 +45,7 @@ let focoSalir = "";
 let relojFocus = false;
 let fondoToque = false;
 let explicarGen = 0;
+let cerradoEn = 0;
 
 try {
   if (new URLSearchParams(location.search).get("modo") === "tv") document.documentElement.dataset.modo = "tv";
@@ -461,16 +463,21 @@ function programarExplicacion() {
   const gen = ++explicarGen;
   const t0 = performance.now();
   let acortada = false;
+  let vozLista = false;
+  let msVoz = 0;
   const avanzar = () => {
-    if (gen !== explicarGen || !guia || guia.paso !== paso || overlay) return;
+    if (gen !== explicarGen || !guia || guia.paso !== paso) return;
+    const transcurrido = performance.now() - t0;
+    if (!debeAvanzarExplicacion({ dialog: overlay, transcurrido, voz: hablada, termino: vozLista, msVoz })) return;
     explicarGen++;
     seguirExplicacion();
   };
   const alAcabar = () => {
-    if (gen !== explicarGen) return;
+    if (gen !== explicarGen || overlay) return;
     acortada = true;
-    const ms = performance.now() - t0;
-    const falta = esperaExplicar({ voz: true, termino: true, ms }) - ms;
+    vozLista = true;
+    msVoz = performance.now() - t0;
+    const falta = esperaExplicar({ voz: true, termino: true, ms: msVoz }) - msVoz;
     luego(avanzar, falta > 40 ? falta : 0);
   };
   callar();
@@ -800,7 +807,11 @@ function saltarFase() {
 
 function preguntarSalir() {
   if (overlay) return;
-  if (guia) cortar();
+  if (guia && efectoDialogoGuia(true) === "pausar") {
+    explicarGen++;
+    cortar();
+    callar();
+  }
   if (partida && atrasEnEspera(partida.fase) === "salir") {
     partida.queda = Math.max(0, (partida.faseHasta || 0) - performance.now());
     cortar();
@@ -820,6 +831,7 @@ function preguntarSalir() {
 
 function cerrarSalir() {
   overlay = false;
+  cerradoEn = performance.now();
   $main.querySelector(".velo")?.remove();
   const el = (focoSalir && $main.querySelector(`[data-foco-id="${focoSalir}"]`)) || $main.querySelector("[data-foco]");
   el?.focus({ preventScroll: true });
@@ -828,7 +840,7 @@ function cerrarSalir() {
     const quieta = seguirGuia(guia);
     guia.paso = quieta.paso;
     guia.fin = quieta.fin;
-    if (esExplicacion(guia.paso)) programarExplicacion();
+    if (esExplicacion(guia.paso) && efectoDialogoGuia(false) === "reiniciar") programarExplicacion();
     return;
   }
   const plan = alCerrarEspera(partida?.fase, partida?.queda);
@@ -909,6 +921,7 @@ $main.addEventListener("click", (ev) => {
   if (tragar) { tragar = false; return; }
   const fondo = fondoToque;
   fondoToque = false;
+  if (!overlay && ignoraTrasCerrar(performance.now() - cerradoEn)) return;
   const t = ev.target.closest("[data-act], [data-ctrl]");
   const act = t?.dataset?.act || "";
   const decision = toqueEnPantalla({ fase: partida?.fase || "", act, dialog: overlay, fondo });
@@ -975,6 +988,11 @@ $main.addEventListener("pointerdown", (ev) => {
     return;
   }
   fondoToque = false;
+  if (ignoraTrasCerrar(performance.now() - cerradoEn)) {
+    tragar = true;
+    ev.preventDefault();
+    return;
+  }
   if (partida?.fase) {
     tragar = true;
     saltarFase();
@@ -1015,6 +1033,7 @@ $main.addEventListener("pointercancel", soltar);
 Noli.alEntrar((accion) => {
   fondoToque = false;
   document.documentElement.classList.add("teclado");
+  if (!overlay && accion === "ok" && ignoraTrasCerrar(performance.now() - cerradoEn)) return true;
   if (overlay) {
     const dlg = $main.querySelector(".dialogo") || $main;
     if (accion === "atras") {
