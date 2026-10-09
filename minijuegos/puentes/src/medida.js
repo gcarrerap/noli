@@ -121,16 +121,24 @@ export function ajustarValor(valor, delta, max) {
   return Math.max(0, Math.min(max, (valor | 0) + d));
 }
 
+// Solo para pruebas y la guía: el juego NO enciende «Listo» al coincidir,
+// porque eso le dice la respuesta (#74).
 export function listoBrilla(valor, correcta) {
   return (valor | 0) === (correcta | 0);
 }
 
-// «Listo» bien sigue. En la comparación un número mal es un fallo, no un silencio.
+// «Listo» siempre se puede pulsar. Un número mal es un fallo, nunca un silencio (#74).
 export function resultadoListo(valor, correcta, fase) {
   if (fase === "estimaLibre") return cerca(valor, correcta) ? "bien" : "fallo";
   if ((valor | 0) === (correcta | 0)) return "bien";
-  if (fase === "comparar") return "fallo";
-  return "ignorar";
+  return "fallo";
+}
+
+// Errores suaves: el primer fallo da la pista completa y otra oportunidad;
+// el segundo enseña la respuesta. Ninguno de los dos cuenta a la primera.
+export const INTENTOS = 2;
+export function trasFallo(fallos) {
+  return (fallos | 0) >= INTENTOS ? "revelar" : "otra";
 }
 
 export function suma(nums) {
@@ -167,8 +175,35 @@ export function contieneSolucion(ofrecidas, solucion) {
   return true;
 }
 
+// La suma justa con todas las piezas. El juego ya no la usa para encender «Cruzar».
 export function cruzarBrilla(elegidas, objetivo, piezas) {
   return elegidas.length === piezas && suma(elegidas) === objetivo;
+}
+
+// «Cruzar» se activa al poner todas las tablas, sin decir si la suma está bien.
+export function cruzarListo(elegidas, piezas) {
+  return (elegidas || []).length === (piezas | 0);
+}
+
+export function resultadoCruzar(elegidas, objetivo, piezas) {
+  if (!cruzarListo(elegidas, piezas)) return "incompleto";
+  const s = suma(elegidas);
+  if (s === objetivo) return "bien";
+  return s < objetivo ? "corta" : "sobra";
+}
+
+// Cada tabla ofrecida se usa una vez: se guarda el índice del botón, no el largo.
+export function puedeUsar(usadas, i, piezas) {
+  const u = usadas || [];
+  return !u.includes(i | 0) && u.length < (piezas | 0);
+}
+
+// El árbol y su tabla de 10 cm, a la misma escala y sin pasar del alto disponible.
+// La escala no depende del árbol de hoy: uno de 14 se ve más alto que uno de 8.
+export const ARBOL_MAX = 14;
+export function escalaArbol({ pxPorCm = 20, altoVista = 640 } = {}) {
+  const tope = Math.max(160, Math.min(340, (Number(altoVista) || 640) * 0.4));
+  return Math.min(Number(pxPorCm) || 20, tope / ARBOL_MAX);
 }
 
 export function cubosDe(longitud, modo) {

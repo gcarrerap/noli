@@ -114,8 +114,13 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .comp-punteo svg{width:100%;height:100%;display:block;transform:rotate(90deg)}
 .falta{display:flex;width:min(100%,420px);height:36px;margin:0 auto}
 .falta svg{width:100%;height:36px;display:block}
-.arbol{height:28vh;max-height:180px}
-.arbol svg{height:100%;width:auto}
+.arbol-escena{display:flex;align-items:flex-end;justify-content:center;gap:20px;padding:0 44px 0 12px;border-bottom:4px solid #7a5a3a}
+.arbol-escena .arbol{display:block;flex:none}
+.arbol-escena .arbol svg{width:100%;height:100%;display:block}
+.tabla-parada{position:relative;display:block;flex:none}
+.tabla-parada > svg{width:100%;height:100%;display:block}
+.tabla-parada small{position:absolute;left:100%;bottom:0;margin-left:4px;font-weight:800;white-space:nowrap}
+.opcion.usada{border-color:var(--bosque)}
 .desfile{display:flex;gap:4px;justify-content:center;align-items:flex-end}
 .desfile .animal{width:64px;height:58px;animation:cruza 1.6s ease-in-out}
 .desfile svg{width:64px;height:58px}
