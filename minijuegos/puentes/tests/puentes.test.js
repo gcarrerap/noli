@@ -7,6 +7,7 @@ import {
   combinacion, cruzarBrilla, cubosDe, seMidioBien, moverRegla, U_CM, U_IN, resultadoListo,
   escalaFija, cajaReferencia, escalaBloques, altoComunTablas, cajaTabla, huecoEnPx,
   anchoDeVista, layoutRegla, xDeFlecha,
+  trasFallo, INTENTOS, cruzarListo, resultadoCruzar, puedeUsar, escalaArbol, ARBOL_MAX,
 } from "../src/medida.js";
 import {
   crearCruce, sumaValida, unidadDeCruce, planSuma, POR_TURNO, ZONAS, NIVELES_MAX, maxRegla,
@@ -200,7 +201,7 @@ test("la referencia sigue a la unidad y el desfase deja el 0 fuera del río", ()
   assert.equal(textoPista({ nivel: 3, tipo: "medir", longitud: 4, unidad: "in" }, "frase", textos, "tabla"), textos.pistaMira);
   assert.equal(resultadoListo(3, 6, "comparar"), "fallo");
   assert.equal(resultadoListo(6, 6, "comparar"), "bien");
-  assert.equal(resultadoListo(3, 6, "leer"), "ignorar");
+  assert.equal(resultadoListo(3, 6, "leer"), "fallo");
   assert.match(svgInline('<text><tspan class="unidad"> in</tspan></text>'), /pulg\./);
   assert.equal(/[^.]in\b/.test(svgInline('<text><tspan class="unidad"> in</tspan></text>')), false);
   const regla = fs.readFileSync(new URL("../img/regla-in-6.svg", import.meta.url), "utf8");
@@ -610,4 +611,61 @@ test("8 de 10 sube, la pista completa no es a la primera y la racha no baja el n
   assert.equal(U_IN, 76.2);
   assert.equal(cruzarBrilla([4, 2], 6, 2), true);
   assert.equal(cruzarBrilla([4], 6, 2), false);
+});
+
+// #74: el juego aceptaba cualquier respuesta porque «Listo» y «Cruzar» la delataban.
+test("#74: un número mal en leer o comparar es un fallo, nunca un silencio", () => {
+  for (const fase of ["leer", "comparar"]) {
+    for (let v = 0; v <= 20; v++) {
+      assert.equal(resultadoListo(v, 7, fase), v === 7 ? "bien" : "fallo", `${fase} ${v}`);
+    }
+  }
+  assert.equal(resultadoListo(9, 7, "estimaLibre"), "bien");
+  assert.equal(resultadoListo(10, 7, "estimaLibre"), "fallo");
+});
+
+test("#74: primer fallo da otra oportunidad; el segundo enseña la respuesta y nada cuenta a la primera", () => {
+  assert.equal(INTENTOS, 2);
+  assert.equal(trasFallo(1), "otra");
+  assert.equal(trasFallo(2), "revelar");
+  assert.equal(cuentaPrimera({ ok: true, nivel: 7, fallo: true }), false);
+  assert.equal(cuentaPrimera({ ok: true, nivel: 6, fallo: true }), false);
+});
+
+test("#74: «Cruzar» se activa con todas las tablas puestas, no con la suma justa", () => {
+  assert.equal(cruzarListo([3, 3], 2), true);
+  assert.equal(cruzarListo([3], 2), false);
+  assert.equal(resultadoCruzar([3], 8, 2), "incompleto");
+  assert.equal(resultadoCruzar([3, 4], 8, 2), "corta");
+  assert.equal(resultadoCruzar([5, 4], 8, 2), "sobra");
+  assert.equal(resultadoCruzar([6, 2], 8, 2), "bien");
+  assert.equal(resultadoCruzar([2, 3, 3], 8, 3), "bien");
+});
+
+test("#74: cada tabla ofrecida se usa una sola vez", () => {
+  assert.equal(puedeUsar([], 0, 2), true);
+  assert.equal(puedeUsar([0], 0, 2), false, "la misma tabla dos veces");
+  assert.equal(puedeUsar([0], 1, 2), true);
+  assert.equal(puedeUsar([0, 1], 2, 2), false, "ya están todas las piezas");
+});
+
+test("#74: el árbol se dibuja a escala y cabe en la pantalla", () => {
+  for (const altoVista of [560, 640, 720, 1080]) {
+    for (const pxPorCm of [18, 19.7, 24, 31.5]) {
+      const u = escalaArbol({ pxPorCm, altoVista });
+      assert.ok(u <= pxPorCm, "nunca más grande que la escala de la referencia");
+      assert.ok(ARBOL_MAX * u <= Math.max(160, altoVista * 0.4) + 0.01, "el árbol más alto cabe");
+      assert.ok(u >= 11, "un centímetro se sigue viendo");
+      // 8 y 14 cm se distinguen a simple vista.
+      assert.ok((14 - 8) * u >= 60);
+    }
+  }
+});
+
+test("#74: el juego ya no enciende Listo ni Cruzar según la respuesta", () => {
+  const src = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.equal(/listoBrilla|cruzarBrilla/.test(src), false);
+  assert.equal(/data-act="listo"[^>]*disabled/.test(src), false);
+  assert.match(src, /data-i="\$\{i\}"/);
+  for (const k of ["casiOtra", "juntaCorta", "juntaSobra", "asiEraTablas"]) assert.ok(textos[k], k);
 });

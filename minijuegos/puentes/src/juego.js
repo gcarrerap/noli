@@ -11,9 +11,10 @@ import {
 import { fasePista, textoPista, pistaVisible, blancoFlecha, glifoMas, glifoMenos, cuentaPrimera, IDLE_ENCIMA_MS, IDLE_COMPLETA_MS } from "./pista.js";
 import {
   moverRegla, confirmarCero, marcaAlFinal, decirUnidad, valorInicial,
-  ajustarValor, listoBrilla, cruzarBrilla, seMidioBien, brilloCeroVisible, cubosDe, resultadoListo,
+  ajustarValor, seMidioBien, brilloCeroVisible, cubosDe, resultadoListo,
   escalaFija, cajaReferencia, escalaBloques, altoComunTablas, cajaTabla,
   anchoDeVista, layoutRegla, xDeFlecha,
+  trasFallo, cruzarListo, resultadoCruzar, puedeUsar, escalaArbol,
 } from "./medida.js";
 import { maxRegla } from "./niveles.js";
 import { promptDe, vozDeFase, notaReferencia, nombreZona, explicaBloques } from "./frases.js";
@@ -212,6 +213,7 @@ function px(n) {
 
 function htmlReferencia(c, blanco) {
   if (!c || !c.referencia) return "";
+  if (c.tipo === "arbol") return `<div class="referencia"><p>${esc(notaReferencia(c, textos, false))}</p></div>`;
   const unidad = c.unidad === "in" ? "in" : "cm";
   const escala = escalaFija({ unidad, tv: modoJuego() === "tv", ancho: anchoLienzo() });
   const caja = cajaReferencia(c.referencia);
@@ -455,6 +457,8 @@ function cargarCruce() {
   partida.desplaza = c.desplazaInicial || 0;
   partida.valor = valorInicial(c.longitud, maxValor(c));
   partida.elegidas = [];
+  partida.usadas = [];
+  partida.fallos = 0;
   partida.ceroMal = false;
   partida.ensucio = false;
   partida.fallo = false;
@@ -533,17 +537,21 @@ function pintarCruce(focoId) {
   programarPista();
 }
 
+// El foco nunca salta a «Listo» según el número: eso delataba la respuesta (#74).
 function focoDeCruce(c, fase) {
   if (fase === "poner") return "poner";
-  if (fase === "leer" || fase === "comparar" || fase === "estimaLibre") return listoBrilla(partida.valor, c.longitud) && fase !== "estimaLibre" ? "listo" : "mas";
-  if (fase === "juntar" && cruzarBrilla(partida.elegidas, c.longitud, c.piezas)) return "cruzar";
-  if (fase === "juntar") return "suma-0";
+  if (fase === "leer" || fase === "comparar" || fase === "estimaLibre") return "mas";
+  if (fase === "juntar" && cruzarListo(partida.elegidas, c.piezas)) return "cruzar";
+  if (fase === "juntar") {
+    const i = (c.ofrecidas || []).findIndex((_, k) => !partida.usadas.includes(k));
+    return `suma-${Math.max(0, i)}`;
+  }
   return "op-0";
 }
 
+// Solo avisa que ya están todas las tablas puestas, no si la suma está bien.
 function anunciarBrillo(c, fase) {
-  const id = fase === "juntar" && cruzarBrilla(partida.elegidas, c.longitud, c.piezas) ? "cruzar"
-    : (fase === "leer" || fase === "comparar") && listoBrilla(partida.valor, c.longitud) ? "listo" : "";
+  const id = fase === "juntar" && cruzarListo(partida.elegidas, c.piezas) ? "cruzar" : "";
   if (id && partida.anuncioId !== id) {
     partida.anuncioId = id;
     sonidoListo();
@@ -554,8 +562,8 @@ function anunciarBrillo(c, fase) {
 
 function cuerpoCruce(c, fase, blanco) {
   if (c.tipo === "bloques" && (fase === "bien" || fase === "cuantos")) return htmlBloquesFase(c, fase);
-  if (c.tipo === "comparar" || fase === "comparar") return htmlCompararFase(c, blanco) + htmlContador(c, true, true);
-  if (c.tipo === "arbol" || (fase === "estima" && c.tipo === "arbol")) return htmlArbol(c);
+  if (c.tipo === "comparar" || fase === "comparar") return htmlCompararFase(c, blanco) + htmlContador(c);
+  if (c.tipo === "arbol") return htmlArbol(c, blanco);
   if (fase === "estima" || fase === "estimaLibre") return htmlEstima(c, fase, blanco);
   if (fase === "poner" || fase === "tabla" || fase === "leer" || fase === "juntar") return htmlMedir(c, fase, blanco);
   return "";
@@ -596,9 +604,22 @@ function htmlCompararFase(c, blanco) {
   });
 }
 
-function htmlArbol(c) {
-  const ops = (c.opciones || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}"><span class="num-grande">${n}</span></button>`).join("");
-  return `<div class="arbol">${svgInline(arte("deco-arbol-alto"))}</div><div class="opciones">${ops}</div>`;
+// El árbol mide lo que dice su longitud, con la tabla de 10 cm parada al lado
+// y a la misma escala. Antes siempre medía lo mismo y solo se podía adivinar (#74).
+const TABLA_PARADA = `<svg viewBox="0 0 36 300" preserveAspectRatio="none" aria-hidden="true"><rect x="1.5" y="1.5" width="33" height="297" rx="5" fill="#d9a066" stroke="#2b2236" stroke-width="3"/><path d="M10 12v90M26 170v110" stroke="#a86b3c" stroke-width="2" stroke-linecap="round" opacity=".7"/></svg>`;
+
+function htmlArbol(c, blanco) {
+  const escala = escalaFija({ unidad: "cm", tv: modoJuego() === "tv", ancho: anchoLienzo() });
+  const altoVista = (typeof window !== "undefined" && window.innerHeight) || 640;
+  const pxCm = escalaArbol({ pxPorCm: escala.px, altoVista });
+  // El dibujo empieza en y=10 (la copa); se recorta para que el alto sea el del árbol.
+  const arbol = svgInline(arte("deco-arbol-alto")).replace(/viewBox="0 0 80 220"/, 'viewBox="0 10 80 210" preserveAspectRatio="none"');
+  const apunta = blanco === "referencia";
+  const ops = (c.opciones || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}"><span class="num-grande">${numeroConUnidad(n, "cm")}</span></button>`).join("");
+  return `<div class="arbol-escena" data-alto="${c.longitud | 0}">
+      <span class="arbol" style="height:${px(c.longitud * pxCm)}px;width:${px((80 / 210) * c.longitud * pxCm)}px">${arbol}</span>
+      <span class="tabla-parada${apunta ? " apunta" : ""}" style="height:${px(10 * pxCm)}px;width:${px(Math.max(12, 1.2 * pxCm))}px">${apunta ? spanFlecha() : ""}${TABLA_PARADA}<small>10 cm</small></span>
+    </div><div class="opciones">${ops}</div>`;
 }
 
 function htmlEstima(c, fase, blanco) {
@@ -607,7 +628,7 @@ function htmlEstima(c, fase, blanco) {
     unidad, longitud: c.longitud, desplaza: 0, sinRegla: true, punta: true, blanco,
     zona: c.zona, hueco: c.hueco, animal: c.animal, tv: modoJuego() === "tv",
   });
-  if (fase === "estimaLibre") return escena + htmlContador(c, false);
+  if (fase === "estimaLibre") return escena + htmlContador(c);
   const ops = (c.opciones || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}"><span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("");
   return `${escena}<div class="opciones">${ops}</div>`;
 }
@@ -653,29 +674,28 @@ function htmlMedir(c, fase, blanco) {
     const alto = altoComunTablas(c.ofrecidas || [], unidad, anchoLienzo());
     return `${escena}<div class="opciones">${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="op-${i}" data-act="opcion" data-valor="${n}">${htmlRecorte(n, unidad, alto)}<span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>`;
   }
-  if (fase === "leer") return `${escena}${htmlContador(c, true)}`;
+  if (fase === "leer") return `${escena}${htmlContador(c)}`;
   if (fase === "juntar") return `${escena}${htmlJuntar(c, unidad, blanco)}`;
   return escena;
 }
 
-function htmlContador(c, brillaAlCoincidir, siempreActivo = false) {
+// «Listo» siempre activo y sin brillo: ni el botón ni el sonido dicen si el número está bien (#74).
+function htmlContador(c) {
   const modo = modoJuego();
-  const brilla = brillaAlCoincidir && listoBrilla(partida.valor, c.longitud);
-  const apagado = brillaAlCoincidir && !brilla && !siempreActivo;
   const abr = abreviatura(c.unidad);
   return `<div class="controles">
     <button type="button" class="ico-btn" data-foco data-foco-id="menos" data-act="valor" data-dir="-1" aria-label="Menos"><span class="glifo">${glifoMenos(modo)}</span></button>
     <span class="valor" aria-live="polite">${partida.valor}${abr ? ` ${abr}` : ""}</span>
     <button type="button" class="ico-btn" data-foco data-foco-id="mas" data-act="valor" data-dir="1" aria-label="Más"><span class="glifo">${glifoMas(modo)}</span></button>
-    <button type="button" class="enviar${brilla ? " listo" : ""}" data-foco${brilla ? '="inicial"' : ""} data-foco-id="listo" data-act="listo" ${apagado ? "disabled" : ""}>${svgInline(arte("boton-listo"))}<span>${esc(textos.listo)}</span></button>
+    <button type="button" class="enviar" data-foco data-foco-id="listo" data-act="listo">${svgInline(arte("boton-listo"))}<span>${esc(textos.listo)}</span></button>
   </div>`;
 }
 
 function htmlJuntar(c, unidad, blanco) {
-  const brilla = cruzarBrilla(partida.elegidas, c.longitud, c.piezas);
+  const brilla = cruzarListo(partida.elegidas, c.piezas);
   const alto = altoComunTablas(c.ofrecidas || [], unidad, anchoLienzo());
   const puestos = partida.elegidas.length ? `<div class="opciones">${partida.elegidas.map((n) => `<span class="opcion elegida"><span class="num-grande">${n}</span></span>`).join("")}</div>` : "";
-  return `${puestos}<div class="opciones ${blanco === "tablas" ? "apunta" : ""}">${blanco === "tablas" ? spanFlecha() : ""}${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion" data-foco${i === 0 ? '="inicial"' : ""} data-foco-id="suma-${i}" data-act="sumar" data-valor="${n}">${htmlRecorte(n, unidad, alto)}<span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>
+  return `${puestos}<div class="opciones ${blanco === "tablas" ? "apunta" : ""}">${blanco === "tablas" ? spanFlecha() : ""}${(c.ofrecidas || []).map((n, i) => `<button type="button" class="opcion${partida.usadas.includes(i) ? " usada" : ""}" ${partida.usadas.includes(i) || brilla ? "disabled" : "data-foco"} data-foco-id="suma-${i}" data-act="sumar" data-i="${i}" data-valor="${n}">${htmlRecorte(n, unidad, alto)}<span class="num-grande">${numeroConUnidad(n, unidad)}</span></button>`).join("")}</div>
     <div class="controles">
       <button type="button" class="ico-btn" data-foco data-foco-id="quitar" data-act="quitar" ${partida.elegidas.length ? "" : "disabled"}>${svgInline(arte("boton-quitar"))}<span>${esc(textos.quitar)}</span></button>
       <button type="button" class="enviar${brilla ? " listo" : ""}" data-foco${brilla ? '="inicial"' : ""} data-foco-id="cruzar" data-act="cruzar" ${brilla ? "" : "disabled"}>${svgInline(arte("boton-cruzar"))}<span>${esc(textos.cruzar)}</span></button>
@@ -686,6 +706,7 @@ function cambiarValor(delta) {
   const c = cruceActual();
   if (!c || partida.revelado) return;
   partida.valor = ajustarValor(partida.valor, delta, maxValor(c));
+  partida.aviso = "";
   pintarCruce(delta > 0 ? "mas" : "menos");
 }
 
@@ -751,10 +772,10 @@ function confirmarListo() {
   const c = cruceActual();
   const fase = faseActual();
   const que = resultadoListo(partida.valor, c.longitud, fase);
-  if (que === "ignorar") return;
   if (que === "fallo") {
-    partida.fallo = true;
-    return mostrarResultado("asi");
+    // En el Ojo de águila no hay segunda vuelta: es una estimación.
+    if (fase === "estimaLibre") { partida.fallo = true; return mostrarResultado("asi"); }
+    return fallar(textos.casiOtra, "mas");
   }
   if (fase === "estimaLibre") return mostrarResultado("desfile");
   if (partida.faseI < c.fases.length - 1) {
@@ -769,24 +790,44 @@ function confirmarListo() {
   cerrarCruce(true);
 }
 
-function sumarTabla(valor) {
+// Primer fallo: aviso, pista completa y otra oportunidad. Segundo: se enseña.
+function fallar(aviso, foco) {
+  partida.fallo = true;
+  partida.fallos = (partida.fallos | 0) + 1;
+  if (trasFallo(partida.fallos) === "revelar") return mostrarResultado("asi");
+  partida.aviso = aviso || "";
+  partida.anuncioId = "";
+  pintarCruce(foco);
+  hablar(partida.aviso);
+}
+
+function sumarTabla(i) {
   const c = cruceActual();
-  if (partida.elegidas.length >= (c.piezas || 2)) return;
-  partida.elegidas = [...partida.elegidas, Number(valor)];
+  const k = Number(i);
+  const n = (c.ofrecidas || [])[k];
+  if (n == null || !puedeUsar(partida.usadas, k, c.piezas || 2)) return;
+  partida.usadas = [...partida.usadas, k];
+  partida.elegidas = [...partida.elegidas, n];
+  partida.aviso = "";
   pintarCruce();
 }
 
 function quitarTabla() {
   if (!partida.elegidas.length) return;
   partida.elegidas = partida.elegidas.slice(0, -1);
+  partida.usadas = partida.usadas.slice(0, -1);
   partida.ensucio = true;
   pintarCruce("quitar");
 }
 
 function confirmarCruzar() {
   const c = cruceActual();
-  if (!cruzarBrilla(partida.elegidas, c.longitud, c.piezas)) return;
-  cerrarCruce(true);
+  const que = resultadoCruzar(partida.elegidas, c.longitud, c.piezas);
+  if (que === "incompleto") return;
+  if (que === "bien") return cerrarCruce(true);
+  partida.elegidas = [];
+  partida.usadas = [];
+  fallar(que === "corta" ? textos.juntaCorta : textos.juntaSobra, "suma-0");
 }
 
 function primeraDe(ok) {
@@ -802,7 +843,8 @@ function cerrarCruce(okVisible) {
   sincronizarPista();
   const ok = primeraDe(okVisible && !partida.fallo);
   anotar(ok);
-  mostrarResultado(okVisible && !partida.fallo ? "desfile" : "asi");
+  // Si lo logró después de un error, cruza igual, pero no cuenta a la primera.
+  mostrarResultado(okVisible ? "desfile" : "asi");
   return c;
 }
 
@@ -844,7 +886,9 @@ function pintarFeedback() {
     frase = textos.sobra;
     arteHtml = htmlFalta({ puesto: c.longitud, hueco: partida.elegidoMal, svgPuesto: arte(archivoTabla(c.longitud, c.unidad)), svgDif: arte("diferencia") });
   } else if (tipo === "asi") {
-    frase = `${textos.asiEra} ${decirUnidad(c.longitud, c.unidad)}`;
+    frase = c.tipo === "juntar" && (c.solucion || []).length
+      ? String(textos.asiEraTablas).replace("{partes}", c.solucion.map((n) => decirUnidad(n, c.unidad)).join(" y "))
+      : `${textos.asiEra} ${decirUnidad(c.longitud, c.unidad)}`;
     arteHtml = `<div class="bicho" style="position:relative;left:auto">${svgInline(arte("animal-" + (c.animal || "conejo")))}</div>`;
   } else {
     arteHtml = `<div class="desfile">${svgInline(arte("banderines"))}${["conejo", "ardilla", "zorro"].map((a) => `<span class="animal">${svgInline(arte("animal-" + a))}</span>`).join("")}</div>`;
@@ -1054,7 +1098,7 @@ function actuar(t) {
   if (act === "sino") { elegirOpcion(t.dataset.valor); return; }
   if (act === "valor") { cambiarValor(+t.dataset.dir); return; }
   if (act === "listo") { confirmarListo(); return; }
-  if (act === "sumar") { sumarTabla(t.dataset.valor); return; }
+  if (act === "sumar") { sumarTabla(t.dataset.i); return; }
   if (act === "quitar") { quitarTabla(); return; }
   if (act === "cruzar") { confirmarCruzar(); return; }
 }
