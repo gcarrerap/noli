@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 222">
+<title>Dragón saludando</title>
+<path id="cola" d="M146 182c30 6 44-6 46-30" fill="none" stroke="#2b2236" stroke-width="22" stroke-linecap="round"/><path d="M146 182c30 6 44-6 46-30" fill="none" stroke="#3ccf8e" stroke-width="12" stroke-linecap="round"/><path d="M180 150l12-22 10 26z" fill="#ff6b4a" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/>
+<path id="ala-izq" d="M62 126C34 110 14 116 8 96c14 4 22-2 26-10 6 8 14 10 22 6-4 10 2 18 12 22z" fill="#c86bfa" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<path id="ala-der" d="M138 126c28-16 48-10 54-30-14 4-22-2-26-10-6 8-14 10-22 6 4 10-2 18-12 22z" fill="#c86bfa" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<ellipse cx="74" cy="206" rx="20" ry="12" fill="#3ccf8e" stroke="#2b2236" stroke-width="5"/><ellipse cx="126" cy="206" rx="20" ry="12" fill="#3ccf8e" stroke="#2b2236" stroke-width="5"/>
+<ellipse id="cuerpo" cx="100" cy="156" rx="54" ry="52" fill="#3ccf8e" stroke="#2b2236" stroke-width="5"/>
+<ellipse cx="100" cy="166" rx="34" ry="36" fill="#fff2c9" stroke="#2b2236" stroke-width="4"/><path d="M74 152h52M70 170h60M76 188h48" stroke="#2b2236" stroke-opacity=".25" stroke-width="3" stroke-linecap="round"/>
+<g id="brazos"><path d="M54 142l-8 22" fill="none" stroke="#2b2236" stroke-width="20" stroke-linecap="round"/><path d="M54 142l-8 22" fill="none" stroke="#3ccf8e" stroke-width="11" stroke-linecap="round"/><path d="M146 138l22-30" fill="none" stroke="#2b2236" stroke-width="20" stroke-linecap="round"/><path d="M146 138l22-30" fill="none" stroke="#3ccf8e" stroke-width="11" stroke-linecap="round"/></g>
+<path d="M66 44L60 14l24 20z" fill="#ffc43d" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/><path d="M134 44l6-30-24 20z" fill="#ffc43d" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/>
+<ellipse id="cabeza" cx="100" cy="74" rx="56" ry="46" fill="#3ccf8e" stroke="#2b2236" stroke-width="5"/>
+<path d="M88 30l6-10 6 10M100 30l6-10 6 10" fill="#ff6b4a" stroke="#2b2236" stroke-width="3.5" stroke-linejoin="round"/>
+<ellipse cx="100" cy="94" rx="30" ry="19" fill="#8fe6bb" stroke="#2b2236" stroke-width="4"/><circle cx="90" cy="88" r="3.5" fill="#2b2236"/><circle cx="110" cy="88" r="3.5" fill="#2b2236"/>
+<circle cx="60" cy="88" r="8" fill="#ff7eb6" opacity=".7"/><circle cx="140" cy="88" r="8" fill="#ff7eb6" opacity=".7"/>
+<g id="ojos"><ellipse cx="76" cy="64" rx="10" ry="12" fill="#2b2236"/><ellipse cx="124" cy="64" rx="10" ry="12" fill="#2b2236"/><circle cx="79" cy="59" r="4" fill="#fff"/><circle cx="127" cy="59" r="4" fill="#fff"/></g><g id="boca"><path d="M86 106q14 12 28 0" fill="none" stroke="#2b2236" stroke-width="5" stroke-linecap="round"/></g>
+</svg>

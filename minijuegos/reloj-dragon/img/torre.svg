@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 300 434">
+<title>Torre del reloj (el reloj va encima del hueco)</title>
+<path d="M8 112L150 10l142 102z" fill="#ff6b4a" stroke="#2b2236" stroke-width="6" stroke-linejoin="round"/>
+<rect x="18" y="108" width="264" height="326" fill="#e9d9f5" stroke="#2b2236" stroke-width="6"/>
+<path d="M68 122v30M118 122v30M168 122v30M218 122v30M268 122v30M18 152h264M43 152v30M93 152v30M143 152v30M193 152v30M243 152v30M18 182h264M68 182v30M118 182v30M168 182v30M218 182v30M268 182v30M18 212h264M43 212v30M93 212v30M143 212v30M193 212v30M243 212v30M18 242h264M68 242v30M118 242v30M168 242v30M218 242v30M268 242v30M18 272h264M43 272v30M93 272v30M143 272v30M193 272v30M243 272v30M18 302h264M68 302v30M118 302v30M168 302v30M218 302v30M268 302v30M18 332h264M43 332v30M93 332v30M143 332v30M193 332v30M243 332v30M18 362h264M68 362v30M118 362v30M168 362v30M218 362v30M268 362v30M18 392h264M43 392v30M93 392v30M143 392v30M193 392v30M243 392v30M18 422h264" stroke="#c7b2db" stroke-width="3"/>
+<path d="M114 112V84a36 36 0 0 1 72 0v28z" fill="#3a3270" stroke="#2b2236" stroke-width="5"/>
+<g id="campana"><path d="M150 64c-14 0-18 12-18 24v6l-6 8h48l-6-8v-6c0-12-4-24-18-24z" fill="#ffc43d" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><circle cx="150" cy="104" r="5" fill="#2b2236"/></g>
+<rect x="8" y="104" width="284" height="18" rx="6" fill="#c86bfa" stroke="#2b2236" stroke-width="5"/>
+<circle id="hueco-reloj" cx="150" cy="258" r="120" fill="#4a4060" stroke="#2b2236" stroke-width="6"/>
+<path d="M126 434v-26a24 24 0 0 1 48 0v26" fill="#c86bfa" stroke="#2b2236" stroke-width="5"/>
+<path d="M4 434h292" stroke="#2b2236" stroke-width="6" stroke-linecap="round"/>
+</svg>

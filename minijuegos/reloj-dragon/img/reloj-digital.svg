@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 104">
+<title>Reloj digital (texto #hora y #ampm)</title>
+<rect x="4" y="4" width="232" height="96" rx="22" fill="#c86bfa" stroke="#2b2236" stroke-width="6"/>
+<rect id="pantalla" x="18" y="16" width="204" height="72" rx="12" fill="#2b2236"/>
+<text id="hora" x="98" y="71" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="52" text-anchor="middle" fill="#8ff0c0">7:15</text>
+<text id="ampm" x="194" y="70" font-family="Fredoka, 'Baloo 2', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle" fill="#ffe08a">a.m.</text>
+</svg>
