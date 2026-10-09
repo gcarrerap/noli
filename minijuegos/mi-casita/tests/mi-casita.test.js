@@ -22,15 +22,18 @@ const { pagarExacto, puedePagar, sumaBolsa, restarBolsa } = await import("../src
 const { cabe, choques, formaDe, mover, ponerEn, aceptaSeis, girarAyuda, dentro } = await import("../src/casa.js");
 const { abiertos, recienAbiertos, bolsaDe } = await import("../src/desbloqueo.js");
 const { pistaPagar, monedasQueSirven, pistaLugar, FLECHA_MS, COMPLETA_MS } = await import("../src/pista.js");
-const { guiaNueva, aplicarGuia, bolsaGuia, textoGuia, monedasDeGuia } = await import("../src/guia.js");
+const {
+  guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, monedasDeGuia,
+  focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, GUIA_TOQUE_MS, PASOS,
+} = await import("../src/guia.js");
 const {
   visitaNueva, debeCobrar, alAgregar, alPagar, alQuitar, dejarPieza, devolverPieza,
   algunoAlcanza, cerrarVisita, elegirMueble, moverPieza, tocarCuadro,
 } = await import("../src/visita.js");
 const { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } = await import("../src/progreso.js");
-const { fraseMedida, fraseGiro, fraseFaltan, fraseToca } = await import("../src/frases.js");
+const { fraseMedida, fraseGiro, fraseFaltan, fraseToca, fraseBrilla } = await import("../src/frases.js");
 const { paraVoz } = await import("../src/voz.js");
-const { resolverAtras } = await import("../src/salida.js");
+const { resolverAtras, dosAtras } = await import("../src/salida.js");
 const { piezaSvg } = await import("../src/monedas.js");
 
 const porId = Object.fromEntries(muebles.map((m) => [m.id, m]));
@@ -56,8 +59,12 @@ test("la lámpara de la guía cuesta 6 y el texto sirve en dólares y en pesos",
   assert.equal(textos.guiaPrecio, "Cuesta 6.");
   assert.equal(textos.guiaMonedas, "Toca 5 y 1. Son 6.");
   assert.equal(textoGuia("monedas", "tactil", textos), "Toca 5 y 1. Son 6.");
+  assert.equal(textoGuia("monedas", "tv", textos), "Pulsa 5 y 1. Son 6.");
+  assert.equal(textoGuia("pagar", "tv", textos), "¡Brilla! Pulsa OK.");
   assert.equal(textoGuia("cuadro", "tv", textos), "Muévela y OK");
   assert.equal(textoGuia("cuadro", "tactil", textos), "Toca un cuadro");
+  assert.equal(fraseBrilla("tv", textos), "¡Brilla! Pulsa OK.");
+  assert.equal(fraseBrilla("tactil", textos, true), "Brilla. Toca Pagar.");
   for (const id of ["usd", "mxn"]) {
     const piezas = id === "usd" ? usd.piezas : mxn.piezas;
     const bolsa = bolsaGuia(id);
@@ -233,7 +240,7 @@ test("la guía solo avanza cuando ella hace el paso", () => {
   assert.equal(g.paso, "precio");
   g = aplicarGuia(g, { tipo: "monedas", orden: ["nickel", "penny"] }, piezas);
   assert.equal(g.paso, "precio");
-  g = aplicarGuia(g, { tipo: "verPrecio" }, piezas);
+  g = aplicarGuia(g, { tipo: "toque" }, piezas);
   assert.equal(g.paso, "monedas");
   g = aplicarGuia(g, { tipo: "monedas", orden: ["dime"] }, piezas);
   assert.equal(g.paso, "monedas");
@@ -250,12 +257,78 @@ test("la guía solo avanza cuando ella hace el paso", () => {
   assert.equal(g.paso, "cuadro");
   g = aplicarGuia(g, { tipo: "mover" }, piezas);
   g = aplicarGuia(g, { tipo: "ok", modo: "tv" }, piezas);
+  assert.equal(g.paso, "fin");
+  assert.equal(g.lista, false);
+  g = aplicarGuia(g, { tipo: "toque" }, piezas);
   assert.equal(g.lista, true);
-  let tactil = aplicarGuia({ ...guiaNueva(), paso: "cuadro", orden: [] }, { tipo: "cuadro", modo: "tactil" }, piezas);
-  assert.equal(tactil.lista, true);
+  const tactil = aplicarGuia({ ...guiaNueva(), paso: "cuadro", orden: [], movio: false, lista: false }, { tipo: "cuadro", modo: "tactil" }, piezas);
+  assert.equal(tactil.paso, "fin");
+  assert.equal(tactil.lista, false);
   const salto = aplicarGuia(guiaNueva(), { tipo: "saltar" }, piezas);
   assert.equal(salto.lista, true);
   assert.equal(aplicarGuia(salto, { tipo: "escoger", id: "lampara" }, piezas).paso, "fin");
+});
+
+test("la guía: mostrar, acción, Pagar, foco, Atrás y el modo", () => {
+  const piezas = usd.piezas;
+  assert.equal(GUIA_TOQUE_MS, 2000);
+  assert.equal(guiaAvanzaConToque("precio"), true);
+  assert.equal(guiaAvanzaConToque("fin"), true);
+  for (const paso of ["escoger", "monedas", "pagar", "cuadro"]) assert.equal(guiaAvanzaConToque(paso), false, paso);
+  for (const paso of ["escoger", "precio", "monedas", "cuadro", "fin"]) assert.equal(guiaPagarActivo(paso), false, paso);
+  assert.equal(guiaPagarActivo("pagar"), true);
+
+  let g = guiaNueva();
+  for (let i = 0; i < 5; i++) {
+    g = aplicarGuia(g, { tipo: "ok" }, piezas);
+    g = aplicarGuia(g, { tipo: "toque" }, piezas);
+    g = aplicarGuia(g, { tipo: "tiempo" }, piezas);
+    g = aplicarGuia(g, { tipo: "pagar" }, piezas);
+  }
+  assert.equal(g.paso, "escoger", "OK repetido no salta el paso de escoger");
+
+  g = aplicarGuia(g, { tipo: "escoger", id: "lampara" }, piezas);
+  assert.equal(aplicarGuia(g, { tipo: "ok" }, piezas).paso, "monedas");
+  assert.equal(aplicarGuia(g, { tipo: "tiempo" }, piezas).paso, "monedas");
+  const monedas = aplicarGuia(g, { tipo: "toque" }, piezas);
+  assert.equal(aplicarGuia(monedas, { tipo: "ok" }, piezas).paso, "monedas");
+  assert.equal(aplicarGuia(monedas, { tipo: "pagar" }, piezas).paso, "monedas");
+  assert.equal(aplicarGuia(monedas, { tipo: "toque" }, piezas).paso, "monedas");
+
+  for (const paso of PASOS) {
+    assert.notEqual(focoDeGuia(paso, [], piezas), "saltar");
+    assert.notEqual(focoDeGuia(paso, ["nickel"], piezas), "saltar");
+  }
+  assert.equal(focoDeGuia("escoger", [], piezas), "mueble-lampara");
+  assert.equal(focoDeGuia("precio", [], piezas), "precio");
+  assert.equal(focoDeGuia("monedas", [], piezas), "moneda-cinco");
+  assert.equal(focoDeGuia("monedas", ["nickel"], piezas), "moneda-uno");
+  assert.equal(focoDeGuia("pagar", ["nickel", "penny"], piezas), "pagar");
+  assert.equal(focoDeGuia("fin", [], piezas), "fin-guia");
+
+  let cuadro = { paso: "cuadro", orden: [], movio: false, lista: false };
+  cuadro = aplicarGuia(cuadro, { tipo: "ok", modo: "tactil" }, piezas);
+  assert.equal(cuadro.paso, "cuadro");
+  cuadro = aplicarGuia(cuadro, { tipo: "ok", modo: "tv" }, piezas);
+  assert.equal(cuadro.paso, "cuadro");
+
+  const tv = PASOS.map((paso) => `${textoGuia(paso, "tv", textos)} ${vozGuia(paso, "tv", textos)}`).join(" ");
+  assert.equal(/Toca/.test(tv), false);
+  const voces = PASOS.flatMap((paso) => [vozGuia(paso, "tv", textos), vozGuia(paso, "tactil", textos)]).join(" ");
+  assert.equal(paraVoz(voces), voces);
+  assert.equal(fraseToca({ nickel: 1 }, piezas, textos, "tv").texto, "Pulsa 5. Son 5.");
+  assert.equal(fraseToca({ nickel: 1 }, piezas, textos, "tv").voz, "Pulsa 5. Son 5.");
+
+  const atras = dosAtras();
+  assert.deepEqual([atras.primero, atras.segundo], ["abrir", "cerrar"]);
+  assert.equal(atras.sale, false);
+  assert.equal(atras.cobra, false);
+  assert.equal(resolverAtras(false), "abrir");
+  assert.equal(resolverAtras(true), "cerrar");
+
+  const css = fs.readFileSync(path.join(raiz, "estilo.css"), "utf8");
+  assert.match(css, /\.cab \.saltar\s*\{[^}]*min-height:\s*64px/);
+  assert.match(css, /button:disabled/);
 });
 
 test("los desbloqueos siguen la curva y abren cuarto a cuarto", () => {

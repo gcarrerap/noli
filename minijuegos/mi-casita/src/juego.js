@@ -6,14 +6,17 @@ import { sumaOrden, sumaBolsa, conteoDe } from "./dinero.js";
 import { formaDe, cabe } from "./casa.js";
 import { abiertos, recienAbiertos, bolsaDe } from "./desbloqueo.js";
 import { pistaPagar, monedasQueSirven, pistaLugar } from "./pista.js";
-import { guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia } from "./guia.js";
+import {
+  guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, focoDeGuia,
+  guiaAvanzaConToque, guiaPagarActivo, GUIA_TOQUE_MS,
+} from "./guia.js";
 import {
   visitaNueva, debeCobrar, alAgregar, alQuitar, alPagar, elegirMueble, moverPieza,
   tocarCuadro, girarPieza, abrirBarra, dejarPieza, devolverPieza, preciosAbiertos,
   algunoAlcanza, cerrarVisita,
 } from "./visita.js";
 import { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } from "./progreso.js";
-import { fraseMedida, fraseGiro, fraseFaltan, rellenar } from "./frases.js";
+import { fraseMedida, fraseGiro, fraseFaltan, fraseBrilla, rellenar } from "./frases.js";
 import { decir } from "./voz.js";
 import { desbloquear, clic, brillo, dejar as sonidoDejar } from "./sonido.js";
 import { resolverAtras } from "./salida.js";
@@ -47,6 +50,7 @@ let finNuevos = { cuartos: [], muebles: [] };
 let dicho = "";
 let sonoExacto = false;
 let relojPista = 0;
+let relojGuia = 0;
 
 const porId = () => Object.fromEntries(muebles.map((m) => [m.id, m]));
 const piezas = () => (monedas[monedaId] || monedas.usd)?.piezas || [];
@@ -96,13 +100,13 @@ function dialogo() {
 function cabecera(extra) {
   const total = pr.visita ? sumaBolsa(pr.visita.bolsa, piezas()) : 0;
   const derecha = guia
-    ? `<button type="button" class="boton saltar" ${focoAttr("saltar")} data-act="saltar">${esc(textos.saltar)}</button>`
+    ? `<button type="button" class="boton saltar" data-foco data-foco-id="saltar" data-act="saltar">${esc(textos.saltar)}</button>`
     : extra || "";
   const bolsa = pr.visita && !guia ? `<span class="bolsa" aria-label="Bolsa">${svgBolsa(total)}</span>` : `<span></span>`;
   return `<header class="cab">${bolsa}${derecha}</header>`;
 }
 
-function htmlCuarto(c, tomando) {
+function htmlCuarto(c, tomando, focoId) {
   const puestos = pr.puestos.filter((p) => p.cuarto === c.id);
   let celdas = "";
   for (let y = 0; y < c.filas; y++) {
@@ -121,7 +125,8 @@ function htmlCuarto(c, tomando) {
   }
   const capas = puestos.map((p) => puestoHtml(p, false)).join("");
   const fantasma = tomando ? puestoHtml(tomando, true) : "";
-  return `<div class="rejilla" style="--cols:${c.cols};--filas:${c.filas};--piso:url('arte/${esc(c.piso)}')">${celdas}${capas}${fantasma}</div>`;
+  const marca = focoId ? ` tabindex="0" data-foco="inicial" data-foco-id="${esc(focoId)}"` : "";
+  return `<div class="rejilla"${marca} style="--cols:${c.cols};--filas:${c.filas};--piso:url('arte/${esc(c.piso)}')">${celdas}${capas}${fantasma}</div>`;
 }
 
 function puestoHtml(p, fantasma) {
@@ -129,12 +134,18 @@ function puestoHtml(p, fantasma) {
   return `<span class="puesto${fantasma ? " fantasma" : ""}${gira ? " gira" : ""}" style="--x:${p.x};--y:${p.y};--w:${p.w};--h:${p.h};--giro:${p.giro || 0}deg"><img src="arte/${esc(p.archivo)}" alt=""></span>`;
 }
 
+function idFocoMoneda(p) {
+  if (guia && p.valor === 5) return "moneda-cinco";
+  if (guia && p.valor === 1) return "moneda-uno";
+  return "moneda-" + p.id;
+}
+
 function fichaHtml(p, bolsa, luz, flecha, inicial) {
   const quedan = (bolsa?.[p.id] || 0);
   const sirve = luz && luz[p.id];
   const cls = `ficha${p.tipo === "billete" ? " billete" : ""}${sirve ? " sirve" : ""}${flecha === p.id ? " flecha" : ""}`;
   const off = quedan <= 0 ? "disabled" : "";
-  return `<button type="button" class="${cls}" ${off} ${quedan > 0 ? focoAttr("moneda-" + p.id, inicial) : ""} data-act="moneda" data-id="${esc(p.id)}" aria-label="${esc(p.nombre)}">${piezaSvg(p)}</button>`;
+  return `<button type="button" class="${cls}" ${off} ${quedan > 0 ? focoAttr(idFocoMoneda(p), inicial) : ""} data-act="moneda" data-id="${esc(p.id)}" aria-label="${esc(p.nombre)}">${piezaSvg(p)}</button>`;
 }
 
 function barraHtml(puede) {
@@ -239,28 +250,32 @@ function htmlPagar(opts) {
   }).join("");
   let aviso = "";
   if (suma > m.precio) aviso = textos.tePasaste;
-  else if (opts.corto) aviso = textos.todaviaNo;
-  else if (exacto) aviso = textos.brilla;
-  const pagarCls = `boton grande${exacto ? " primario brilla" : " apagado"}`;
+  else if (!opts.linea && exacto) aviso = fraseBrilla(modo(), textos);
+  else if (!opts.linea && opts.corto) aviso = textos.todaviaNo;
+  const lineaPista = opts.linea || (exacto || suma > m.precio ? "" : (pista.texto || ""));
+  const pagarActivo = opts.pagarActivo !== false;
+  const pagarCls = `boton grande${pagarActivo && exacto ? " primario brilla" : " apagado"}`;
+  const precio = opts.muestraPrecio
+    ? `<span class="precio-tag" tabindex="0" ${focoAttr("precio", true)}>${svgPrecio(m.precio)}</span>`
+    : `<span class="precio-tag">${svgPrecio(m.precio)}</span>`;
+  const focoMoneda = guia && guia.paso === "monedas" ? focoDeGuia("monedas", orden, piezas()) : "";
   return `
     ${cabecera(guia ? "" : `<button type="button" class="boton" ${focoAttr("terminar")} data-act="terminar">${esc(textos.terminar)}</button>`)}
-    <p class="pista">${esc(opts.linea || pista.texto || "")}</p>
+    <p class="pista">${esc(lineaPista)}</p>
     <div class="compra">
       <img class="dibujo" src="arte/${esc(m.archivo)}" alt="">
       <b>${esc(m.es)} <span class="en">${esc(m.en)}</span></b>
-      ${opts.precioTap
-        ? `<button type="button" class="precio-tag" ${focoAttr("precio", true)} data-act="ver-precio">${svgPrecio(m.precio)}</button>`
-        : `<span class="precio-tag">${svgPrecio(m.precio)}</span>`}
+      ${precio}
     </div>
-    <div class="fichas">${tipos.map((p, i) => fichaHtml(p, bolsa, luz, pista.flecha, !opts.precioTap && i === 0 && !exacto)).join("")}</div>
+    <div class="fichas">${tipos.map((p, i) => fichaHtml(p, bolsa, luz, pista.flecha, focoMoneda ? idFocoMoneda(p) === focoMoneda : i === 0 && !exacto)).join("")}</div>
     <div class="puestos-mano">${mano}</div>
     ${mostrarSuma ? `<p class="llevas">${esc(rellenar(textos.llevas, { n: suma }))}</p>` : ""}
     <p class="aviso${suma > m.precio ? " mal" : ""}">${esc(aviso)}</p>
-    ${opts.soloPrecio ? "" : `<div class="abajo">
-      <button type="button" class="boton${orden.length ? "" : " apagado"}" ${orden.length ? "" : "disabled"} ${focoAttr("quitar")} data-act="quitar">${esc(textos.quitar)}</button>
+    <div class="abajo">
+      <button type="button" class="boton${orden.length ? "" : " apagado"}" ${orden.length ? "" : "disabled"} ${orden.length ? focoAttr("quitar") : ""} ${orden.length ? 'data-act="quitar"' : ""}>${esc(textos.quitar)}</button>
       ${opts.ayuda ? `<button type="button" class="boton" ${focoAttr("ayuda")} data-act="ayuda">${esc(textos.ayuda)}</button>` : ""}
-      <button type="button" class="${pagarCls}" ${focoAttr("pagar", exacto)} data-act="pagar">${esc(textos.pagar)}</button>
-    </div>`}
+      <button type="button" class="${pagarCls}" ${pagarActivo ? focoAttr("pagar", guia ? guia.paso === "pagar" : exacto) : ""} ${pagarActivo ? 'data-act="pagar"' : "disabled"}>${esc(textos.pagar)}</button>
+    </div>
     ${dialogo()}`;
 }
 
@@ -285,7 +300,7 @@ function htmlAcomodar(linea) {
     ${cabecera(guia ? "" : `<button type="button" class="boton" ${focoAttr("terminar")} data-act="terminar">${esc(textos.terminar)}</button>`)}
     <p class="pista">${esc(linea || lugar.texto || "")}</p>
     <div class="lado">
-      ${htmlCuarto(c, toma)}
+      ${htmlCuarto(c, toma, guia ? "cuadro" : "")}
       <div>
         ${flechasHtml()}
         <p class="medida">${esc(fraseMedida(toma.w, toma.h, textos))}</p>
@@ -327,6 +342,7 @@ function htmlFin() {
 
 function htmlGuiaFin() {
   return `
+    ${cabecera()}
     <img class="casa-icono" src="icono.svg" alt="">
     <h1 class="titulo">${esc(textos.guiaFin)}</h1>
     <div class="menu">
@@ -372,8 +388,9 @@ function vistaGuia() {
       pista: { texto: linea, flecha: null },
       linea,
       mostrarSuma: paso !== "precio",
-      precioTap: paso === "precio",
+      muestraPrecio: paso === "precio",
       soloPrecio: paso === "precio",
+      pagarActivo: guiaPagarActivo(paso),
       ayuda: false,
       corto: false,
     });
@@ -388,7 +405,7 @@ function vistaPagar() {
   const ms = v.ayudaDesde ? Date.now() - v.ayudaDesde : 0;
   const pista = pistaPagar({
     nivelDinero: ab.dinero, precio: m.precio, bolsa: v.bolsa, piezas: piezas(), textos,
-    errores: v.fallos, ms,
+    errores: v.fallos, ms, modo: modo(),
   });
   return htmlPagar({
     muebleId: v.mueble,
@@ -406,6 +423,35 @@ function vistaAcomodar() {
   return htmlAcomodar("");
 }
 
+function limpiarRelojGuia() {
+  clearTimeout(relojGuia);
+  relojGuia = 0;
+}
+
+function pintarGuia() {
+  pintar(guia ? focoDeGuia(guia.paso, guia.orden, piezas()) : "");
+}
+
+function avanzarMuestra(tipo) {
+  if (!guia || !guiaAvanzaConToque(guia.paso)) return;
+  limpiarRelojGuia();
+  guia = aplicarGuia(guia, { tipo }, piezas());
+  dicho = "";
+  if (guia.lista) { terminarGuia(); return; }
+  pintarGuia();
+}
+
+function programarMuestra() {
+  limpiarRelojGuia();
+  if (pantalla !== "guia" || !guia || salir || !guiaAvanzaConToque(guia.paso)) return;
+  const paso = guia.paso;
+  relojGuia = setTimeout(() => {
+    relojGuia = 0;
+    if (salir || pantalla !== "guia" || !guia || guia.paso !== paso) return;
+    avanzarMuestra("tiempo");
+  }, GUIA_TOQUE_MS);
+}
+
 function pintar(forzar) {
   clearTimeout(relojPista);
   $main.innerHTML = vista();
@@ -413,13 +459,18 @@ function pintar(forzar) {
   const exacto = pagarExactoAhora();
   if (exacto && !sonoExacto) { sonoExacto = true; brillo(); }
   if (!exacto) sonoExacto = false;
-  const id = salir ? "seguir" : (forzar || (exacto ? "pagar" : ""));
+  let id = "";
+  if (salir) id = "seguir";
+  else if (forzar) id = forzar;
+  else if (pantalla === "guia" && guia) id = focoDeGuia(guia.paso, guia.orden, piezas());
+  else if (exacto) id = "pagar";
   const el = (id && $main.querySelector(`[data-foco-id="${id}"]`))
-    || $main.querySelector('[data-foco="inicial"]')
-    || $main.querySelector("[data-foco]");
+    || $main.querySelector('[data-foco="inicial"]:not([data-foco-id="saltar"])')
+    || [...$main.querySelectorAll("[data-foco]")].find((n) => n.dataset.focoId !== "saltar");
   if (el) el.focus({ preventScroll: true });
   else focoInicial($main);
   programarPista();
+  programarMuestra();
   decirPantalla();
 }
 
@@ -444,9 +495,10 @@ function decirPantalla() {
     const pista = pistaPagar({
       nivelDinero: ab.dinero, precio: m.precio, bolsa: pr.visita.bolsa, piezas: piezas(), textos,
       errores: pr.visita.fallos, ms: pr.visita.ayudaDesde ? Date.now() - pr.visita.ayudaDesde : 0,
+      modo: modo(),
     });
     if (suma > m.precio) hablar(textos.vozPasaste);
-    else if (suma === m.precio) hablar(textos.vozPagar);
+    else if (suma === m.precio) hablar(fraseBrilla(modo(), textos, true));
     else if (ab.dinero <= 1 && suma > 0) hablar(textoLargo(monedas[monedaId], suma));
     else hablar(pista.voz);
   }
@@ -538,13 +590,7 @@ function actuarGuia(act, ds) {
   if (paso === "escoger" && act === "escoger") {
     guia = aplicarGuia(guia, { tipo: "escoger", id: ds.id }, piezas());
     dicho = "";
-    pintar();
-    return;
-  }
-  if (paso === "precio" && act === "ver-precio") {
-    guia = aplicarGuia(guia, { tipo: "verPrecio" }, piezas());
-    dicho = "";
-    pintar();
+    pintarGuia();
     return;
   }
   if (paso === "monedas" && act === "moneda") {
@@ -557,19 +603,20 @@ function actuarGuia(act, ds) {
     clic();
     guia = aplicarGuia({ ...guia, orden }, { tipo: "monedas", orden }, piezas());
     dicho = "";
-    pintar();
+    pintarGuia();
     return;
   }
   if (paso === "monedas" && act === "quitar") {
     guia = { ...guia, orden: (guia.orden || []).slice(0, -1) };
-    pintar();
+    pintarGuia();
     return;
   }
-  if ((paso === "monedas" || paso === "pagar") && act === "pagar") {
+  if (act === "pagar") {
+    if (!guiaPagarActivo(paso)) return;
     guia = aplicarGuia(guia, { tipo: "pagar" }, piezas());
-    if (guia.paso === "cuadro") { asegurarGuiaLugar(); dicho = ""; }
-    else guia.fallos = (guia.fallos || 0) + 1;
-    pintar();
+    if (guia.paso === "cuadro") asegurarGuiaLugar();
+    dicho = "";
+    pintarGuia();
     return;
   }
   if (paso === "cuadro") actuarLugar(act, ds);
@@ -587,7 +634,7 @@ function actuarLugar(act, ds) {
       guia = aplicarGuia({ ...guia, x: p.x, y: p.y, rot: guia.rot || 0 }, { tipo: "mover" }, piezas());
       guia.x = p.x; guia.y = p.y;
       if (guia.lista) return terminarGuia();
-      pintar();
+      pintarGuia();
       return;
     }
     pr.visita = moverPieza(pr.visita, c, ds.dir, m);
@@ -602,7 +649,8 @@ function actuarLugar(act, ds) {
       guia.x = p.x; guia.y = p.y;
       guia = aplicarGuia(guia, { tipo: "cuadro", modo: modo() }, piezas());
       if (guia.lista) return terminarGuia();
-      pintar();
+      dicho = "";
+      pintarGuia();
       return;
     }
     pr.visita = tocarCuadro(pr.visita, c, +ds.x, +ds.y, m);
@@ -648,6 +696,7 @@ function empezarGuia() {
 }
 
 function terminarGuia() {
+  limpiarRelojGuia();
   guia = null;
   pr = { ...pr, guia: true };
   guardar();
@@ -703,7 +752,13 @@ function abrirSalir() {
 
 $main.addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]");
+  if (pantalla === "guia" && guia && !salir && guiaAvanzaConToque(guia.paso)) {
+    if (t && t.dataset.act === "saltar") { actuar("saltar", t.dataset); return; }
+    avanzarMuestra("toque");
+    return;
+  }
   if (!t || t.disabled || !$main.contains(t)) return;
+  if (t.dataset.act === "pagar" && pantalla === "guia" && !guiaPagarActivo(guia?.paso)) return;
   actuar(t.dataset.act, t.dataset);
 });
 
@@ -737,10 +792,24 @@ Noli.alEntrar((accion) => {
     pintar(puede ? "dejar" : "girar");
     return true;
   }
-  if (pantalla === "guia" && guia && guia.paso === "cuadro" && accion === "ok") {
-    guia = aplicarGuia(guia, { tipo: "ok", modo: modo() }, piezas());
-    if (guia.lista) { terminarGuia(); return true; }
-    pintar();
+  if (pantalla === "guia" && guia && accion === "ok") {
+    const e = document.activeElement;
+    const act = e && $main.contains(e) ? e.dataset.act : "";
+    if (act === "saltar" && e && !e.disabled) { e.click(); return true; }
+    if (guiaAvanzaConToque(guia.paso)) { avanzarMuestra("ok"); return true; }
+    if (guia.paso === "cuadro") {
+      guia = aplicarGuia(guia, { tipo: "ok", modo: modo() }, piezas());
+      if (guia.lista) { terminarGuia(); return true; }
+      dicho = "";
+      pintarGuia();
+      return true;
+    }
+    if (e && $main.contains(e) && !e.disabled && (
+      act === "escoger" || act === "moneda" || (act === "pagar" && guiaPagarActivo(guia.paso))
+    )) {
+      e.click();
+      return true;
+    }
     return true;
   }
   if (moverFoco(accion, $main)) return true;

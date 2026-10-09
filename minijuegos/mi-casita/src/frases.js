@@ -18,13 +18,20 @@ export function valoresDeConteo(conteo, piezas) {
   return nums;
 }
 
-export function fraseToca(conteo, piezas, textos) {
+export function fraseToca(conteo, piezas, textos, modo = "tactil") {
   const lista = listaY(valoresDeConteo(conteo, piezas));
   const total = valoresDeConteo(conteo, piezas).reduce((s, n) => s + n, 0);
+  const tv = modo === "tv";
   return {
-    texto: `${rellenar(textos.toca, { lista })}. ${rellenar(textos.son, { n: total })}`.replace(/\.\s*\./g, ".").trim(),
-    voz: rellenar(textos.vozToca, { lista, n: total }),
+    texto: `${rellenar(tv ? textos.tocaTv : textos.toca, { lista })}. ${rellenar(textos.son, { n: total })}`.replace(/\.\s*\./g, ".").trim(),
+    voz: rellenar(tv ? textos.vozTocaTv : textos.vozToca, { lista, n: total }),
   };
+}
+
+export function fraseBrilla(modo, textos, voz = false) {
+  const tv = modo === "tv";
+  if (voz) return tv ? textos.vozPagarTv : textos.vozPagar;
+  return tv ? textos.brillaTv : textos.brilla;
 }
 
 /** «3 cuadros de largo, 2 de ancho». Nunca usa ×. */

@@ -9,9 +9,9 @@ export const FLECHA_MS = 20000;
 export const COMPLETA_MS = 40000;
 export const FALLOS_LUZ = 2;
 
-export function pistaPagar({ nivelDinero, precio, bolsa, piezas, textos, errores = 0, ms = 0 }) {
+export function pistaPagar({ nivelDinero, precio, bolsa, piezas, textos, errores = 0, ms = 0, modo = "tactil" }) {
   const sol = pagarExacto(precio, bolsa, piezas) || {};
-  const completo = fraseToca(sol, piezas, textos);
+  const completo = fraseToca(sol, piezas, textos, modo);
   const mayor = monedaMayor(sol, piezas);
   if ((nivelDinero | 0) <= 1) {
     return { texto: completo.texto, voz: completo.voz, flecha: null, paso: "completo" };
