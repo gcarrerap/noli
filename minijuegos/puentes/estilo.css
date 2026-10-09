@@ -92,7 +92,7 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .referencia{position:relative;display:flex;align-items:center;gap:8px;background:var(--card);border-radius:14px;padding:4px 8px;max-width:100%;min-width:0;width:min(100%,520px)}
 .referencia .dibujo{position:relative;flex:none}
 .referencia .dibujo > svg{width:100%;height:100%;display:block}
-.referencia p{margin:0;font-weight:800;text-align:left;font-size:.85rem;flex:1;min-width:0}
+.referencia p{margin:0;font-weight:800;text-align:left;font-size:.85rem;flex:1;min-width:0;overflow-wrap:anywhere}
 .bloques{position:relative;width:min(100%,420px);height:64px;margin:0 auto}
 .hueco .bloques{position:absolute;left:0;width:100%;bottom:14%;height:auto;margin:0;z-index:2}
 .hueco .cubo{height:100%;top:0}
@@ -165,7 +165,7 @@ button:disabled{opacity:.38;filter:grayscale(.65);box-shadow:none;cursor:default
 .flecha-pista svg{width:100%;height:100%;display:block}
 .escena .flecha-pista{top:10px;transform:translate(-50%,0)}
 .referencia .flecha-pista{top:auto;bottom:0;left:50%;transform:translate(-50%,30%)}
-.comp-dif .flecha-pista{top:50%;left:50%;transform:translate(-50%,-50%)}
+.comp-dif .flecha-pista{top:2px;left:50%;width:28px;height:32px;transform:translate(-50%,0)}
 .comp-dif .flecha-pista svg{width:100%;height:100%}
 .opciones .flecha-pista{top:0;transform:translate(-50%,0)}
 .apunta{position:relative}
