@@ -20,8 +20,8 @@ import {
   MARCA, esc, estrellasSvg, claseMarco, frascoSvg, iconoPolvo, iconoCredito, iconoVoz,
   fichasProbabilidad, htmlFoto, rutaPieza, rutaFamilia,
 } from "./dibujo.js";
-import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
-import { preguntaPapas, aciertoPapas, PAPAS_FALLO_MS } from "./papas.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoAbrir, entradaTienda, CARTA_MS, TRAS_ABRIR_MS, TRAS_COMPRA_MS } from "./apertura.js";
+import { preguntaPapas, responderPapas, PAPAS_QUIETO_MS } from "./papas.js";
 import { QUIEN_VISIBLE, opcionesQuien, candidatosMeta } from "./quien.js";
 import { sonar } from "./sonido.js";
 
@@ -47,7 +47,11 @@ let recien = false;
 let cobrando = false;
 let papasOk = false;
 let pregunta = null;
-let falloPapas = false;
+let papasAviso = "";
+let papasSeguidas = 0;
+let papasFallos = 0;
+let papasAceptaDesde = 0;
+let papasCerradoHasta = 0;
 
 let aparecio = 0;
 let vozTerminoEn = null;
@@ -65,6 +69,7 @@ let relojMuestra = 0;
 let relojEtapa = 0;
 let relojRevelar = 0;
 let relojBloqueo = 0;
+let relojPapas = 0;
 
 const modo = () => (document.documentElement.dataset.modo === "tv" || Noli.modo === "tv" ? "tv" : "tactil");
 const esTv = () => modo() === "tv";
@@ -398,8 +403,22 @@ function htmlDetalle() {
     ${dialogo()}`;
 }
 
+function papasCerrada(ahora = Date.now()) {
+  const hasta = Number(papasCerradoHasta) || 0;
+  return hasta > 0 && (Number(ahora) || 0) < hasta;
+}
+
 function htmlPregunta() {
-  const aviso = falloPapas ? `<p class="aviso">${esc(TEXTOS.esaNo)}</p>` : "";
+  if (papasCerrada()) {
+    return `${cabecera()}
+      <h2>${esc(TEXTOS.papas)}</h2>
+      <p class="aviso">${esc(TEXTOS.papasDescanso)}</p>
+      <button type="button" class="boton" data-act="volver" ${focoAttr("volver", true)}>${esc(TEXTOS.volver)}</button>
+      ${dialogo()}`;
+  }
+  const aviso = papasAviso === "fallo" ? `<p class="aviso">${esc(TEXTOS.esaNo)}</p>`
+    : papasAviso === "otra" ? `<p class="aviso">${esc(TEXTOS.papasOtra)}</p>`
+    : "";
   const ops = (pregunta ? pregunta.opciones : []).map((n, i) =>
     `<button type="button" class="boton grande" data-act="respuesta" data-valor="${n}" ${focoAttr("op-" + i, false)}>${n}</button>`
   ).join("");
@@ -463,6 +482,7 @@ function pintar(foco) {
   enfocar(salir ? "seguir" : foco);
   animarBarras();
   programarFinBloqueo();
+  if (pantalla === "papas" && !papasOk) programarFinPapas();
 }
 
 function animarBarras() {
@@ -736,14 +756,21 @@ async function abrirDeVerdad() {
   });
 }
 
+function dialogoVigente(ahora = Date.now()) {
+  const t = Number(ahora) || 0;
+  const d = Number(bloqueoDialogoHasta) || 0;
+  return d > 0 && t < d;
+}
+
 function pulsarAbrir() {
   if (cobrando || abrirApagado()) return;
   if (pantalla === "abriendo" || pantalla === "carta") return;
   if (guia && guia.paso === "abrir") { abrirDemo(); return; }
   if (guia) return;
-  const pulso = pulsoTrasCarta({ ahora: Date.now(), hasta: bloqueoPasoHasta, carta: false });
+  const ahora = Number(Date.now()) || 0;
+  const pulso = pulsoAbrir({ ahora, hastaPaso: bloqueoPasoHasta, hastaDialogo: bloqueoDialogoHasta, carta: false });
   if (!pulso.abre) {
-    bloqueoPasoHasta = pulso.hasta;
+    bloqueoPasoHasta = pulso.hastaPaso;
     programarFinBloqueo();
     return;
   }
@@ -824,34 +851,48 @@ function actuar(act, data) {
   if (act === "como") return empezarGuia();
   if (act === "papas") {
     pantalla = "papas";
-    if (!papasOk) {
-      pregunta = preguntaPapas(rngUi);
-      falloPapas = false;
-    }
+    if (!papasOk) asegurarPregunta();
     pintar(papasOk ? "menos" : "volver");
     return;
   }
   if (act === "respuesta") {
     if (bloqueado("respuesta")) return;
-    if (aciertoPapas(pregunta, data.valor)) {
+    const ahora = Number(Date.now()) || 0;
+    const r = responderPapas({
+      ahora,
+      valor: data.valor,
+      pregunta,
+      enOpcion: true,
+      seguidas: papasSeguidas,
+      fallos: papasFallos,
+      aceptaDesde: papasAceptaDesde,
+      cerradoHasta: papasCerradoHasta,
+    });
+    papasSeguidas = r.seguidas;
+    papasFallos = r.fallos;
+    papasAceptaDesde = r.aceptaDesde;
+    papasCerradoHasta = r.cerradoHasta;
+    papasAviso = r.aviso;
+    if (r.abre) {
       papasOk = true;
-      falloPapas = false;
+      papasAviso = "";
       pintar("menos");
       return;
     }
-    falloPapas = true;
-    pregunta = preguntaPapas(rngUi);
-    bloqueoPasoHasta = Date.now() + PAPAS_FALLO_MS;
+    if (r.nueva) pregunta = preguntaPapas(rngUi);
+    if (r.aviso === "descanso") pregunta = null;
     pintar("volver");
     return;
   }
   if (act === "volver") {
+    const entrada = entradaTienda({ ahora: Date.now(), hasta: bloqueoPasoHasta });
     pantalla = "tienda";
     detalleId = null;
     recien = false;
     carta = null;
     fotoPendiente = null;
-    pintar("abrir");
+    bloqueoPasoHasta = entrada.hasta;
+    pintar(entrada.foco);
     return;
   }
   if (act === "familia") {
@@ -960,8 +1001,37 @@ function cerrarDialogo() {
   pintar(guia ? focoDeGuia(guia.paso) : undefined);
 }
 
-function prepararPregunta() {
-  if (!papasOk && !pregunta) pregunta = preguntaPapas(rngUi);
+function asegurarPregunta() {
+  const ahora = Number(Date.now()) || 0;
+  if (papasCerrada(ahora)) return;
+  if ((Number(papasCerradoHasta) || 0) && ahora >= (Number(papasCerradoHasta) || 0)) {
+    papasCerradoHasta = 0;
+    papasFallos = 0;
+    papasSeguidas = 0;
+    papasAviso = "";
+    pregunta = null;
+  }
+  if (!pregunta) {
+    pregunta = preguntaPapas(rngUi);
+    papasAceptaDesde = ahora + PAPAS_QUIETO_MS;
+    papasAviso = "";
+  }
+}
+
+function programarFinPapas() {
+  clearTimeout(relojPapas);
+  const falta = (Number(papasCerradoHasta) || 0) - (Number(Date.now()) || 0);
+  if (falta <= 0) return;
+  relojPapas = setTimeout(() => {
+    if (salir || pantalla !== "papas" || papasOk) return;
+    papasCerradoHasta = 0;
+    papasFallos = 0;
+    papasSeguidas = 0;
+    papasAviso = "";
+    pregunta = preguntaPapas(rngUi);
+    papasAceptaDesde = (Number(Date.now()) || 0) + PAPAS_QUIETO_MS;
+    pintar("volver");
+  }, falta + 20);
 }
 
 $main.addEventListener("click", (ev) => {
@@ -983,7 +1053,7 @@ $main.addEventListener("click", (ev) => {
     return;
   }
   if (bloqueado(act)) {
-    if (act === "abrir") pulsarAbrir();
+    if (act === "abrir" && !dialogoVigente()) pulsarAbrir();
     return;
   }
   if (!t || t.disabled) return;
@@ -1007,7 +1077,7 @@ Noli.alEntrar((accion) => {
     return true;
   }
   if (accion === "ok" && bloqueado(idFoco() === "saltar" ? "saltar" : "ok")) {
-    if (!guia && pantalla === "tienda" && idFoco() === "abrir") pulsarAbrir();
+    if (!guia && pantalla === "tienda" && idFoco() === "abrir" && !dialogoVigente()) pulsarAbrir();
     return true;
   }
   if (accion === "ok" && pantalla === "abriendo") {
@@ -1088,7 +1158,6 @@ Promise.all([Noli.datos, Noli.creditos, leerJson("piezas.json"), leerJson("regla
   pr = alinearDia(cargar(datos, reglas), fechaLocal());
   if (datos && datos.dia && pr.dia !== datos.dia) guardar();
   saldo = typeof creditos === "number" ? creditos : null;
-  prepararPregunta();
   if (pr.pendiente) reanudarPendiente();
   else if (!pr.guiaHecha) empezarGuia();
   else pintar("abrir");

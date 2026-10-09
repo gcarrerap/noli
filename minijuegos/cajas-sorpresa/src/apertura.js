@@ -47,3 +47,24 @@ export function pulsoTrasCarta({ ahora, hasta = 0, carta = false } = {}) {
   if (t < plazo) return { abre: false, hasta: t + TRAS_ABRIR_MS };
   return { abre: true, hasta: plazo };
 }
+
+/**
+ * El único guardia de Abrir. Cubre el plazo de la carta y el de «¿Salir?».
+ * Mientras el diálogo sigue vigente no se abre y tampoco se alarga el de la carta.
+ * Un toque ignorado por la carta sí vuelve a contar 1 s.
+ */
+export function pulsoAbrir({ ahora, hastaPaso = 0, hastaDialogo = 0, carta = false } = {}) {
+  const t = Number(ahora) || 0;
+  const paso = Number(hastaPaso) || 0;
+  const dialogo = Number(hastaDialogo) || 0;
+  if (carta || (dialogo && t < dialogo)) return { abre: false, hastaPaso: paso, hastaDialogo: dialogo };
+  const pulso = pulsoTrasCarta({ ahora: t, hasta: paso, carta: false });
+  return { abre: pulso.abre, hastaPaso: pulso.hasta, hastaDialogo: dialogo };
+}
+
+/** Al entrar en la tienda, Abrir espera 1 s y el foco cae en la vitrina. */
+export function entradaTienda({ ahora, hasta = 0 } = {}) {
+  const t = Number(ahora) || 0;
+  const previo = Number(hasta) || 0;
+  return { hasta: Math.max(previo, t + TRAS_ABRIR_MS), foco: "vitrina" };
+}

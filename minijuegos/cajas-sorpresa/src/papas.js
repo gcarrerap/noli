@@ -3,7 +3,10 @@
 // La respuesta buena no es siempre el número del medio: a veces las dos malas
 // son más altas, a veces más bajas, y el orden en pantalla se baraja.
 
-export const PAPAS_FALLO_MS = 2000;
+export const PAPAS_QUIETO_MS = 1500;
+export const PAPAS_CIERRE_MS = 30000;
+export const PAPAS_ACIERTOS = 2;
+export const PAPAS_FALLOS = 2;
 
 function barajar(lista, rng) {
   const a = lista.slice();
@@ -49,15 +52,121 @@ export function aciertoPapas(pregunta, valor) {
 }
 
 /**
- * Un OK en la pregunta. El foco inicial no está en una opción, así que el OK
- * repetido no elige. Tras un fallo nadie acepta otra respuesta hasta 2 s.
- * Solo un acierto, con el foco en una opción y el plazo cumplido, abre Para papás.
+ * Un toque en una opción.
+ * Durante 1,5 s después de que aparece la pregunta (y después de cada toque
+ * que llega antes) la respuesta no cuenta: la espera vuelve a empezar, así
+ * una ráfaga no alcanza a acertar.
+ * Hacen falta 2 aciertos seguidos, cada uno con otra pregunta.
+ * A los 2 fallos la puerta descansa 30 s y el foco vuelve a Volver.
  */
-export function pulsoPapas({ ahora, foco = "", valor, pregunta, hasta = 0 } = {}) {
+export function responderPapas({
+  ahora,
+  valor,
+  pregunta,
+  enOpcion = false,
+  seguidas = 0,
+  fallos = 0,
+  aceptaDesde = 0,
+  cerradoHasta = 0,
+} = {}) {
+  const t = Number(ahora) || 0;
+  const desde = Number(aceptaDesde) || 0;
+  const cerrado = Number(cerradoHasta) || 0;
+  const racha = Number(seguidas) || 0;
+  const malas = Number(fallos) || 0;
+  const quieto = {
+    abre: false,
+    seguidas: racha,
+    fallos: malas,
+    aceptaDesde: desde,
+    cerradoHasta: cerrado,
+    nueva: false,
+    foco: "volver",
+    aviso: "",
+  };
+  if (cerrado && t < cerrado) return { ...quieto, aviso: "descanso" };
+  if (!enOpcion) return quieto;
+  if (t < desde) return { ...quieto, aceptaDesde: t + PAPAS_QUIETO_MS };
+  if (!aciertoPapas(pregunta, valor)) {
+    const f = malas + 1;
+    if (f >= PAPAS_FALLOS) {
+      const hasta = t + PAPAS_CIERRE_MS;
+      return {
+        abre: false,
+        seguidas: 0,
+        fallos: 0,
+        aceptaDesde: hasta,
+        cerradoHasta: hasta,
+        nueva: false,
+        foco: "volver",
+        aviso: "descanso",
+      };
+    }
+    return {
+      abre: false,
+      seguidas: 0,
+      fallos: f,
+      aceptaDesde: t + PAPAS_QUIETO_MS,
+      cerradoHasta: 0,
+      nueva: true,
+      foco: "volver",
+      aviso: "fallo",
+    };
+  }
+  const s = racha + 1;
+  if (s >= PAPAS_ACIERTOS) {
+    return {
+      abre: true,
+      seguidas: s,
+      fallos: 0,
+      aceptaDesde: desde,
+      cerradoHasta: 0,
+      nueva: false,
+      foco: "menos",
+      aviso: "",
+    };
+  }
+  return {
+    abre: false,
+    seguidas: s,
+    fallos: 0,
+    aceptaDesde: t + PAPAS_QUIETO_MS,
+    cerradoHasta: 0,
+    nueva: true,
+    foco: "volver",
+    aviso: "otra",
+  };
+}
+
+/**
+ * Un OK en la pregunta. El foco inicial no está en una opción, así que el OK
+ * repetido no elige. Si el foco sí está en una opción, valen las mismas reglas
+ * que un toque: espera, dos aciertos y el descanso.
+ */
+export function pulsoPapas({
+  ahora,
+  foco = "",
+  valor,
+  pregunta,
+  hasta = 0,
+  seguidas = 0,
+  fallos = 0,
+  aceptaDesde = 0,
+  cerradoHasta = 0,
+} = {}) {
   const t = Number(ahora) || 0;
   const plazo = Number(hasta) || 0;
-  if (t < plazo) return { abre: false, hasta: plazo };
-  if (foco !== "opcion") return { abre: false, hasta: plazo };
-  if (aciertoPapas(pregunta, valor)) return { abre: true, hasta: plazo };
-  return { abre: false, hasta: t + PAPAS_FALLO_MS };
+  const base = { seguidas, fallos, aceptaDesde, cerradoHasta, nueva: false, foco: "volver", aviso: "" };
+  if (t < plazo || foco !== "opcion") return { abre: false, hasta: plazo, ...base };
+  const r = responderPapas({
+    ahora: t,
+    valor,
+    pregunta,
+    enOpcion: true,
+    seguidas,
+    fallos,
+    aceptaDesde,
+    cerradoHasta,
+  });
+  return { ...r, hasta: plazo };
 }

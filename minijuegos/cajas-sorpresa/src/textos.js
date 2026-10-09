@@ -57,6 +57,8 @@ export const TEXTOS = {
   noAbrio: "No se pudo abrir la tienda.",
   quien: "¿Quién crees que es?",
   esaNo: "Esa no es. Intenta otra vez.",
+  papasOtra: "Una más, para estar seguros.",
+  papasDescanso: "Esta puerta descansa un ratito.",
   album: "Ya está en el álbum",
   cuantoEs: "¿Cuánto es",
   metaPara: "Guardas polvo para",

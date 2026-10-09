@@ -18,8 +18,8 @@ import { decir, calentarVoces, escogerVoz, escogerVozIngles, olvidarVoz, vozActu
 import { TEXTOS, textoGuia, vozGuia, fraseGarantia, fraseVisita, fraseNueva, fraseTuya, fraseCosto, fraseGuardar } from "../src/textos.js";
 import { htmlFoto, rutaPieza, rutaFamilia, frascoSvg, MARCA, fichasProbabilidad } from "../src/dibujo.js";
 import { FAMILIAS, familiaCompleta, familiaQueSeCompleto, ordenarFamilia } from "../src/familias.js";
-import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, REVELAR_MS, CARTA_MS, TRAS_ABRIR_MS } from "../src/apertura.js";
-import { preguntaPapas, aciertoPapas, pulsoPapas, PAPAS_FALLO_MS } from "../src/papas.js";
+import { etapaSiguiente, esperaDeEtapa, seDeshabilitaAbrir, pulsoTrasCarta, pulsoAbrir, entradaTienda, REVELAR_MS, CARTA_MS, TRAS_ABRIR_MS } from "../src/apertura.js";
+import { preguntaPapas, aciertoPapas, pulsoPapas, responderPapas, PAPAS_QUIETO_MS, PAPAS_CIERRE_MS } from "../src/papas.js";
 import { QUIEN_VISIBLE, opcionesQuien, candidatosMeta } from "../src/quien.js";
 
 const piezas = JSON.parse(fs.readFileSync(new URL("../datos/piezas.json", import.meta.url), "utf8"));
@@ -762,12 +762,6 @@ test("el OK cada 50 ms no abre Para papás y la respuesta buena cambia de sitio"
     if (r.abre) abre = true;
   }
   assert.equal(abre, false);
-  const mal = p.opciones.find((n) => n !== p.r);
-  const fallo = pulsoPapas({ ahora: t0, foco: "opcion", valor: mal, pregunta: p, hasta: 0 });
-  assert.equal(fallo.abre, false);
-  assert.equal(fallo.hasta, t0 + PAPAS_FALLO_MS);
-  assert.equal(pulsoPapas({ ahora: t0 + 50, foco: "opcion", valor: p.r, pregunta: p, hasta: fallo.hasta }).abre, false);
-  assert.equal(pulsoPapas({ ahora: fallo.hasta, foco: "opcion", valor: p.r, pregunta: p, hasta: fallo.hasta }).abre, true);
 
   const sitios = new Set();
   let medianas = 0;
@@ -784,6 +778,174 @@ test("el OK cada 50 ms no abre Para papás y la respuesta buena cambia de sitio"
   }
   assert.equal(sitios.size, 3);
   assert.ok(medianas < n);
+});
+
+test("Seguir no cobra si Abrir llega a los 90, 150 o 300 ms", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  const dialogo = t0 + TRAS_DIALOGO_MS;
+  for (const via of ["toque", "ok"]) {
+    let paso = 0;
+    for (const dt of [90, 150, 300]) {
+      const r = pulsoAbrir({ ahora: t0 + dt, hastaPaso: paso, hastaDialogo: dialogo, via });
+      assert.equal(r.abre, false, `${via} ${dt}`);
+      assert.equal(r.hastaPaso, paso, `${via} ${dt} no alarga el plazo`);
+      paso = r.hastaPaso;
+    }
+    const tarde = pulsoAbrir({ ahora: t0 + 450, hastaPaso: paso, hastaDialogo: dialogo, via });
+    assert.equal(tarde.abre, true, `${via} 450`);
+  }
+});
+
+test("toques al azar durante 60 s no abren Para papás y dos aciertos seguidos sí", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  const rng = rngConSemilla("papas-rafaga");
+  let t = t0;
+  const fin = t0 + 60000;
+  let pregunta = preguntaPapas(rng);
+  let seguidas = 0;
+  let fallos = 0;
+  let aceptaDesde = t + PAPAS_QUIETO_MS;
+  let cerradoHasta = 0;
+  let abrio = false;
+  while (t < fin) {
+    t += 50 + Math.floor(rng() * 251);
+    if (t > fin) break;
+    if (cerradoHasta && t >= cerradoHasta) {
+      cerradoHasta = 0;
+      seguidas = 0;
+      fallos = 0;
+      pregunta = preguntaPapas(rng);
+      aceptaDesde = t + PAPAS_QUIETO_MS;
+    }
+    const valor = pregunta.opciones[Math.floor(rng() * pregunta.opciones.length)];
+    const r = responderPapas({ ahora: t, pregunta, valor, enOpcion: true, seguidas, fallos, aceptaDesde, cerradoHasta });
+    if (r.abre) abrio = true;
+    seguidas = r.seguidas;
+    fallos = r.fallos;
+    aceptaDesde = r.aceptaDesde;
+    cerradoHasta = r.cerradoHasta;
+    if (r.nueva) pregunta = preguntaPapas(rng);
+  }
+  assert.equal(abrio, false);
+
+  const padre = rngConSemilla("papas-padre");
+  const primera = preguntaPapas(padre);
+  const espera = responderPapas({
+    ahora: t0 + 200,
+    pregunta: primera,
+    valor: primera.r,
+    enOpcion: true,
+    aceptaDesde: t0 + PAPAS_QUIETO_MS,
+  });
+  assert.equal(espera.abre, false);
+  assert.equal(espera.seguidas, 0);
+  assert.ok(espera.aceptaDesde > t0 + PAPAS_QUIETO_MS);
+  const uno = responderPapas({
+    ahora: espera.aceptaDesde,
+    pregunta: primera,
+    valor: primera.r,
+    enOpcion: true,
+    aceptaDesde: espera.aceptaDesde,
+  });
+  assert.equal(uno.abre, false);
+  assert.equal(uno.seguidas, 1);
+  assert.equal(uno.nueva, true);
+  assert.equal(uno.foco, "volver");
+  const segunda = preguntaPapas(padre);
+  assert.equal(new Set(segunda.opciones).size, 3);
+  const pronto = responderPapas({
+    ahora: uno.aceptaDesde - 1,
+    pregunta: segunda,
+    valor: segunda.r,
+    enOpcion: true,
+    seguidas: uno.seguidas,
+    aceptaDesde: uno.aceptaDesde,
+  });
+  assert.equal(pronto.abre, false);
+  const dos = responderPapas({
+    ahora: uno.aceptaDesde,
+    pregunta: segunda,
+    valor: segunda.r,
+    enOpcion: true,
+    seguidas: uno.seguidas,
+    aceptaDesde: uno.aceptaDesde,
+  });
+  assert.equal(dos.abre, true);
+
+  const mal = primera.opciones.find((n) => n !== primera.r);
+  const fallo1 = responderPapas({
+    ahora: t0 + PAPAS_QUIETO_MS,
+    pregunta: primera,
+    valor: mal,
+    enOpcion: true,
+    aceptaDesde: t0 + PAPAS_QUIETO_MS,
+  });
+  assert.equal(fallo1.abre, false);
+  assert.equal(fallo1.fallos, 1);
+  assert.equal(fallo1.nueva, true);
+  assert.equal(fallo1.foco, "volver");
+  const otra = preguntaPapas(padre);
+  const mal2 = otra.opciones.find((n) => n !== otra.r);
+  const fallo2 = responderPapas({
+    ahora: fallo1.aceptaDesde,
+    pregunta: otra,
+    valor: mal2,
+    enOpcion: true,
+    seguidas: fallo1.seguidas,
+    fallos: fallo1.fallos,
+    aceptaDesde: fallo1.aceptaDesde,
+  });
+  assert.equal(fallo2.abre, false);
+  assert.equal(fallo2.aviso, "descanso");
+  assert.equal(fallo2.foco, "volver");
+  assert.equal(fallo2.cerradoHasta, fallo1.aceptaDesde + PAPAS_CIERRE_MS);
+  const durante = responderPapas({
+    ahora: fallo2.cerradoHasta - 1,
+    pregunta: otra,
+    valor: otra.r,
+    enOpcion: true,
+    cerradoHasta: fallo2.cerradoHasta,
+    aceptaDesde: fallo2.aceptaDesde,
+  });
+  assert.equal(durante.abre, false);
+  assert.equal(/\d/.test(TEXTOS.papasDescanso), false);
+  assert.equal(/\d/.test(TEXTOS.papasOtra), false);
+});
+
+test("volver de Para papás no deja comprar con OK ni con toques durante 10 s", () => {
+  const t0 = 1.7e12;
+  assert.notEqual(t0 | 0, t0);
+  for (const via of ["ok", "toque"]) {
+    let pantalla = "papas";
+    let foco = "volver";
+    let hastaPaso = 0;
+    let cajas = 0;
+    let gasto = 0;
+    for (let dt = 0; dt <= 10000; dt += 50) {
+      const ahora = t0 + dt;
+      if (pantalla === "papas") {
+        const entrada = entradaTienda({ ahora, hasta: hastaPaso });
+        pantalla = "tienda";
+        foco = entrada.foco;
+        hastaPaso = entrada.hasta;
+        continue;
+      }
+      const quiereAbrir = via === "toque" || foco === "abrir";
+      if (!quiereAbrir) continue;
+      const r = pulsoAbrir({ ahora, hastaPaso, hastaDialogo: 0 });
+      hastaPaso = r.hastaPaso;
+      if (r.abre) {
+        cajas += 1;
+        gasto += 5;
+      }
+    }
+    assert.equal(cajas, 0, via);
+    assert.equal(gasto, 0, via);
+    assert.equal(foco, "vitrina", via);
+    assert.ok(hastaPaso > t0 + 10000 || via === "ok");
+  }
 });
 
 test("un OK cada 50 ms durante 10 s después de la carta no abre otro frasco", () => {
