@@ -103,12 +103,15 @@ export function colorPuesto(atuendo, prenda) {
  */
 export function fraseIngles(atuendo, idx) {
   const partes = puestas(atuendo).map((p) => {
-    const pr = idx.prendas.get(p.id), c = idx.colores.get(p.color), pa = p.patron && idx.patrones ? idx.patrones.get(p.patron) : null;
+    const pr = idx.prendas.get(p.id);
     if (!pr) return null;
+    const c = idx.colores.get(p.color), pid = p.patron || pr.patronFijo, pa = pid && idx.patrones ? idx.patrones.get(pid) : null;
     // "a pink zebra print T-shirt": color, patrón y prenda (como en inglés)
     const txt = (c ? c.en + " " : "") + (pa ? pa.en + " " : "") + pr.en;
-    if (pr.enPlural) return txt;
-    return (/^[aeiou]/i.test(txt) ? "an " : "a ") + txt;
+    // Un diseño del Taller (#80) dice su nombre: a pink long dress called "Estrellita"
+    const nombre = pr.diseno && pr.nombre ? ` called "${pr.nombre}"` : "";
+    if (pr.enPlural) return txt + nombre;
+    return (/^[aeiou]/i.test(txt) ? "an " : "a ") + txt + nombre;
   }).filter(Boolean);
   if (!partes.length) return "";
   if (partes.length === 1) return partes[0];

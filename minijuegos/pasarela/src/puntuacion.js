@@ -12,7 +12,8 @@ import { el, un, concuerda, es, queda, tu, mayuscula, conEl, conUn } from "./esp
 function conPrendas(atuendo, idx) {
   return puestas(atuendo).map((p) => {
     let prenda = idx.prendas.get(p.id);
-    const pa = prenda && p.patron && idx.patrones ? idx.patrones.get(p.patron) : null;
+    const pid = prenda && (p.patron || prenda.patronFijo); // patronFijo: diseños del Taller (#80)
+    const pa = pid && idx.patrones ? idx.patrones.get(pid) : null;
     if (pa) prenda = { ...prenda, etiquetas: [...new Set([...prenda.etiquetas, ...(pa.etiquetas || [])])] };
     return { ...p, prenda };
   }).filter((p) => p.prenda);
@@ -130,7 +131,11 @@ export function comentar(juez, atuendo, tema, idx, abiertas, coloresAbiertos) {
 
   if (juez === "detalle") {
     const accBuenos = items.filter((it) => it.prenda.lugar && encaje(it.prenda, tema) >= 2);
-    const pos = accBuenos.length ? `¡${mayuscula(conEl(accBuenos[0].prenda))} ${es(accBuenos[0].prenda)} el toque perfecto!`
+    // Un diseño del Taller (#80): Don Detalle lo nota (solo el comentario; la fórmula no cambia)
+    const propio = items.find((it) => it.prenda.diseno);
+    const pron = (p) => (p.genero === "f" ? "la" : "lo") + (p.plural ? "s" : "");
+    const pos = propio ? `¿${mayuscula(tu(propio.prenda))} ${propio.prenda.es} «${propio.prenda.nombre}» ${pron(propio.prenda)} hiciste tú? ¡Qué original!`
+      : accBuenos.length ? `¡${mayuscula(conEl(accBuenos[0].prenda))} ${es(accBuenos[0].prenda)} el toque perfecto!`
       : k.completo === 1 ? "¡No te faltó nada, de la cabeza a los pies!"
       : atuendo.peinado ? `¡Qué ${concuerda("bonito", idx.prendas.get(atuendo.peinado.id))} ${idx.prendas.get(atuendo.peinado.id).es}!` : "¡Me gusta cómo caminas en la pasarela!";
     let mejora = null;

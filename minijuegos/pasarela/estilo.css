@@ -269,3 +269,63 @@ html[data-modo="tv"] .joy{display:none}
 @keyframes vuelta{50%{transform:scaleX(-1)}}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- Taller de diseño (#80) ---------- */
+.panel.taller{height:58vh}
+.pasos{display:flex;gap:.3rem;justify-content:space-between;margin:.45rem 0 .2rem}
+.paso{flex:1;display:flex;flex-direction:column;align-items:center;gap:.1rem;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:.25rem .1rem;font-weight:800;font-size:.75rem;min-height:2.6rem}
+.paso b{display:grid;place-items:center;width:1.4rem;height:1.4rem;border-radius:50%;background:var(--off);font-size:.8rem}
+.paso.sel{border-color:var(--rosa);background:#fff0f7}
+.paso.sel b{background:var(--rosa);color:#fff}
+.taller-cuerpo{flex:1;overflow:auto;padding:.2rem .15rem .4rem;min-height:0}
+.taller-cuerpo h3{font-size:1rem;margin:.55rem 0 .2rem}
+.taller-cuerpo h3 small,.opcion small,.lugar small{color:var(--muted);font-weight:700}
+.indicacion{text-align:center;font-weight:800;margin:.3rem 0}
+.prendas.moldes{overflow:visible}
+.opciones{display:grid;grid-template-columns:repeat(auto-fill, minmax(6.2rem, 1fr));gap:.5rem}
+.opcion{display:flex;flex-direction:column;align-items:center;background:var(--card);border:3px solid transparent;border-radius:18px;padding:.3rem;box-shadow:var(--sombra)}
+.opcion.sel{border-color:var(--rosa)}
+.opcion .mini-caja{width:4.4rem;height:4.4rem}
+.opcion .mini{width:100%;height:100%}
+.opcion .nombre{display:flex;flex-direction:column;align-items:center;font-weight:800;font-size:.85rem;line-height:1.1}
+.lugares{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center}
+.lugar{display:inline-flex;align-items:center;gap:.3rem;background:var(--card);border:3px solid var(--line);border-radius:999px;padding:.25rem .8rem;font-weight:800;min-height:2.6rem}
+.lugar span{display:flex;flex-direction:column;line-height:1.05}
+.lugar .ico{width:1.8rem;height:1.8rem;display:block}
+.lugar .ico svg,.lugar .ico img{width:100%;height:100%;background:var(--rosa);border-radius:6px}
+.lugar.sel{border-color:var(--rosa)}
+.estampados{display:flex;flex-wrap:wrap;gap:.45rem;justify-content:center;padding:.45rem 0}
+.estampado{width:3rem;height:3rem;padding:.2rem;border-radius:12px;border:3px solid rgba(43,34,54,.2);background:var(--rosa);box-shadow:var(--sombra)}
+.estampado svg,.estampado img{display:block;width:100%;height:100%}
+.estampado:first-child{background:var(--card)}
+.estampado.nuevo{background:var(--card)}
+.estampado.sel{border:4px solid var(--fg);transform:scale(1.1)}
+.campo{width:100%;font:inherit;font-size:1.3rem;font-weight:800;padding:.5rem .8rem;border-radius:16px;border:3px solid var(--line);background:var(--card);color:var(--fg)}
+.campo:focus{border-color:var(--rosa)}
+.sugeridos{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin:.45rem 0}
+.chip{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:.35rem .8rem;font-weight:700;min-height:2.4rem}
+.temas-taller{display:grid;grid-template-columns:repeat(auto-fill, minmax(6.4rem, 1fr));gap:.45rem}
+.tema-btn{display:flex;flex-direction:column;align-items:center;gap:.15rem;background:var(--card);border:3px solid transparent;border-radius:16px;padding:.35rem;box-shadow:var(--sombra);font-weight:800;font-size:.8rem;line-height:1.1}
+.tema-btn svg{width:2.2rem;height:2.2rem}
+.tema-btn.sel{border-color:var(--rosa);background:#fff0f7}
+.coser{display:flex;gap:.8rem;align-items:center}
+.coser-mini{flex:none;width:7.5rem;height:7.5rem;background:var(--card);border-radius:20px;box-shadow:var(--sombra)}
+.coser-mini .mini{width:100%;height:100%}
+.coser h3{margin:0;font-size:1.3rem}
+.coser p{margin:.25rem 0}
+.coser .costo{display:block}
+.coser .costo svg{display:inline-block;width:1.4rem;height:1.4rem;vertical-align:-.35rem}
+.chip-mini{display:inline-flex;align-items:center;gap:.2rem;background:var(--card);border-radius:999px;padding:.1rem .5rem .1rem .2rem;font-weight:700;font-size:.85rem}
+.chip-mini svg{width:1.3rem;height:1.3rem}
+.aviso-taller{background:#fff4cc;border-radius:16px;padding:.5rem .8rem;margin:.6rem 0;text-align:center}
+.taller-pie{display:flex;justify-content:space-between;gap:.5rem;padding-top:.35rem}
+.boton[disabled]{opacity:.5;pointer-events:none}
+.confirmar h2 svg{width:2.2rem;height:2.2rem;vertical-align:middle}
+.guia-pasos{text-align:left;padding:0;margin:.4rem 0 .8rem;list-style:none;display:flex;flex-direction:column;gap:.45rem}
+.guia-pasos li{display:flex;align-items:center;gap:.6rem}
+.guia-pasos .ico{flex:none;width:2.4rem;height:2.4rem}
+.prendas .vacio{grid-column:1/-1}
+.vacio{text-align:center;color:var(--muted);padding:.4rem 1rem}
+.centro{text-align:center;justify-content:center}
+@media (prefers-color-scheme:dark){.paso.sel,.tema-btn.sel{background:#3d2b45}.aviso-taller{background:#4a3f20}}
+@media (min-aspect-ratio:23/20){.panel.taller{height:auto}}

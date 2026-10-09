@@ -1,0 +1,171 @@
+{
+  "_ayuda": "Moldes del Taller de diseño (#80). Cada molde es una prenda base con controles de opciones (no números: corta / media / larga). Una opción pone valores en variables ($nombre) que usan las piezas; 'variables' con 'por' son tablas que dependen de dos controles. 'solo' deja una pieza solo con ciertas opciones. 'sobre' pone una pieza encima de otra ('pieza': su 'nombre', 'desde'/'hasta': fracción de su alto, de arriba a abajo): el taller calcula su y y su radio (un poco más que la de abajo), así un listón o una calcomanía nunca se hunden en la tela, sea cual sea el largo o el vuelo. lugares: dónde se pueden poner calcomanías (en2d: centro y tamaño en el dibujo 2D). La prueba recorre todas las combinaciones de cada molde: ninguna puede quedar más delgada que la ropa que ya existe en cada parte del cuerpo. Cómo hacer uno: docs/ASSETS.md § G.",
+  "moldes": [
+    {
+      "id": "playera", "categoria": "arriba", "es": "playera", "en": "T-shirt", "genero": "f",
+      "controles": [
+        { "id": "mangas", "es": "Mangas", "en": "sleeves", "opciones": [
+          { "id": "sin", "es": "sin mangas", "en": "sleeveless", "valores": { "alto": 0.34, "tapa": null }, "dibujo2d": "tirantes", "prenda": { "es": "blusa", "en": "tank top" } },
+          { "id": "cortas", "es": "cortas", "en": "short sleeves", "valores": { "alto": 0.42, "tapa": "arriba" }, "dibujo2d": "camiseta" },
+          { "id": "largas", "es": "largas", "en": "long sleeves", "valores": { "alto": 0.42, "tapa": "arriba" }, "dibujo2d": "sueter", "prenda": { "es": "playera de manga larga", "en": "long-sleeved shirt" } }
+        ] },
+        { "id": "largo", "es": "Largo", "en": "length", "opciones": [
+          { "id": "corta", "es": "corta", "en": "cropped", "valores": { "abajo": 0.1 } },
+          { "id": "normal", "es": "normal", "en": "regular", "valores": { "abajo": -0.05 } },
+          { "id": "larga", "es": "larga", "en": "long", "valores": { "abajo": -0.08 } }
+        ] }
+      ],
+      "inicial": { "mangas": "cortas", "largo": "normal" },
+      "piezas": [
+        { "nombre": "cuerpo", "f": "tubo", "a": "torso", "y": ["$alto", "$abajo"], "r": [0.168, 0.168], "z": 0.74, "tapa": "$tapa", "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.37, 0], "tam": [0.04, 0.07, 0.25], "col": "p", "espejo": true, "solo": { "mangas": ["sin"] } },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.11], "r": [0.062, 0.058], "col": "p", "espejo": true, "solo": { "mangas": ["cortas"] } },
+        { "f": "tubo", "a": "brazoI", "y": [0.03, -0.2], "r": [0.064, 0.058], "col": "p", "espejo": true, "solo": { "mangas": ["largas"] } },
+        { "f": "tubo", "a": "antebrazoI", "y": [0.01, -0.16], "r": [0.058, 0.054], "col": "p", "espejo": true, "solo": { "mangas": ["largas"] } },
+        { "f": "toro", "a": "torso", "pos": [0, 0.425, 0], "r": 0.07, "grosor": 0.02, "rot": [90, 0, 0], "esc": [1, 0.8, 1], "col": "s", "solo": { "mangas": ["cortas", "largas"] } }
+      ],
+      "lugares": [
+        { "id": "pecho", "es": "pecho", "en": "chest", "pieza": "cuerpo", "desde": 0.12, "hasta": 0.62, "ancho": 0.17, "en2d": [{ "x": 100, "y": 160, "tam": 32 }] },
+        { "id": "espalda", "es": "espalda", "en": "back", "pieza": "cuerpo", "desde": 0.1, "hasta": 0.7, "ancho": 0.19, "lado": "espalda" }
+      ]
+    },
+    {
+      "id": "vestido", "categoria": "vestido", "es": "vestido", "en": "dress", "genero": "m",
+      "controles": [
+        { "id": "largo", "es": "Largo", "en": "length", "opciones": [
+          { "id": "corto", "es": "corto", "en": "short", "valores": { "abajo": -0.27 }, "dibujo2d": "v-verano", "prenda": { "es": "vestido corto", "en": "short dress" } },
+          { "id": "medio", "es": "medio", "en": "midi", "valores": { "abajo": -0.46 }, "dibujo2d": "v-fiesta" },
+          { "id": "largo", "es": "largo", "en": "long", "valores": { "abajo": -0.72 }, "dibujo2d": "v-princesa", "prenda": { "es": "vestido largo", "en": "long dress" } }
+        ] },
+        { "id": "vuelo", "es": "Vuelo", "en": "flare", "opciones": [
+          { "id": "pegado", "es": "pegado", "en": "fitted" },
+          { "id": "amplio", "es": "amplio", "en": "flared" },
+          { "id": "princesa", "es": "de princesa", "en": "princess" }
+        ] },
+        { "id": "mangas", "es": "Mangas", "en": "sleeves", "opciones": [
+          { "id": "sin", "es": "sin mangas", "en": "sleeveless" },
+          { "id": "globo", "es": "de globo", "en": "puff sleeves" }
+        ] }
+      ],
+      "variables": {
+        "rAbajo": { "por": ["largo", "vuelo"], "valores": {
+          "corto": { "pegado": 0.22, "amplio": 0.3, "princesa": 0.37 },
+          "medio": { "pegado": 0.25, "amplio": 0.37, "princesa": 0.45 },
+          "largo": { "pegado": 0.29, "amplio": 0.42, "princesa": 0.52 } } }
+      },
+      "inicial": { "largo": "corto", "vuelo": "amplio", "mangas": "sin" },
+      "piezas": [
+        { "nombre": "cuerpo", "f": "tubo", "a": "torso", "y": [0.36, -0.04], "r": [0.164, 0.168], "z": 0.74, "col": "p" },
+        { "f": "caja", "a": "torso", "pos": [0.085, 0.38, 0], "tam": [0.03, 0.06, 0.25], "col": "p", "espejo": true, "solo": { "mangas": ["sin"] } },
+        { "f": "esfera", "a": "brazoI", "pos": [0.01, -0.04, 0], "r": 0.09, "col": "p", "espejo": true, "solo": { "mangas": ["globo"] } },
+        { "nombre": "falda", "f": "tubo", "a": "cadera", "y": [0.04, "$abajo"], "r": [0.172, "$rAbajo"], "z": 0.9, "col": "p" },
+        { "f": "tubo", "sobre": { "pieza": "falda", "desde": 0.86, "hasta": 0.93 }, "col": "s" },
+        { "f": "toro", "a": "torso", "pos": [0, 0.36, 0], "r": 0.15, "grosor": 0.012, "rot": [90, 0, 0], "esc": [1, 0.74, 1], "col": "s" }
+      ],
+      "lugares": [
+        { "id": "pecho", "es": "pecho", "en": "chest", "pieza": "cuerpo", "desde": 0.1, "hasta": 0.6, "ancho": 0.15, "en2d": [{ "x": 100, "y": 158, "tam": 28 }] },
+        { "id": "falda", "es": "falda", "en": "skirt", "pieza": "falda", "desde": 0.3, "hasta": 0.75, "ancho": 0.22, "en2d": [{ "x": 100, "y": 238, "tam": 34 }] },
+        { "id": "espalda", "es": "espalda", "en": "back", "pieza": "cuerpo", "desde": 0.1, "hasta": 0.7, "ancho": 0.19, "lado": "espalda" }
+      ]
+    },
+    {
+      "id": "falda", "categoria": "abajo", "es": "falda", "en": "skirt", "genero": "f",
+      "controles": [
+        { "id": "largo", "es": "Largo", "en": "length", "opciones": [
+          { "id": "corta", "es": "corta", "en": "short", "valores": { "abajo": -0.24 }, "dibujo2d": "falda", "prenda": { "es": "falda corta", "en": "short skirt" } },
+          { "id": "media", "es": "media", "en": "midi", "valores": { "abajo": -0.42 }, "dibujo2d": "falda" },
+          { "id": "larga", "es": "larga", "en": "long", "valores": { "abajo": -0.62 }, "dibujo2d": "falda-larga", "prenda": { "es": "falda larga", "en": "long skirt" } }
+        ] },
+        { "id": "vuelo", "es": "Vuelo", "en": "flare", "opciones": [
+          { "id": "pegada", "es": "pegada", "en": "fitted" },
+          { "id": "amplia", "es": "amplia", "en": "flared" },
+          { "id": "princesa", "es": "de princesa", "en": "princess" }
+        ] }
+      ],
+      "variables": {
+        "rAbajo": { "por": ["largo", "vuelo"], "valores": {
+          "corta": { "pegada": 0.21, "amplia": 0.28, "princesa": 0.34 },
+          "media": { "pegada": 0.24, "amplia": 0.33, "princesa": 0.41 },
+          "larga": { "pegada": 0.27, "amplia": 0.37, "princesa": 0.45 } } }
+      },
+      "inicial": { "largo": "corta", "vuelo": "amplia" },
+      "piezas": [
+        { "nombre": "falda", "f": "tubo", "a": "cadera", "y": [0.04, "$abajo"], "r": [0.17, "$rAbajo"], "z": 0.86, "col": "p" },
+        { "f": "tubo", "sobre": { "pieza": "falda", "desde": 0.86, "hasta": 0.94 }, "col": "s" },
+        { "f": "tubo", "sobre": { "pieza": "falda", "desde": 0.0, "hasta": 0.08 }, "col": "s" }
+      ],
+      "lugares": [
+        { "id": "frente", "es": "frente", "en": "front", "pieza": "falda", "desde": 0.2, "hasta": 0.72, "ancho": 0.2, "en2d": [{ "x": 100, "y": 238, "tam": 30 }] },
+        { "id": "atras", "es": "atrás", "en": "back", "pieza": "falda", "desde": 0.2, "hasta": 0.72, "ancho": 0.2, "lado": "espalda" }
+      ]
+    },
+    {
+      "id": "pantalon", "categoria": "abajo", "es": "pantalón", "en": "pants", "genero": "m", "enPlural": true,
+      "controles": [
+        { "id": "largo", "es": "Largo", "en": "length", "opciones": [
+          { "id": "shorts", "es": "shorts", "en": "shorts", "valores": { "musloAbajo": -0.15, "rMuslo": 0.085 }, "dibujo2d": "shorts", "prenda": { "es": "shorts", "en": "shorts", "plural": true } },
+          { "id": "pescador", "es": "a la rodilla", "en": "capri", "valores": { "musloAbajo": -0.35, "rMuslo": 0.072, "piernaAbajo": -0.13 }, "dibujo2d": "pantalon", "prenda": { "es": "pantalón pescador", "en": "capri pants" } },
+          { "id": "largo", "es": "largo", "en": "long", "valores": { "musloAbajo": -0.35, "rMuslo": 0.072, "piernaAbajo": -0.27 }, "dibujo2d": "pantalon" }
+        ] },
+        { "id": "corte", "es": "Corte", "en": "cut", "opciones": [
+          { "id": "recto", "es": "recto", "en": "straight", "valores": { "rPierna": 0.067 } },
+          { "id": "acampanado", "es": "acampanado", "en": "flared", "valores": { "rPierna": 0.095 } }
+        ] }
+      ],
+      "inicial": { "largo": "largo", "corte": "recto" },
+      "piezas": [
+        { "nombre": "cadera", "f": "tubo", "a": "cadera", "y": [0.03, -0.1], "r": [0.168, 0.172], "z": 0.78, "col": "p" },
+        { "nombre": "muslo", "f": "tubo", "a": "musloI", "y": [0.02, "$musloAbajo"], "r": [0.088, "$rMuslo"], "col": "p", "espejo": true },
+        { "f": "esfera", "a": "piernaI", "pos": [0, 0, 0], "r": 0.072, "col": "p", "espejo": true, "solo": { "largo": ["pescador", "largo"] } },
+        { "f": "tubo", "a": "piernaI", "y": [0.01, "$piernaAbajo"], "r": [0.068, "$rPierna"], "col": "p", "espejo": true, "solo": { "largo": ["pescador", "largo"] } },
+        { "f": "tubo", "sobre": { "pieza": "cadera", "desde": 0.0, "hasta": 0.25 }, "col": "s" }
+      ],
+      "lugares": [
+        { "id": "piernas", "es": "piernas", "en": "legs", "pieza": "muslo", "desde": 0.15, "hasta": 0.6, "ancho": 0.09, "espejo": true, "en2d": [{ "x": 82, "y": 250, "tam": 16 }, { "x": 118, "y": 250, "tam": 16 }] }
+      ]
+    },
+    {
+      "id": "zapatos", "categoria": "zapatos", "es": "zapatos", "en": "shoes", "genero": "m", "plural": true, "enPlural": true,
+      "controles": [
+        { "id": "alto", "es": "Alto", "en": "height", "opciones": [
+          { "id": "bajos", "es": "bajos", "en": "low", "dibujo2d": "tenis", "prenda": { "es": "tenis", "en": "sneakers" } },
+          { "id": "botines", "es": "botines", "en": "ankle boots", "valores": { "botaArriba": -0.17 }, "dibujo2d": "botas", "prenda": { "es": "botines", "en": "ankle boots" } },
+          { "id": "botas", "es": "botas", "en": "boots", "valores": { "botaArriba": -0.03 }, "dibujo2d": "botas", "prenda": { "es": "botas", "en": "boots", "genero": "f" } }
+        ] },
+        { "id": "suela", "es": "Suela", "en": "sole", "opciones": [
+          { "id": "plana", "es": "plana", "en": "flat", "valores": { "suela": 0.035, "ySuela": -0.12 } },
+          { "id": "gruesa", "es": "gruesa", "en": "platform", "valores": { "suela": 0.07, "ySuela": -0.135 } }
+        ] }
+      ],
+      "inicial": { "alto": "bajos", "suela": "plana" },
+      "piezas": [
+        { "f": "caja", "a": "pieI", "pos": [0, -0.06, 0.045], "tam": [0.135, 0.115, 0.25], "col": "p", "espejo": true },
+        { "f": "caja", "a": "pieI", "pos": [0, "$ySuela", 0.05], "tam": [0.145, "$suela", 0.27], "col": "s", "espejo": true },
+        { "f": "tubo", "a": "piernaI", "y": ["$botaArriba", -0.31], "r": [0.072, 0.074], "col": "p", "espejo": true, "solo": { "alto": ["botines", "botas"] } }
+      ],
+      "lugares": []
+    },
+    {
+      "id": "gorra", "categoria": "accesorio", "lugar": "cabeza", "es": "gorra", "en": "cap", "genero": "f",
+      "controles": [
+        { "id": "visera", "es": "Visera", "en": "visor", "opciones": [
+          { "id": "adelante", "es": "adelante", "en": "forward", "valores": { "vz": 0.2, "inclina": -10 } },
+          { "id": "atras", "es": "atrás", "en": "backward", "valores": { "vz": -0.2, "inclina": 10 } }
+        ] },
+        { "id": "remate", "es": "Arriba", "en": "top", "opciones": [
+          { "id": "boton", "es": "botón", "en": "button" },
+          { "id": "pompon", "es": "pompón", "en": "pompom" }
+        ] }
+      ],
+      "inicial": { "visera": "adelante", "remate": "boton" },
+      "piezas": [
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.215, 0], "r": 0.238, "theta": [0, 64], "col": "p" },
+        { "f": "disco", "a": "cabeza", "pos": [0, 0.315, "$vz"], "r": 0.15, "alto": 0.016, "esc": [1, 1, 0.75], "rot": ["$inclina", 0, 0], "col": "p" },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.453, 0], "r": 0.022, "col": "s", "solo": { "remate": ["boton"] } },
+        { "f": "esfera", "a": "cabeza", "pos": [0, 0.47, 0], "r": 0.06, "col": "s", "solo": { "remate": ["pompon"] } }
+      ],
+      "dibujo2d": "gorra",
+      "lugares": []
+    }
+  ]
+}

@@ -484,3 +484,185 @@ test("patrones: el panel enseña los patrones abiertos y la pantalla de nivel lo
   const svg = dibujarMuneca(A.poner(A.atuendoVacio(), idx.prendas.get("a-camiseta-osito"), "rosa", "cebra"), idx, { piel: "#ffd9c0", base: "#cbbfe6" });
   assert.match(svg, /<pattern id="pt-cebra/); assert.match(svg, /url\(#pt-cebra/); assert.doesNotMatch(svg, /undefined|NaN|\{[pstmc]\}/);
 });
+
+// ---------- Taller de diseño (#80) ----------
+
+const T = await import("../src/taller.js");
+const combos = (m) => m.controles.reduce((acc, c) => acc.flatMap((a) => c.opciones.map((o) => ({ ...a, [c.id]: o.id }))), [{}]);
+
+test("taller: ningún ajuste de ningún molde queda más delgado que la ropa que ya existe (no traspasa el cuerpo)", () => {
+  // Lo más delgado que ya usa la ropa del catálogo en cada ancla (tubos del color principal): eso ya se probó a ojo
+  const minimo = {};
+  for (const p of D.prendas.prendas) for (const pz of p.piezas || []) {
+    if (pz.f !== "tubo" || pz.col !== "p" || !pz.a) continue;
+    minimo[pz.a] = Math.min(minimo[pz.a] ?? Infinity, ...pz.r);
+  }
+  let revisadas = 0;
+  for (const m of idx.moldes.values()) {
+    const lugares = (m.lugares || []).map((l) => ({ estampado: "osito", lugar: l.id }));
+    for (const aj of combos(m)) {
+      const piezas = T.piezasDe(m, aj, lugares);
+      const donde = `${m.id} ${JSON.stringify(aj)}`;
+      for (const pz of piezas) {
+        if (pz.f === "tubo" && pz.col === "p") {
+          assert.ok(pz.a in minimo, `${donde}: ancla ${pz.a} sin referencia`);
+          assert.ok(Math.min(...pz.r) >= minimo[pz.a] - 1e-9, `${donde}: tubo en ${pz.a} de radio ${pz.r} (lo más delgado que existe: ${minimo[pz.a]})`);
+          assert.ok(pz.y[0] > pz.y[1], `${donde}: y de arriba a abajo`);
+        }
+        for (const k of ["y", "r", "pos", "tam"]) if (pz[k]) for (const x of [].concat(pz[k])) assert.ok(Number.isFinite(x), `${donde}: ${k} sin variable resuelta`);
+        revisadas++;
+      }
+      // Lo que va encima (listones y calcomanías) siempre queda por fuera de la tela de abajo
+      const tubos = piezas.filter((pz) => pz.f === "tubo" && pz.col === "p");
+      for (const q of piezas.filter((pz) => pz.f === "calca" || (pz.f === "tubo" && pz.col === "s"))) {
+        const base = tubos.find((t) => t.a === q.a && t.y[0] >= q.y[0] - 1e-9 && t.y[1] <= q.y[1] + 1e-9);
+        if (!base) continue;
+        for (const [y, r] of [[q.y[0], q.r[0]], [q.y[1], q.r[1]]]) {
+          const t = (base.y[0] - y) / (base.y[0] - base.y[1]);
+          const rb = base.r[0] + (base.r[1] - base.r[0]) * t;
+          assert.ok(r > rb, `${donde}: ${q.f} a y ${y} (r ${r}) se hunde en la tela (r ${rb})`);
+        }
+      }
+      assert.equal(piezas.filter((pz) => pz.f === "calca").length, lugares.length, `${donde}: una calcomanía por lugar`);
+    }
+  }
+  assert.ok(revisadas > 100);
+});
+
+test("taller: cada combinación se arma en 3D con menos de 6000 triángulos y tiene dibujo 2D", async () => {
+  const { crearAvatar } = await import("../../../kit/3d/avatar.js");
+  const av = crearAvatar({ piel: "#ffd9c0", base: D.config.colorBase });
+  for (const m of idx.moldes.values()) for (const aj of combos(m)) {
+    const d = T.limpiarDiseno({ id: "d-prueba", molde: m.id, ajustes: aj, color: "rosa", patron: "cebra", calcas: (m.lugares || []).map((l) => ({ estampado: "osito", lugar: l.id })), nombre: "Prueba", temas: ["playa"] }, idx);
+    const p = T.prendaDeDiseno(d, idx);
+    assert.ok(FIGURAS_2D.includes(p.dibujo2d), `${m.id} ${JSON.stringify(aj)}: figura 2D ${p.dibujo2d}`);
+    T.registrarDisenos(idx, [d]);
+    av.vestir(A.poner(A.atuendoVacio(), p, "rosa"), idx);
+    let tris = 0;
+    av.raiz.traverse((o) => { if (o.isMesh && o.userData.prenda) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+    assert.ok(tris > 0 && tris < 6000, `${m.id}: ${tris} triángulos`);
+    assert.doesNotMatch(miniPrenda(p, "rosa", idx), /undefined|NaN/);
+  }
+  T.registrarDisenos(idx, []);
+});
+
+test("taller: un diseño se vuelve prenda (nombre, temas → etiquetas, patrón fijo, estampados 2D)", () => {
+  const d = T.limpiarDiseno({ id: "d-abc", molde: "vestido", ajustes: { largo: "largo", vuelo: "princesa" }, color: "lila", secundario: "dorado", patron: "estrellas",
+    calcas: [{ estampado: "estrella", lugar: "falda" }, { estampado: "osito", lugar: "falda" }, { estampado: "corazon", lugar: "pecho" }], nombre: "  Estrellita\n<b> ", temas: ["princesa", "gala", "playa"] }, idx);
+  assert.equal(d.nombre, "Estrellita b");
+  assert.deepEqual(d.temas, ["princesa", "gala"]);
+  assert.equal(d.calcas.length, 2, "una calcomanía por lugar");
+  const p = T.prendaDeDiseno(d, idx);
+  assert.equal(p.categoria, "vestido"); assert.equal(p.es, "vestido largo"); assert.equal(p.en, "long dress"); assert.equal(p.nombre, "Estrellita b");
+  assert.equal(p.patronFijo, "estrellas"); assert.equal(aceptaPatron(p, D.config), false);
+  assert.ok(p.etiquetas.includes("princesa") && p.etiquetas.includes("elegante"), p.etiquetas.join());
+  assert.equal(p.estampado2d.length, 2);
+  T.registrarDisenos(idx, [d]);
+  const a = A.poner(A.atuendoVacio(), p, "lila");
+  assert.equal(A.fraseIngles(a, idx), 'a lilac star print long dress called "Estrellita b"');
+  // La jueza del tema: va perfecto con los temas que escogió
+  assert.equal(encaje(T.prendaDeDiseno(d, idx), idx.temas.get("princesa")), 3);
+  const svg = dibujarMuneca(a, idx, { piel: "#ffd9c0", base: "#cbbfe6" });
+  assert.match(svg, /pt-estrellas/); assert.doesNotMatch(svg, /undefined|NaN/);
+  // Registrar de nuevo quita los de antes
+  T.registrarDisenos(idx, []);
+  assert.equal(idx.prendas.has("d-abc"), false);
+  assert.equal(T.limpiarDiseno({ molde: "no-existe" }, idx), null);
+  assert.equal(T.limpiarDiseno(null, idx), null);
+  const raro = T.limpiarDiseno({ molde: "falda", ajustes: { largo: "kilométrica" }, color: "fosforescente", calcas: [{ estampado: "x", lugar: "frente" }, "basura"], temas: "playa" }, idx);
+  assert.deepEqual(raro.ajustes, { largo: "corta", vuelo: "amplia" }); assert.equal(raro.calcas.length, 0); assert.deepEqual(raro.temas, []);
+  assert.ok(idx.colores.has(raro.color)); assert.match(raro.id, /^d-/);
+});
+
+test("taller: espacios por nivel y nombres sugeridos", () => {
+  assert.equal(T.espacios(0, D.config), D.config.taller.espacios);
+  assert.equal(T.espacios(D.config.taller.espacioCadaNiveles, D.config), D.config.taller.espacios + 1);
+  assert.equal(T.espacios(1000, D.config), D.config.taller.maxEspacios);
+  const d = T.limpiarDiseno({ molde: "playera", color: "blanco", patron: "cebra", calcas: [{ estampado: "osito", lugar: "pecho" }], temas: ["playa"] }, idx);
+  const s = T.nombresSugeridos(d, idx);
+  assert.ok(s.length >= 3 && s.length <= 4);
+  assert.ok(s.includes("Mi playera")); assert.ok(s.includes("Playera de cebra")); assert.ok(s.includes("Playera del osito"));
+  for (const n of s) assert.ok(n.length <= D.config.taller.maxNombre);
+  assert.ok(T.nombresSugeridos({ ...d, temas: [], patron: null, calcas: [] }, idx).includes("Playera blanca"));
+});
+
+test("taller: progreso v1 → v2, los diseños sobreviven y lo guardado cabe en la nube", () => {
+  const v1 = { v: 1, puntos: 40, pasarelas: 3, vistos: ["a-camiseta"], atuendos: [], piel: 1, ultimo: { arriba: { id: "a-camiseta", color: "rosa" }, accesorios: {} }, ultimoTema: "playa" };
+  const p1 = PR.leerProgreso(v1, idx);
+  assert.equal(p1.v, 2); assert.deepEqual(p1.disenos, []); assert.equal(p1.borrador, null); assert.equal(p1.puntos, 40);
+  // Con un diseño puesto
+  const d = T.limpiarDiseno({ id: "d-uno", molde: "falda", color: "rosa", nombre: "Mi falda" }, idx);
+  const guardado = JSON.parse(JSON.stringify({ ...p1, disenos: [d, d, { molde: "borrado" }], borrador: { molde: "gorra" },
+    ultimo: { abajo: { id: "d-uno", color: "rosa" }, arriba: { id: "d-otro", color: "rosa" }, accesorios: {} } }));
+  const p2 = PR.leerProgreso(guardado, idx);
+  assert.equal(p2.disenos.length, 1, "sin repetidos ni moldes que ya no existen");
+  assert.equal(p2.borrador.molde, "gorra");
+  assert.equal(p2.ultimo.abajo.id, "d-uno"); assert.equal(p2.ultimo.arriba, null);
+  assert.ok(idx.prendas.has("d-uno"));
+  // Lo más grande que se puede guardar: todos los espacios con nombres largos y todas las calcomanías, y el clóset lleno de diseños
+  const max = D.config.taller.maxEspacios, cal = (m) => (m.lugares || []).map((l) => ({ estampado: "arcoiris", lugar: l.id }));
+  const disenos = Array.from({ length: max }, (_, i) => T.limpiarDiseno({ id: "d-" + "x".repeat(20) + i, molde: "vestido", ajustes: {}, color: "turquesa", patron: "leopardo",
+    calcas: cal(idx.moldes.get("vestido")), nombre: "W".repeat(40), temas: ["campamento", "pijamada"], fecha: 1760000000000 }, idx));
+  const lleno = { ...PR.progresoNuevo(), disenos, borrador: disenos[0], vistos: [...idx.prendas.keys()].map((k) => k), atuendos: Array.from({ length: D.config.maxAtuendosGuardados }, () => ({ fecha: 1, tema: "playa", estrellas: [5, 5, 5], puntos: 15, atuendo: { vestido: { id: disenos[0].id, color: "turquesa" }, accesorios: {} } })) };
+  const txt = JSON.stringify(lleno);
+  assert.ok(txt.length < 20000, `${txt.length} caracteres (la nube acepta 200 000)`);
+  T.registrarDisenos(idx, []);
+});
+
+test("taller: la pantalla de cada paso y Mis diseños se arman sin huecos", async () => {
+  const P = await import("../src/ui/pantallas.js");
+  const ab = PR.abiertosHasta(5, idx.niveles);
+  const d = T.limpiarDiseno({ molde: "playera", color: "rosa", patron: "rayas", calcas: [{ estampado: "osito", lugar: "pecho" }], nombre: "", temas: ["playa"] }, idx);
+  for (const paso of P.PASOS_TALLER.map((x) => x.id)) {
+    const html = P.taller({ idx, diseno: d, paso, ab, saldo: 3, costo: 5, libres: 2, total: 4, lugar: "pecho", girar: true });
+    assert.doesNotMatch(html, /undefined|NaN|\[object/, paso);
+    assert.match(html, /data-accion="t-paso"/);
+  }
+  const coser = P.taller({ idx, diseno: d, paso: "coser", ab, saldo: 3, costo: 5, libres: 2, total: 4, lugar: null, girar: false });
+  assert.match(coser, /Te faltan <b>2<\/b> créditos/); assert.match(coser, /disabled/);
+  assert.match(P.taller({ idx, diseno: d, paso: "coser", ab, saldo: 30, costo: 5, libres: 0, total: 4, lugar: null, girar: false }), /Ya llenaste tus 4 espacios/);
+  assert.match(P.taller({ idx, diseno: d, paso: "decorar", ab, saldo: 30, costo: 5, libres: 1, total: 4, lugar: "pecho", girar: false }), /data-estampado="osito"/);
+  const zona = D.zonas.zonas.find((z) => z.disenos);
+  assert.match(P.panel({ zona, idx, atuendo: A.atuendoVacio(), ab, progreso: PR.progresoNuevo(), sel: null, voz: false }), /Aún no tienes diseños/);
+  const g = { ...d, id: "d-mio", nombre: "Rayitas" };
+  T.registrarDisenos(idx, [g]);
+  ab.prendas.add("d-mio");
+  const html = P.panel({ zona, idx, atuendo: A.atuendoVacio(), ab, progreso: PR.progresoNuevo(), sel: "d-mio", voz: false, espaciosTotal: 4 });
+  assert.match(html, /Rayitas/); assert.match(html, /1 de 4 espacios/); assert.match(html, /t-descoser/);
+  assert.doesNotMatch(html, /data-patron=/, "un diseño ya trae su patrón");
+  assert.match(P.guiaTaller({ costo: 5 }), /5 créditos/);
+  assert.match(P.confirmarDescoser(idx.prendas.get("d-mio")), /no regresan los créditos/);
+  T.registrarDisenos(idx, []);
+});
+
+test("taller: datos de un molde mal escrito se avisan", () => {
+  const malo = leer();
+  for (const { x } of arteDe(malo)) x.svg = "<svg/>";
+  const m = malo.moldes.moldes[0];
+  m.controles[0].opciones[0].valores = {}; // sin "alto": la pieza queda sin y
+  m.lugares.push({ id: "x", es: "x", en: "x", pieza: "no-existe", desde: 0.8, hasta: 0.2, ancho: 0.1 });
+  malo.moldes.moldes.push({ id: "Malo", categoria: "peinado", es: "x", en: "x", genero: "x", controles: [] });
+  const e = revisarDatos(malo).join("\n");
+  assert.match(e, /molde playera sin\/.* pieza 1/);
+  assert.match(e, /lugar x: "pieza" debe ser/); assert.match(e, /lugar x: desde < hasta/);
+  assert.match(e, /molde Malo: id en minúsculas/); assert.match(e, /molde Malo: de 1 a 3 controles/);
+});
+
+test("taller: el estudio tiene el Taller y Mis diseños, y se llega caminando", () => {
+  const taller = D.zonas.zonas.find((z) => z.accion === "taller"), mis = D.zonas.zonas.find((z) => z.disenos);
+  assert.ok(taller && mis);
+  for (const z of [taller, mis]) {
+    const ruta = M.rutaHacia({ x: -4, z: -2 }, z, mapa);
+    let a = { x: -4, z: -2 };
+    for (const b of ruta) { assert.ok(M.libre(a, b, mapa, CFG.radio), `${z.id}: ${JSON.stringify(a)} → ${JSON.stringify(b)}`); a = b; }
+  }
+});
+
+test("taller: Don Detalle nota un diseño propio (sin cambiar la calificación)", () => {
+  const d = T.limpiarDiseno({ id: "d-don", molde: "falda", color: "rosa", nombre: "Girasol", temas: ["playa"] }, idx);
+  T.registrarDisenos(idx, [d]);
+  const a = vestir([["p-cola", "cafe"], ["a-tirantes", "amarillo"], ["z-sandalias", "rosa"]]);
+  const con = A.poner(a, idx.prendas.get("d-don"), "rosa");
+  assert.match(comentar("detalle", con, idx.temas.get("playa"), idx).positivo, /¿Tu falda corta «Girasol» la hiciste tú\? ¡Qué original!/);
+  T.registrarDisenos(idx, []);
+});

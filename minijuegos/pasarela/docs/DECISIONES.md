@@ -130,3 +130,19 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 
 **Consecuencias.** Un patrón nuevo es un SVG de 64×64 y un renglón de JSON (ASSETS.md § F). La primera vez que aparece un patrón tarda un cuadro en pintarse (sale del color de fondo mientras carga). Memoria: 64 KB por patrón y color en uso. Sin `document` (pruebas) la ropa sale lisa: las pruebas revisan la lógica y el arte, y el aspecto se revisa en el navegador.
 
+## ADR 15 — Taller de diseño: moldes con opciones, diseños guardados como receta (#80)
+
+**Contexto.** Se pidió que Noelia diseñe su propia ropa en el juego y que coser cueste créditos. Riesgos: que una prenda salga rota (atravesando el cuerpo), que el diseño sea difícil con el control de la TV, y que lo guardado crezca.
+
+**Decisión.**
+- **Moldes con opciones, no deslizadores.** Cada control tiene 2 a 4 opciones con dibujo (corta / media / larga). Con opciones, una prueba puede revisar **todas** las combinaciones (son decenas), y en la TV se escoge con flechas. Con deslizadores habría infinitas medidas que revisar y serían difíciles con el control.
+- **Lo que va encima se calcula** (`sobre`): los listones y las calcomanías se ponen como fracción de la pieza de abajo, así no se hunden con ningún largo o vuelo.
+- **Calcomanías en lugares fijos** (pecho, espalda, falda, piernas), escogidos con botones, en el teléfono igual que en la TV. Arrastrar con el dedo se dejó fuera: con la cámara girando y la ropa con vuelo es difícil hacerlo bien, y en la TV no se puede; los lugares fijos se ven bien siempre.
+- **El diseño se guarda como receta** (molde + opciones + colores + calcomanías + nombre + temas, unos 300 caracteres), no como piezas. Es chico para la nube y, si se mejora un molde, los diseños viejos mejoran solos.
+- **Temas como etiquetas, máximo 2.** Así su diseño compite justo: le va perfecto en sus temas y no en todos.
+- **Cuesta 5 créditos** al coser (más que una pasarela, 3, porque es para siempre). Diseñar y probar es gratis y el borrador se guarda solo, para que no haya miedo de salir.
+- **Espacios limitados** (4 + 1 cada 6 niveles, máximo 9): cada diseño se siente valioso y lo guardado no crece sin fin. Descoser libera el espacio sin devolver créditos.
+- **El reloj se para** en el taller: diseñar con prisa no es divertido.
+
+**Consecuencias.** Un molde nuevo es JSON (ASSETS.md § G) y la prueba dice si alguna combinación sale mal. Los diseños se agregan a `idx.prendas` al leer el progreso (también en el mundo del menú). Las prendas propias no salen en las sugerencias de los jueces (no están en `porCategoria`).
+

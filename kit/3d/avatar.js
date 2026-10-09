@@ -108,7 +108,7 @@ export function crearAvatar(op) {
         if (obj) { const an = prenda.ancla || "cabeza"; a[an].add(obj); puestas.push({ obj, ancla: an }); }
         continue;
       }
-      const extras = texturasDe(prenda, patron, colorDe, idx);
+      const extras = texturasDe(prenda, patron || prenda.patronFijo, colorDe, idx); // patronFijo: diseños del Taller (#80)
       for (const pz of prenda.piezas) {
         for (const q of pz.espejo ? [pz, reflejar(pz)] : [pz]) {
           const obj = crearPieza(q, colorDe, prenda, extras);

@@ -9,6 +9,7 @@ import { reloj } from "../partida.js";
 import { concuerda } from "../espanol.js";
 import { prendasDeZona, aceptaPatron } from "../datos.js";
 import { pintarSVG } from "../../../../kit/3d/pintar.js";
+import { prendaDeDiseno, ajustesDe, variante, nombresSugeridos } from "../taller.js";
 
 /** Ícono de una zona: el suyo (zonas.json → icono), el de su acción o el de su categoría */
 export const iconoZona = (z) => z.icono || (z.accion === "espejo" ? "espejo" : z.accion === "pasarela" ? "pasarela" : z.categorias[0]);
@@ -98,12 +99,12 @@ export function letrero(z) {
 
 /** Aviso abajo al acercarse a una zona */
 export function aviso(z, { libre, tv }) {
-  const txt = z.accion === "espejo" ? "Mirarme en el espejo" : z.accion === "pasarela" ? (libre ? "Salir del probador" : "¡A la pasarela!") : `Ver ${z.nombre.toLowerCase()}`;
+  const txt = z.accion === "espejo" ? "Mirarme en el espejo" : z.accion === "taller" ? "Diseñar ropa" : z.accion === "pasarela" ? (libre ? "Salir del probador" : "¡A la pasarela!") : `Ver ${z.nombre.toLowerCase()}`;
   return `<button class="aviso-zona" data-accion="zona" data-zona="${z.id}">${icono(iconoZona(z))}<span>${esc(txt)}</span>${tv ? "<kbd>OK</kbd>" : ""}</button>`;
 }
 
 /** Panel con la ropa de una zona (un perchero) */
-export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar, colorElegido = null, patronElegido = null }) {
+export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar, colorElegido = null, patronElegido = null, espaciosTotal = 0 }) {
   const prendas = prendasDeZona(zona, idx);
   const actual = sel && idx.prendas.get(sel);
   const colorSel = actual ? colorPuesto(atuendo, actual) || (colorElegido && coloresDe(actual, ab).includes(colorElegido) && colorElegido) || coloresDe(actual, ab)[0] : null;
@@ -124,13 +125,13 @@ export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar, color
     return `<button class="prenda${puesta ? " puesta" : ""}${p.id === sel ? " sel" : ""}" data-accion="prenda" data-prenda="${p.id}" data-foco${p.id === primera ? '="inicial"' : ""}
         aria-pressed="${!!puesta}" aria-label="${esc(p.es)}, en inglés ${esc(p.en)}">
       <span class="mini-caja">${miniPrenda(p, color, idx, patron)}${puesta ? `<i class="check">${icono("palomita")}</i>` : ""}${esNuevo(progreso, p.id) ? '<i class="badge">¡Nuevo!</i>' : ""}</span>
-      <span class="nombre">${esc(p.es)}</span><small lang="en">${esc(p.en)}</small></button>`;
+      <span class="nombre">${esc(p.nombre || p.es)}</span><small lang="en">${esc(p.en)}</small></button>`;
   }).join("");
   let colores = "";
   if (actual && ab.prendas.has(actual.id)) {
     const cs = coloresDe(actual, ab);
     const c = idx.colores.get(colorSel);
-    const pa = patronSel && idx.patrones.get(patronSel);
+    const pid = patronSel || actual.patronFijo, pa = pid && idx.patrones.get(pid); // patronFijo: diseños del Taller
     colores = `<div class="colores" role="group" aria-label="Colores">
       ${cs.map((cid) => { const cc = idx.colores.get(cid); return `<button class="color${cid === colorSel ? " sel" : ""}" data-accion="color" data-color="${cid}" data-foco style="--c:${cc.hex}" aria-label="${esc(cc.es)}, en inglés ${esc(cc.en)}" title="${esc(cc.es)} · ${esc(cc.en)}">${esNuevo(progreso, "c:" + cid) ? '<i class="punto-nuevo"></i>' : ""}</button>`; }).join("")}
     </div>
@@ -138,12 +139,21 @@ export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar, color
     <p class="ingles"><span lang="en"><b>${esc(c ? c.en : "")} ${pa ? esc(pa.en) + " " : ""}${esc(actual.en)}</b></span> = ${esc(actual.es)} ${esc(c ? colorConcuerda(c.es, actual) : "")}${pa ? " de " + esc(pa.es) : ""}
       ${voz ? `<button class="redondo chico" data-accion="decir" data-foco aria-label="Escuchar en inglés">${icono("bocina")}</button>` : ""}</p>`;
   }
+  // Mis diseños (#80): cuántos espacios lleva, y descoser el escogido
+  let disenos = "";
+  if (zona.disenos) {
+    const n = prendas.length;
+    disenos = n ? `<p class="nota chica centro">${n} de ${espaciosTotal || n} espacios usados.${actual ? "" : " Toca un diseño para ponértelo."}</p>
+      ${actual ? `<div class="fila centro">${boton("t-descoser", "Descoser", { clase: "chico", ico: "tijeras", extra: `data-prenda="${actual.id}"` })}</div>` : ""}`
+      : "";
+  }
+  const vacio = zona.disenos && !prendas.length ? `<p class="vacio">Aún no tienes diseños. Ve al <b>Taller de diseño</b> (la mesa con la máquina de coser) y crea tu propia ropa.</p>` : "";
   return `<div class="panel-cab"><h2>${icono(iconoZona(zona))}${esc(zona.nombre)}</h2>
       <span class="panel-botones">${girar ? `<button class="redondo" data-accion="girar" data-grados="-45" data-foco aria-label="Girar a la izquierda" title="Girar">${icono("girarIzq")}</button>
       <button class="redondo" data-accion="girar" data-grados="45" data-foco aria-label="Girar a la derecha" title="Girar">${icono("girarDer")}</button>` : ""}
       <button class="redondo" data-accion="cerrar-panel" data-foco aria-label="Listo">${icono("palomita")}</button></span></div>
-    <div class="prendas">${tarjetas}</div>
-    ${colores}
+    <div class="prendas">${tarjetas}${vacio}</div>
+    ${colores}${disenos}
     <p class="nota">Toca una prenda para ponértela; tócala otra vez para quitártela.${girar ? " Arrastra al personaje para girarlo." : ""}</p>`;
 }
 
@@ -255,3 +265,151 @@ export function error(msg, lista = []) {
     ${lista.length ? `<ul>${lista.slice(0, 12).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
     <div class="menu">${boton("ir-a-jugar", "Regresar", { clase: "grande", inicial: true })}</div></section>`;
 }
+
+// ---------- Taller de diseño (#80) ----------
+
+/** Los pasos del taller, en orden */
+export const PASOS_TALLER = [
+  { id: "molde", es: "Molde" }, { id: "forma", es: "Forma" }, { id: "decorar", es: "Decorar" }, { id: "nombre", es: "Nombre" }, { id: "coser", es: "Coser" },
+];
+
+const opcionTxt = (o) => `${esc(o.es)}<small lang="en">${esc(o.en)}</small>`;
+
+/** Un renglón de colores para el taller */
+function filaColores(lista, sel, accion, idx, etiqueta) {
+  return `<div class="colores" role="group" aria-label="${etiqueta}">${lista.map((cid) => {
+    const cc = idx.colores.get(cid);
+    return cc ? `<button class="color${cid === sel ? " sel" : ""}" data-accion="${accion}" data-color="${cid}" data-foco style="--c:${cc.hex}" aria-pressed="${cid === sel}" aria-label="${esc(cc.es)}, en inglés ${esc(cc.en)}" title="${esc(cc.es)} · ${esc(cc.en)}"></button>` : "";
+  }).join("")}</div>`;
+}
+
+/** Muestra de un estampado (SVG pintado, PNG o pixeles) para los botones */
+function muestraEstampado(e) {
+  if (!e) return `<svg viewBox="0 0 64 64"><path d="M14 14l36 36M50 14L14 50" stroke="#c9bba5" stroke-width="5" stroke-linecap="round"/></svg>`;
+  if (e.svg) return pintarSVG(e.svg, { p: "#ffffff" });
+  if (e.url) return `<img src="${esc(e.url)}" alt="">`;
+  if (e.pixeles) return `<svg viewBox="0 0 64 64">${miniPixeles(e.pixeles)}</svg>`;
+  return "";
+}
+
+function miniPixeles(px) {
+  const k = 64 / px.lado;
+  let r = "";
+  px.colores.forEach((c, i) => { if (c) r += `<rect x="${(i % px.lado) * k}" y="${Math.floor(i / px.lado) * k}" width="${k + 0.1}" height="${k + 0.1}" fill="${c}"/>`; });
+  return `<g shape-rendering="crispEdges">${r}</g>`;
+}
+
+/**
+ * El panel del taller.
+ * @param {{ idx, diseno, paso: string, ab, saldo: number|null, costo: number, libres: number, total: number, lugar: string|null, girar: boolean, faltan?: number|null }} o
+ */
+export function taller({ idx, diseno, paso, ab, saldo, costo, libres, total, lugar, girar, faltan = null }) {
+  const molde = idx.moldes.get(diseno.molde);
+  const prenda = prendaDeDiseno(diseno, idx);
+  const iPaso = PASOS_TALLER.findIndex((x) => x.id === paso);
+  const tabs = PASOS_TALLER.map((x, i) => `<button class="paso${x.id === paso ? " sel" : ""}" data-accion="t-paso" data-paso="${x.id}" data-foco aria-current="${x.id === paso ? "step" : "false"}"><b>${i + 1}</b><span>${x.es}</span></button>`).join("");
+  let cuerpo = "";
+  if (paso === "molde") {
+    cuerpo = `<p class="indicacion">¿Qué vas a coser?</p><div class="prendas moldes">${[...idx.moldes.values()].map((m) => {
+      const d2 = { ...diseno, molde: m.id, ajustes: ajustesDe(m, m.id === diseno.molde ? diseno.ajustes : {}), calcas: m.id === diseno.molde ? diseno.calcas : [] };
+      const pr = prendaDeDiseno(d2, idx);
+      return `<button class="prenda${m.id === diseno.molde ? " sel" : ""}" data-accion="t-molde" data-molde="${m.id}" data-foco${m.id === diseno.molde ? '="inicial"' : ""} aria-pressed="${m.id === diseno.molde}">
+        <span class="mini-caja">${miniPrenda(pr, diseno.color, idx)}</span><span class="nombre">${esc(m.es)}</span><small lang="en">${esc(m.en)}</small></button>`;
+    }).join("")}</div>`;
+  } else if (paso === "forma") {
+    const aj = ajustesDe(molde, diseno.ajustes);
+    cuerpo = molde.controles.map((c, ci) => `<div class="control"><h3>${esc(c.es)} <small lang="en">${esc(c.en)}</small></h3><div class="opciones">${c.opciones.map((o) => {
+      const pr = prendaDeDiseno({ ...diseno, ajustes: { ...aj, [c.id]: o.id } }, idx);
+      const on = aj[c.id] === o.id;
+      return `<button class="opcion${on ? " sel" : ""}" data-accion="t-opcion" data-control="${c.id}" data-opcion="${o.id}" data-foco${on && ci === 0 ? '="inicial"' : ""} aria-pressed="${on}">
+        <span class="mini-caja">${miniPrenda(pr, diseno.color, idx)}</span><span class="nombre">${opcionTxt(o)}</span></button>`;
+    }).join("")}</div></div>`).join("");
+  } else if (paso === "decorar") {
+    const colores = [...ab.colores];
+    const conS = molde.piezas.some((pz) => pz.col === "s");
+    const pats = [...idx.patrones.values()].filter((x) => ab.patrones.has(x.id) && x.svg);
+    const hex = (idx.colores.get(diseno.color) || {}).hex || "#cccccc";
+    const pat = (x) => {
+      const id = x ? x.id : "", on = (diseno.patron || "") === id;
+      return `<button class="patron${on ? " sel" : ""}" data-accion="t-patron" data-patron="${id}" data-foco aria-pressed="${on}" aria-label="${esc(x ? x.es : "lisa")}" title="${esc(x ? x.es + " · " + x.en : "lisa · plain")}">${x ? pintarSVG(x.svg, { p: hex }) : `<svg viewBox="0 0 64 64"><rect width="64" height="64" fill="${hex}"/></svg>`}</button>`;
+    };
+    const lugares = molde.lugares || [];
+    const lsel = lugares.find((l) => l.id === lugar) || lugares[0];
+    const puesta = lsel && (diseno.calcas.find((c) => c.lugar === lsel.id) || {}).estampado;
+    const ests = [...idx.estampados.values()].filter((e) => (ab.estampados.has(e.id) || e.propio) && (e.svg || e.url || e.pixeles));
+    cuerpo = `<h3>Color <small lang="en">color</small></h3>${filaColores(colores, diseno.color, "t-color", idx, "Color")}
+      ${conS ? `<h3>Detalles <small lang="en">trim</small></h3>${filaColores(colores, diseno.secundario, "t-secundario", idx, "Color de los detalles")}` : ""}
+      <h3>Patrón <small lang="en">pattern</small></h3><div class="patrones" role="group" aria-label="Patrones">${pat(null)}${pats.map(pat).join("")}</div>
+      ${lugares.length ? `<h3>Calcomanías <small lang="en">stickers</small></h3>
+        <div class="lugares" role="group" aria-label="Dónde va la calcomanía">${lugares.map((l) => {
+          const c = diseno.calcas.find((x) => x.lugar === l.id);
+          return `<button class="lugar${l === lsel ? " sel" : ""}" data-accion="t-lugar" data-lugar="${l.id}" data-foco aria-pressed="${l === lsel}">${c ? `<i class="ico">${muestraEstampado(idx.estampados.get(c.estampado))}</i>` : ""}<span>${opcionTxt(l)}</span></button>`;
+        }).join("")}</div>
+        <div class="estampados" role="group" aria-label="Calcomanías">${[null, ...ests].map((e) => {
+          const id = e ? e.id : "", on = (puesta || "") === id;
+          return `<button class="estampado${on ? " sel" : ""}" data-accion="t-estampado" data-estampado="${id}" data-foco aria-pressed="${on}" aria-label="${esc(e ? e.es : "sin calcomanía")}" title="${esc(e ? e.es + " · " + e.en : "ninguna")}">${muestraEstampado(e)}</button>`;
+        }).join("")}${ab.dibujar ? `<button class="estampado nuevo" data-accion="t-dibujar" data-foco aria-label="Dibujar una calcomanía" title="Dibujar">${icono("lapiz")}</button>` : ""}</div>` : `<p class="nota">A este molde no se le ponen calcomanías.</p>`}`;
+  } else if (paso === "nombre") {
+    const max = (idx.config.taller || {}).maxTemas || 2;
+    cuerpo = `<h3>¿Cómo se llama?</h3>
+      <input id="t-nombre" class="campo" type="text" maxlength="${(idx.config.taller || {}).maxNombre || 18}" value="${esc(diseno.nombre)}" placeholder="${esc(variante(molde, diseno.ajustes).es)}" data-foco autocomplete="off" enterkeyhint="done">
+      <div class="sugeridos">${nombresSugeridos(diseno, idx).map((n) => `<button class="chip" data-accion="t-nombre-sug" data-nombre="${esc(n)}" data-foco>${esc(n)}</button>`).join("")}</div>
+      <h3>¿Para qué temas es? <small>(${max} como mucho)</small></h3>
+      <div class="temas-taller">${[...idx.temas.values()].filter((t) => ab.temas.has(t.id)).map((t) => {
+        const on = diseno.temas.includes(t.id);
+        return `<button class="tema-btn${on ? " sel" : ""}" data-accion="t-tema" data-tema="${t.id}" data-foco aria-pressed="${on}">${icono(t.icono)}<span>${esc(t.nombre)}</span></button>`;
+      }).join("")}</div>
+      <p class="nota">Los jueces se fijan en esto: tu diseño va perfecto con los temas que escojas.</p>`;
+  } else {
+    const v = variante(molde, diseno.ajustes), c = idx.colores.get(diseno.color), pa = diseno.patron && idx.patrones.get(diseno.patron);
+    const en = [c && c.en, pa && pa.en, v.en].filter(Boolean).join(" ");
+    const lleno = libres <= 0;
+    const corto = saldo !== null && saldo < costo;
+    cuerpo = `<div class="coser">
+      <div class="coser-mini">${miniPrenda(prenda, diseno.color, idx)}</div>
+      <div><h3>${esc(diseno.nombre || v.es)}</h3>
+        <p class="ingles"><b lang="en">${esc(en)}</b></p>
+        <p>${diseno.temas.length ? diseno.temas.map((t) => { const tt = idx.temas.get(t); return tt ? `<span class="chip-mini">${icono(tt.icono)}${esc(tt.nombre)}</span>` : ""; }).join(" ") : `<span class="nota">Sin temas: escoge uno en el paso 4 para que les guste a los jueces.</span>`}</p>
+        <p class="costo">${icono("moneda")} Coser cuesta <b>${costo}</b> créditos${saldo !== null ? ` · tienes <b>${saldo}</b>` : ""}</p>
+        <p class="nota">Espacios en Mis diseños: ${total - libres} de ${total}.</p></div></div>
+      ${lleno ? `<p class="aviso-taller">Ya llenaste tus ${total} espacios. Descose un diseño en <b>Mis diseños</b> para hacer otro. Al subir de nivel tendrás más espacios.</p>`
+        : corto || faltan ? `<p class="aviso-taller">Te faltan <b>${faltan || costo - saldo}</b> créditos. Tu diseño se queda guardado: gana créditos en los otros juegos y regresa a coserlo.</p>` : ""}
+      <div class="menu">${boton("t-coser", `Coser · ${costo}`, { clase: "grande primario", ico: "hilo", inicial: true, extra: lleno || corto ? "disabled" : "" })}</div>`;
+  }
+  const anterior = PASOS_TALLER[iPaso - 1], siguiente = PASOS_TALLER[iPaso + 1];
+  return `<div class="panel-cab"><h2>${icono("taller")}Taller de diseño</h2>
+      <span class="panel-botones">${girar ? `<button class="redondo" data-accion="girar" data-grados="-45" data-foco aria-label="Girar a la izquierda" title="Girar">${icono("girarIzq")}</button>
+      <button class="redondo" data-accion="girar" data-grados="45" data-foco aria-label="Girar a la derecha" title="Girar">${icono("girarDer")}</button>` : ""}
+      <button class="redondo" data-accion="t-cerrar" data-foco aria-label="Salir del taller" title="Salir (tu diseño se guarda)">${icono("cerrar")}</button></span></div>
+    <nav class="pasos" aria-label="Pasos">${tabs}</nav>
+    <div class="taller-cuerpo">${cuerpo}</div>
+    <div class="taller-pie">${anterior ? boton("t-paso", "Atrás", { clase: "chico", extra: `data-paso="${anterior.id}"` }) : "<span></span>"}
+      ${siguiente ? boton("t-paso", "Siguiente", { clase: "chico primario", extra: `data-paso="${siguiente.id}"` }) : "<span></span>"}</div>`;
+}
+
+/** La primera vez en el taller: cómo se juega */
+export function guiaTaller({ costo }) {
+  const paso = (ico, txt) => `<li><i class="ico">${icono(ico)}</i><span>${txt}</span></li>`;
+  return `<div class="confirmar guia" role="dialog" aria-labelledby="tGuia">
+    <h2 id="tGuia">${icono("taller")} ¡Tu taller de diseño!</h2>
+    <ol class="guia-pasos">
+      ${paso("arriba", "Escoge un <b>molde</b>: playera, vestido, falda…")}
+      ${paso("girarDer", "Cambia su <b>forma</b>: corta o larga, con o sin mangas.")}
+      ${paso("estrella", "<b>Decórala</b> con colores, patrones y calcomanías.")}
+      ${paso("lapiz", "Ponle <b>nombre</b> y escoge para qué temas es.")}
+      ${paso("hilo", `<b>Cósela</b> por ${costo} créditos. ¡Queda en <b>Mis diseños</b> para siempre!`)}
+    </ol>
+    <p class="nota">Probar es gratis: lo que hagas se guarda aunque salgas.</p>
+    ${boton("t-guia-ok", "¡A diseñar!", { clase: "grande primario", inicial: true })}
+  </div>`;
+}
+
+/** ¿Descoser un diseño? */
+export function confirmarDescoser(p) {
+  return `<div class="confirmar" role="dialog" aria-labelledby="tDesc">
+    <h2 id="tDesc">¿Descoser «${esc(p.nombre || p.es)}»?</h2>
+    <p>Se libera su espacio, pero <b>no regresan los créditos</b> y ya no la vas a tener.</p>
+    <div class="fila">${boton("t-descoser-no", "No, me la quedo", { clase: "primario", inicial: true })}${boton("t-descoser-si", "Sí, descoser", { ico: "tijeras", extra: `data-prenda="${p.id}"` })}</div>
+  </div>`;
+}
+

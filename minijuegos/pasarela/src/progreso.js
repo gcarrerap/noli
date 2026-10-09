@@ -2,7 +2,7 @@
 // Lógica pura. Se guarda con Noli.guardar (el catálogo lo guarda y lo sincroniza con la nube).
 //
 //   progreso = {
-//     v: 1,                         // versión del formato (leerProgreso convierte versiones viejas)
+//     v: 2,                         // versión del formato (leerProgreso convierte versiones viejas; v1 no tenía diseños)
 //     puntos: 0,                    // puntos de estilo acumulados (nunca bajan)
 //     pasarelas: 0,                 // cuántas pasarelas con tema ha hecho
 //     vistos: [ids],                // prendas, colores ("c:rosa"), temas ("t:playa") y poses ("o:vuelta") que ya vio (lo demás abierto brilla como nuevo)
@@ -10,20 +10,34 @@
 //     piel: 0,                      // tono de piel del personaje (índice en config.tonosPiel)
 //     ultimo: null | atuendo,       // lo último que se puso (para empezar con eso)
 //     ultimoTema: null | id,        // para no repetir el mismo tema dos veces seguidas
+//     disenos: [diseno],            // lo que cosió en el Taller de diseño (#80; src/taller.js), el más viejo primero
+//     borrador: null | diseno,      // lo que estaba diseñando y no cosió (se guarda solo)
 //   }
 import { limpiar } from "./atuendo.js";
+import { limpiarDiseno, registrarDisenos } from "./taller.js";
+
+/** Versión del formato que escribe este código */
+export const VERSION_PROGRESO = 2;
 
 /** @returns {object} el progreso de alguien que nunca ha jugado */
-export const progresoNuevo = () => ({ v: 1, puntos: 0, pasarelas: 0, vistos: [], atuendos: [], piel: 0, ultimo: null, ultimoTema: null });
+export const progresoNuevo = () => ({ v: VERSION_PROGRESO, puntos: 0, pasarelas: 0, vistos: [], atuendos: [], piel: 0, ultimo: null, ultimoTema: null, disenos: [], borrador: null });
 
 /**
- * Lee lo guardado (puede ser null, de otra versión o venir roto) y regresa un progreso válido.
+ * Lee lo guardado (puede ser null, de otra versión o venir roto) y regresa un progreso válido. v1 → v2: sin
+ * diseños. OJO: registra los diseños en idx (taller.js → registrarDisenos) antes de revisar los atuendos, para que
+ * un atuendo con un diseño puesto no pierda esa prenda (también lo usa el mundo del menú principal).
  * @param {*} x
  * @param {object} idx índices de datos.js
  */
 export function leerProgreso(x, idx) {
   const p = progresoNuevo();
-  if (!x || typeof x !== "object") return p;
+  if (!x || typeof x !== "object") { registrarDisenos(idx, []); return p; }
+  if (Array.isArray(x.disenos)) {
+    const ids = new Set();
+    p.disenos = x.disenos.map((d) => limpiarDiseno(d, idx)).filter((d) => d && !ids.has(d.id) && ids.add(d.id));
+  }
+  if (x.borrador) p.borrador = limpiarDiseno(x.borrador, idx);
+  registrarDisenos(idx, p.disenos);
   if (Number.isInteger(x.puntos) && x.puntos >= 0) p.puntos = x.puntos;
   if (Number.isInteger(x.pasarelas) && x.pasarelas >= 0) p.pasarelas = x.pasarelas;
   if (Array.isArray(x.vistos)) p.vistos = x.vistos.filter((s) => typeof s === "string");

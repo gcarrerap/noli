@@ -137,6 +137,19 @@ function mueble(grupo, tipo, x, z, w, d, h, color) {
       add(new THREE.CylinderGeometry(0.08, 0.08, 0.03, 18), "#d3a6ff", 0, h * 0.72, 0.28);
       break;
     }
+    case "costura": {
+      // Taller de diseño (#80): mesa, máquina de coser, carretes de hilo y una tela doblada
+      add(new THREE.BoxGeometry(w, 0.08, d), color, 0, h - 0.04, 0);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(new THREE.CylinderGeometry(0.035, 0.035, h - 0.08, 8), "#c3c7d3", (sx * w) / 2.3, (h - 0.08) / 2, (sz * d) / 2.6);
+      add(new THREE.BoxGeometry(0.5, 0.12, 0.24), "#ffffff", 0, h + 0.06, 0);
+      add(new THREE.BoxGeometry(0.1, 0.3, 0.2), "#ffffff", 0.2, h + 0.27, 0);
+      add(new THREE.BoxGeometry(0.46, 0.1, 0.2), "#ffffff", -0.02, h + 0.44, 0);
+      add(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 8), "#c3c7d3", -0.2, h + 0.33, 0);
+      add(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 16), "#ff7eb6", 0.2, h + 0.27, 0.12).rotation.x = Math.PI / 2;
+      for (let i = 0; i < 3; i++) add(new THREE.CylinderGeometry(0.04, 0.04, 0.09, 10), PALETA_ROPA[i + 1], -w / 2 + 0.18 + i * 0.12, h + 0.045, -d / 4);
+      add(new THREE.BoxGeometry(0.3, 0.05, 0.22), PALETA_ROPA[4], w / 2 - 0.25, h + 0.025, 0.05);
+      break;
+    }
     case "planta": {
       add(new THREE.CylinderGeometry(w * 0.4, w * 0.32, h * 0.35, 14), "#ff9a3c", 0, h * 0.175, 0);
       add(new THREE.SphereGeometry(w * 0.55, 14, 10), color, 0, h * 0.65, 0);

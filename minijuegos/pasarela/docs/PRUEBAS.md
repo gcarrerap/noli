@@ -18,6 +18,8 @@ node --test minijuegos/pasarela/tests/pasarela.test.js     # solo las de la Pasa
 | Movimiento | Camina, gira poco a poco, no atraviesa; se desliza en la pared; cada zona es alcanzable desde el inicio con la ruta automática; flechas con impulso y diagonal |
 | Partida | Transiciones del diagrama; eventos que no aplican; reloj |
 | 2D | Cada prenda tiene figura, miniatura y muñeca sin `undefined`/`NaN` |
+| Patrones y estampados (#79) | El arte (64×64, fondo `{p}`, nada de fuera); `pintarSVG`; qué prendas aceptan patrón; poner/cambiar/quitar; frase en inglés; jueces; validación de `calca` y `patrones.json`; panel, pantalla de nivel y 2D |
+| Taller (#80) | **Todas las combinaciones de todos los moldes**: ningún tubo más delgado que la ropa del catálogo en esa ancla, listones y calcomanías por fuera de la tela, una calcomanía por lugar, figura 2D, menos de 6 000 triángulos en 3D; diseño → prenda (nombre, temas → etiquetas, patrón fijo, frase en inglés, encaje 3); `limpiarDiseno` con basura; espacios; nombres sugeridos; progreso v1 → v2 y que el atuendo con un diseño sobreviva; **tamaño máximo guardado < 20 000 caracteres**; pantallas de cada paso; molde mal escrito; ruta hasta el Taller y Mis diseños; Don Detalle |
 | 3D | El personaje tiene todas las anclas; **cada prenda se arma con Three.js** (en Node) y anima en las 6 posturas; ninguna pasa de 6 000 triángulos; el `.glb` existe, es glTF y pesa menos de 200 KB |
 
 Además, las pruebas del repo revisan que `juego.json` sea válido (incluido `"creditos": "gasta"` y `"costo"`), que el juego esté en `catalogo.json`, y que cada módulo (también `kit/3d/vendor/`) se analice y sus imports existan (`tests/sintaxis.test.js`). `herramientas/simular-curva.mjs` es `.mjs` para que esa prueba no lo trate como parte del juego.
@@ -53,6 +55,11 @@ Abrir `https://gcarrerap.github.io/noli/` (en la TV, `?modo=tv`). Para tener cr�
 - [ ] "Mi piel" cambia el tono.
 - [ ] Bloquear el teléfono a la mitad y regresar: sigue donde iba.
 - [ ] Teléfono acostado: el panel va a la derecha y el personaje a la izquierda.
+- [ ] Patrones (#79): debajo de los colores; se ven en la prenda puesta (3D y modo sencillo) y en la miniatura; la frase en inglés los dice.
+- [ ] Taller (#80): la primera vez sale la guía; los 5 pasos; el personaje trae el diseño y la cámara enfoca su parte; el reloj no corre; salir y volver conserva el borrador; escribir el nombre con el teclado del teléfono.
+- [ ] Coser descuenta 5 (revisar en el catálogo); sin créditos: "Te faltan N" y el borrador sigue; con los espacios llenos no deja coser.
+- [ ] Mis diseños: el diseño aparece, se pone, va a la pasarela (Don Detalle lo comenta), sale en el clóset y en el modo sencillo; "Descoser" pregunta.
+- [ ] Recargar: los diseños siguen; en la TV aparecen los del teléfono (sincronización).
 
 ### LG webOS y Samsung Tizen (control de la tele)
 

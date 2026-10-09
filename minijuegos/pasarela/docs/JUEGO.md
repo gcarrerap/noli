@@ -118,6 +118,7 @@ Siempre hay uno **positivo** por juez (nunca se regaña) y, si hay algo que mejo
 - El juego nunca guarda ni calcula el saldo: lo lee al abrir (`Noli.creditos`) y usa el que regresa `Noli.gastar`. Si el catálogo no contesta en 5 s, no se cobra ("No se pudieron cobrar los créditos").
 - La Pasarela **no da créditos** (`"creditos": "gasta"`); solo puntos de estilo. Los créditos salen de los juegos educativos (#20, DESIGN.md §12).
 - Abierto solo (sin catálogo), el kit simula 10 créditos.
+- **Taller de diseño:** coser una prenda cuesta `config.taller.costo` = **5** (`Noli.gastar(5, "taller")`), al tocar "Coser". Diseñar y probar es gratis.
 
 ## Puntos de estilo, niveles y desbloqueos
 
@@ -233,6 +234,30 @@ Al escoger una prenda en el panel, debajo de los colores (círculos) salen los *
 
 Cada pieza del atuendo guarda su patrón: `{ id: "a-camiseta", color: "rosa", patron: "cebra" }` (ver § Qué se guarda).
 
+## Taller de diseño (#80)
+
+Noelia **diseña su propia ropa** en el estudio: la mesa con la máquina de coser (adelante a la izquierda) es el **Taller de diseño**, y el perchero de adelante a la derecha es **Mis diseños**. Está en la pasarela con tema y en el probador libre; mientras el taller está abierto **el reloj de la pasarela se para**.
+
+**Cinco pasos** (pestañas arriba; "Atrás" y "Siguiente" abajo). El personaje trae puesto el diseño todo el tiempo y la cámara enfoca su parte del cuerpo:
+
+1. **Molde:** playera, vestido, falda, pantalón, zapatos o gorra (`datos/moldes.json`).
+2. **Forma:** de 1 a 3 controles con opciones dibujadas (no números): largo (corta / media / larga), mangas (sin / cortas / largas), vuelo (pegada / amplia / de princesa), corte, alto, suela, visera… Cada opción tiene su nombre en inglés (*long sleeves*, *flared*).
+3. **Decorar:** color, color de los detalles (listones, cuello, suela), patrón (los abiertos, #79) y **calcomanías**: se escoge el lugar (pecho, espalda, falda, piernas…) y luego el estampado. Una por lugar. En la TV todo es con flechas: los lugares son botones, no hay que arrastrar.
+4. **Nombre y temas:** escribe el nombre (18 letras como mucho) o toca uno sugerido ("Playera de cebra", "Vestido del osito"…; en la TV no hay que escribir). Escoge **1 o 2 temas**: son las etiquetas del diseño para los jueces (las de peso 3 de cada tema). Como mucho 2, para que no pueda poner todos y ganar siempre.
+5. **Coser:** cuesta **`config.taller.costo` = 5 créditos** (`Noli.gastar`), más que una pasarela porque es para siempre. Si no alcanzan: "Te faltan N créditos" y el diseño se queda guardado como **borrador**. Si ya no hay espacio: hay que descoser uno.
+
+**Probar es gratis:** cada cambio se guarda en el borrador (`progreso.borrador`), así que salir del taller no pierde nada. La primera vez sale una guía corta.
+
+**Mis diseños:** lo cosido aparece en ese perchero (no en los demás) y se usa como cualquier prenda: pasarela, clóset, fotos, modo 2D, el mundo del menú principal. Su color, patrón y calcomanías son fijos (son parte del diseño). **Espacios:** 4 al empezar y uno más cada 6 niveles, hasta 9 (`config.taller`). **Descoser** (con pregunta) libera el espacio; los créditos no regresan.
+
+**Jueces:** se califica igual que cualquier prenda; la jueza del tema le da 3 de encaje en los temas que escogió. Don Detalle lo nota: "¿Tu falda corta «Girasol» la hiciste tú? ¡Qué original!" (solo el comentario; la fórmula no cambia).
+
+**Inglés:** la frase dice el nombre: *a pink star print long dress called "Estrellita"*.
+
+**Nunca sale rota:** las opciones solo mueven medidas dentro de lo que el molde permite, y lo que va encima (listones, calcomanías) se calcula sobre la tela que queda abajo. Una prueba arma **todas las combinaciones de todos los moldes** y revisa que ningún tubo quede más delgado que la ropa que ya existe en esa parte del cuerpo, que nada se hunda en la tela, y que cada una se arme en 3D con menos de 6 000 triángulos (ASSETS.md § G).
+
+![Taller de diseño](img/taller.jpg)
+
 ## Maquillaje y joyería
 
 Además de la ropa hay **maquillaje** (categoría `maquillaje`: rubor, labial, sombra de ojos, pestañas largas, pecas, brillitos, corazón y estrella pintados) y **joyería** (accesorios de orejas, cuello y muñeca: aretes de perla, arracadas, aretes de estrella, collar de perlas, collar de corazón, reloj, reloj deportivo, pulsera). Van **uno por lugar** (`config.json → lugares`): mejillas, ojos, labios y pintura en la cara; orejas, cuello, muñeca, y los de antes (cabeza, cara, abrigo, mano, espalda). Para los jueces cuentan como **detalles** (igual que los accesorios). En el estudio están en dos muebles nuevos: el **tocador de maquillaje** (derecha) y la **joyería** (izquierda).
@@ -245,7 +270,7 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
 
 ```js
 {
-  v: 1,                    // versión del formato; leerProgreso() convierte o descarta lo que no entienda
+  v: 2,                    // versión del formato; leerProgreso() convierte o descarta lo que no entienda (v1 → v2: disenos vacío)
   puntos: 41,              // puntos de estilo acumulados
   pasarelas: 4,            // pasarelas con tema
   vistos: ["a-camiseta", "c:rosa", "t:playa", "o:vuelta", "pt:cebra", …],   // lo que ya no brilla como nuevo (prendas, "c:" colores, "t:" temas, "o:" poses, "pt:" patrones)
@@ -256,9 +281,17 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
   ],
   piel: 0,                 // índice en config.tonosPiel
   ultimo: { … },           // el último atuendo (para el probador libre y el peinado de la siguiente pasarela)
-  ultimoTema: "playa"      // para no repetirlo
+  ultimoTema: "playa",     // para no repetirlo
+  disenos: [               // lo que cosió en el Taller (#80), el más viejo primero; ~300 caracteres cada uno
+    { id: "d-mf3k2a1x", molde: "vestido", ajustes: { largo: "largo", vuelo: "princesa", mangas: "globo" },
+      color: "lila", secundario: "dorado", patron: "estrellas", calcas: [{ estampado: "estrella", lugar: "falda" }],
+      nombre: "Estrellita", temas: ["princesa", "gala"], fecha: 1760000000000 }
+  ],
+  borrador: null           // lo que estaba diseñando sin coser (mismo formato; el nombre puede ir vacío)
 }
 ```
+
+Los diseños se guardan como **receta** (molde + opciones), no como piezas: así ocupan poco (lo más grande posible, 9 diseños con nombres largos y todas las calcomanías más el clóset lleno de diseños, son menos de 20 000 caracteres; la nube acepta 200 000; hay prueba) y si se mejora un molde, los diseños viejos se ven mejor solos. `leerProgreso` registra los diseños en `idx.prendas` (`taller.js → registrarDisenos`) **antes** de revisar los atuendos guardados, para que un atuendo con un diseño puesto no lo pierda. Un diseño cuyo molde ya no existe se descarta; una opción que ya no existe vuelve a la inicial.
 
 **Lo que NO se guarda aquí:** créditos (el catálogo), la preferencia 3D/2D (`localStorage["noli.pasarela.vista"]`, solo de ese aparato), el nivel (sale de los puntos), lo abierto (sale del nivel).
 
