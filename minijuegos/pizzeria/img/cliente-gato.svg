@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 122">
+<title>Cliente: Gata esperando su pedido</title>
+<path d="M24 52L22 10l34 24zM96 52l2-42-34 24z" fill="#ffa64d" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/><path d="M30 40l-1-18 14 10zM90 40l1-18-14 10z" fill="#ff7eb6"/>
+<path d="M12 120q0-34 48-34t48 34z" fill="#d9772a" stroke="#2b2236" stroke-width="5" stroke-linejoin="round"/><path d="M44 90l16 22 16-22z" fill="#fff" stroke="#2b2236" stroke-width="4" stroke-linejoin="round"/><path d="M50 96h20M54 102h12" stroke="#ff6b4a" stroke-width="3"/>
+<ellipse id="cabeza" cx="60" cy="56" rx="42" ry="36" fill="#ffa64d" stroke="#2b2236" stroke-width="5"/><ellipse cx="60" cy="70" rx="18" ry="12" fill="#fff2df"/>
+<path d="M57 64l3 3 3-3z" fill="#ff7eb6" stroke="#2b2236" stroke-width="2.5" stroke-linejoin="round"/><path d="M28 64h-14M28 70l-12 4M92 64h14M92 70l12 4" stroke="#2b2236" stroke-width="2.5" stroke-linecap="round"/><g id="ojos"><circle cx="44" cy="50" r="7" fill="#2b2236"/><circle cx="76" cy="50" r="7" fill="#2b2236"/><circle cx="46" cy="48" r="2.5" fill="#fff"/><circle cx="78" cy="48" r="2.5" fill="#fff"/></g><g id="boca"><path d="M50 72q10 6 20 0" fill="none" stroke="#2b2236" stroke-width="4.5" stroke-linecap="round"/></g>
+</svg>

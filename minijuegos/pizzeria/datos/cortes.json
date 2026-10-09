@@ -1,0 +1,432 @@
+{
+  "patrones": [
+    {
+      "id": "redonda-mitad",
+      "forma": "redonda",
+      "partes": 2,
+      "iguales": true,
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": -100,
+          "y1": 0,
+          "x2": 100,
+          "y2": 0
+        }
+      ]
+    },
+    {
+      "id": "redonda-mitad-vertical",
+      "forma": "redonda",
+      "partes": 2,
+      "iguales": true,
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": 0,
+          "y1": -100,
+          "x2": 0,
+          "y2": 100
+        }
+      ]
+    },
+    {
+      "id": "redonda-mitad-torcida",
+      "forma": "redonda",
+      "partes": 2,
+      "iguales": false,
+      "trampa": "desigual",
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": -87.7268,
+          "y1": 48,
+          "x2": 87.7268,
+          "y2": 48
+        }
+      ]
+    },
+    {
+      "id": "redonda-cuartos",
+      "forma": "redonda",
+      "partes": 4,
+      "iguales": true,
+      "familia": "cuarto",
+      "cortes": [
+        {
+          "x1": -100,
+          "y1": 0,
+          "x2": 100,
+          "y2": 0
+        },
+        {
+          "x1": 0,
+          "y1": -100,
+          "x2": 0,
+          "y2": 100
+        }
+      ]
+    },
+    {
+      "id": "redonda-cuartos-angulo",
+      "forma": "redonda",
+      "partes": 4,
+      "iguales": false,
+      "trampa": "angulo",
+      "familia": "cuarto",
+      "cortes": [
+        {
+          "x1": -100,
+          "y1": 0,
+          "x2": 100,
+          "y2": 0
+        },
+        {
+          "x1": -57.3576,
+          "y1": -81.9152,
+          "x2": 57.3576,
+          "y2": 81.9152
+        }
+      ]
+    },
+    {
+      "id": "redonda-tercios",
+      "forma": "redonda",
+      "partes": 3,
+      "iguales": true,
+      "familia": "tercio",
+      "cortes": [
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 0,
+          "y2": -100
+        },
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 86.6025,
+          "y2": 50
+        },
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": -86.6025,
+          "y2": 50
+        }
+      ]
+    },
+    {
+      "id": "redonda-tercios-angulo",
+      "forma": "redonda",
+      "partes": 3,
+      "iguales": false,
+      "trampa": "angulo",
+      "familia": "tercio",
+      "cortes": [
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 0,
+          "y2": -100
+        },
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": 93.9693,
+          "y2": 34.202
+        },
+        {
+          "x1": 0,
+          "y1": 0,
+          "x2": -34.202,
+          "y2": 93.9693
+        }
+      ]
+    },
+    {
+      "id": "redonda-paralelos",
+      "forma": "redonda",
+      "partes": 4,
+      "iguales": false,
+      "trampa": "paralelos",
+      "parece": 3,
+      "familia": "tercio",
+      "cortes": [
+        {
+          "x1": -86.6025,
+          "y1": -50,
+          "x2": 86.6025,
+          "y2": -50
+        },
+        {
+          "x1": -100,
+          "y1": 0,
+          "x2": 100,
+          "y2": 0
+        },
+        {
+          "x1": -86.6025,
+          "y1": 50,
+          "x2": 86.6025,
+          "y2": 50
+        }
+      ]
+    },
+    {
+      "id": "redonda-bandas",
+      "forma": "redonda",
+      "partes": 3,
+      "iguales": false,
+      "trampa": "bandas",
+      "parece": 3,
+      "familia": "tercio",
+      "cortes": [
+        {
+          "x1": -94.2809,
+          "y1": -33.3333,
+          "x2": 94.2809,
+          "y2": -33.3333
+        },
+        {
+          "x1": -94.2809,
+          "y1": 33.3333,
+          "x2": 94.2809,
+          "y2": 33.3333
+        }
+      ]
+    },
+    {
+      "id": "rect-mitad",
+      "forma": "rectangular",
+      "partes": 2,
+      "iguales": true,
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": 120,
+          "y1": 8,
+          "x2": 120,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "rect-mitad-horizontal",
+      "forma": "rectangular",
+      "partes": 2,
+      "iguales": true,
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": 8,
+          "y1": 80,
+          "x2": 232,
+          "y2": 80
+        }
+      ]
+    },
+    {
+      "id": "rect-mitad-diagonal",
+      "forma": "rectangular",
+      "partes": 2,
+      "iguales": true,
+      "familia": "mitad",
+      "formaPieza": "triangulos",
+      "cortes": [
+        {
+          "x1": 8,
+          "y1": 8,
+          "x2": 232,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "rect-mitad-torcida",
+      "forma": "rectangular",
+      "partes": 2,
+      "iguales": false,
+      "trampa": "desigual",
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": 70,
+          "y1": 8,
+          "x2": 70,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "rect-cuartos-cuadros",
+      "forma": "rectangular",
+      "partes": 4,
+      "iguales": true,
+      "familia": "cuarto",
+      "formaPieza": "cuadros",
+      "cortes": [
+        {
+          "x1": 120,
+          "y1": 8,
+          "x2": 120,
+          "y2": 152
+        },
+        {
+          "x1": 8,
+          "y1": 80,
+          "x2": 232,
+          "y2": 80
+        }
+      ]
+    },
+    {
+      "id": "rect-cuartos-tiras",
+      "forma": "rectangular",
+      "partes": 4,
+      "iguales": true,
+      "familia": "cuarto",
+      "formaPieza": "tiras",
+      "cortes": [
+        {
+          "x1": 64,
+          "y1": 8,
+          "x2": 64,
+          "y2": 152
+        },
+        {
+          "x1": 120,
+          "y1": 8,
+          "x2": 120,
+          "y2": 152
+        },
+        {
+          "x1": 176,
+          "y1": 8,
+          "x2": 176,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "rect-cuartos-triangulos",
+      "forma": "rectangular",
+      "partes": 4,
+      "iguales": true,
+      "familia": "cuarto",
+      "formaPieza": "triangulos",
+      "cortes": [
+        {
+          "x1": 8,
+          "y1": 8,
+          "x2": 232,
+          "y2": 152
+        },
+        {
+          "x1": 232,
+          "y1": 8,
+          "x2": 8,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "rect-cuartos-torcidos",
+      "forma": "rectangular",
+      "partes": 4,
+      "iguales": false,
+      "trampa": "desigual",
+      "familia": "cuarto",
+      "cortes": [
+        {
+          "x1": 70,
+          "y1": 8,
+          "x2": 70,
+          "y2": 152
+        },
+        {
+          "x1": 8,
+          "y1": 50,
+          "x2": 232,
+          "y2": 50
+        }
+      ]
+    },
+    {
+      "id": "rect-tercios",
+      "forma": "rectangular",
+      "partes": 3,
+      "iguales": true,
+      "familia": "tercio",
+      "cortes": [
+        {
+          "x1": 82.667,
+          "y1": 8,
+          "x2": 82.667,
+          "y2": 152
+        },
+        {
+          "x1": 157.333,
+          "y1": 8,
+          "x2": 157.333,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "rect-tercios-torcidos",
+      "forma": "rectangular",
+      "partes": 3,
+      "iguales": false,
+      "trampa": "desigual",
+      "familia": "tercio",
+      "cortes": [
+        {
+          "x1": 60,
+          "y1": 8,
+          "x2": 60,
+          "y2": 152
+        },
+        {
+          "x1": 110,
+          "y1": 8,
+          "x2": 110,
+          "y2": 152
+        }
+      ]
+    },
+    {
+      "id": "guia-buena",
+      "forma": "redonda",
+      "partes": 2,
+      "iguales": true,
+      "guia": true,
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": 0,
+          "y1": -100,
+          "x2": 0,
+          "y2": 100
+        }
+      ]
+    },
+    {
+      "id": "guia-mala",
+      "forma": "redonda",
+      "partes": 2,
+      "iguales": false,
+      "guia": true,
+      "trampa": "desigual",
+      "familia": "mitad",
+      "cortes": [
+        {
+          "x1": -85.4166,
+          "y1": 52,
+          "x2": 85.4166,
+          "y2": 52
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+<title>Moneda de propina</title>
+<circle cx="30" cy="30" r="25" fill="#ffc43d" stroke="#2b2236" stroke-width="5"/><circle cx="30" cy="30" r="17" fill="none" stroke="#e0a400" stroke-width="3"/><path d="M30 20L33.23 26.55L40.46 27.6L35.23 32.7L36.47 39.9L30 36.5L23.53 39.9L24.77 32.7L19.54 27.6L26.77 26.55z" fill="#fff" stroke="#2b2236" stroke-width="3" stroke-linejoin="round"/>
+</svg>
