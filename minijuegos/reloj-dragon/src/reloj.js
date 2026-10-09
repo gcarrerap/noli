@@ -14,9 +14,10 @@ export function atrasEnEspera(fase) {
 }
 
 // Con «¿Salir?» abierto, Seguir y Salir funcionan aunque el chiste o el acierto sigan.
-export function toqueEnPantalla({ fase = "", act = "", dialog = false } = {}) {
-  if (dialog && act === "seguir") return "seguir";
+// En el teléfono, un toque en lo oscuro detrás del diálogo es Seguir.
+export function toqueEnPantalla({ fase = "", act = "", dialog = false, fondo = false } = {}) {
   if (dialog && act === "salir-si") return "salir";
+  if (dialog && (act === "seguir" || fondo)) return "seguir";
   if (dialog || fase) return "nada";
   return act || "otro";
 }

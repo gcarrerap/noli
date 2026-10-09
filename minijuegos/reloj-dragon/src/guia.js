@@ -5,8 +5,20 @@ import { fraseBrilla } from "./frases.js";
 
 export const META_GUIA = { h: 3, m: 0 };
 export const INICIO_GUIA = { h: 1, m: 0 };
-// Los pasos que solo explican («la corta», «la larga») siguen solos si nadie toca.
+// Los pasos que solo explican («la corta», «la larga») siguen con un toque, con OK
+// o solos: sin voz a los 2 s; con voz, cuando termina, y nunca más de 3 s.
 export const ESPERA_EXPLICAR_MS = 2000;
+export const ESPERA_VOZ_MAX_MS = 3000;
+
+// Espera del avance solo. Un toque o OK no pasan por aquí.
+// Sin voz: 2 s. Con voz todavía hablando: el tope de 3 s. Al terminar, lo que duró, con ese tope.
+export function esperaExplicar({ voz = false, termino = false, ms = 0 } = {}) {
+  if (!voz) return ESPERA_EXPLICAR_MS;
+  if (!termino) return ESPERA_VOZ_MAX_MS;
+  const t = Number(ms);
+  if (!Number.isFinite(t) || t <= 0) return ESPERA_EXPLICAR_MS;
+  return Math.min(ESPERA_VOZ_MAX_MS, t);
+}
 
 export const PASOS = [
   { id: "come", luz: "escena", texto: "El dragón come a las 3. Pon las 3.", voz: "El dragón come a las 3. Pon las 3." },

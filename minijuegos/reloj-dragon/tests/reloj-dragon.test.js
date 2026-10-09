@@ -17,7 +17,8 @@ import { MOMENTOS, NIVELES, ALBUM, planDia, escenaDe, POR_TURNO } from "../src/n
 import { pista } from "../src/pista.js";
 import {
   guiaNueva, aplicarGuia, textoPaso, vozPaso, PASOS, META_GUIA,
-  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS, efectoAtrasGuia, seguirGuia,
+  esExplicacion, focoTrasExplicacion, ESPERA_EXPLICAR_MS, ESPERA_VOZ_MAX_MS, esperaExplicar,
+  efectoAtrasGuia, seguirGuia,
 } from "../src/guia.js";
 import {
   nuevo, cargar, registrar, dominio, cerrarTurno, estrellasTurno, racha, textoRacha,
@@ -194,6 +195,15 @@ test("la guía de las 3:00 solo avanza cuando ella hace el paso", () => {
   let explica = aplicarGuia(guiaNueva(), { tipo: "escena" });
   assert.equal(esExplicacion(explica.paso), true);
   assert.equal(ESPERA_EXPLICAR_MS, 2000);
+  assert.equal(ESPERA_VOZ_MAX_MS, 3000);
+  assert.equal(esperaExplicar({}), 2000);
+  assert.equal(esperaExplicar({ voz: false }), 2000);
+  assert.equal(esperaExplicar({ voz: true }), 3000, "mientras habla, el tope es 3 s");
+  assert.equal(esperaExplicar({ voz: true, termino: true, ms: 2600 }), 2600, "una frase de 2,6 s no se corta a los 2");
+  assert.ok(esperaExplicar({ voz: true, termino: true, ms: 2600 }) > ESPERA_EXPLICAR_MS);
+  assert.equal(esperaExplicar({ voz: true, termino: true, ms: 4500 }), 3000);
+  assert.equal(esperaExplicar({ voz: true, termino: true, ms: 0 }), 2000);
+  assert.equal(aplicarGuia(explica, { tipo: "seguir" }).paso, explica.paso + 1, "un toque sigue avanzando sin esperar la voz");
   explica = aplicarGuia(explica, { tipo: "seguir" });
   assert.equal(explica.paso, 2);
   assert.equal(focoTrasExplicacion(explica.paso), "hora");
@@ -243,10 +253,16 @@ test("Atrás en cada paso de la guía abre ¿Salir? y Seguir no la marca como vi
   }
   assert.equal(toqueEnPantalla({ fase: "", act: "seguir", dialog: true }), "seguir");
   assert.equal(toqueEnPantalla({ fase: "", act: "salir-si", dialog: true }), "salir");
+  assert.equal(toqueEnPantalla({ fase: "gag", dialog: true, fondo: true }), "seguir");
+  assert.equal(toqueEnPantalla({ fase: "", dialog: true, fondo: true }), "seguir");
+  assert.equal(toqueEnPantalla({ dialog: true, fondo: true, act: "salir-si" }), "salir");
+  assert.equal(toqueEnPantalla({ dialog: false, fondo: true }), "otro");
   const src = readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
   assert.equal(/if \(guia\) terminarGuia\(\)/.test(src), false);
   assert.match(src, /efectoAtrasGuia\(false\) === "preguntar"/);
   assert.match(src, /efectoAtrasGuia\(true\) === "seguir"/);
+  assert.match(src, /fondoToque/);
+  assert.match(src, /esperaExplicar\(/);
 });
 
 test("poner no arranca a las 12:00", () => {
