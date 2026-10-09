@@ -275,7 +275,7 @@ function empezarPasoGuia() {
     activo: pr.voz !== false,
     onEstado(estado) {
       if (token !== vozToken || !guia || guia.saliendo || guia.fin) return;
-      // onerror, sin voces o la frase que no empieza: no es el fin. Sigue el reloj.
+      // onerror o una frase que no llega a onend: no es el fin. Sigue el reloj.
       if (!cuentaComoFin(estado)) return;
       guia = anotarVoz(guia, "termino", Date.now());
       if (!esMirar(guia.paso)) return;

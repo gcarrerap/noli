@@ -6,6 +6,8 @@
 // Los de acción solo con la acción de verdad, y aguantan el bloqueo de 1 a 3 s.
 // Con «¿Salir?» abierto se pausan el avance solo y la espera de la voz.
 // Seguir los reinicia enteros para el paso en el que estaba.
+// El candado de 400 ms al cerrar y el candado del paso empiezan juntos:
+// se espera el más largo, nunca la suma.
 
 import { IGNORAR_MS } from "./salida.js";
 
@@ -137,11 +139,15 @@ export function debeAvanzarSolo(g, ahora) {
   return ahora >= cuando;
 }
 
+// El toque vuelve cuando acaba el que dure más. No se encadenan.
+export function finCandado(g) {
+  if (!g) return 0;
+  return Math.max(g.ignorarHasta || 0, g.bloqueoHasta || 0);
+}
+
 export function bloqueada(g, ahora) {
   if (!g || g.saliendo) return true;
-  if (ahora < (g.ignorarHasta || 0)) return true;
-  if (ahora < (g.bloqueoHasta || 0)) return true;
-  return false;
+  return ahora < finCandado(g);
 }
 
 export function abrirSalirGuia(g, ahora) {

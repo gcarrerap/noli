@@ -4,13 +4,13 @@ import fs from "node:fs";
 import { rngConSemilla } from "../src/rng.js";
 import { ORDEN, animal, fraseIngles } from "../src/animales.js";
 import { TEXTOS, textoGuia, vozGuia, vozLeyenda } from "../src/textos.js";
-import { limpiarHabla, hablar, cuentaComoFin } from "../src/voz.js";
+import { limpiarHabla, hablar, cuentaComoFin, prepararVoces, elegirVoz } from "../src/voz.js";
 import { IGNORAR_MS, efectoAtras, resolverToque, alCerrarDialogo } from "../src/salida.js";
 import { controlesCaben, eje20Cabe, animalesEnFila, CONTROL_PX, TV_MARGEN } from "../src/medidas.js";
 import {
   PASOS, GUIA_MONOS, GUIA_JIRAFAS, guiaNueva, aplicarGuia, debeAvanzarSolo, abrirSalirGuia,
   seguirSalirGuia, palitosGuia, listoGuiaActivo, numerosGuiaActivos, focoGuia, saltarAlcanzable,
-  guardarAlTerminar, bloqueada, anotarVoz, instanteAuto, MIRAR_MIN_MS, MIRAR_MAX_MS,
+  guardarAlTerminar, bloqueada, anotarVoz, instanteAuto, finCandado, MIRAR_MIN_MS, MIRAR_MAX_MS,
   OPCIONES_GUIA_CONTEO, OPCIONES_GUIA_MAS, TRAS_GUIA_MS, trasGuiaBloquea,
 } from "../src/guia.js";
 import {
@@ -140,6 +140,10 @@ test("¿Salir? pausa el avance y la voz, y Seguir los reinicia", () => {
   assert.equal(g.bloqueoHasta, 2900 + 1000);
   assert.equal(g.ignorarHasta, 2900 + IGNORAR_MS);
   assert.equal(IGNORAR_MS, 400);
+  assert.equal(finCandado(g), 2900 + 1000);
+  assert.notEqual(finCandado(g), 2900 + IGNORAR_MS + 1000);
+  assert.equal(bloqueada(g, 2900 + 999), true);
+  assert.equal(bloqueada(g, 2900 + 1000), false);
   assert.equal(debeAvanzarSolo(g, 2900 + 100), false);
   assert.equal(debeAvanzarSolo(g, 2900 + 2999), false);
   assert.equal(debeAvanzarSolo(g, 2900 + 3000), true);
@@ -210,28 +214,15 @@ test("un error de voz no cierra el paso de mirar: cae al reloj de 2 a 3 s", () =
   assert.equal(aplicarGuia(g, { tipo: "tiempo" }, MIRAR_MIN_MS).paso, "cuidar");
   assert.equal(aplicarGuia(g, { tipo: "ok" }, 50).paso, "contar");
 
-  const sinLista = [];
-  let speakSin = 0;
-  const sinVoces = {
-    speaking: false,
-    pending: false,
-    cancel() {},
-    getVoices() { return []; },
-    speak() { speakSin++; },
-  };
-  const vacio = hablar("Ahora la gráfica.", { sintesis: sinVoces, Utterance: Frase, onEstado: (e) => sinLista.push(e) });
-  assert.equal(speakSin, 0);
-  assert.equal(vacio.estado, "fallo");
-  assert.equal(vacio.motivo, "sin-voces");
-  assert.equal(sinLista.includes("termino"), false);
-
   const nuncaLista = [];
-  const nunca = vozFalsa((u) => { u.onend(); });
+  const nunca = vozFalsa(() => { /* speak no dispara onstart ni onend */ });
   const callado = hablar("Ahora la gráfica.", { sintesis: nunca, Utterance: Frase, onEstado: (e) => nuncaLista.push(e) });
-  assert.equal(callado.estado, "fallo");
-  assert.equal(callado.motivo, "no-empieza");
+  assert.equal(callado.estado, "esperando");
+  assert.equal(cuentaComoFin(callado.estado), false);
   assert.equal(nuncaLista.includes("termino"), false);
   assert.equal(anotarVoz(guiaNueva(0), "fallo").vozEstado, "fallo");
+  assert.equal(debeAvanzarSolo(guiaNueva(0), MIRAR_MIN_MS), false);
+  assert.equal(debeAvanzarSolo(guiaNueva(0), MIRAR_MAX_MS), true);
 
   const bienLista = [];
   const bien = vozFalsa((u) => { u.onstart(); u.onend(); });
@@ -244,6 +235,49 @@ test("un error de voz no cierra el paso de mirar: cae al reloj de 2 a 3 s", () =
   assert.equal(debeAvanzarSolo(acabada, MIRAR_MIN_MS), true);
   assert.equal(instanteAuto(acabada), MIRAR_MIN_MS);
   assert.equal(acabada.bloqueoHasta, 1000);
+});
+
+test("getVoices vacío no es «sin voz»: speak sigue y onend cierra entre 2 y 3 s", () => {
+  assert.equal(elegirVoz([]), null);
+  let lecturas = 0;
+  let lista = [];
+  const oyentes = [];
+  let dicho = null;
+  const s = {
+    speaking: false,
+    pending: false,
+    cancel() {},
+    getVoices() { lecturas++; return lista; },
+    addEventListener(tipo, fn) { oyentes.push({ tipo, fn }); },
+    speak(u) { dicho = u; u.onend(); },
+  };
+  assert.equal(prepararVoces(s), null);
+  assert.ok(lecturas >= 1);
+  assert.equal(oyentes.length, 1);
+  assert.equal(oyentes[0].tipo, "voiceschanged");
+
+  const eventos = [];
+  const r = hablar("Ahora la gráfica.", { sintesis: s, Utterance: Frase, onEstado: (e) => eventos.push(e) });
+  assert.ok(dicho);
+  assert.equal(dicho.lang, "es-ES");
+  assert.equal(dicho.voice, undefined);
+  assert.equal(r.estado, "termino");
+  assert.equal(cuentaComoFin(r.estado), true);
+  assert.deepEqual(eventos, ["termino"]);
+
+  const g = anotarVoz(guiaNueva(0), r.estado, 50);
+  assert.equal(debeAvanzarSolo(g, MIRAR_MIN_MS - 1), false);
+  assert.equal(debeAvanzarSolo(g, MIRAR_MIN_MS), true);
+  assert.equal(instanteAuto(g), MIRAR_MIN_MS);
+  assert.ok(instanteAuto(g) <= MIRAR_MAX_MS);
+  assert.equal(debeAvanzarSolo(g, MIRAR_MAX_MS), true);
+
+  lista = [{ lang: "en-US", name: "Alex" }, { lang: "es-MX", name: "Paulina" }];
+  oyentes[0].fn();
+  assert.equal(elegirVoz(lista).name, "Paulina");
+  hablar("Cuenta los monos.", { sintesis: s, Utterance: Frase });
+  assert.equal(dicho.voice.name, "Paulina");
+  assert.equal(dicho.lang, "es-ES");
 });
 
 test("no hay escala de 2: el nivel 5 es la tabla de conteo", () => {
