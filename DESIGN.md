@@ -206,13 +206,20 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 
 ## 9. Cómo agregar un juego
 
-1. Abrir un issue para el juego (qué enseña, edad, cómo se juega con el dedo y con flechas).
+1. Abrir un issue con la plantilla de juego (`.github/ISSUE_TEMPLATE/juego.md`): qué enseña, edad y cómo se juega con el dedo y con flechas.
 2. Crear `minijuegos/<id>/` con `juego.json`, `index.html` y su código. Usar `minijuegos/ejemplo/` como plantilla.
 3. Importar el kit, atender `alEntrar` (flechas + OK) para que se pueda jugar en la TV, y llamar `Noli.terminar({ estrellas })` al acabar.
 4. Agregar el id a `minijuegos/catalogo.json`.
 5. `npm test`, cambiar `src/version.js` y abrir el PR que cierra el issue.
 
-**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que las instrucciones pueden ir en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`. **Juegos en 3D:** ver la Pasarela (`minijuegos/pasarela/docs/`): Three.js copiado en la carpeta del juego, presupuesto de dibujos y triángulos, y un respaldo 2D para las TVs que no puedan. `diagnostico.html` dice si el aparato tiene WebGL. **Sin emojis para nada que importe:** el navegador de la TV LG no tiene emojis a color y salen en blanco y negro (#5); dibujar con SVG. **Sin `await` al nivel del módulo** (algunos navegadores de TV no lo soportan): usar `Noli.datos.then(…)`. Las pruebas de cada juego viven en su carpeta (`minijuegos/<id>/tests/*.test.js`) para que viajen con él si se vuelve submódulo.
+Para juntar ese PR hace falta, además:
+
+- Capturas de un teléfono en vertical, angosto, a 360 px y a 412 px de ancho: sin scroll horizontal y con el botón de la acción principal a la vista.
+- Probado en la TV, en horizontal (`?modo=tv`), jugado solo con el control (flechas, OK y Atrás), con captura.
+- Guía la primera vez, o pistas claras en cada paso, para que una niña de 7 años entienda cómo jugar sin ayuda.
+- Visto bueno de claridad de Ñoño (diseño del juego).
+
+**Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que la guía de la primera vez o las pistas de cada paso van en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`. **Juegos en 3D:** ver la Pasarela (`minijuegos/pasarela/docs/`): Three.js copiado en la carpeta del juego, presupuesto de dibujos y triángulos, y un respaldo 2D para las TVs que no puedan. `diagnostico.html` dice si el aparato tiene WebGL. **Sin emojis para nada que importe:** el navegador de la TV LG no tiene emojis a color y salen en blanco y negro (#5); dibujar con SVG. **Sin `await` al nivel del módulo** (algunos navegadores de TV no lo soportan): usar `Noli.datos.then(…)`. Las pruebas de cada juego viven en su carpeta (`minijuegos/<id>/tests/*.test.js`) para que viajen con él si se vuelve submódulo.
 
 ## 10. Juegos
 
