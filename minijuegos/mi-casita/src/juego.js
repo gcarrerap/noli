@@ -9,6 +9,7 @@ import { pistaPagar, monedasQueSirven, pistaLugar } from "./pista.js";
 import {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, focoDeGuia,
   guiaAvanzaConToque, guiaPagarActivo, okDeGuia, demoraMuestra, relojConSalir, entradaTrasCierre,
+  esperasAlSalir,
   GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS,
 } from "./guia.js";
 import {
@@ -57,6 +58,8 @@ let compraPausaHasta = 0;
 let pasoConPausa = "";
 let pausaToken = 0;
 let dialogCerroEn = -1e15;
+/** El cierre del paso ya había pasado cuando se abrió «¿Salir?». */
+let bloqueoListo = false;
 
 const porId = () => Object.fromEntries(muebles.map((m) => [m.id, m]));
 const piezas = () => (monedas[monedaId] || monedas.usd)?.piezas || [];
@@ -93,16 +96,25 @@ function esFlecha(accion) {
 function empezarPausaPaso(linea) {
   const token = ++pausaToken;
   const t0 = Date.now();
+  const listo = bloqueoListo;
+  bloqueoListo = false;
   const habla = !!(pr.voz && paraVoz(linea));
-  guiaPausaHasta = t0 + (habla ? GUIA_PAUSA_MAX_MS : GUIA_PAUSA_MS);
+  if (listo) {
+    const re = esperasAlSalir({ seguir: true, bloqueoListo: true, msVoz: 0 });
+    guiaPausaHasta = t0 + re.pausa;
+  } else {
+    guiaPausaHasta = t0 + (habla ? GUIA_PAUSA_MAX_MS : GUIA_PAUSA_MS);
+  }
   dicho = "";
   const cerrar = (estado, ms) => {
     if (token !== pausaToken) return;
     const ahora = Date.now();
-    if (estado === "ok") {
-      guiaPausaHasta = Math.min(t0 + GUIA_PAUSA_MAX_MS, Math.max(t0 + GUIA_PAUSA_MS, ahora));
-    } else {
-      guiaPausaHasta = t0 + GUIA_PAUSA_MS;
+    if (!listo) {
+      if (estado === "ok") {
+        guiaPausaHasta = Math.min(t0 + GUIA_PAUSA_MAX_MS, Math.max(t0 + GUIA_PAUSA_MS, ahora));
+      } else {
+        guiaPausaHasta = t0 + GUIA_PAUSA_MS;
+      }
     }
     if (pantalla !== "guia" || !guia || !guiaAvanzaConToque(guia.paso)) return;
     programarMuestra(t0 + demoraMuestra(estado, ms) - ahora);
@@ -768,6 +780,7 @@ function terminarGuia() {
   limpiarRelojGuia();
   guia = null;
   pasoConPausa = "";
+  bloqueoListo = false;
   pausaToken += 1;
   guiaPausaHasta = 0;
   compraPausaHasta = Date.now() + GUIA_COMPRA_MS;
@@ -821,9 +834,12 @@ function abrirSalir() {
   salir = true;
   clearTimeout(relojPista);
   if (pantalla === "guia" && guia && relojConSalir(true) === "pausa") {
+    bloqueoListo = !pausaGuiaActiva();
     pausaToken += 1;
     limpiarRelojGuia();
     callar();
+  } else {
+    bloqueoListo = false;
   }
   pintar("seguir");
 }

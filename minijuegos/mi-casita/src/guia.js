@@ -55,7 +55,8 @@ export function esperaMuestra(msVoz) {
  * Cuánto tarda en irse solo un paso que se mira.
  * "ok": la frase sonó `ms` (nunca menos de 2 s ni más de 3 s).
  * "hablando": sigue la voz, con el tope de 3 s.
- * "falla": error, sin voces o no empezó. Son 2 s, y `ms` no cuenta.
+ * "falla": error o no empezó. Son 2 s, y `ms` no cuenta.
+ * Una lista de voces vacía no es falla: si la frase suena, es "ok".
  */
 export function demoraMuestra(estado, ms) {
   if (estado === "ok") return esperaMuestra(ms);
@@ -82,13 +83,29 @@ export function relojConSalir(dialogoAbierto, seguir = false) {
  * el paso cuenta otra vez desde el principio. `muestra` y `pausa`
  * en null quieren decir que el reloj está parado.
  */
-export function esperasAlSalir({ abierto = false, seguir = false, msVoz = 0 } = {}) {
+export function esperasAlSalir({ abierto = false, seguir = false, msVoz = 0, bloqueoListo = false } = {}) {
   if (relojConSalir(abierto, seguir) === "pausa") return { muestra: null, pausa: null, ignoraMs: 0 };
   return {
     muestra: esperaMuestra(msVoz),
-    pausa: pausaDePaso(msVoz),
+    // Si el cierre de 1 s ya había pasado al abrir, no vuelve a sumarse a los 400 ms.
+    pausa: seguir && bloqueoListo ? 0 : pausaDePaso(msVoz),
     ignoraMs: seguir ? TRAS_DIALOGO_MS : 0,
   };
+}
+
+/**
+ * Tras Seguir, los 400 ms y el cierre del paso empiezan juntos: vale el mayor,
+ * no la suma. Si el cierre ya había pasado, un toque a los 500 ms entra.
+ * Si no había pasado, el cierre empieza otra vez junto con los 400 ms.
+ * Devuelve "ignora" o "sigue". Atrás siempre sigue.
+ */
+export function entradaSolapada({ ms = 0, tipo = "toque", bloqueoListo = false, msVoz = 0 } = {}) {
+  if (tipo === "atras") return "sigue";
+  const e = esperasAlSalir({ seguir: true, msVoz, bloqueoListo });
+  const tope = Math.max(e.ignoraMs, e.pausa);
+  const t = Number(ms);
+  if (!Number.isFinite(t) || t < 0 || t < tope) return "ignora";
+  return "sigue";
 }
 
 /** Un toque o OK justo después de cerrar no cuenta. Atrás sí. */

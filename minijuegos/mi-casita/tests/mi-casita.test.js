@@ -25,7 +25,7 @@ const { pistaPagar, monedasQueSirven, pistaLugar, FLECHA_MS, COMPLETA_MS } = awa
 const {
   guiaNueva, aplicarGuia, bolsaGuia, textoGuia, vozGuia, monedasDeGuia,
   focoDeGuia, guiaAvanzaConToque, guiaPagarActivo, okDeGuia, pausaDePaso, esperaMuestra, demoraMuestra,
-  relojConSalir, esperasAlSalir, entradaTrasCierre, TRAS_DIALOGO_MS,
+  relojConSalir, esperasAlSalir, entradaTrasCierre, entradaSolapada, TRAS_DIALOGO_MS,
   GUIA_TOQUE_MS, GUIA_PAUSA_MS, GUIA_PAUSA_MAX_MS, GUIA_COMPRA_MS, PASOS,
 } = await import("../src/guia.js");
 const {
@@ -35,7 +35,7 @@ const {
 } = await import("../src/visita.js");
 const { nuevo, cargar, monedaDeTienda, fechaLocal, COSTO } = await import("../src/progreso.js");
 const { fraseMedida, fraseGiro, fraseTrasGiro, fraseFaltan, fraseToca, fraseBrilla, textoMover } = await import("../src/frases.js");
-const { paraVoz, decir } = await import("../src/voz.js");
+const { paraVoz, decir, elegirVoz, prepararVoces } = await import("../src/voz.js");
 const {
   resolverAtras, dosAtras, resolverToque, teclaConDialogo, teclaConBarra, toqueEnVelo, atrasEnPantalla, FASES_CON_GUARDIA,
 } = await import("../src/salida.js");
@@ -440,7 +440,7 @@ function motorVoz(parcial) {
   return { sintesis: s, Utterance };
 }
 
-test("si la voz falla, no hay voces o no empieza, el paso espera 2 s", () => {
+test("si la voz falla o no empieza, el paso espera 2 s", () => {
   assert.equal(demoraMuestra("ok", 100), 2000);
   assert.equal(demoraMuestra("ok", 2600), 2600);
   assert.equal(demoraMuestra("ok", 9000), 3000);
@@ -470,7 +470,8 @@ test("si la voz falla, no hay voces o no empieza, el paso espera 2 s", () => {
     speak() { hablo = true; },
   });
   assert.equal(oir(vacio), "falla");
-  assert.equal(hablo, false);
+  assert.equal(hablo, true);
+  assert.equal(demoraMuestra("falla", 0), 2000);
 
   const mudo = motorVoz({
     speak() { /* no llama a onend ni a onerror */ },
@@ -486,6 +487,73 @@ test("si la voz falla, no hay voces o no empieza, el paso espera 2 s", () => {
     },
   });
   assert.equal(oir(larga), "ok");
+});
+
+test("getVoices vacío no calla: speak dispara onend y la frase se dijo", () => {
+  let dicha = "";
+  let lang = "";
+  let voice = "sin-mirar";
+  const vacio = motorVoz({
+    getVoices() { return []; },
+    speak(u) {
+      dicha = u.text;
+      lang = u.lang;
+      voice = u.voice;
+      this.speaking = true;
+      u.onstart();
+      u.onend();
+    },
+  });
+  let estado = "";
+  decir("Cuesta 6.", "es-MX", () => { estado = "ok"; }, {
+    ...vacio,
+    alFallar: () => { estado = "falla"; },
+  });
+  assert.equal(estado, "ok");
+  assert.equal(dicha, "Cuesta 6.");
+  assert.equal(lang, "es");
+  assert.equal(voice, undefined);
+  assert.equal(demoraMuestra("ok", 0), 2000);
+  assert.equal(demoraMuestra("ok", 2600), 2600);
+  assert.equal(demoraMuestra("ok", 9000), 3000);
+});
+
+test("voiceschanged elige la voz en español", () => {
+  assert.equal(elegirVoz([]), null);
+  assert.equal(elegirVoz([{ lang: "en-US", name: "ingles" }]), null);
+  assert.equal(elegirVoz([{ lang: "es-ES", name: "es" }, { lang: "es-MX", name: "mx" }]).name, "mx");
+  const voces = [];
+  let handler = null;
+  let lecturas = 0;
+  let ultima = null;
+  const sintesis = {
+    speaking: false,
+    pending: false,
+    getVoices() { lecturas += 1; return voces.slice(); },
+    cancel() {},
+    speak(u) {
+      ultima = u;
+      this.speaking = true;
+      u.onstart();
+      u.onend();
+    },
+    addEventListener(tipo, fn) { if (tipo === "voiceschanged") handler = fn; },
+  };
+  prepararVoces(sintesis);
+  assert.equal(lecturas >= 1, true);
+  assert.equal(typeof handler, "function");
+  voces.push({ lang: "en-US", name: "ingles" }, { lang: "es-ES", name: "españa" }, { lang: "es-MX", name: "mexico" });
+  handler();
+  let estado = "";
+  decir("Hola", "es-MX", () => { estado = "ok"; }, {
+    sintesis,
+    Utterance: function (texto) { this.text = texto; },
+    alFallar: () => { estado = "falla"; },
+  });
+  assert.equal(estado, "ok");
+  assert.equal(ultima && ultima.text, "Hola");
+  assert.equal(ultima.voice && ultima.voice.name, "mexico");
+  assert.match(String(ultima.lang), /^es-MX/i);
 });
 
 test("«¿Salir?» pausa la guía y Seguir la empieza otra vez", () => {
@@ -514,6 +582,26 @@ test("«¿Salir?» pausa la guía y Seguir la empieza otra vez", () => {
   assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: false }), "seguir");
   assert.equal(toqueEnVelo({ modo: "tactil", enDialogo: true }), "nada");
   assert.equal(toqueEnVelo({ modo: "tv", enDialogo: false }), "nada");
+});
+
+test("tras Seguir, el cierre del paso no se suma a los 400 ms si ya había pasado", () => {
+  assert.equal(entradaSolapada({ ms: 399, tipo: "toque", bloqueoListo: true }), "ignora");
+  assert.equal(entradaSolapada({ ms: 399, tipo: "ok", bloqueoListo: true }), "ignora");
+  assert.equal(entradaSolapada({ ms: 500, tipo: "toque", bloqueoListo: true }), "sigue");
+  assert.equal(entradaSolapada({ ms: 500, tipo: "ok", bloqueoListo: true }), "sigue");
+  assert.equal(entradaSolapada({ ms: 0, tipo: "atras", bloqueoListo: true }), "sigue");
+  const re = esperasAlSalir({ seguir: true, msVoz: 2600, bloqueoListo: true });
+  assert.equal(re.pausa, 0);
+  assert.equal(re.ignoraMs, 400);
+  assert.equal(re.muestra, 2600);
+  assert.equal(esperasAlSalir({ seguir: true, msVoz: 0, bloqueoListo: true }).muestra, 2000);
+  assert.equal(entradaSolapada({ ms: 500, bloqueoListo: false, msVoz: 0 }), "ignora");
+  assert.equal(entradaSolapada({ ms: 1000, bloqueoListo: false, msVoz: 0 }), "sigue");
+  assert.equal(entradaSolapada({ ms: 1399, bloqueoListo: false, msVoz: 0 }), "sigue");
+  assert.equal(entradaSolapada({ ms: 500, bloqueoListo: false, msVoz: 2600 }), "ignora");
+  assert.equal(entradaSolapada({ ms: 2600, bloqueoListo: false, msVoz: 2600 }), "sigue");
+  const juegoSrc = fs.readFileSync(new URL("../src/juego.js", import.meta.url), "utf8");
+  assert.match(juegoSrc, /bloqueoListo/);
 });
 
 test("girar solo cambia largo y ancho, y el área no cambia", () => {
