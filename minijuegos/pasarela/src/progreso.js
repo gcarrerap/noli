@@ -2,7 +2,8 @@
 // Lógica pura. Se guarda con Noli.guardar (el catálogo lo guarda y lo sincroniza con la nube).
 //
 //   progreso = {
-//     v: 2,                         // versión del formato (leerProgreso convierte versiones viejas; v1 no tenía diseños)
+//     v: 3,                         // versión del formato (leerProgreso convierte versiones viejas; v1 no tenía diseños; v2 no tenía premios)
+//     premios: 0,                   // cuántos de la fila de premios de desbloqueos.json ya abrió (#88)
 //     puntos: 0,                    // puntos de estilo acumulados (nunca bajan)
 //     pasarelas: 0,                 // cuántas pasarelas con tema ha hecho
 //     vistos: [ids],                // prendas, colores ("c:rosa"), temas ("t:playa") y poses ("o:vuelta") que ya vio (lo demás abierto brilla como nuevo)
@@ -19,10 +20,10 @@ import { limpiarDiseno, registrarDisenos } from "./taller.js";
 import { limpiarDibujo, registrarDibujos } from "./pixeles.js";
 
 /** Versión del formato que escribe este código */
-export const VERSION_PROGRESO = 2;
+export const VERSION_PROGRESO = 3;
 
 /** @returns {object} el progreso de alguien que nunca ha jugado */
-export const progresoNuevo = () => ({ v: VERSION_PROGRESO, puntos: 0, pasarelas: 0, vistos: [], atuendos: [], piel: 0, ultimo: null, ultimoTema: null, disenos: [], borrador: null, dibujos: [] });
+export const progresoNuevo = () => ({ v: VERSION_PROGRESO, puntos: 0, pasarelas: 0, vistos: [], atuendos: [], piel: 0, ultimo: null, ultimoTema: null, disenos: [], borrador: null, dibujos: [], premios: 0 });
 
 /**
  * Lee lo guardado (puede ser null, de otra versión o venir roto) y regresa un progreso válido. v1 → v2: sin
@@ -48,6 +49,10 @@ export function leerProgreso(x, idx) {
   registrarDisenos(idx, p.disenos);
   if (Number.isInteger(x.puntos) && x.puntos >= 0) p.puntos = x.puntos;
   if (Number.isInteger(x.pasarelas) && x.pasarelas >= 0) p.pasarelas = x.pasarelas;
+  // Premios abiertos (#88). v1/v2 abrían por niveles: se le dan 1.5 premios por pasarela jugada (lo que habría
+  // ganado con el sistema nuevo, más o menos), así nadie pierde lo que ya tenía.
+  if (Number.isInteger(x.premios) && x.premios >= 0) p.premios = Math.min(x.premios, idx.premios.length);
+  else p.premios = Math.min(idx.premios.length, Math.round(p.pasarelas * 1.5));
   if (Array.isArray(x.vistos)) p.vistos = x.vistos.filter((s) => typeof s === "string");
   if (Number.isInteger(x.piel) && x.piel >= 0 && x.piel < idx.config.tonosPiel.length) p.piel = x.piel;
   if (Array.isArray(x.atuendos)) p.atuendos = x.atuendos.filter((a) => a && idx.temas.has(a.tema)).map((a) => ({ ...a, atuendo: limpiar(a.atuendo, idx) }));
@@ -69,52 +74,68 @@ export function nivelDe(puntos, niveles) {
   return { i, nombre: niveles[i].nombre, siguiente: sig ? { nombre: sig.nombre, puntos: sig.puntos, faltan: sig.puntos - puntos } : null };
 }
 
-/** Lo que puede abrir un nivel (las llaves de desbloqueos.json) */
+/** Lo que se abre (las llaves de desbloqueos.json) */
 export const QUE_ABRE = ["prendas", "colores", "temas", "poses", "patrones", "estampados"];
 
 /**
- * Lo abierto hasta el nivel i (inclusive).
+ * Lo abierto con n premios (#88): el clóset inicial (niveles[0]) y los primeros n de la fila de premios.
+ * @param {number} n
+ * @param {{ niveles: object[], premios: {k, id}[] }} idx
  * @returns {{ prendas: Set<string>, colores: Set<string>, temas: Set<string>, poses: Set<string>, patrones: Set<string>, estampados: Set<string> }}
  */
-export function abiertosHasta(i, niveles) {
+export function abiertosCon(n, idx) {
   const r = Object.fromEntries(QUE_ABRE.map((k) => [k, new Set()]));
-  for (const n of niveles.slice(0, i + 1)) for (const k of QUE_ABRE) for (const x of n[k] || []) r[k].add(x);
+  const ini = idx.niveles[0];
+  for (const k of QUE_ABRE) for (const x of ini[k] || []) r[k].add(x);
+  for (const q of idx.premios.slice(0, Math.max(0, n))) r[q.k].add(q.id);
   return r;
 }
 
-/** Lo abierto con estos puntos */
-export const abiertos = (puntos, niveles) => abiertosHasta(nivelDe(puntos, niveles).i, niveles);
+/** Lo abierto con este progreso */
+export const abiertos = (progreso, idx) => abiertosCon(progreso.premios, idx);
+
+/** Cuántos premios gana una pasarela: config.premios.porPasarela, y uno más con extraDesde puntos o más */
+export function premiosDe(puntos, config) {
+  const c = config.premios || {};
+  return (c.porPasarela || 1) + (puntos >= (c.extraDesde || 10) ? 1 : 0);
+}
 
 /** Colores que se pueden escoger para una prenda: los suyos que ya estén abiertos (en el orden de la prenda). */
 export const coloresDe = (prenda, ab) => prenda.colores.filter((c) => ab.colores.has(c));
 
-/** Nivel en el que se abre una prenda (para enseñar el candado "en el nivel X"), o null. */
-export function nivelDePrenda(id, niveles) {
-  const i = niveles.findIndex((n) => (n.prendas || []).includes(id));
-  return i < 0 ? null : { i, nombre: niveles[i].nombre, puntos: niveles[i].puntos };
+/**
+ * Cuántos premios faltan para abrir algo (para el candado: "faltan 3 premios"), o null si no está en la fila.
+ * @param {string} clave como las de los premios ("x-gorra", "c:verde"…)
+ */
+export function faltanPara(clave, progreso, idx) {
+  const i = idx.premios.findIndex((q) => q.clave === clave);
+  return i < 0 ? null : Math.max(0, i + 1 - progreso.premios);
 }
 
 /**
- * Registra una pasarela calificada: suma puntos, guarda el atuendo en el clóset y dice qué se abrió.
+ * Registra una pasarela calificada: suma puntos, abre los premios que tocan (#88: siempre al menos uno), guarda el
+ * atuendo en el clóset y dice qué se abrió.
  * @param {object} progreso
  * @param {{ tema: string, atuendo: object, jueces: {estrellas}[], puntos: number }} pasarela
  * @param {number} ahora ms
  * @param {object} idx
- * @returns {{ progreso: object, subio: boolean, nivel: object, nuevos: Record<string, string[]> }} nuevos: una lista por cada llave de QUE_ABRE
+ * @returns {{ progreso: object, subio: boolean, nivel: object, nuevos: Record<string, string[]>, ganados: number }} nuevos: una lista por cada llave de QUE_ABRE
  */
 export function registrarPasarela(progreso, pasarela, ahora, idx) {
   const antes = nivelDe(progreso.puntos, idx.niveles);
   const puntos = progreso.puntos + pasarela.puntos;
   const despues = nivelDe(puntos, idx.niveles);
   const nuevos = Object.fromEntries(QUE_ABRE.map((k) => [k, []]));
-  for (const n of idx.niveles.slice(antes.i + 1, despues.i + 1)) for (const k of QUE_ABRE) nuevos[k].push(...(n[k] || []));
+  const premios = Math.min(idx.premios.length, progreso.premios + premiosDe(pasarela.puntos, idx.config));
+  for (const q of idx.premios.slice(progreso.premios, premios)) nuevos[q.k].push(q.id);
   const foto = { fecha: ahora, tema: pasarela.tema, atuendo: pasarela.atuendo, estrellas: pasarela.jueces.map((j) => j.estrellas), puntos: pasarela.puntos };
   const max = idx.config.maxAtuendosGuardados || 12;
   return {
-    progreso: { ...progreso, puntos, pasarelas: progreso.pasarelas + 1, atuendos: [foto, ...progreso.atuendos].slice(0, max), ultimoTema: pasarela.tema },
+    progreso: { ...progreso, puntos, premios, pasarelas: progreso.pasarelas + 1, atuendos: [foto, ...progreso.atuendos].slice(0, max), ultimoTema: pasarela.tema },
     subio: despues.i > antes.i,
     nivel: despues,
     nuevos,
+    ganados: premios - progreso.premios,
   };
 }
 

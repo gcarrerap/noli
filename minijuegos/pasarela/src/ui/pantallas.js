@@ -4,7 +4,7 @@
 import { icono, estrellas, ICONOS } from "./iconos.js";
 import { miniPrenda, dibujarMuneca } from "./dibujo2d.js";
 import { colorPuesto, patronPuesto, fraseIngles } from "../atuendo.js";
-import { coloresDe, nivelDePrenda, esNuevo } from "../progreso.js";
+import { coloresDe, faltanPara, esNuevo } from "../progreso.js";
 import { reloj } from "../partida.js";
 import { concuerda } from "../espanol.js";
 import { prendasDeZona, aceptaPatron } from "../datos.js";
@@ -28,8 +28,26 @@ function barraNivel(nivel, puntos, niveles) {
     <small>${sig ? `Faltan ${sig.faltan} para <b>${esc(sig.nombre)}</b>` : "¡Ya tienes todo el clóset!"}</small></div>`;
 }
 
+/** "¡En tu siguiente pasarela!" / "Faltan 4 premios" (#88) */
+export const textoFaltan = (n) => (n === null ? "Pronto" : n <= 1 ? "¡En tu siguiente pasarela!" : `Faltan ${n} premios`);
+
+/** Qué tipo de cosa es el siguiente premio (sin decir cuál: es sorpresa) */
+export function siguientePremio(progreso, idx) {
+  const q = idx.premios && idx.premios[progreso.premios];
+  if (!q) return null;
+  if (q.k === "prendas") {
+    const p = idx.prendas.get(q.id);
+    if (!p) return "algo nuevo";
+    if (p.categoria === "maquillaje") return "maquillaje";
+    if (p.categoria === "accesorio") return ["orejas", "cuello", "muneca"].includes(p.lugar) ? "una joya" : "un accesorio";
+    return p.categoria === "peinado" ? "un peinado" : p.categoria === "zapatos" ? "zapatos" : "ropa nueva";
+  }
+  return { colores: "un color", temas: "un tema nuevo", poses: "una pose", patrones: "un patrón", estampados: "un estampado" }[q.k];
+}
+
 /** Pantalla de inicio */
-export function inicio({ saldo, costo, nivel, progreso, niveles, enCatalogo }) {
+export function inicio({ saldo, costo, nivel, progreso, niveles, enCatalogo, idx = null }) {
+  const sig = idx ? siguientePremio(progreso, idx) : null;
   const alcanza = saldo !== null && saldo >= costo;
   return `<section class="pantalla inicio" aria-labelledby="tInicio">
     <h1 id="tInicio" class="logo">Pasarela</h1>
@@ -40,6 +58,7 @@ export function inicio({ saldo, costo, nivel, progreso, niveles, enCatalogo }) {
       ${boton("libre", "Probarme ropa", { clase: "grande", ico: "arriba" })}
       <div class="fila">${boton("closet", "Mi clóset", { ico: "closet" })}${boton("piel", "Mi piel", { ico: "piel" })}</div>
     </div>
+    ${sig ? `<p class="premio-sig">${icono("estrella")}<span>En tu siguiente pasarela ganas <b>${esc(sig)}</b></span></p>` : ""}
     ${barraNivel(nivel, progreso.puntos, niveles)}
     ${!enCatalogo ? `<p class="nota">Abierto sin el catálogo: los créditos son de prueba.</p>` : ""}
   </section>`;
@@ -115,10 +134,10 @@ export function panel({ zona, idx, atuendo, ab, progreso, sel, voz, girar, color
   const tarjetas = prendas.map((p) => {
     const abierta = ab.prendas.has(p.id), puesta = colorPuesto(atuendo, p);
     if (!abierta) {
-      const n = nivelDePrenda(p.id, idx.niveles);
-      return `<button class="prenda bloqueada" data-accion="bloqueada" data-prenda="${p.id}" data-foco aria-label="${esc(p.es)}: se abre en el nivel ${esc(n ? n.nombre : "")}">
+      const txt = textoFaltan(faltanPara(p.id, progreso, idx));
+      return `<button class="prenda bloqueada" data-accion="bloqueada" data-prenda="${p.id}" data-foco aria-label="${esc(p.es)}: ${esc(txt)}">
         <span class="mini-caja">${miniPrenda(p, "plateado", idx)}<i class="candado">${icono("candado")}</i></span>
-        <span class="nombre">${esc(p.es)}</span><small>Nivel ${esc(n ? n.nombre : "")} · ${n ? n.puntos : 0} pts</small></button>`;
+        <span class="nombre">${esc(p.es)}</span><small>${esc(txt)}</small></button>`;
     }
     const color = puesta || (p.id === sel && colorSel) || coloresDe(p, ab)[0];
     const patron = puesta ? patronPuesto(atuendo, p) : p.id === sel ? patronSel : null;
@@ -174,7 +193,7 @@ function patrones({ prenda, idx, ab, progreso, hex, sel }) {
     return `<button class="patron${on ? " sel" : ""}" data-accion="patron" data-patron="${id}" data-foco aria-pressed="${on}" aria-label="${esc(es)}, en inglés ${esc(en)}" title="${esc(es)} · ${esc(en)}">${muestra(x)}${x && esNuevo(progreso, "pt:" + x.id) ? '<i class="punto-nuevo"></i>' : ""}</button>`;
   };
   return `<div class="patrones" role="group" aria-label="Patrones">${b(null)}${lista.map(b).join("")}</div>
-    ${faltan ? `<p class="nota chica">${faltan} ${faltan === 1 ? "patrón más se abre" : "patrones más se abren"} subiendo de nivel.</p>` : ""}`;
+    ${faltan ? `<p class="nota chica">${faltan} ${faltan === 1 ? "patrón más se abre" : "patrones más se abren"} con los premios de la pasarela.</p>` : ""}`;
 }
 
 /** Desfile: texto encima mientras camina */
@@ -186,7 +205,7 @@ export function poses({ idx, ab, progreso, actual }) {
     <h2>¡Escoge tu pose!</h2>
     <div class="poses-grid">${lista.map((o, i) => `<button class="pose${o.id === actual ? " sel" : ""}" data-accion="pose" data-pose="${o.id}" data-foco${i === 0 ? '="inicial"' : ""}>
       ${o.baile ? `<i class="ico">${icono("musica")}</i>` : `<i class="ico">${icono("estrella")}</i>`}<span>${esc(o.es)}<small lang="en">${esc(o.en)}</small></span>${esNuevo(progreso, "o:" + o.id) ? '<i class="badge">¡Nueva!</i>' : ""}</button>`).join("")}</div>
-    ${faltan ? `<p class="nota">${faltan} ${faltan === 1 ? "pose más se abre" : "poses más se abren"} subiendo de nivel.</p>` : ""}
+    ${faltan ? `<p class="nota">${faltan} ${faltan === 1 ? "pose más se abre" : "poses más se abren"} con los premios de la pasarela.</p>` : ""}
     ${boton("fin-poses", "¡Listo!", { clase: "grande primario" })}
   </div>`;
 }
@@ -216,18 +235,21 @@ export function calificacion({ resultado, idx, tema, frase, voz, nivel, progreso
   </section>`;
 }
 
-/** Subió de nivel: lo que se abrió */
-export function desbloqueo({ nivel, nuevos, idx }) {
+/** Los premios de la pasarela (#88: siempre hay al menos uno) y, si subió, el nivel nuevo */
+export function desbloqueo({ nivel, nuevos, idx, subio = false, siguiente = null }) {
   const prendas = nuevos.prendas.map((id) => idx.prendas.get(id)).filter(Boolean);
+  const n = Object.values(nuevos).reduce((s, l) => s + l.length, 0);
   return `<section class="pantalla desbloqueo" aria-labelledby="tDes">
-    <p class="antes">¡Subiste de nivel!</p>
-    <h1 id="tDes">${esc(nivel.nombre)}</h1>
-    ${prendas.length ? `<h2>Ropa nueva</h2><div class="nuevas">${prendas.map((p) => `<figure>${miniPrenda(p, p.colores[0], idx)}<figcaption>${esc(p.es)}<small lang="en">${esc(p.en)}</small></figcaption></figure>`).join("")}</div>` : ""}
+    <p class="antes">${subio ? `¡Subiste de nivel: <b>${esc(nivel.nombre)}</b>!` : "¡Ganaste en la pasarela!"}</p>
+    <h1 id="tDes">${n === 1 ? "¡Un premio!" : `¡${n} premios!`}</h1>
+    ${[["Ropa nueva", prendas.filter((p) => !p.lugar)], ["Accesorios y maquillaje", prendas.filter((p) => p.lugar)]].map(([titulo, lista]) => lista.length
+      ? `<h2>${titulo}</h2><div class="nuevas">${lista.map((p) => `<figure>${miniPrenda(p, p.colores[0], idx)}<figcaption>${esc(p.es)}<small lang="en">${esc(p.en)}</small></figcaption></figure>`).join("")}</div>` : "").join("")}
     ${nuevos.colores.length ? `<h2>Colores nuevos</h2><div class="nuevos-colores">${nuevos.colores.map((c) => { const cc = idx.colores.get(c); return `<span><i style="--c:${cc.hex}"></i>${esc(cc.es)} <small lang="en">${esc(cc.en)}</small></span>`; }).join("")}</div>` : ""}
     ${(nuevos.poses || []).length ? `<h2>${nuevos.poses.length === 1 ? "Pose nueva" : "Poses nuevas"}</h2><div class="nuevos-temas">${nuevos.poses.map((o) => { const oo = idx.poses.get(o); return `<span>${icono(oo.baile ? "musica" : "estrella")}${esc(oo.es)} <small lang="en">${esc(oo.en)}</small></span>`; }).join("")}</div>` : ""}
     ${(nuevos.patrones || []).length ? `<h2>${nuevos.patrones.length === 1 ? "Patrón nuevo" : "Patrones nuevos"}</h2><div class="nuevos-patrones">${nuevos.patrones.map((x) => { const pa = idx.patrones.get(x); return pa ? `<span>${pa.svg ? pintarSVG(pa.svg, { p: "#ff7eb6" }) : ""}${esc(pa.es)} <small lang="en">${esc(pa.en)}</small></span>` : ""; }).join("")}</div>` : ""}
     ${(nuevos.estampados || []).length ? `<h2>${nuevos.estampados.length === 1 ? "Estampado nuevo" : "Estampados nuevos"}</h2><div class="nuevos-patrones">${nuevos.estampados.map((x) => { const e = idx.estampados.get(x); return e ? `<span class="estampado">${e.svg ? pintarSVG(e.svg, { p: "#ffffff" }) : e.url ? `<img src="${e.url}" alt="">` : ""}${esc(e.es)} <small lang="en">${esc(e.en)}</small></span>` : ""; }).join("")}</div><p class="nota">Para ponerlos en tu ropa: el Taller de diseño.</p>` : ""}
     ${nuevos.temas.length ? `<h2>Tema nuevo</h2><div class="nuevos-temas">${nuevos.temas.map((t) => { const tt = idx.temas.get(t); return `<span>${icono(tt.icono)}${esc(tt.nombre)}</span>`; }).join("")}</div>` : ""}
+    ${siguiente ? `<p class="premio-sig">${icono("estrella")}<span>En la siguiente pasarela: <b>${esc(siguiente)}</b></span></p>` : `<p class="nota">¡Ya tienes todo! Ahora a inventar ropa en el Taller de diseño.</p>`}
     <div class="menu">${boton("continuar", "¡Genial!", { clase: "grande primario", inicial: true })}</div>
   </section>`;
 }

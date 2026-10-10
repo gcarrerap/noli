@@ -29,7 +29,7 @@
 | Noche de gala | elegante 3, brillo 2 | deportivo, pijama, playa, casual | negro, dorado, plateado, morado, rojo | Maestra del estilo |
 | Hada del bosque | magia 3, flores 2, brillo 1 | deportivo, rock | verde, lila, turquesa, rosa, dorado | Reina de la pasarela |
 
-(Datos en `datos/temas.json`; nivel en `datos/desbloqueos.json`.)
+(Datos en `datos/temas.json`; cuándo se abre cada uno: `datos/desbloqueos.json`.)
 
 ## Cómo califican los jueces
 
@@ -133,87 +133,86 @@ Si los tres dan 5 estrellas sale "¡Perfecto! ¡No le cambiaría nada!". El camp
 - Abierto solo (sin catálogo), el kit simula 10 créditos.
 - **Taller de diseño:** coser una prenda cuesta `config.taller.costo` = **5** (`Noli.gastar(5, "taller")`), al tocar "Coser". Diseñar y probar es gratis.
 
-## Puntos de estilo, niveles y desbloqueos
+## Puntos de estilo, niveles y premios
 
-Los puntos de cada pasarela (3 a 15) se **suman** y **nunca se pierden ni se gastan**. Cada nivel de `datos/desbloqueos.json` abre **poco: de 1 a 3 cosas** (prendas, colores para todas las prendas que los acepten, temas, poses de la pasarela, patrones y estampados), y los niveles se van espaciando (#26: antes cada nivel abría hasta 11 prendas y se ganaba ropa en casi cada pasarela):
+**Cada pasarela abre algo (#88).** Antes las cosas se abrían por niveles de puntos, y entre un nivel y otro pasaban 2 a 5 pasarelas sin nada nuevo; Noelia se frustraba, sobre todo con los accesorios y el maquillaje. Ahora:
 
-| Nivel | Puntos | Abre |
-|---|---|---|
-| Principiante | 0 | El clóset inicial: 14 prendas (2 peinados, 3 de arriba, 3 de abajo, 1 vestido, 2 zapatos, 3 accesorios), 7 colores, 5 temas, 3 poses, patrones rayas y puntos, estampados osito y corazón |
-| Aprendiz | 16 | suéter, gorra, color verde |
-| Con estilo | 33 | pantalón de mezclilla, pose dar una vuelta, patrón corazones |
-| Curiosa | 51 | chamarra de invierno, gorro de invierno, tema Invierno en la nieve |
-| Creativa | 71 | botas de nieve, pantalón de nieve, color celeste |
-| Coqueta | 93 | rubor, labial, camiseta del osito |
-| Chispa | 116 | traje de baño, sombrero de playa, pose corazón |
-| Original | 140 | coletas, reloj, patrón cuadros |
-| Brillante | 166 | pantuflas de conejo, pecas, color morado |
-| Atrevida | 194 | vestido de fiesta, aretes de perla, patrón flores |
-| Divertida | 223 | blusa de princesa, corona, tema Princesa del castillo |
-| Elegante | 253 | zapatillas de fiesta, sombra de ojos, pose baile de brazos |
-| Glamorosa | 285 | dos chongos, pulsera, color lila |
-| Artista | 319 | sudadera, bufanda, blusa del corazón |
-| Diseñadora | 354 | trenza larga, flor en el pelo, tema Primavera en el jardín |
-| Modelo | 390 | falda larga, brillitos, pose baile de lado a lado |
-| Fotogénica | 428 | vestido de princesa, aretes de estrella, patrón estrellas |
-| Fashionista | 468 | camisa de botones, collar de perlas, color naranja |
-| Estrella | 509 | falda de tutú, corazón pintado, pose reverencia |
-| Estrella brillante | 551 | leggings, reloj deportivo, sudadera de estrella |
-| Superestrella | 595 | botas, arracadas, tema Campamento en el bosque |
-| Celebridad | 641 | rizos, bolsa, pose saltar |
-| Ícono | 688 | pijama de una pieza, collar de corazón, color turquesa |
-| Ícono de la moda | 736 | top de brillos, moño, estrella pintada |
-| Leyenda | 786 | chaqueta de cuero, chongo de bailarina, tema Estrella de rock |
-| Leyenda dorada | 838 | zapatos de ballet, pestañas largas, pose lanzar un beso |
-| Diva | 891 | pelo largo suelto, varita mágica, color plateado |
-| Maestra del estilo | 945 | vestido de gala, tema Noche de gala, pose baile del robot |
-| Gran diseñadora | 1001 | vestido de hada, alas de hada, color dorado |
-| Reina de la pasarela | 1059 | tiara de estrellas, tema Hada del bosque, pose pensativa |
-| Maestra de estampados | 1118 | vestido de arcoíris, patrón cebra, estampado arcoíris |
-| Reina del diseño | 1178 | patrón leopardo, estampado estrella |
+- **Clóset inicial** (`desbloqueos.json → niveles[0]`): 18 prendas, entre ellas lentes de sol, diadema, mochila, aretes de perla, pulsera, rubor y labial; 7 colores, 5 temas, 3 poses, 2 patrones y 2 estampados.
+- **La fila de premios** (`desbloqueos.json → premios`): todo lo demás, en orden. **Cada pasarela abre el siguiente premio, y uno más si saca 10 puntos o más** (`config.premios`: `porPasarela` 1, `extraDesde` 10 = 2 estrellas de Noli). Aunque le vaya mal, siempre gana uno.
+- **Accesorios y maquillaje seguido:** en la fila, de cada 3 premios uno es un accesorio, una joya o maquillaje (alternando), hasta que se acaban; los otros dos son ropa, colores, temas, poses, patrones o estampados. Hay prueba.
+- **Siempre hay algo que esperar:** el inicio y la pantalla de premios dicen qué tipo de cosa es el siguiente premio, sin decir cuál ("En tu siguiente pasarela ganas **maquillaje**"). Las prendas con candado dicen "¡En tu siguiente pasarela!" o "Faltan 4 premios".
+- **Pantalla de premios** después de cada pasarela: "¡2 premios!", con lo que se abrió; si además subió de nivel, lo dice arriba.
+- **Los niveles** (Aprendiz, Con estilo… Reina del diseño) siguen saliendo de los puntos de estilo (que se suman y nunca se pierden), pero **ya no abren cosas**: son títulos y la barra de progreso. Los espacios del Taller de diseño sí crecen con el nivel.
+- **Se guarda** `progreso.premios` (cuántos de la fila ya abrió; formato v3). Un progreso de antes (v1/v2) recibe 1.5 premios por pasarela jugada, lo que más o menos habría ganado, para no perder lo que ya tenía.
 
-Al subir de nivel sale la pantalla de desbloqueo. Lo nuevo se marca **"¡Nuevo!"** en el panel (y un punto en los colores; "¡Nueva!" en las poses) hasta que se ve: al cerrar el panel de ese mueble (o al terminar de posar) queda como visto. Lo del clóset inicial nunca sale como nuevo. Las prendas bloqueadas se ven en gris con candado y dicen en qué nivel se abren y con cuántos puntos.
+![Premios después de una pasarela](img/premios.png)
+
+La fila (en orden; se edita en `desbloqueos.json`, con claves como las de `vistos`: id de prenda, `c:` color, `t:` tema, `o:` pose, `pt:` patrón, `e:` estampado):
+
+| Premios | Qué |
+|---|---|
+| 1–6 | gorra, suéter, color verde, pecas, pantalón de mezclilla, pose Dar una vuelta |
+| 7–12 | gorro de invierno, patrón corazones, chamarra de invierno, sombra de ojos, tema Invierno en la nieve, botas de nieve |
+| 13–18 | sombrero de playa, pantalón de nieve, color celeste, brillitos, camiseta del osito, traje de baño |
+| 19–24 | reloj, pose Corazón, coletas, corazón pintado, patrón cuadros, pantuflas de conejo |
+| 25–30 | corona, color morado, vestido de fiesta, estrella pintada, patrón flores, blusa de princesa |
+| 31–36 | bufanda, tema Princesa del castillo, zapatillas de fiesta, pestañas largas, pose Baile de brazos, dos chongos |
+| 37–42 | flor en el pelo, color lila, sudadera, aretes de estrella, blusa del corazón, trenza larga |
+| 43–48 | collar de perlas, tema Primavera en el jardín, falda larga, reloj deportivo, pose Baile de lado a lado, vestido de princesa |
+| 49–54 | arracadas, patrón estrellas, camisa de botones, bolsa, color naranja, falda de tutú |
+| 55–60 | collar de corazón, pose Reverencia, leggings, moño, sudadera de estrella, botas |
+| 61–66 | varita mágica, tema Campamento en el bosque, rizos, alas de hada, pose Saltar, pijama de una pieza |
+| 67–72 | tiara de estrellas, color turquesa, top de brillos, chaqueta de cuero, chongo de bailarina, tema Estrella de rock |
+| 73–78 | zapatos de ballet, pose Lanzar un beso, pelo largo suelto, color plateado, vestido de gala, tema Noche de gala |
+| 79–84 | pose Baile del robot, vestido de hada, color dorado, tema Hada del bosque, pose Pensativa, vestido de arcoíris |
+| 85–88 | patrón cebra, estampado arcoíris, patrón leopardo, estampado estrella |
+
+Lo nuevo se marca **"¡Nuevo!"** en el panel (y un punto en los colores y patrones; "¡Nueva!" en las poses) hasta que se ve. Lo del clóset inicial nunca sale como nuevo.
 
 ### La curva
 
-Meta (#26): **algo nuevo cada 2 pasarelas al principio, cada vez más espaciado después**, para que la ropa nueva se sienta como un premio. Puntos para cada nivel: el salto empieza en 16 y crece 1.5 por nivel (`round(14 + 1.5 × nivel)`). `herramientas/simular-curva.mjs` simula 200 jugadoras de cada estilo, con temas al azar como en el juego (`node minijuegos/pasarela/herramientas/simular-curva.mjs --md`). Pasarelas (mediana) para llegar a cada nivel:
+`herramientas/simular-curva.mjs` simula 200 jugadoras de cada estilo con temas al azar, como en el juego (`node minijuegos/pasarela/herramientas/simular-curva.mjs --md`). Pasarelas (mediana) para llegar a cada nivel de estilo, y cuándo abre el último premio:
 
 | Nivel | Puntos | Pasarelas (con cuidado) | Pasarelas (a medias) | Pasarelas (al azar) |
 |---|---|---|---|---|
 | Principiante | 0 | 0 | 0 | 0 |
 | Aprendiz | 16 | 2 | 2 | 2 |
 | Con estilo | 33 | 3 | 4 | 4 |
-| Curiosa | 51 | 4 | 5 | 6 |
+| Curiosa | 51 | 5 | 5 | 6 |
 | Creativa | 71 | 6 | 7 | 9 |
 | Coqueta | 93 | 8 | 9 | 11 |
-| Chispa | 116 | 9 | 12 | 14 |
-| Original | 140 | 11 | 14 | 17 |
+| Chispa | 116 | 10 | 12 | 14 |
+| Original | 140 | 12 | 14 | 17 |
 | Brillante | 166 | 14 | 16 | 20 |
 | Atrevida | 194 | 16 | 19 | 23 |
 | Divertida | 223 | 18 | 22 | 27 |
-| Elegante | 253 | 20 | 25 | 31 |
-| Glamorosa | 285 | 23 | 27 | 35 |
-| Artista | 319 | 25 | 31 | 39 |
-| Diseñadora | 354 | 28 | 34 | 43 |
-| Modelo | 390 | 30 | 37 | 48 |
-| Fotogénica | 428 | 33 | 41 | 52 |
-| Fashionista | 468 | 36 | 44 | 57 |
-| Estrella | 509 | 39 | 48 | 62 |
-| Estrella brillante | 551 | 42 | 52 | 67 |
-| Superestrella | 595 | 45 | 56 | 73 |
-| Celebridad | 641 | 48 | 60 | 78 |
-| Ícono | 688 | 51 | 64 | 84 |
-| Ícono de la moda | 736 | 55 | 68 | 90 |
-| Leyenda | 786 | 58 | 73 | 96 |
-| Leyenda dorada | 838 | 62 | 77 | 103 |
-| Diva | 891 | 65 | 82 | 109 |
-| Maestra del estilo | 945 | 69 | 87 | 116 |
-| Gran diseñadora | 1001 | 73 | 92 | 123 |
-| Reina de la pasarela | 1059 | 77 | 97 | 131 |
+| Elegante | 253 | 20 | 24 | 31 |
+| Glamorosa | 285 | 22 | 27 | 35 |
+| Artista | 319 | 25 | 30 | 39 |
+| Diseñadora | 354 | 27 | 33 | 43 |
+| Modelo | 390 | 30 | 37 | 47 |
+| Fotogénica | 428 | 32 | 40 | 52 |
+| Fashionista | 468 | 35 | 44 | 57 |
+| Estrella | 509 | 38 | 47 | 62 |
+| Estrella brillante | 551 | 41 | 51 | 67 |
+| Superestrella | 595 | 44 | 55 | 73 |
+| Celebridad | 641 | 47 | 59 | 79 |
+| Ícono | 688 | 50 | 63 | 85 |
+| Ícono de la moda | 736 | 53 | 68 | 91 |
+| Leyenda | 786 | 57 | 72 | 97 |
+| Leyenda dorada | 838 | 60 | 77 | 104 |
+| Diva | 891 | 64 | 82 | 110 |
+| Maestra del estilo | 945 | 68 | 86 | 117 |
+| Gran diseñadora | 1001 | 72 | 92 | 124 |
+| Reina de la pasarela | 1059 | 76 | 97 | 131 |
+| Maestra de estampados | 1118 | 80 | 102 | 139 |
+| Reina del diseño | 1178 | 84 | 107 | 146 |
 
-Puntos por pasarela en promedio: con cuidado 14.3 · a medias 11.0 · al azar 8.1. Mediana de 200 jugadoras simuladas por estilo.
+Premios (88; cada pasarela abre 1, o 2 con 10+ puntos): todo abierto en la pasarela con cuidado 44 · a medias 51 · al azar 73.
 
-**Por qué así:** el primer nivel llega en la segunda pasarela aun vistiéndose al azar, para que entienda pronto que desfilar abre cosas. Después, un nivel cada 2 pasarelas al principio y cada 4–5 al final. Vestirse "con cuidado" se nota (todo en ≈ 77 pasarelas contra ≈ 131 al azar), así que poner atención al tema sí paga. A 3 créditos por pasarela, abrir todo cuesta unos 290 créditos para quien juega "a medias": semanas de practicar sumas y spelling. Si se siente lento o rápido, cambiar los `puntos` en `desbloqueos.json` (o mover cosas entre niveles) y volver a correr el simulador; la prueba revisa que cada nivel abra de 1 a 3 cosas y que los saltos no se achiquen.
+Puntos por pasarela en promedio: con cuidado 14.4 · a medias 11.1 · al azar 8.1. Mediana de 200 jugadoras simuladas por estilo.
+
+**Por qué así:** en cada pasarela sale algo nuevo, así que siempre se siente que avanza; jugando con cuidado salen 2 premios casi siempre, así que fijarse en el tema paga. Todo se abre en ≈ 44 pasarelas con cuidado, ≈ 51 a medias y ≈ 73 al azar: a 3 créditos, unos 150 créditos para quien juega a medias. Si se siente lento o rápido: cambiar `config.premios` o el orden de `premios` y volver a correr el simulador.
 
 ## Poses y bailes
 
@@ -296,7 +295,8 @@ Con `Noli.guardar(progreso)` (el catálogo lo guarda en `noli.datos.pasarela` y 
 
 ```js
 {
-  v: 2,                    // versión del formato; leerProgreso() convierte o descarta lo que no entienda (v1 → v2: disenos vacío)
+  v: 3,                    // versión del formato; leerProgreso() convierte o descarta lo que no entienda (v1 → v2: disenos vacío; v2 → v3: premios = 1.5 × pasarelas)
+  premios: 14,             // cuántos de la fila de premios ya abrió (#88)
   puntos: 41,              // puntos de estilo acumulados
   pasarelas: 4,            // pasarelas con tema
   vistos: ["a-camiseta", "c:rosa", "t:playa", "o:vuelta", "pt:cebra", …],   // lo que ya no brilla como nuevo (prendas, "c:" colores, "t:" temas, "o:" poses, "pt:" patrones)

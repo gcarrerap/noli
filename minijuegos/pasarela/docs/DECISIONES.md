@@ -158,3 +158,18 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 
 **Consecuencias.** En 3D la textura usa `NearestFilter` y sin *mipmaps* (se ve pixelado y nítido); si usa 1/2, hay una textura por color de prenda (caché). En 2D cada renglón de cuadros iguales es un `<rect>`. En la TV dibujar es lento pero posible; lo hecho en el teléfono aparece en la TV.
 
+## ADR 17 — Cada pasarela abre algo: una fila de premios (reemplaza lo que abrían los niveles de ADR 10) (#88)
+
+**Contexto.** Con ADR 10 cada nivel abría de 1 a 3 cosas, pero los niveles llegaban cada 2 a 5 pasarelas. Noelia, que juega sobre todo la Pasarela, pasaba varias pasarelas sin nada nuevo, y los accesorios y el maquillaje (lo que más quería) salían tarde. Se frustraba.
+
+**Decisión.**
+- **Una fila de premios en orden** (`desbloqueos.json → premios`). Cada pasarela abre el siguiente, y uno más con 10 puntos o más. Siempre gana algo, y hacerlo bien da el doble.
+- **Más cosas desde el principio:** rubor, labial, aretes de perla y pulsera pasan al clóset inicial (ya había lentes, diadema y mochila).
+- **Accesorios y maquillaje uno de cada 3 premios**, alternando, hasta que se acaban.
+- **Anticipación:** se dice qué tipo de cosa es el siguiente premio, y el candado dice cuántos premios faltan (no puntos).
+- **Los niveles se quedan como títulos** por puntos de estilo (lo bonito de "¡Subiste a Glamorosa!"), sin abrir nada.
+
+**Por qué una fila y no premios al azar:** es determinista (se puede decir qué viene y cuánto falta), se ordena a mano (accesorios seguido, temas espaciados) y se prueba.
+
+**Consecuencias.** Todo se abre en ≈ 44–73 pasarelas (antes 77–131). El progreso guarda `premios` (v3); uno anterior recibe 1.5 premios por pasarela jugada. Los espacios del Taller siguen creciendo con el nivel.
+

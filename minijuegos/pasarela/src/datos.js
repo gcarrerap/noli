@@ -10,6 +10,16 @@ export const FORMAS = ["tubo", "esfera", "caja", "capsula", "toro", "cono", "dis
 export const ANCLAS = ["cadera", "torso", "cuello", "cabeza", "brazoI", "brazoD", "antebrazoI", "antebrazoD", "manoI", "manoD",
   "musloI", "musloD", "piernaI", "piernaD", "pieI", "pieD"];
 
+/** Prefijo de cada tipo en las claves de premios y de "vistos" ("c:rosa", "t:playa"…); las prendas van sin prefijo */
+export const PREFIJOS = { colores: "c:", temas: "t:", poses: "o:", patrones: "pt:", estampados: "e:" };
+
+/** "c:rosa" → { k: "colores", id: "rosa", clave: "c:rosa" }; "x-gorra" → { k: "prendas", … }; o null */
+export function clavePremio(clave) {
+  if (typeof clave !== "string" || !clave) return null;
+  for (const [k, pre] of Object.entries(PREFIJOS)) if (clave.startsWith(pre)) return { k, id: clave.slice(pre.length), clave };
+  return clave.includes(":") ? null : { k: "prendas", id: clave, clave };
+}
+
 /** Categorías que van por lugar (un accesorio o maquillaje por lugar: orejas, labios…) en lugar de una sola ranura */
 export const CON_LUGAR = ["accesorio", "maquillaje"];
 /** ¿Esta prenda se pone en un lugar (accesorio o maquillaje)? */
@@ -148,10 +158,13 @@ export function revisarDatos(d) {
   const poses = new Set((d.poses ? d.poses.poses : []).map((x) => x.id));
   const abre = { prendas: new Map(), colores: new Map(), temas: new Map(), poses: new Map(), patrones: new Map(), estampados: new Map() };
   let antes = -1;
+  const VALIDOS = { prendas: ids, colores, temas, poses, patrones, estampados };
   d.desbloqueos.niveles.forEach((n, i) => {
     if (!(Number.isInteger(n.puntos) && n.puntos > antes)) e.push(`nivel ${n.nombre}: los puntos deben subir de nivel en nivel`);
     antes = n.puntos;
     if (i === 0 && n.puntos !== 0) e.push("el primer nivel debe empezar en 0 puntos");
+    // Desde #88 solo el primer nivel (el clóset inicial) abre cosas; lo demás sale en los premios
+    if (i > 0 && Object.keys(VALIDOS).some((k) => (n[k] || []).length)) e.push(`nivel ${n.nombre}: ya no abre cosas (van en "premios")`);
     for (const [k, valid] of [["prendas", ids], ["colores", colores], ["temas", temas], ["poses", poses], ["patrones", patrones], ["estampados", estampados]]) {
       for (const x of n[k] || []) {
         if (!valid.has(x)) e.push(`nivel ${n.nombre}: ${k} "${x}" no existe`);
@@ -160,6 +173,13 @@ export function revisarDatos(d) {
       }
     }
   });
+  // La fila de premios (#88)
+  for (const [i, clave] of (d.desbloqueos.premios || []).entries()) {
+    const q = clavePremio(clave);
+    if (!q || !VALIDOS[q.k].has(q.id)) { e.push(`premio ${i + 1}: "${clave}" no existe`); continue; }
+    if (abre[q.k].has(q.id)) e.push(`premio ${i + 1}: "${clave}" ya se abría en ${abre[q.k].get(q.id)}`);
+    abre[q.k].set(q.id, `el premio ${i + 1}`);
+  }
   for (const x of ids) if (!abre.prendas.has(x)) e.push(`${x}: no se abre en ningún nivel (desbloqueos.json)`);
   for (const x of colores) if (!abre.colores.has(x)) e.push(`color ${x}: no se abre en ningún nivel`);
   for (const x of temas) if (!abre.temas.has(x)) e.push(`tema ${x}: no se abre en ningún nivel`);
@@ -240,6 +260,8 @@ export function indexar(d) {
     colores: new Map(d.colores.colores.map((c) => [c.id, c])),
     temas: new Map(d.temas.temas.map((t) => [t.id, t])),
     niveles: d.desbloqueos.niveles,
+    // La fila de premios (#88): [{ k: "prendas" | "colores" | …, id, clave }]
+    premios: (d.desbloqueos.premios || []).map(clavePremio).filter(Boolean),
     poses: new Map((d.poses ? d.poses.poses : []).map((x) => [x.id, x])),
     // Patrones y estampados: cada uno con su .svg (texto) o .url (PNG), que pone cargar.js (o las pruebas)
     patrones: new Map((d.patrones ? d.patrones.patrones : []).map((x) => [x.id, x])),

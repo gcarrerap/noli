@@ -55,7 +55,7 @@ test("datos: revisarDatos encuentra los errores típicos al editar a mano", () =
 });
 
 test("datos: el tema inicial siempre se puede vestir con el clóset inicial", () => {
-  const ab = PR.abiertosHasta(0, idx.niveles);
+  const ab = PR.abiertosCon(0, idx);
   for (const t of ab.temas) {
     const tema = idx.temas.get(t);
     const buenas = [...ab.prendas].filter((id) => encaje(idx.prendas.get(id), tema) >= 2);
@@ -146,7 +146,7 @@ test("puntuación: nunca menos de 1 estrella por juez; sin ropa, 0 estrellas de 
 
 test("puntuación: sugiere solo ropa que ya tiene, y es determinista", () => {
   const a = vestir([["p-cola", "cafe"], ["a-tirantes", "amarillo"], ["b-shorts", "blanco"], ["z-sandalias", "rosa"]]);
-  const ab = PR.abiertosHasta(0, idx.niveles);
+  const ab = PR.abiertosCon(0, idx);
   const tema = idx.temas.get("escuela");
   const c = comentar("estrella", a, tema, idx, ab.prendas, ab.colores);
   const sugerida = c.mejora && D.prendas.prendas.find((p) => c.mejora.toLowerCase().includes(p.es));
@@ -170,11 +170,14 @@ test("progreso: niveles, lo abierto y lo que falta", () => {
   assert.deepEqual(PR.nivelDe(15, idx.niveles).siguiente, { nombre: "Aprendiz", puntos: 16, faltan: 1 });
   assert.equal(PR.nivelDe(16, idx.niveles).i, 1);
   assert.equal(PR.nivelDe(99999, idx.niveles).siguiente, null);
-  const ab = PR.abiertos(51, idx.niveles); // Curiosa
+  const ab = PR.abiertos({ ...PR.progresoNuevo(), premios: 11 }, idx);
   assert.ok(ab.prendas.has("x-gorro") && ab.temas.has("invierno") && ab.colores.has("verde") && ab.poses.has("vuelta"));
   assert.ok(!ab.prendas.has("v-gala") && !ab.poses.has("robot"));
-  assert.deepEqual([...PR.abiertosHasta(0, idx.niveles).poses], ["cintura", "saludo", "estrella"]);
-  assert.deepEqual(PR.coloresDe(idx.prendas.get("a-camiseta"), PR.abiertosHasta(0, idx.niveles)), ["blanco", "rosa", "azul", "amarillo", "rojo", "negro"]);
+  assert.equal(PR.faltanPara("x-gorra", PR.progresoNuevo(), idx), 1);
+  assert.equal(PR.faltanPara("t:invierno", PR.progresoNuevo(), idx), 11);
+  assert.equal(PR.faltanPara("a-camiseta", PR.progresoNuevo(), idx), null, "lo del clóset inicial no está en la fila");
+  assert.deepEqual([...PR.abiertosCon(0, idx).poses], ["cintura", "saludo", "estrella"]);
+  assert.deepEqual(PR.coloresDe(idx.prendas.get("a-camiseta"), PR.abiertosCon(0, idx)), ["blanco", "rosa", "azul", "amarillo", "rojo", "negro"]);
 });
 
 test("progreso: registrar una pasarela suma puntos, guarda la foto y dice qué se abrió", () => {
@@ -183,10 +186,17 @@ test("progreso: registrar una pasarela suma puntos, guarda la foto y dice qué s
   const reg = PR.registrarPasarela(pr, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: r.puntos }, 123, idx);
   assert.equal(reg.progreso.puntos, 35); assert.equal(reg.progreso.pasarelas, 1);
   assert.equal(reg.subio, true); assert.equal(reg.nivel.nombre, "Con estilo");
-  assert.deepEqual(reg.nuevos, { prendas: ["b-pantalon"], colores: [], temas: [], poses: ["vuelta"], patrones: ["corazones"], estampados: [] });
+  // 15 puntos: 2 premios (#88)
+  assert.equal(reg.ganados, 2); assert.equal(reg.progreso.premios, 2);
+  assert.deepEqual(reg.nuevos, { prendas: ["x-gorra", "a-sueter"], colores: [], temas: [], poses: [], patrones: [], estampados: [] });
   assert.deepEqual(reg.progreso.atuendos[0], { fecha: 123, tema: "playa", atuendo: PLAYA, estrellas: [5, 5, 5], puntos: 15 });
-  const sin = PR.registrarPasarela({ ...PR.progresoNuevo(), puntos: 35 }, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 3 }, 1, idx);
+  const sin = PR.registrarPasarela({ ...PR.progresoNuevo(), puntos: 35, premios: 2 }, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 3 }, 1, idx);
   assert.equal(sin.subio, false);
+  // Aunque le vaya mal, siempre gana un premio
+  assert.equal(sin.ganados, 1); assert.deepEqual(sin.nuevos.colores, ["verde"]);
+  // Con todo abierto ya no hay más
+  const todo = PR.registrarPasarela({ ...PR.progresoNuevo(), premios: idx.premios.length }, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 15 }, 1, idx);
+  assert.equal(todo.ganados, 0); assert.equal(todo.progreso.premios, idx.premios.length);
   // El clóset guarda solo los últimos
   let p = PR.progresoNuevo();
   for (let i = 0; i < 20; i++) p = PR.registrarPasarela(p, { tema: "playa", atuendo: PLAYA, jueces: r.jueces, puntos: 3 }, i, idx).progreso;
@@ -215,19 +225,31 @@ test("progreso: escoger tema no repite el último", () => {
   assert.equal(PR.escogerTema(["playa"], "playa", Math.random), "playa");
 });
 
-test("progreso: cada nivel abre poco (1 a 3 cosas) y los niveles se espacian cada vez más (#26)", () => {
+test("progreso: cada pasarela abre algo, con accesorios y maquillaje seguido (#88)", () => {
+  // Los niveles ya solo son títulos; los puntos siguen subiendo y espaciándose (#26)
   let antes = 0;
   for (const [i, n] of idx.niveles.entries()) {
     if (i === 0) continue;
-    const cuantas = PR.QUE_ABRE.reduce((s, k) => s + (n[k] || []).length, 0);
-    assert.ok(cuantas >= 1 && cuantas <= 3, `${n.nombre} abre ${cuantas}`);
+    assert.ok(!PR.QUE_ABRE.some((k) => (n[k] || []).length), `${n.nombre} ya no abre cosas`);
     const salto = n.puntos - idx.niveles[i - 1].puntos;
-    assert.ok(salto >= antes, `${n.nombre}: el salto no se achica`);
-    assert.ok(salto >= 15, `${n.nombre}: más de una pasarela perfecta`);
+    assert.ok(salto >= antes && salto >= 15, n.nombre);
     antes = salto;
   }
-  // El primer nivel sí llega pronto (2 pasarelas regulares, herramientas/simular-curva.mjs)
-  assert.ok(idx.niveles[1].puntos <= 22);
+  // Desde el principio ya hay accesorios, joyas y maquillaje
+  const ini = PR.abiertosCon(0, idx);
+  const cat = (ids, c) => [...ids].filter((id) => idx.prendas.get(id).categoria === c);
+  assert.ok(cat(ini.prendas, "maquillaje").length >= 2, "maquillaje inicial");
+  assert.ok(cat(ini.prendas, "accesorio").length >= 5, "accesorios y joyas iniciales");
+  // En cada 3 premios seguidos hay al menos un accesorio o maquillaje (mientras queden)
+  const esAcc = (q) => q.k === "prendas" && ["accesorio", "maquillaje"].includes(idx.prendas.get(q.id).categoria);
+  const ultimoAcc = idx.premios.map(esAcc).lastIndexOf(true);
+  for (let i = 0; i + 3 <= ultimoAcc; i++) assert.ok(idx.premios.slice(i, i + 3).some(esAcc), `premios ${i + 1}–${i + 3} sin accesorio ni maquillaje`);
+  // 1 premio siempre; 2 con 10 puntos o más
+  assert.equal(PR.premiosDe(3, D.config), 1); assert.equal(PR.premiosDe(9, D.config), 1); assert.equal(PR.premiosDe(10, D.config), 2); assert.equal(PR.premiosDe(15, D.config), 2);
+  // Progreso guardado antes de los premios (v2): 1.5 por pasarela jugada
+  assert.equal(PR.leerProgreso({ v: 2, puntos: 120, pasarelas: 10 }, idx).premios, 15);
+  assert.equal(PR.leerProgreso({ v: 3, pasarelas: 10, premios: 4 }, idx).premios, 4);
+  assert.equal(PR.leerProgreso({ v: 3, premios: 99999 }, idx).premios, idx.premios.length);
 });
 
 // ---------- Movimiento ----------
@@ -468,7 +490,7 @@ test("patrones: el avatar se viste con patrón y estampado sin navegador (sale l
 
 test("patrones: el panel enseña los patrones abiertos y la pantalla de nivel los nuevos", async () => {
   const P = await import("../src/ui/pantallas.js");
-  const ab = PR.abiertosHasta(0, idx.niveles);
+  const ab = PR.abiertosCon(0, idx);
   const zona = D.zonas.zonas.find((z) => z.id === "arriba");
   const html = P.panel({ zona, idx, atuendo: A.poner(A.atuendoVacio(), idx.prendas.get("a-camiseta"), "rosa", "rayas"), ab, progreso: PR.progresoNuevo(), sel: "a-camiseta", voz: false, girar: true });
   assert.match(html, /data-patron="rayas"/); assert.match(html, /data-patron="puntos"/); assert.match(html, /data-patron=""/);
@@ -590,7 +612,7 @@ test("taller: espacios por nivel y nombres sugeridos", () => {
 test("taller: progreso v1 → v2, los diseños sobreviven y lo guardado cabe en la nube", () => {
   const v1 = { v: 1, puntos: 40, pasarelas: 3, vistos: ["a-camiseta"], atuendos: [], piel: 1, ultimo: { arriba: { id: "a-camiseta", color: "rosa" }, accesorios: {} }, ultimoTema: "playa" };
   const p1 = PR.leerProgreso(v1, idx);
-  assert.equal(p1.v, 2); assert.deepEqual(p1.disenos, []); assert.equal(p1.borrador, null); assert.equal(p1.puntos, 40);
+  assert.equal(p1.v, 3); assert.deepEqual(p1.disenos, []); assert.equal(p1.borrador, null); assert.equal(p1.puntos, 40);
   // Con un diseño puesto
   const d = T.limpiarDiseno({ id: "d-uno", molde: "falda", color: "rosa", nombre: "Mi falda" }, idx);
   const guardado = JSON.parse(JSON.stringify({ ...p1, disenos: [d, d, { molde: "borrado" }], borrador: { molde: "gorra" },
@@ -612,7 +634,7 @@ test("taller: progreso v1 → v2, los diseños sobreviven y lo guardado cabe en 
 
 test("taller: la pantalla de cada paso y Mis diseños se arman sin huecos", async () => {
   const P = await import("../src/ui/pantallas.js");
-  const ab = PR.abiertosHasta(5, idx.niveles);
+  const ab = PR.abiertosCon(15, idx);
   const d = T.limpiarDiseno({ molde: "playera", color: "rosa", patron: "rayas", calcas: [{ estampado: "osito", lugar: "pecho" }], nombre: "", temas: ["playa"] }, idx);
   for (const paso of P.PASOS_TALLER.map((x) => x.id)) {
     const html = P.taller({ idx, diseno: d, paso, ab, saldo: 3, costo: 5, libres: 2, total: 4, lugar: "pecho", girar: true });
@@ -765,7 +787,7 @@ test("pixeles: un dibujo se vuelve estampado, se pone en un diseño y cambia de 
 
 test("pixeles: el editor se arma (cuadros, herramientas, colores 1 y 2) y lo guardado con todo lleno sigue cabiendo", async () => {
   const P = await import("../src/ui/pantallas.js");
-  const ab = PR.abiertosHasta(3, idx.niveles);
+  const ab = PR.abiertosCon(9, idx);
   const dib = { id: null, nombre: "", lado: 16, celdas: PX.vacio().map((_, i) => (i % 3 ? "" : "P")), historial: [], herramienta: "lapiz", ficha: "P", espejo: true };
   const html = P.taller({ idx, diseno: T.limpiarDiseno({ molde: "playera", color: "rosa" }, idx), paso: "dibujo", ab, saldo: 5, costo: 5, libres: 1, total: 4, lugar: null, girar: false, dibujo: dib });
   assert.equal((html.match(/data-accion="d-px"/g) || []).length, 256);
@@ -783,7 +805,7 @@ test("pixeles: el editor se arma (cuadros, herramientas, colores 1 y 2) y lo gua
 // ---------- Jueces: siempre dicen qué esperaban (Noelia: "Don Detalle me da 3 estrellas y no dice por qué") ----------
 
 test("jueces: si no dan 5 estrellas, cada uno dice qué esperaba, sin repetirse; con 5, nada", async () => {
-  const ab = PR.abiertosHasta(8, idx.niveles);
+  const ab = PR.abiertosCon(24, idx);
   // Su queja: atuendo completo sin accesorios → Don Detalle no da 5 y dice qué detalle y dónde buscarlo
   const sinDetalles = vestir([["p-cola", "cafe"], ["a-tirantes", "amarillo"], ["b-shorts", "blanco"], ["z-sandalias", "rosa"]]);
   const r = calificar(sinDetalles, idx.temas.get("playa"), idx, ab);

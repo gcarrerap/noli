@@ -57,11 +57,12 @@ const resultados = {};
 for (const estilo of ESTILOS) {
   const llegadas = idx.niveles.map(() => []);
   let puntosTotal = 0, pasarelas = 0;
+  const todo = []; // en qué pasarela abre el último premio (#88)
   for (let v = 0; v < VECES; v++) {
     const rnd = semilla(1000 + v * 7 + estilo.length);
     let pr = progresoNuevo();
     for (let n = 1; n <= MAX; n++) {
-      const ab = abiertos(pr.puntos, idx.niveles);
+      const ab = abiertos(pr, idx);
       const tema = idx.temas.get(escogerTema([...ab.temas], pr.ultimoTema, rnd));
       const atu = vestir(tema, ab, estilo, rnd);
       const r = calificar(atu, tema, idx, { prendas: ab.prendas, colores: ab.colores });
@@ -70,9 +71,10 @@ for (const estilo of ESTILOS) {
       puntosTotal += r.puntos; pasarelas++;
       const despues = nivelDe(pr.puntos, idx.niveles).i;
       for (let i = antes + 1; i <= despues; i++) llegadas[i].push(n);
+      if (pr.premios === idx.premios.length && todo.length === v) todo.push(n);
     }
   }
-  resultados[estilo] = { llegadas, promedio: puntosTotal / pasarelas };
+  resultados[estilo] = { llegadas, promedio: puntosTotal / pasarelas, todo };
 }
 
 const mediana = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
@@ -82,8 +84,9 @@ if (md) {
   console.log(`| Nivel | Puntos | ${ESTILOS.map((e) => `Pasarelas (${e})`).join(" | ")} |`);
   console.log(`|---|---|${ESTILOS.map(() => "---").join("|")}|`);
   for (const f of filas) console.log(`| ${f.join(" | ")} |`);
+  console.log(`\nPremios (${idx.premios.length}; cada pasarela abre 1, o 2 con ${idx.config.premios.extraDesde}+ puntos): todo abierto en la pasarela ${ESTILOS.map((e) => `${e} ${mediana(resultados[e].todo)}`).join(" · ")}.`);
   console.log(`\nPuntos por pasarela en promedio: ${ESTILOS.map((e) => `${e} ${resultados[e].promedio.toFixed(1)}`).join(" · ")}. Mediana de ${VECES} jugadoras simuladas por estilo.`);
 } else {
   console.table(filas.map((f) => Object.fromEntries([["nivel", f[0]], ["puntos", f[1]], ...ESTILOS.map((e, i) => [e, f[2 + i]])])));
-  for (const e of ESTILOS) console.log(`${e}: ${resultados[e].promedio.toFixed(1)} puntos por pasarela`);
+  for (const e of ESTILOS) console.log(`${e}: ${resultados[e].promedio.toFixed(1)} puntos por pasarela; todo abierto en la pasarela ${mediana(resultados[e].todo)}`);
 }

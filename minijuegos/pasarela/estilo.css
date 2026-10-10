@@ -355,3 +355,6 @@ html[data-modo="tv"] .joy{display:none}
 @media (prefers-color-scheme:dark){.herramienta.sel{background:#3d2b45}}
 /* Lo que esperaba cada juez (Noelia pidió saber por qué no le dieron 5 estrellas) */
 .juez .esperaba{background:#fff6d6;color:#2b2236;border-radius:12px;padding:.35rem .6rem;font-size:.95rem}
+/* El siguiente premio (#88): algo que esperar siempre */
+.premio-sig{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:.6rem auto;max-width:28rem;background:#fff6d6;color:#2b2236;border-radius:999px;padding:.4rem .9rem;font-weight:700}
+.premio-sig svg{width:1.6rem;height:1.6rem;flex:none}
