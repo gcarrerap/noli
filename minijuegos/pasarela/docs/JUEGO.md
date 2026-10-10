@@ -95,21 +95,34 @@ Tema **Invierno en la nieve** (pide frío 3, aventura 1; evita playa y verano).
 - color: blanco es del tema; amarillo y rosa no → 1/4 = 0.25; 3 colores → 0.7·0.25 + 0.3 = **0.475**.
 - completo **1**; detalles: los lentes no van (−0.3) → **0**.
 - Estela: 0.0475 + 0.2 = 0.2475 → 1 + round(0.99) = **2**. Colorina: 0.2375 + 0.1 = 0.3375 → 1 + round(1.35) = **2**. Don Detalle: 0.0475 + 0.3 = 0.3475 → **2**.
-- **6 puntos**, 1 estrella. Comentarios: "¡Me gusta cómo queda la blusa de tirantes!" · "¡Me encanta el blanco de tus shorts!" · "¡No te faltó nada, de la cabeza a los pies!". Consejo (el del juez con el valor más bajo, Estela): "Un suéter iría mejor que la blusa de tirantes."
+- **6 puntos**, 1 estrella. Lo bueno: "¡Me gusta cómo queda la blusa de tirantes!" · "¡Me encanta el blanco de tus shorts!" · "¡No te faltó nada, de la cabeza a los pies!". Lo que esperaban: Estela "Un suéter iría mejor que la blusa de tirantes." · Colorina "Para jugar en la nieve prueba tu blusa de tirantes en blanco; los colores del tema son blanco, celeste y azul." · Don Detalle "Los lentes de sol no van con jugar en la nieve; mejor …".
 
 (Los dos ejemplos son pruebas en `tests/pasarela.test.js`.)
 
 ### Los comentarios
 
-Siempre hay uno **positivo** por juez (nunca se regaña) y, si hay algo que mejorar en lo suyo, una **mejora**:
+Cada juez dice **una o dos cosas buenas** (nunca se regaña) y, **si no dio 5 estrellas, siempre dice qué esperaba** ("Para 5 estrellas: …"). Antes cada juez decía solo una cosa buena y había un único "Consejo" para los tres, así que un juez podía dar 3 estrellas diciendo "¡No te faltó nada!" sin explicar por qué (Noelia se quejó de Don Detalle).
 
-| Juez | Positivo | Mejora |
+**Lo bueno:**
+
+| Juez | Primero | Segundo (varía con el atuendo, sin azar) |
 |---|---|---|
-| Estela | La prenda con mejor encaje: "¡El vestido de fiesta es perfecto para una fiesta de cumpleaños!" (si ninguna pasa de 1: "¡Me gusta cómo queda…!") | Si la peor tiene encaje ≤ 0: la mejor prenda **que ya tiene** de esa categoría: "Unas sandalias irían mejor que las botas de nieve." Si no tiene una mejor: "Las botas no van mucho con…". En empate se habla primero de la ropa y al final del peinado. |
-| Colorina | "¡Me encanta el amarillo de tu blusa de tirantes!" (una prenda con color del tema) | Menos de 60 % de colores del tema: "Para jugar en la nieve prueba colores como blanco o celeste" (solo colores ya abiertos). 4 o más colores: "Son muchos colores juntos…" |
-| Don Detalle | Un accesorio que va, o "¡No te faltó nada…!", o el peinado | Lo que falta ("Te faltó: zapatos, peinado."), o el mejor accesorio que ya tiene para el tema. |
+| Estela | La prenda con mejor encaje: "¡El vestido de fiesta es perfecto para una fiesta de cumpleaños!" (si ninguna pasa de 1: "¡Me gusta cómo queda…!") | Otra que va bien ("Y los tenis también van muy bien con el tema"), o "¡Se nota que pensaste en…!" |
+| Colorina | "¡Me encanta el amarillo de tu blusa de tirantes!" (una prenda con color del tema) | Otro color del tema, el estampado ("¡Qué divertido el estampado de cebra!") o "Tus colores combinan muy bien" |
+| Don Detalle | Un diseño suyo del Taller, un accesorio que va ("¡La gorra es el toque perfecto!") o "¡No te faltó nada…!" | Otro accesorio, el maquillaje o el peinado |
 
-**Consejo** = la mejora del juez con el valor más bajo (si no tiene, la del siguiente); si nadie tiene mejora: "¡No le cambiaría nada!". Los textos concuerdan en género y número con `genero` y `plural` de cada prenda (`src/espanol.js`).
+**Lo que esperaba:** cada juez habla primero de **su especialidad** (Estela: el tema; Colorina: los colores; Don Detalle: que no falte nada y los accesorios). Si ahí no tiene nada que decir, habla de lo que **más estrellas le quitó** (peso × lo que faltó de cada componente), sin repetir lo que ya dijo otro juez; si lo único que tiene es lo mismo, lo apoya ("Opino como Estela: …"). Siempre sugiere cosas **que ya tiene abiertas** y, para accesorios, **dónde están** en el estudio.
+
+| De qué | Frases |
+|---|---|
+| tema | "Un suéter iría mejor que la blusa de tirantes." · "La camiseta es bonita, pero un suéter iría mejor para el primer día de escuela." · "Las botas no van mucho con…" |
+| color | "Para jugar en la nieve prueba tu blusa de tirantes en blanco; los colores del tema son blanco, celeste y azul." · "Son muchos colores juntos…" · "Tus shorts en blanco se verían más de…" |
+| completo | "Te faltó: zapatos, peinado." |
+| detalles | "Los lentes de sol no van con jugar en la nieve; mejor un gorro de invierno (en accesorios)." · "Me hubiera gustado un detalle: unos lentes de sol (en accesorios) quedarían increíbles para un día de playa." · "Un detalle más, como una diadema (en accesorios), y sería perfecto." |
+
+![Lo que esperaba cada juez](img/jueces.png)
+
+Si los tres dan 5 estrellas sale "¡Perfecto! ¡No le cambiaría nada!". El campo `consejo` (la mejora del juez con el valor más bajo) se sigue calculando. Los textos concuerdan en género y número con `genero` y `plural` de cada prenda (`src/espanol.js`). Una prueba califica cientos de atuendos en todos los temas y revisa que ningún juez dé menos de 5 sin decir por qué y que dos jueces no digan lo mismo.
 
 ## Créditos
 
