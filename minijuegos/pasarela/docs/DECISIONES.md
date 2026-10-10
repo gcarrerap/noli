@@ -173,3 +173,11 @@ Cada decisión: contexto, opciones, qué se decidió y qué consecuencias tiene.
 
 **Consecuencias.** Todo se abre en ≈ 44–73 pasarelas (antes 77–131). El progreso guarda `premios` (v3); uno anterior recibe 1.5 premios por pasarela jugada. Los espacios del Taller siguen creciendo con el nivel.
 
+## ADR 18 — Otras modelos que compiten; la Pasarela siempre en modo claro; la malla de base solo donde no hay ropa (#90)
+
+**Rivales.** Noelia pidió "bots" que compitan e interactúen. Son 2 modelos con su peinado, que se visten solas (lógica pura, `src/rivales.js`), desfilan antes que ella (se puede saltar), le dicen cosas bonitas mientras desfila, le aplauden y salen en un podio con los mismos jueces. **No afectan los premios ni los puntos** (ADR 17): perder no quita nada, y ganar se celebra. Son más fáciles que una jugadora con cuidado (mediana 10 puntos contra ≈ 14) para que esforzarse se note. Rendimiento: cada modelo vestida cuesta ≈ 9 000 triángulos y ≈ 65 dibujos; en la TV (o con calidad baja) sale una sola.
+
+**Modo claro siempre.** Los íconos, las miniaturas y la muñeca 2D tienen trazo oscuro (#2b2236). En un teléfono en modo oscuro los botones redondos y el gancho de "Mis diseños" desaparecían (fondo oscuro, trazo oscuro). Hacer dos juegos de íconos no vale la pena para un juego de colores: `color-scheme: light` y sin `prefers-color-scheme: dark`. Dentro del catálogo, el hud se recorre para no quedar debajo de la casita de regresar.
+
+**Malla de base.** La malla morada (que evita que el personaje se vea sin ropa) se asomaba en el cuello y los hombros de las blusas. Ahora el tronco y los hombros son piel cuando trae algo arriba (o vestido), y la pelvis cuando trae algo abajo; si no, se ve la malla como antes.
+

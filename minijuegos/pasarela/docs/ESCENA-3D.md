@@ -185,6 +185,10 @@ Cada zona dice qué parte del cuerpo enseñar (`enfoque` en `zonas.json`). `vist
 
 Está en z = −30 (lejos del estudio): pasarela de 7 m con 14 focos que parpadean, telón morado con estrellas y la mesa de los jueces. Los **jueces son personajes** como el de Noelia (`crearAvatar`) con ropa fija del mismo `prendas.json`. El desfile dura 4.4 s (2.2 s con `prefers-reduced-motion`). Al llegar al final, Noelia escoge poses y bailes (`posar(id)`); "dar una vuelta" gira todo el personaje. Al terminar (`terminarDesfile()`), los jueces saludan. Fondo y niebla cambian a morado de noche; el estudio se oculta.
 
+**Las otras modelos (#90).** Dos personajes más (`rivales` en `pasarela.js`, ocultos fuera de la pasarela). `ponerRivales([{ atuendo, piel }])` las viste y las pone atrás, a los lados. `vista3d.rivales(lista)` las hace desfilar una por una: caminan al centro (2.6 s), posan (1.1 s) y se van a su lugar al frente, a los lados (0.7 s); la cámara sigue a la que camina (`sigueZ`). `saltarRivales()` las pone directo en su lugar. Mientras Noelia desfila se quedan quietas; al terminar aplauden con los jueces.
+
+**La malla de base** (`avatar.js`): tronco y hombros son piel si trae algo arriba o vestido; la pelvis, si trae algo abajo o vestido (`ajustarMalla`, también al cambiar la piel). Así la malla morada no se asoma en el cuello de una blusa.
+
 ## Prendas de Blender (`modelos.js`)
 
 Una prenda con `"modelo": "modelos/x.glb"` y `"ancla"` se carga con `GLTFLoader` (una vez), se copia para cada uso y se pinta: materiales llamados `principal…` toman el color escogido, `secundario…` el secundario; los demás se quedan como vienen. `pos`/`rot`/`esc` de la prenda acomodan el modelo. Si todavía no carga, el personaje se vuelve a vestir al terminar. Cómo hacer uno: [ASSETS.md](ASSETS.md#prendas-con-blender-glb).

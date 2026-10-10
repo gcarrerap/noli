@@ -55,6 +55,26 @@ export function crearPasarela(idx) {
     grupo.add(av.raiz);
     return { id: j.id, nombre: j.nombre, av, modo: "quieto" };
   });
+  // Las otras modelos (#90): esperan atrás en el escenario, desfilan antes que Noelia y después la acompañan a los lados
+  const rivales = [0, 1].map((i) => {
+    const av = crearAvatar({ piel: idx.config.tonosPiel[0], base: idx.config.colorBase });
+    av.raiz.visible = false;
+    grupo.add(av.raiz);
+    return { av, modo: "quieto", lado: i ? 1 : -1 };
+  });
+  /** Viste a las rivales de esta pasarela ([{ atuendo, piel }]) y las pone atrás, esperando */
+  function ponerRivales(lista) {
+    rivales.forEach((r, i) => {
+      const x = lista[i];
+      r.av.raiz.visible = !!x;
+      if (!x) return;
+      r.av.ponerPiel(idx.config.tonosPiel[x.piel] || idx.config.tonosPiel[0]);
+      r.av.vestir(x.atuendo, idx);
+      r.av.raiz.position.set(r.lado * 0.6, E.alto, E.inicio + 0.2);
+      r.av.raiz.rotation.y = 0;
+      r.modo = "quieto";
+    });
+  }
   // Cada foco con su propio material, para que parpadeen a destiempo (los materiales normales se comparten por color)
   for (const f of focos) f.material = f.material.clone();
   let t = 0;
@@ -62,6 +82,7 @@ export function crearPasarela(idx) {
     t += dt;
     focos.forEach((f, i) => { f.material.emissiveIntensity = 0.5 + 0.5 * Math.abs(Math.sin(t * 2 + i)); });
     for (const j of jueces) j.av.animar(j.modo, dt);
+    for (const r of rivales) if (r.av.raiz.visible) r.av.animar(r.modo, dt);
   }
-  return { grupo, jueces, animar, focos };
+  return { grupo, jueces, rivales, ponerRivales, animar, focos };
 }

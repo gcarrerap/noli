@@ -210,12 +210,37 @@ export function poses({ idx, ab, progreso, actual }) {
   </div>`;
 }
 
-export function desfile({ tema }) {
-  return `<div class="desfile-txt"><span>${icono(tema.icono)}${esc(tema.nombre)}</span><b>¡Noelia en la pasarela!</b></div>`;
+export function desfile({ tema, piropos = [] }) {
+  return `<div class="desfile-txt"><span>${icono(tema.icono)}${esc(tema.nombre)}</span><b>¡Noelia en la pasarela!</b>
+    ${piropos.map((t, i) => `<i class="burbuja" style="--d:${1.2 + i * 1.3}s">${esc(t)}</i>`).join("")}</div>`;
+}
+
+/** Mientras desfilan las otras modelos (#90): quiénes son y un botón para saltar */
+export function desfileRivales({ tema, rivales }) {
+  const nombres = rivales.map((r) => r.rival.nombre);
+  return `<div class="desfile-txt"><span>${icono(tema.icono)}${esc(tema.nombre)}</span>
+    <b class="chico">Primero ${nombres.length > 1 ? "desfilan" : "desfila"} ${esc(nombres.join(" y "))}</b></div>
+    <div class="saltar-caja">${boton("saltar-rivales", "Saltar", { clase: "chico", inicial: true })}</div>`;
 }
 
 /** Calificación de los jueces */
-export function calificacion({ resultado, idx, tema, frase, voz, nivel, progreso, ganados, reducir }) {
+/** Medalla de un lugar (1, 2, 3…) */
+const medalla = (n) => `<i class="medalla m${Math.min(n, 4)}">${n}</i>`;
+
+/** El podio (#90): Noelia y las otras modelos, con su muñeca, sus puntos y lo que dicen */
+function podioHtml(podio, idx, pielNoelia, atuendo) {
+  if (!podio || podio.length < 2) return "";
+  const noelia = podio.find((x) => x.quien === "noelia");
+  const titulo = noelia.lugar === 1 ? "¡Ganaste la pasarela!" : noelia.lugar === 2 ? "¡Segundo lugar!" : "¡Tercer lugar!";
+  return `<section class="podio" aria-label="Resultados">
+    <h2>${titulo}</h2>
+    <ol>${podio.map((x) => `<li class="${x.quien === "noelia" ? "yo" : ""}">${medalla(x.lugar)}
+      ${dibujarMuneca(x.quien === "noelia" ? atuendo : x.atuendo, idx, { piel: x.quien === "noelia" ? pielNoelia : idx.config.tonosPiel[x.piel] || idx.config.tonosPiel[0], base: idx.config.colorBase, titulo: x.nombre, clase: "muneca-podio" })}
+      <div><b>${esc(x.nombre)}</b><small>${x.puntos} puntos</small>${x.dice ? `<p>«${esc(x.dice)}»</p>` : ""}</div></li>`).join("")}</ol>
+  </section>`;
+}
+
+export function calificacion({ resultado, idx, tema, frase, voz, nivel, progreso, ganados, reducir, podio = null, piel = "#ffd9c0", atuendo = null }) {
   const juez = (j, i) => {
     const d = idx.jueces.find((x) => x.id === j.id);
     return `<article class="juez" style="--c:${d.color};--d:${reducir ? 0 : 0.4 + i * 0.9}s">
@@ -226,6 +251,7 @@ export function calificacion({ resultado, idx, tema, frase, voz, nivel, progreso
   return `<section class="pantalla calificacion" aria-labelledby="tCal">
     <h1 id="tCal">${icono(tema.icono)} ${esc(tema.nombre)}</h1>
     <div class="jueces">${resultado.jueces.map(juez).join("")}</div>
+    ${atuendo ? podioHtml(podio, idx, piel, atuendo) : ""}
     ${resultado.jueces.some((j) => j.mejora) ? "" : `<div class="consejo"><b>¡Perfecto!</b> ${esc(resultado.consejo)}</div>`}
     ${frase ? `<p class="ingles grande-txt"><span>Hoy traes puesto:</span> <b lang="en">${esc(frase)}</b>
       ${voz ? `<button class="redondo chico" data-accion="decir-frase" data-foco aria-label="Escuchar en inglés">${icono("bocina")}</button>` : ""}</p>` : ""}

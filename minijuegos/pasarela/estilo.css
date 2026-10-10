@@ -8,8 +8,8 @@
   --sombra:0 6px 0 rgba(43,34,54,.12), 0 10px 22px rgba(43,34,54,.12);
   --vidrio:rgba(255,255,255,.88);
 }
-@media (prefers-color-scheme:dark){:root{--fg:#f6f0ff;--muted:#c9bedb;--card:#2a2338;--line:#3d3352;--off:#4a4060;--foco:#fff;
-  --vidrio:rgba(34,27,48,.9);--sombra:0 6px 0 rgba(0,0,0,.35), 0 10px 22px rgba(0,0,0,.3)}}
+/* Siempre en modo claro (#90): los íconos y las miniaturas tienen trazo oscuro y en modo oscuro no se veían */
+:root{color-scheme:light}
 *{box-sizing:border-box}
 html{font-size:clamp(15px, 2.2vmin, 22px)}
 html[data-modo="tv"]{font-size:clamp(18px, 2.6vmin, 40px)}
@@ -137,7 +137,6 @@ html[data-modo="tv"] .joy{display:none}
   padding:.4rem .3rem .5rem;box-shadow:var(--sombra);min-height:8.5rem}
 .prenda.sel{border-color:var(--rosa)}
 .prenda.puesta{background:#fff0f7}
-@media (prefers-color-scheme:dark){.prenda.puesta{background:#3d2b45}}
 .prenda .mini-caja{position:relative;width:5.2rem;height:5.2rem}
 .prenda .mini{width:100%;height:100%}
 .prenda .nombre{font-weight:800;font-size:.85rem;line-height:1.1;text-align:center}
@@ -327,7 +326,6 @@ html[data-modo="tv"] .joy{display:none}
 .prendas .vacio{grid-column:1/-1}
 .vacio{text-align:center;color:var(--muted);padding:.4rem 1rem}
 .centro{text-align:center;justify-content:center}
-@media (prefers-color-scheme:dark){.paso.sel,.tema-btn.sel{background:#3d2b45}.aviso-taller{background:#4a3f20}}
 @media (min-aspect-ratio:23/20){.panel.taller{height:auto}}
 
 /* ---------- Dibujar estampados (#81) ---------- */
@@ -352,9 +350,29 @@ html[data-modo="tv"] .joy{display:none}
 .fila-nombre{display:flex;gap:.5rem;align-items:center}
 .fila-nombre .campo{flex:1;font-size:1.05rem}
 .estampado.propio{background:#fff}
-@media (prefers-color-scheme:dark){.herramienta.sel{background:#3d2b45}}
 /* Lo que esperaba cada juez (Noelia pidió saber por qué no le dieron 5 estrellas) */
 .juez .esperaba{background:#fff6d6;color:#2b2236;border-radius:12px;padding:.35rem .6rem;font-size:.95rem}
 /* El siguiente premio (#88): algo que esperar siempre */
 .premio-sig{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:.6rem auto;max-width:28rem;background:#fff6d6;color:#2b2236;border-radius:999px;padding:.4rem .9rem;font-weight:700}
 .premio-sig svg{width:1.6rem;height:1.6rem;flex:none}
+
+/* Dentro del catálogo (no en la TV) la casita para regresar está arriba a la izquierda: el hud se recorre (#90) */
+html.con-casita .hud{padding-left:calc(env(safe-area-inset-left) + 74px)}
+
+/* ---------- Las otras modelos (#90) ---------- */
+.desfile-txt b.chico{font-size:1.5rem}
+.saltar-caja{position:fixed;right:max(12px, env(safe-area-inset-right));bottom:max(16px, env(safe-area-inset-bottom));z-index:13}
+.burbuja{font-style:normal;text-shadow:none;background:#fff;color:#2b2236;border-radius:18px;padding:.35rem .8rem;font-weight:700;font-size:1rem;box-shadow:var(--sombra);
+  max-width:min(92vw, 28rem);animation:aparece .4s both;animation-delay:var(--d)}
+@keyframes aparece{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:none}}
+.podio{margin:1rem auto 0;max-width:40rem}
+.podio h2{margin:.2rem 0 .5rem;color:var(--rosa);font-size:1.6rem}
+.podio ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+.podio li{display:flex;align-items:center;gap:.6rem;background:var(--card);border-radius:18px;padding:.4rem .7rem;box-shadow:var(--sombra);text-align:left}
+.podio li.yo{outline:3px solid var(--rosa)}
+.podio li > div{display:flex;flex-direction:column;flex:1;min-width:0}
+.podio li small{color:var(--muted);font-weight:700}
+.podio li p{margin:.15rem 0 0;font-size:.92rem}
+.muneca-podio{width:3.6rem;height:6.4rem;flex:none}
+.medalla{flex:none;display:grid;place-items:center;width:2.2rem;height:2.2rem;border-radius:50%;font-style:normal;font-weight:800;font-size:1.1rem;color:#2b2236;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.medalla.m1{background:#ffd23f}.medalla.m2{background:#d9dde6}.medalla.m3{background:#e3a36b}.medalla.m4{background:#efe6f7}

@@ -39,6 +39,7 @@ Así la lógica (puntuación, desbloqueos, choques) se prueba sin navegador, y l
 | `src/espanol.js` | Concordancia: el/la/los/las, un/una, perfecto/perfecta/perfectos. |
 | `src/progreso.js` | Puntos de estilo, `nivelDe`, `abiertos`, `registrarPasarela`, lo "nuevo", `escogerTema`, `leerProgreso` (v1 → v2; registra los diseños). |
 | `src/pixeles.js` | Estampados dibujados (#81): `pintar` (con espejo), `rellenar`, `linea`, `recordar`/`deshacer`, `comprimir`/`descomprimir` (corridas), `limpiarDibujo`, `registrarDibujos` (en `idx.estampados`, con `propio: true`). Los colores salen con `kit/3d/pintar.js → pintarPixeles` (P/S = los de la prenda). |
+| `src/rivales.js` | Las otras modelos (#90): `escogerRivales`, `vestirRival` (para el tema, con su habilidad), `prepararRivales` (vestir y calificar), `podio`, `piropo`, `alFinal`. Las dibuja `escena/pasarela.js` (`ponerRivales`) y las hace desfilar `vista3d.rivales()`. |
 | `src/taller.js` | Taller de diseño (#80): de un diseño (molde + opciones + decoración) a una prenda. `piezasDe` (variables, `solo`, `sobre`, calcomanías), `prendaDeDiseno`, `limpiarDiseno`, `registrarDisenos` (en `idx.prendas`), `espacios`, `nombresSugeridos`. |
 | `src/movimiento.js` | `paso` (caminar con deslizamiento en paredes), `choca`, `zonaCercana`, `rutaHacia`/`seguirRuta`, `direccionDeTeclas`. |
 | `src/partida.js` | La máquina de estados (`TRANSICIONES`, `siguiente`) y el reloj. |

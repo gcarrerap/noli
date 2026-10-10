@@ -16,6 +16,8 @@ import { nuevoDiseno, limpiarDiseno, prendaDeDiseno, registrarDisenos, espacios,
 import { calificar } from "../puntuacion.js";
 import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, faltanPara, esNuevo } from "../progreso.js";
 import { siguiente, quedan, EN_ESTUDIO } from "../partida.js";
+import { prepararRivales, podio, piropo, alFinal } from "../rivales.js";
+import { abiertosCon } from "../progreso.js";
 import { prendasDeZona } from "../datos.js";
 import { direccionDeTeclas } from "../movimiento.js";
 
@@ -55,6 +57,8 @@ async function arrancar() {
   const idx = S.idx;
   datos = await Noli.datos;
   S.tv = Noli.modo === "tv";
+  // En el catálogo (fuera de la TV) hay una casita arriba a la izquierda para regresar: que no tape el hud
+  document.documentElement.classList.toggle("con-casita", !!Noli.enCatalogo && !S.tv);
   S.progreso = leerProgreso(datos, idx);
   if (!S.progreso.vistos.length) S.progreso = marcarVistos(S.progreso, clavesIniciales(idx.niveles));
   actualizarAbiertos();
@@ -139,7 +143,8 @@ function ir(estado) {
       mostrarCapa(P.closet({ progreso: S.progreso, idx, piel: idx.config.tonosPiel[S.progreso.piel] }));
       break;
     case "calificacion":
-      mostrarCapa(P.calificacion({ resultado: S.resultado, idx, tema: S.tema, frase: fraseIngles(S.atuendo, idx), voz: hayVoz(), nivel: S.nivel, progreso: S.progreso, ganados: S.ganados, reducir }));
+      mostrarCapa(P.calificacion({ resultado: S.resultado, idx, tema: S.tema, frase: fraseIngles(S.atuendo, idx), voz: hayVoz(), nivel: S.nivel, progreso: S.progreso, ganados: S.ganados, reducir,
+        podio: S.podio, piel: idx.config.tonosPiel[S.progreso.piel], atuendo: S.atuendo }));
       break;
     case "desbloqueo":
       mostrarCapa(P.desbloqueo({ nivel: S.nivel, nuevos: S.nuevos, idx, subio: S.subio, siguiente: P.siguientePremio(S.progreso, idx) }));
@@ -179,12 +184,20 @@ async function aPasarela(porTiempo = false) {
   ocultarCapa();
   if (porTiempo) toast("¡Se acabó el tiempo!");
   S.vista.modo("pasarela");
-  $("desfile").innerHTML = P.desfile({ tema: S.tema });
+  // Las otras modelos (#90): se visten con lo de Noelia y unos premios más, desfilan primero (se puede saltar)
+  const idxR = S.idx;
+  // En la TV (o con la calidad baja) solo una rival: cada modelo vestida son ~9 000 triángulos y ~65 dibujos
+  const cuantas = S.tv || (S.vista.calidad === "baja") ? 1 : (idxR.config.rivales || {}).cuantas || 2;
+  S.rivales = prepararRivales(S.tema, abiertosCon(S.progreso.premios + ((idxR.config.rivales || {}).premiosAdelante || 6), idxR), idxR, Math.random, cuantas);
+  $("desfile").innerHTML = P.desfileRivales({ tema: S.tema, rivales: S.rivales });
+  await S.vista.rivales(S.rivales.map((r) => ({ atuendo: r.atuendo, piel: r.rival.piel })), true);
+  S.piropos = S.rivales.map((r, i) => piropo(r.rival, S.atuendo, S.tema, idxR, Math.random, i));
+  $("desfile").innerHTML = P.desfile({ tema: S.tema, piropos: S.piropos });
   await S.vista.desfilar();
   // Al final de la pasarela escoge poses y bailes (varios si quiere); "¡Listo!" o 25 s sin escoger → calificación
   S.estado = siguiente("pasarela", "llego");
   S.pose = null;
-  $("desfile").innerHTML = P.desfile({ tema: S.tema }) + P.poses({ idx: S.idx, ab: S.ab, progreso: S.progreso, actual: null });
+  $("desfile").innerHTML = P.desfile({ tema: S.tema, piropos: S.piropos || [] }) + P.poses({ idx: S.idx, ab: S.ab, progreso: S.progreso, actual: null });
   if (S.tv || document.documentElement.classList.contains("teclado")) focoInicial($("desfile"));
   await new Promise((r) => { S.finPoses = r; reiniciarPosesTimer(); });
   clearTimeout(S.posesTimer);
@@ -194,6 +207,10 @@ async function aPasarela(porTiempo = false) {
   const reg = registrarPasarela(S.progreso, { tema: S.tema.id, atuendo: S.atuendo, jueces: S.resultado.jueces, puntos: S.resultado.puntos }, Date.now(), idx);
   S.progreso = reg.progreso;
   S.ganados = S.resultado.puntos;
+  // El podio con las otras modelos
+  S.podio = podio(S.resultado.puntos, S.rivales || []);
+  const lugarNoelia = S.podio.find((x) => x.quien === "noelia").lugar;
+  for (const x of S.podio) if (x.quien !== "noelia") x.dice = alFinal(null, x.lugar, lugarNoelia);
   S.nuevos = reg.ganados || reg.subio ? reg.nuevos : null;
   S.subio = reg.subio;
   actualizarAbiertos();
@@ -728,7 +745,8 @@ function manejar(a) {
     enfocar($("capa")); return true;
   }
   if (S.estado === "posando") { if (a !== "atras") enfocar($("desfile")); return true; }
-  if (S.estado === "pasarela" || S.estado === "cobrando") return true;
+  if (S.estado === "pasarela") { if (a === "ok") S.vista.saltarRivales(); return true; }
+  if (S.estado === "cobrando") return true;
   if (EN_ESTUDIO.includes(S.estado)) {
     if (a === "atras") { if (S.estado === "libre") salirDelEstudio(); else abrirModal(P.confirmarSalir()); return true; }
     if (S.vista.botones) {
@@ -780,6 +798,7 @@ function accion(nombre, el) {
     case "ir-a": return abrirModal(P.zonasBotones(S.idx.zonas.zonas, { libre: S.estado === "libre", comoMenu: true }));
     case "cerrar-ira": case "cerrar-modal": case "salir-no": cerrarModal(); return;
     case "a-pasarela": return aPasarela();
+    case "saltar-rivales": return S.vista.saltarRivales();
     case "salir-estudio": return salirDelEstudio();
     case "salir-si": S.progreso = { ...S.progreso, ultimo: S.atuendo }; guardar(); return ir("inicio");
     case "continuar": return despuesDeCalificar();

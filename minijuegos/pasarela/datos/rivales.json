@@ -1,0 +1,11 @@
+{
+  "_ayuda": "Las otras modelos que compiten en la pasarela (#90). En cada pasarela salen config.rivales.cuantas al azar. piel: índice en config.tonosPiel. peinado: su peinado de siempre [prenda, color] (así se reconocen). habilidad: de 0 a 1, qué tan seguido escoge lo que mejor va con el tema (0.5 = a veces sí, a veces no). Se visten solas con lo que ya tiene Noelia y unos premios más adelante (así ve cosas que vienen). Todo original: no son personajes de ningún juego.",
+  "rivales": [
+    { "id": "lupita", "nombre": "Lupita", "piel": 2, "peinado": ["p-rizos", "negro"], "habilidad": 0.4 },
+    { "id": "coco", "nombre": "Coco", "piel": 0, "peinado": ["p-coletas", "amarillo"], "habilidad": 0.4 },
+    { "id": "mimi", "nombre": "Mimí", "piel": 1, "peinado": ["p-chongos", "rosa"], "habilidad": 0.35 },
+    { "id": "sol", "nombre": "Sol", "piel": 3, "peinado": ["p-trenza", "cafe"], "habilidad": 0.55 },
+    { "id": "dani", "nombre": "Dani", "piel": 2, "peinado": ["p-melena", "morado"], "habilidad": 0.35 },
+    { "id": "vale", "nombre": "Vale", "piel": 1, "peinado": ["p-cola", "negro"], "habilidad": 0.5 }
+  ]
+}

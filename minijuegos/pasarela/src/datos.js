@@ -208,6 +208,19 @@ export function revisarDatos(d) {
     if (Math.abs(s - 1) > 1e-9) e.push(`juez ${j.id}: los pesos deben sumar 1 (suman ${s})`);
   }
 
+  // Las otras modelos (#90)
+  const idsRivales = new Set();
+  for (const r of d.rivales ? d.rivales.rivales : []) {
+    const donde = `rival ${r.id}`;
+    if (!/^[a-z0-9-]+$/.test(r.id || "") || idsRivales.has(r.id)) e.push(`${donde}: id en minúsculas y sin repetir`);
+    idsRivales.add(r.id);
+    if (!r.nombre) e.push(`${donde}: falta nombre`);
+    if (!(Number.isInteger(r.piel) && r.piel >= 0 && r.piel < d.config.tonosPiel.length)) e.push(`${donde}: piel es un índice de config.tonosPiel`);
+    if (!(esNum(r.habilidad) && r.habilidad >= 0 && r.habilidad <= 1)) e.push(`${donde}: habilidad de 0 a 1`);
+    const pe = Array.isArray(r.peinado) && d.prendas.prendas.find((p) => p.id === r.peinado[0]);
+    if (!pe || pe.categoria !== "peinado" || !pe.colores.includes(r.peinado[1])) e.push(`${donde}: peinado es [id de un peinado, uno de sus colores]`);
+  }
+
   // Moldes del Taller de diseño (#80): cada combinación de opciones tiene que armar piezas válidas
   const vistosMoldes = new Set();
   for (const m of d.moldes ? d.moldes.moldes : []) {
@@ -268,6 +281,8 @@ export function indexar(d) {
     estampados: new Map((d.estampados ? d.estampados.estampados : []).map((x) => [x.id, x])),
     // Moldes del Taller de diseño (#80; src/taller.js)
     moldes: new Map((d.moldes ? d.moldes.moldes : []).map((x) => [x.id, x])),
+    // Las otras modelos de la pasarela (#90; src/rivales.js)
+    rivales: d.rivales ? d.rivales.rivales : [],
     zonas: d.zonas,
     jueces: d.jueces.jueces,
   };
@@ -276,7 +291,7 @@ export function indexar(d) {
 /** Archivos de datos/ que hay que leer, con la clave que usa revisarDatos/indexar. */
 export const ARCHIVOS = { config: "config.json", colores: "colores.json", temas: "temas.json", prendas: "prendas.json",
   desbloqueos: "desbloqueos.json", zonas: "zonas.json", jueces: "jueces.json", poses: "poses.json",
-  patrones: "patrones.json", estampados: "estampados.json", moldes: "moldes.json" };
+  patrones: "patrones.json", estampados: "estampados.json", moldes: "moldes.json", rivales: "rivales.json" };
 
 /**
  * ¿Esta prenda acepta un patrón? La ropa de config.categoriasConPatron sí (salvo "patrones": false); los accesorios

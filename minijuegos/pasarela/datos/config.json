@@ -13,6 +13,7 @@
     { "id": "accesorio", "es": "Accesorios",        "en": "Accessories" },
     { "id": "maquillaje", "es": "Maquillaje",       "en": "Makeup" }
   ],
+  "rivales": { "_ayuda": "Otras modelos en cada pasarela (#90): cuántas, y cuántos premios más adelante de Noelia pueden usar (así a veces traen algo que ella todavía no tiene).", "cuantas": 2, "premiosAdelante": 6 },
   "premios": { "_ayuda": "Cada pasarela abre los siguientes porPasarela premios de desbloqueos.json, y uno más si saca extraDesde puntos o más (de 3 a 15; 10 = 2 estrellas de Noli). #88", "porPasarela": 1, "extraDesde": 10 },
   "taller": { "_ayuda": "Taller de diseño (#80): costo en créditos por coser una prenda; espacios para diseños al empezar, uno más cada espacioCadaNiveles niveles, hasta maxEspacios; largo máximo del nombre; temas por diseño; calcomanías: una por lugar del molde. maxDibujos: cuántos estampados dibujados por ella se guardan (#81; guardarlos no cuesta).", "costo": 5, "espacios": 4, "espacioCadaNiveles": 6, "maxEspacios": 9, "maxNombre": 18, "maxTemas": 2, "maxDibujos": 6 },
   "categoriasConPatron": ["arriba", "abajo", "vestido", "zapatos"],

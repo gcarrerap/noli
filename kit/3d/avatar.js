@@ -80,6 +80,13 @@ export function crearAvatar(op) {
   sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.006; raiz.add(sombra);
 
   let puestas = []; // { obj, ancla } de la ropa puesta
+  // La malla de base es "ropa interior": se ve solo donde no hay ropa. Si trae algo arriba (o vestido), el tronco y
+  // los hombros son piel (así en el cuello de una blusa o con tirantes no se asoma la malla); igual abajo con la pelvis.
+  let cubre = { arriba: false, abajo: false };
+  const ajustarMalla = () => {
+    tronco.material = hombros.material = cubre.arriba ? piel() : base();
+    pelvis.material = cubre.abajo ? piel() : base();
+  };
   const pose = { t: 0, fase: 0, actual: {} };
 
   /**
@@ -91,6 +98,8 @@ export function crearAvatar(op) {
   function vestir(atuendo, idx, modelo) {
     for (const { obj, ancla } of puestas) a[ancla].remove(obj);
     puestas = [];
+    cubre = { arriba: !!(atuendo.arriba || atuendo.vestido), abajo: !!(atuendo.abajo || atuendo.vestido) };
+    ajustarMalla();
     const lista = [];
     for (const k of ["peinado", "arriba", "abajo", "vestido", "zapatos"]) if (atuendo[k]) lista.push(atuendo[k]);
     for (const p of Object.values(atuendo.accesorios || {})) if (p) lista.push(p);
@@ -127,6 +136,7 @@ export function crearAvatar(op) {
     op.piel = hex;
     const m = material(hex);
     for (const o of mallasPiel) o.material = m;
+    ajustarMalla();
   }
 
   /**
