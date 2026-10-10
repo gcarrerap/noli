@@ -291,6 +291,8 @@ Noelia pidió que haya otras niñas compitiendo. En cada pasarela salen **2 riva
 - **Desfilan primero**, una por una ("Primero desfilan Vale y Mimí"); hay botón **Saltar** (OK en la TV). Después se quedan al frente, a los lados, y Noelia desfila entre ellas.
 - **Le dicen cosas:** mientras Noelia desfila salen burbujas con lo que les gusta de su atuendo ("Vale: ¡Tu falda está increíble!"), cada una de una prenda distinta. Al final le aplauden con los jueces.
 - **Los mismos jueces las califican** con la misma fórmula. En la calificación sale el **podio**: lugar, muñeca, puntos y lo que dice cada una ("¡Felicidades, ganaste! Te lo merecías." / "¡Gané esta vez! La próxima te toca a ti."). En empate gana Noelia.
+![Las otras modelos: desfilan primero, Noelia entre ellas, poses y podio](img/rivales.png)
+
 - **Qué tan difícil:** las rivales sacan casi siempre de 8 a 11 puntos (mediana 10). Vistiéndose con cuidado (≈ 14 puntos) Noelia gana casi siempre; a medias (≈ 11), seguido; al azar (≈ 8), pocas veces. **El podio no cambia los premios ni los puntos de estilo**: es para que sea emocionante.
 
 ## Maquillaje y joyería
