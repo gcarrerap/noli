@@ -283,6 +283,18 @@ En el paso **Decorar**, el botón del lápiz (al final de las calcomanías) abre
 
 ![Dibujar un estampado: 360 px, 412 px y TV](img/dibujar.jpg)
 
+## Las otras modelos (#90)
+
+Noelia pidió que haya otras niñas compitiendo. En cada pasarela salen **2 rivales** al azar de `datos/rivales.json` (Lupita, Coco, Mimí, Sol, Dani y Vale; nombres y personajes originales). En la TV, o si el aparato bajó la calidad, sale **una** (ver RENDIMIENTO.md).
+
+- **Se visten solas** para el tema (`src/rivales.js → vestirRival`) con lo que ya tiene Noelia y **6 premios más adelante** (`config.rivales.premiosAdelante`): a veces traen algo que ella todavía no tiene (y se antoja). Cada una tiene su peinado de siempre y su `habilidad` (qué tan seguido escoge lo que mejor va con el tema).
+- **Desfilan primero**, una por una ("Primero desfilan Vale y Mimí"); hay botón **Saltar** (OK en la TV). Después se quedan al frente, a los lados, y Noelia desfila entre ellas.
+- **Le dicen cosas:** mientras Noelia desfila salen burbujas con lo que les gusta de su atuendo ("Vale: ¡Tu falda está increíble!"), cada una de una prenda distinta. Al final le aplauden con los jueces.
+- **Los mismos jueces las califican** con la misma fórmula. En la calificación sale el **podio**: lugar, muñeca, puntos y lo que dice cada una ("¡Felicidades, ganaste! Te lo merecías." / "¡Gané esta vez! La próxima te toca a ti."). En empate gana Noelia.
+![Las otras modelos: desfilan primero, Noelia entre ellas, poses y podio](img/rivales.png)
+
+- **Qué tan difícil:** las rivales sacan casi siempre de 8 a 11 puntos (mediana 10). Vistiéndose con cuidado (≈ 14 puntos) Noelia gana casi siempre; a medias (≈ 11), seguido; al azar (≈ 8), pocas veces. **El podio no cambia los premios ni los puntos de estilo**: es para que sea emocionante.
+
 ## Maquillaje y joyería
 
 Además de la ropa hay **maquillaje** (categoría `maquillaje`: rubor, labial, sombra de ojos, pestañas largas, pecas, brillitos, corazón y estrella pintados) y **joyería** (accesorios de orejas, cuello y muñeca: aretes de perla, arracadas, aretes de estrella, collar de perlas, collar de corazón, reloj, reloj deportivo, pulsera). Van **uno por lugar** (`config.json → lugares`): mejillas, ojos, labios y pintura en la cara; orejas, cuello, muñeca, y los de antes (cabeza, cara, abrigo, mano, espalda). Para los jueces cuentan como **detalles** (igual que los accesorios). En el estudio están en dos muebles nuevos: el **tocador de maquillaje** (derecha) y la **joyería** (izquierda).

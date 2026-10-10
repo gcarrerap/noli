@@ -36,6 +36,9 @@ export function crearVista2d(cont, idx, op) {
       raiz.classList.remove("desfilando"); void raiz.offsetWidth; raiz.classList.add("desfilando");
       return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 1200 : 3000));
     },
+    /** Las otras modelos (#90): en el modo sencillo no desfilan (salen en el podio de la calificación) */
+    rivales() { return Promise.resolve(); },
+    saltarRivales() {},
     /** Pose o baile: una animación CSS por id (estilo.css → .pose-<id>) */
     posar(id) { caja.className = "muneca2d pose-" + id; },
     terminarDesfile() { return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 300 : 900)); },

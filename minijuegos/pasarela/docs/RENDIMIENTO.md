@@ -9,7 +9,7 @@ Meta del issue: **≥ 30 fps en el teléfono, la LG (webOS) y la Samsung (Tizen)
 | Triángulos del personaje vestido | < 15 000 | 8 600 – 10 000 (el peor medido: rizos + sudadera + tutú + pantuflas + mochila) | Probador (`herramientas/probador.html`) |
 | Triángulos de una prenda | < 6 000 | Prueba automática (falla si alguna pasa) | `npm test` |
 | Estudio completo en pantalla | < 30 000 triángulos, < 150 dibujos por cuadro | **≈ 11 000 triángulos, 88–103 dibujos** | `?fps` |
-| Pasarela en pantalla | < 50 000 triángulos, < 300 dibujos | **≈ 40 000 triángulos, 252 dibujos** (4 personajes vestidos y 23 focos) | `?fps` |
+| Pasarela en pantalla | < 50 000 triángulos, < 300 dibujos (en la TV) | **≈ 40 000 triángulos, 252 dibujos** con 4 personajes (Noelia y 3 jueces). Con las 2 rivales (#90): **≈ 62 000 triángulos, 385 dibujos** en teléfono y computadora; en la TV o con la calidad baja sale una sola rival (≈ 51 000, ≈ 320) | `?fps` |
 | Modelo `.glb` | < 2 000 triángulos, < 200 KB | tiara: 376 triángulos, 24 KB | Prueba automática |
 | Texturas | ≤ 1024 px | El piso (64×64); patrones de 128×128 (64 KB de video cada uno) y estampados de 256×256, solo los que estén puestos, una vez por patrón y color (caché en `kit/3d/texturas.js`) | `?fps`; ESCENA-3D.md § Texturas |
 | Descarga | — | Three.js 670 KB (167 KB comprimido), cargador glTF 140 KB (≈ 30 KB comprimido), el juego 210 KB (63 KB comprimido) | — |

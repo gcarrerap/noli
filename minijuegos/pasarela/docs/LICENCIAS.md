@@ -19,6 +19,8 @@ Regla: **nada entra al repo sin su renglón aquí.** El repo es público, así q
 | Fuentes Fredoka y Nunito | (se cargan de Google Fonts, no están en el repo) | Milena Brandão / Hafontia (Fredoka), Vernon Adams y otros (Nunito) | fonts.google.com | SIL Open Font License 1.1 | 2026-10-08 |
 | Voz en inglés | (la del navegador, `speechSynthesis`) | El sistema del aparato | — | No se distribuye nada | — |
 
+Las otras modelos (Lupita, Coco, Mimí, Sol, Dani y Vale, `datos/rivales.json`) son personajes originales hechos con las mismas piezas del personaje.
+
 No se usa nada de Roblox ni de *Dress to Impress*: ni nombre, ni logos, ni personajes, ni arte. Los jueces (Estela, Colorina y Don Detalle) son personajes originales.
 
 ## Antes de agregar algo de fuera

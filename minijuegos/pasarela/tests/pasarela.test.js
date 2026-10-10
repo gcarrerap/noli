@@ -841,3 +841,63 @@ test("jueces: si no dan 5 estrellas, cada uno dice qué esperaba, sin repetirse;
   const r15 = calificar(PLAYA, idx.temas.get("playa"), idx);
   assert.match(P.calificacion({ resultado: r15, idx, tema: idx.temas.get("playa"), frase: "", voz: false, nivel: PR.nivelDe(0, idx.niveles), progreso: PR.progresoNuevo(), ganados: 15, reducir: true }), /¡Perfecto!/);
 });
+
+// ---------- Las otras modelos (#90) ----------
+
+const RV = await import("../src/rivales.js");
+
+test("rivales: se visten para el tema con lo que se puede, compiten y hay podio", () => {
+  let n = 7; const rnd = () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
+  const ab = PR.abiertosCon(6, idx);
+  const tema = idx.temas.get("playa");
+  const rs = RV.prepararRivales(tema, ab, idx, rnd);
+  assert.equal(rs.length, D.config.rivales.cuantas);
+  assert.notEqual(rs[0].rival.id, rs[1].rival.id);
+  for (const r of rs) {
+    const piezas = A.puestas(r.atuendo);
+    assert.ok(piezas.every((p) => ab.prendas.has(p.id) || p.id === r.rival.peinado[0]), "solo usa lo abierto (y su peinado)");
+    assert.ok((r.atuendo.vestido || (r.atuendo.arriba && r.atuendo.abajo)) && r.atuendo.zapatos && r.atuendo.peinado, `${r.rival.id} sale vestida`);
+    assert.ok(r.puntos >= 3 && r.puntos <= 15);
+  }
+  // Puntos típicos de las rivales: entre lo de una jugadora "a medias" y "al azar" (Noelia gana si se esfuerza)
+  const pts = [];
+  for (let k = 0; k < 300; k++) for (const r of RV.prepararRivales(idx.temas.get(["playa", "cumple", "escuela", "deportes", "pijamada"][k % 5]), ab, idx, rnd)) pts.push(r.puntos);
+  pts.sort((a, b) => a - b);
+  const med = pts[pts.length >> 1];
+  assert.ok(med >= 8 && med <= 11, `mediana ${med}`);
+  // Podio: por puntos; en empate Noelia primero; empates comparten lugar
+  const p = RV.podio(11, [{ rival: { id: "a", nombre: "A", piel: 0 }, puntos: 11, atuendo: A.atuendoVacio() }, { rival: { id: "b", nombre: "B", piel: 1 }, puntos: 13, atuendo: A.atuendoVacio() }]);
+  assert.deepEqual(p.map((x) => [x.quien, x.lugar]), [["b", 1], ["noelia", 2], ["a", 2]]);
+  assert.equal(RV.podio(15, rs)[0].quien, "noelia");
+  assert.match(RV.alFinal(null, 2, 1), /ganaste/); assert.match(RV.alFinal(null, 1, 2), /próxima te toca a ti/);
+  // Piropos: de una prenda que trae, distintos entre rivales
+  const a = vestir([["p-cola", "cafe"], ["a-tirantes", "amarillo"], ["z-sandalias", "rosa"]]);
+  const t1 = RV.piropo(rs[0].rival, a, tema, idx, () => 0, 0), t2 = RV.piropo(rs[1].rival, a, tema, idx, () => 0, 1);
+  assert.notEqual(t1.split(": ")[1], t2.split(": ")[1]);
+  assert.doesNotMatch(t1 + t2, /undefined|null/);
+});
+
+test("rivales: la pantalla de calificación trae el podio con sus muñecas", async () => {
+  const P = await import("../src/ui/pantallas.js");
+  const r = calificar(PLAYA, idx.temas.get("playa"), idx);
+  const rs = RV.prepararRivales(idx.temas.get("playa"), PR.abiertosCon(6, idx), idx, () => 0.3);
+  const pod = RV.podio(r.puntos, rs);
+  for (const x of pod) if (x.quien !== "noelia") x.dice = RV.alFinal(null, x.lugar, 1);
+  const html = P.calificacion({ resultado: r, idx, tema: idx.temas.get("playa"), frase: "", voz: false, nivel: PR.nivelDe(0, idx.niveles), progreso: PR.progresoNuevo(), ganados: 15, reducir: true, podio: pod, piel: "#ffd9c0", atuendo: PLAYA });
+  assert.match(html, /¡Ganaste la pasarela!/); assert.equal((html.match(/muneca-podio/g) || []).length, 3);
+  assert.doesNotMatch(html, /undefined|NaN/);
+  assert.match(P.desfileRivales({ tema: idx.temas.get("playa"), rivales: rs }), /Primero desfilan .* y /);
+  assert.match(P.desfile({ tema: idx.temas.get("playa"), piropos: ["Lupita: ¡Hola!"] }), /burbuja/);
+});
+
+test("3D: la malla de base no se asoma bajo la ropa (#90)", async () => {
+  const { crearAvatar } = await import("../../../kit/3d/avatar.js");
+  const av = crearAvatar({ piel: "#ffd9c0", base: "#cbbfe6" });
+  const base = () => { const r = []; av.raiz.traverse((o) => { if (o.isMesh && !o.userData.prenda && o.material.color && o.material.color.getHexString() === "cbbfe6") r.push(o); }); return r.length; };
+  av.vestir(A.atuendoVacio(), idx);
+  const sinRopa = base();
+  assert.equal(sinRopa, 3, "pelvis, tronco y hombros de malla");
+  av.vestir(vestir([["a-camiseta", "blanco"]]), idx); assert.equal(base(), 1, "con algo arriba solo queda la pelvis");
+  av.vestir(vestir([["v-verano", "rosa"]]), idx); assert.equal(base(), 0, "con vestido, nada");
+  av.ponerPiel("#7a4b2e"); assert.equal(base(), 0, "cambiar la piel no la regresa");
+});

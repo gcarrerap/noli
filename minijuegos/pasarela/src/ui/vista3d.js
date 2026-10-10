@@ -46,6 +46,8 @@ export function crearVista3d(cont, idx, op) {
   const pos = { x: zonas.inicio.x, z: zonas.inicio.z, ang: 180 };
   let modo = "inicio", quiere = { x: 0, z: 0 }, ruta = [], alLlegar = null, cerca = null, animacion = "quieto";
   let desfile = null; // { t, pose, llego, giro } — la pose la escoge Noelia al llegar (posar)
+  let rivalDesfile = null; // { i, t, n, listo } — las otras modelos desfilan una por una antes que Noelia (#90)
+  let sigueZ = null;       // a quién sigue la cámara en la pasarela (z), mientras desfila una rival
   let enfoque = "cuerpo", giro = 0, giroActual = 0; // en el probador: qué se ve y cuánto se ha girado el personaje
   const corr = { x: 0, y: 0, ox: 0, oy: 0 };          // corrimiento de la imagen (actual y objetivo)
   let espejo = 0;     // segundos que quedan de la vuelta en el espejo
@@ -91,7 +93,7 @@ export function crearVista3d(cont, idx, op) {
       objetivo.p.set(pos.x, e.y + arriba, pos.z + d);
     } else if (modo === "pasarela") {
       // Al final de la pasarela, un poco a la derecha para que se vean también los jueces
-      objetivo.m.set(ancho ? 0.9 : 0.3, 1.0, Math.max(av.raiz.position.z, ESCENARIO.inicio + 1.5));
+      objetivo.m.set(ancho ? 0.9 : 0.3, 1.0, Math.max(sigueZ ?? av.raiz.position.z, ESCENARIO.inicio + 1.5));
       objetivo.p.set(ancho ? 1.4 : 0.5, 1.7, ESCENARIO.z0 + (ancho ? 3.4 : 5.2));
     } else { // estudio: atrás y arriba, siempre con la misma orientación (no marea). En el teléfono parado, más lejos.
       const alto = ancho ? 3.6 : 5.2, atras = ancho ? 5.4 : 6.6;
@@ -123,6 +125,27 @@ export function crearVista3d(cont, idx, op) {
       av.raiz.position.set(pos.x, 0, pos.z);
       av.raiz.rotation.y = (pos.ang + 180) * Math.PI / 180;
       animacion = caminando ? "caminar" : espejo > 0 ? "vuelta" : "quieto";
+    } else if (rivalDesfile) {
+      // Una rival camina por el centro, posa un momento y se va a su lugar al frente, a un lado
+      const rd = rivalDesfile, r = pasarela.rivales[rd.i], E = ESCENARIO;
+      rd.t += dt;
+      const red = op.reducirMovimiento, dCam = red ? 1.2 : 2.6, dPose = red ? 0.4 : 1.1, dLado = red ? 0.3 : 0.7;
+      const ra = r.av.raiz;
+      if (rd.t < dCam) {
+        const k = rd.t / dCam;
+        ra.position.set(r.lado * 0.6 * (1 - Math.min(1, k * 4)), E.alto, E.inicio + 0.2 + (E.fin - E.inicio - 0.2) * k);
+        ra.rotation.y = 0; r.modo = "desfilar";
+      } else if (rd.t < dCam + dPose) { ra.position.set(0, E.alto, E.fin); r.modo = rd.i ? "estrella" : "cintura"; }
+      else {
+        const k = Math.min(1, (rd.t - dCam - dPose) / dLado);
+        ra.position.set(r.lado * 0.62 * k, E.alto, E.fin - 0.55 * k);
+        r.modo = k < 1 ? "caminar" : "quieto";
+        if (k >= 1) {
+          rd.i++; rd.t = 0;
+          if (rd.i >= rd.n || !pasarela.rivales[rd.i].av.raiz.visible) { const f = rd.listo; rivalDesfile = null; sigueZ = null; f(); }
+        }
+      }
+      if (rivalDesfile) sigueZ = ra.position.z;
     } else if (desfile) {
       desfile.t += dt;
       const dur = op.reducirMovimiento ? 2.2 : 4.4;
@@ -204,19 +227,39 @@ export function crearVista3d(cont, idx, op) {
     desfilar() {
       return new Promise((r) => {
         for (const j of pasarela.jueces) j.modo = "quieto";
+        for (const x of pasarela.rivales) x.modo = "quieto";
         desfile = { t: 0, pose: "quieto", llego: r, giro: 0 };
         saltar = true;
       });
+    },
+    /**
+     * Las otras modelos (#90): las viste y las pone atrás (lista [{ atuendo, piel }]); con `desfilar` true, desfilan una
+     * por una y la promesa se cumple cuando terminan. `saltar()` las manda directo a su lugar.
+     */
+    rivales(lista, desfilar = true) {
+      pasarela.ponerRivales(lista);
+      av.raiz.position.set(0, ESCENARIO.alto, ESCENARIO.inicio);
+      av.raiz.rotation.y = 0;
+      if (!desfilar || !lista.length) return Promise.resolve();
+      saltar = true;
+      return new Promise((r) => { rivalDesfile = { i: 0, t: 0, n: lista.length, listo: r }; });
+    },
+    /** Se salta el desfile de las rivales (botón "Saltar") */
+    saltarRivales() {
+      if (!rivalDesfile) return;
+      for (const r of pasarela.rivales) if (r.av.raiz.visible) { r.av.raiz.position.set(r.lado * 0.62, ESCENARIO.alto, ESCENARIO.fin - 0.55); r.modo = "quieto"; }
+      const f = rivalDesfile.listo; rivalDesfile = null; sigueZ = null; f();
     },
     /** Hace una pose o baile de datos/poses.json al final de la pasarela */
     posar(id) { if (desfile) desfile.pose = id; },
     /** Termina el desfile: los jueces aplauden (saludan); la promesa se cumple después de un momento */
     terminarDesfile() {
       for (const j of pasarela.jueces) j.modo = "saludo";
+      for (const x of pasarela.rivales) x.modo = "saludo"; // le aplauden a Noelia
       return new Promise((r) => setTimeout(r, op.reducirMovimiento ? 300 : 1200));
     },
     /** Regresa al estudio (al punto de inicio) después de la pasarela */
-    regresar() { desfile = null; pos.x = zonas.inicio.x; pos.z = zonas.inicio.z; pos.ang = 180; saltar = true; cerca = null; },
+    regresar() { desfile = null; rivalDesfile = null; sigueZ = null; pasarela.ponerRivales([]); pos.x = zonas.inicio.x; pos.z = zonas.inicio.z; pos.ang = 180; saltar = true; cerca = null; },
     /** Posición en pantalla del letrero de cada zona: Map(id → {x, y}) */
     letreros() {
       const r = new Map();
