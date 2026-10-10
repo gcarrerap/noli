@@ -52,9 +52,9 @@ En `datos/prendas.json`, copia la prenda más parecida a la nueva y pégala en s
 
 (En el archivo real no van comentarios `//`: JSON no los acepta. Están aquí para explicar.)
 
-### 3. Abrirla en un nivel
+### 3. Ponerla en los premios
 
-Toda prenda tiene que abrirse en algún nivel de `datos/desbloqueos.json` (si no, la prueba falla). Agrega su id a la lista `prendas` del nivel que quieras.
+Toda prenda tiene que estar en el clóset inicial (`datos/desbloqueos.json → niveles[0].prendas`) o en la fila de `premios` (si no, la prueba falla). Agrega su id a `premios` donde quieras que salga (cada pasarela abre 1 o 2; los accesorios y el maquillaje van uno de cada 3 premios, hay prueba).
 
 ### 4. Ajustar mirando el probador
 
@@ -90,7 +90,7 @@ Las esferas chicas ya usan menos caras solas; un `anillo` de 10 esferas son 10 d
 - [ ] `es`, `en`, `genero` (y `plural`/`enPlural` si van) están bien: lee la frase en inglés del final y un comentario de los jueces.
 - [ ] Etiquetas que existen, y que tengan sentido (¿con qué temas va?).
 - [ ] Colores que existen; el primero se ve bien en la miniatura.
-- [ ] Se abre en un nivel de `desbloqueos.json`.
+- [ ] Está en el clóset inicial o en los `premios` de `desbloqueos.json`.
 - [ ] En el probador: de frente, de lado y de espaldas; en las 6 posturas; con 3 colores; con la ropa con la que se combina.
 - [ ] Menos de 15 000 triángulos con todo puesto.
 - [ ] Tiene `dibujo2d` y se ve en el modo sencillo (`index.html?modo2d`).
@@ -153,7 +153,7 @@ Probado con **Blender 5.2.2 LTS** (los mismos pasos deberían servir desde Blend
     ```
 
     Opcional: `"pos"`, `"rot"` (grados) y `"esc"` para acomodarla sin volver a Blender.
-12. Ábrela en un nivel de `desbloqueos.json`, agrega su `dibujo2d` (paso A.5), revísala en el probador y corre `npm test`.
+12. Ponla en los `premios` de `desbloqueos.json`, agrega su `dibujo2d` (paso A.5), revísala en el probador y corre `npm test`.
 
 **Con script** (como la tiara), el modelo se puede volver a generar igual siempre:
 
@@ -189,15 +189,15 @@ blender --background --python minijuegos/pasarela/herramientas/blender/tiara.py
 1. Agrega la pose a `datos/poses.json`: `id`, `es`, `en` y `"baile": true` si se mueve con ritmo.
 2. Dibújala en `kit/3d/avatar.js → posturas()`: un `case` que devuelve los ángulos de las articulaciones en radianes (`"brazoI.z": 2.4` sube de lado el brazo izquierdo). Parte de `quieto` (`{ ...quieto, … }`) para que lo demás regrese a su lugar. Agrégala a `POSES_3D` (y a `BAILES` si es baile).
 3. Modo sencillo: una animación CSS para `.muneca2d.pose-<id>` en `estilo.css`.
-4. Ábrela en un nivel (`"poses": [...]` en `desbloqueos.json`).
+4. Ponla en los premios (`"o:<id>"` en `premios` de `desbloqueos.json`).
 5. Mírala en el probador (botón "Postura") y corre `npm test` (revisa que `poses.json` y `POSES_3D` coincidan).
 
 ## E. Temas, colores y niveles
 
-- **Tema nuevo** (`temas.json`): `id`, `nombre`, `para` ("perfecto para **un día de playa**"), `frase`, `icono` (un ícono de `src/ui/iconos.js`; agrega uno SVG si no hay), `etiquetas` con peso 1–3, `evitar`, `colores`. Ábrelo en un nivel. La prueba revisa que los temas del primer nivel se puedan vestir con el clóset inicial.
-- **Color nuevo** (`colores.json`): `id`, `es`, `en`, `hex`. Ábrelo en un nivel y agrégalo a los `colores` de las prendas que lo acepten.
+- **Tema nuevo** (`temas.json`): `id`, `nombre`, `para` ("perfecto para **un día de playa**"), `frase`, `icono` (un ícono de `src/ui/iconos.js`; agrega uno SVG si no hay), `etiquetas` con peso 1–3, `evitar`, `colores`. Ponlo en los premios (`"t:<id>"`). La prueba revisa que los temas del primer nivel se puedan vestir con el clóset inicial.
+- **Color nuevo** (`colores.json`): `id`, `es`, `en`, `hex`. Ponlo en los premios (`"c:<id>"`) y agrégalo a los `colores` de las prendas que lo acepten.
 - **Etiqueta nueva**: en `config.json → etiquetas`, y úsala en prendas y temas.
-- **Niveles** (`desbloqueos.json`): después de moverlos, corre `node minijuegos/pasarela/herramientas/simular-curva.mjs` para ver cuántas pasarelas toma cada nivel ([JUEGO.md](JUEGO.md#la-curva)).
+- **Niveles y premios** (`desbloqueos.json`): los niveles son títulos por puntos; lo que se abre está en `premios` (en orden, 1 o 2 por pasarela). Después de moverlos, corre `node minijuegos/pasarela/herramientas/simular-curva.mjs` ([JUEGO.md](JUEGO.md#la-curva)).
 
 ## F. Patrones y estampados (#79)
 
@@ -208,7 +208,7 @@ blender --background --python minijuegos/pasarela/herramientas/blender/tiara.py
    - Encima, el dibujo con `fill="{t}"` (tinta que contrasta), `{m}` (tono intermedio) o `{s}` (el secundario de la prenda). Ver los marcadores en ESCENA-3D.md § Texturas.
    - **Tiene que empalmar:** lo que sale por la orilla derecha entra por la izquierda, y lo de abajo por arriba. Lo más fácil: que nada toque las orillas (puntos, corazones, estrellas, manchas) o que lo que sí las toque sea igual en las dos (rayas que cruzan completas, cuadros cuyas líneas caen en 0 y 64).
 2. Agrégalo a `datos/patrones.json`: `id`, `es`, `en` (como se dice en inglés antes de la prenda: *zebra print*, *polka dot*, *striped*), `archivo`, `etiquetas` (se suman a las de la prenda para la jueza del tema: la cebra cuenta como `rock`) y `escala` (1 = baldosa de 12 cm; más grande = dibujo más grande).
-3. Ábrelo en un nivel: `"patrones": ["<id>"]` en `desbloqueos.json` (sin pasar de 3 cosas por nivel).
+3. Ponlo en los premios: `"pt:<id>"` en `premios` de `desbloqueos.json`.
 4. Míralo en el probador (`herramientas/probador.html`, menú **Patrón**): se aplica a toda la ropa puesta que lo acepte. Prueba un color claro y uno oscuro, y una prenda delgada (leggings) y una ancha (falda de tutú).
 5. `npm test` revisa que el SVG exista, sea de 64×64, empiece con el fondo `{p}` y no cargue nada de fuera.
 
@@ -217,7 +217,7 @@ blender --background --python minijuegos/pasarela/herramientas/blender/tiara.py
 ### Un estampado (calcomanía) nuevo
 
 1. Dibújalo en `estampados/<id>.svg`: 64×64, **fondo transparente**, con borde oscuro para que se vea sobre cualquier color. Puede usar colores fijos o los marcadores (`{p}`, `{t}`, `{c}`). También sirve un **PNG** con fondo transparente (por ejemplo, un dibujo de Noelia fotografiado y recortado; no cambia de color).
-2. Agrégalo a `datos/estampados.json`: `id`, `es`, `en`, `archivo`, `etiquetas`. Ábrelo en un nivel (`"estampados"`).
+2. Agrégalo a `datos/estampados.json`: `id`, `es`, `en`, `archivo`, `etiquetas`. Ponlo en los premios (`"e:<id>"`).
 3. Para una **prenda estampada** (como `a-camiseta-osito`): copia la prenda base y agrega una pieza `calca` sobre el pecho, con radios **2 o 3 mm más** que la tela de esa altura:
 
 ```json

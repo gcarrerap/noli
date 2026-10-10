@@ -14,7 +14,7 @@ node --test minijuegos/pasarela/tests/pasarela.test.js     # solo las de la Pasa
 | Datos | Los JSON no tienen errores (`revisarDatos`); lo que pide el issue (5+ categorías, 40+ prendas, 10+ temas, 3 jueces, 4+ niveles, nombres en español e inglés); que `revisarDatos` sí atrape los errores típicos al editar a mano; que los temas iniciales se puedan vestir con el clóset inicial |
 | Atuendo | Vestido ↔ arriba/abajo; tocar dos veces quita; otro color reemplaza; un accesorio por lugar; frase en inglés con *a/an* y plurales; `limpiar` con datos viejos |
 | Puntuación | Encaje (−2 a 3); los dos ejemplos trabajados de JUEGO.md con sus números y comentarios exactos; nunca menos de 1 estrella; solo sugiere ropa abierta; determinista; concordancia el/la/los/las |
-| Progreso | Niveles y lo abierto; registrar una pasarela (sube dos niveles de una vez, guarda la foto, clóset de máximo 12); leer basura; lo "nuevo"; tema sin repetir; curva |
+| Progreso | Niveles (solo títulos) y lo abierto con N premios; **cada pasarela abre 1 premio (2 con 10+ puntos), aunque le vaya mal**; accesorios o maquillaje en cada 3 premios; maquillaje y accesorios desde el principio; v2 → v3; registrar una pasarela (guarda la foto, clóset de máximo 12); leer basura; lo "nuevo"; tema sin repetir; curva |
 | Movimiento | Camina, gira poco a poco, no atraviesa; se desliza en la pared; cada zona es alcanzable desde el inicio con la ruta automática; flechas con impulso y diagonal |
 | Partida | Transiciones del diagrama; eventos que no aplican; reloj |
 | 2D | Cada prenda tiene figura, miniatura y muñeca sin `undefined`/`NaN` |

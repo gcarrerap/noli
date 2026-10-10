@@ -14,7 +14,7 @@ import { atuendoVacio, atuendoInicial, poner, ponerPatron, colorPuesto, patronPu
 import * as PX from "../pixeles.js";
 import { nuevoDiseno, limpiarDiseno, prendaDeDiseno, registrarDisenos, espacios, ajustesDe, limpiarNombre, prendasDeDisenos } from "../taller.js";
 import { calificar } from "../puntuacion.js";
-import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, nivelDePrenda, esNuevo } from "../progreso.js";
+import { leerProgreso, nivelDe, abiertos, coloresDe, registrarPasarela, marcarVistos, clavesIniciales, escogerTema, faltanPara, esNuevo } from "../progreso.js";
 import { siguiente, quedan, EN_ESTUDIO } from "../partida.js";
 import { prendasDeZona } from "../datos.js";
 import { direccionDeTeclas } from "../movimiento.js";
@@ -87,7 +87,7 @@ function crearVista(tipo) {
 
 function actualizarAbiertos() {
   S.nivel = nivelDe(S.progreso.puntos, S.idx.niveles);
-  S.ab = abiertos(S.progreso.puntos, S.idx.niveles);
+  S.ab = abiertos(S.progreso, S.idx);
   // Lo que cosió en el Taller (#80) siempre está abierto
   for (const p of prendasDeDisenos(S.idx)) S.ab.prendas.add(p.id);
 }
@@ -117,7 +117,7 @@ function ir(estado) {
   switch (estado) {
     case "inicio":
       S.vista.modo("inicio");
-      mostrarCapa(P.inicio({ saldo: S.saldo, costo: idx.config.costo, nivel: S.nivel, progreso: S.progreso, niveles: idx.niveles, enCatalogo: Noli.enCatalogo }));
+      mostrarCapa(P.inicio({ saldo: S.saldo, costo: idx.config.costo, nivel: S.nivel, progreso: S.progreso, niveles: idx.niveles, enCatalogo: Noli.enCatalogo, idx }));
       break;
     case "faltan": {
       mostrarCapa(P.faltan({ saldo: S.saldo, costo: idx.config.costo, juegosQueDan: "Sumas y restas o Spelling" }));
@@ -142,7 +142,7 @@ function ir(estado) {
       mostrarCapa(P.calificacion({ resultado: S.resultado, idx, tema: S.tema, frase: fraseIngles(S.atuendo, idx), voz: hayVoz(), nivel: S.nivel, progreso: S.progreso, ganados: S.ganados, reducir }));
       break;
     case "desbloqueo":
-      mostrarCapa(P.desbloqueo({ nivel: S.nivel, nuevos: S.nuevos, idx }));
+      mostrarCapa(P.desbloqueo({ nivel: S.nivel, nuevos: S.nuevos, idx, subio: S.subio, siguiente: P.siguientePremio(S.progreso, idx) }));
       break;
   }
 }
@@ -194,7 +194,8 @@ async function aPasarela(porTiempo = false) {
   const reg = registrarPasarela(S.progreso, { tema: S.tema.id, atuendo: S.atuendo, jueces: S.resultado.jueces, puntos: S.resultado.puntos }, Date.now(), idx);
   S.progreso = reg.progreso;
   S.ganados = S.resultado.puntos;
-  S.nuevos = reg.subio ? reg.nuevos : null;
+  S.nuevos = reg.ganados || reg.subio ? reg.nuevos : null;
+  S.subio = reg.subio;
   actualizarAbiertos();
   guardar(true);
   Noli.terminar({ estrellas: S.resultado.estrellas });
@@ -763,7 +764,7 @@ function accion(nombre, el) {
     case "listo": return empezarEstudio();
     case "zona": return tocarZona(el.dataset.zona);
     case "prenda": return tocarPrenda(el.dataset.prenda);
-    case "bloqueada": { const n = nivelDePrenda(el.dataset.prenda, S.idx.niveles); return toast(n ? `Se abre en el nivel ${n.nombre} (${n.puntos} puntos de estilo)` : "Todavía no está abierta"); }
+    case "bloqueada": { const n = faltanPara(el.dataset.prenda, S.progreso, S.idx); return toast(n === null ? "Todavía no está abierta" : n <= 1 ? "¡Se abre en tu siguiente pasarela!" : `Se abre en ${n} premios: cada pasarela te da 1 o 2`); }
     case "color": return tocarColor(el.dataset.color);
     case "patron": return tocarPatron(el.dataset.patron);
     case "decir": {

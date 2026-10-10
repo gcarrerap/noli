@@ -49,7 +49,7 @@ minijuegos/pasarela/
 │   ├── prendas.json      la ropa (70 prendas: ropa, accesorios, joyería y maquillaje): nombres es/en, etiquetas, colores, piezas 3D
 │   ├── temas.json        los 12 temas: qué etiquetas y colores piden
 │   ├── colores.json      la paleta (15 colores con nombre en español e inglés)
-│   ├── desbloqueos.json  los 30 niveles de estilo y qué abre cada uno
+│   ├── desbloqueos.json  el clóset inicial, la fila de premios (1 o 2 por pasarela) y los niveles de estilo
 │   ├── zonas.json        el estudio: muebles, dónde se para el personaje
 │   ├── jueces.json       los tres jueces y qué le importa a cada uno
 │   └── poses.json        poses y bailes del final de la pasarela
