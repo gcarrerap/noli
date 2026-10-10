@@ -132,7 +132,8 @@ test("puntuación: el mismo atuendo en un tema que no va saca poco y da consejos
   assert.equal(r.consejo, "Un suéter iría mejor que la blusa de tirantes.");
   assert.equal(r.estrellas, 1);
   assert.match(r.jueces[0].mejora, /iría mejor que la blusa de tirantes/);
-  assert.match(r.jueces[1].mejora, /prueba colores como blanco o celeste/);
+  assert.match(r.jueces[1].mejora, /prueba tu blusa de tirantes en blanco; los colores del tema son blanco, celeste y azul/);
+  assert.match(r.jueces[2].mejora, /Los lentes de sol no van con jugar en la nieve/);
 });
 
 test("puntuación: nunca menos de 1 estrella por juez; sin ropa, 0 estrellas de Noli", () => {
@@ -777,4 +778,44 @@ test("pixeles: el editor se arma (cuadros, herramientas, colores 1 y 2) y lo gua
     calcas: idx.moldes.get("vestido").lugares.map((l) => ({ estampado: "arcoiris", lugar: l.id })), nombre: "W".repeat(40), temas: ["gala", "rock"] }, idx));
   const txt = JSON.stringify({ ...PR.progresoNuevo(), dibujos, disenos, borrador: disenos[0], vistos: [...idx.prendas.keys()] });
   assert.ok(txt.length < 20000, `${txt.length} caracteres`);
+});
+
+// ---------- Jueces: siempre dicen qué esperaban (Noelia: "Don Detalle me da 3 estrellas y no dice por qué") ----------
+
+test("jueces: si no dan 5 estrellas, cada uno dice qué esperaba, sin repetirse; con 5, nada", async () => {
+  const ab = PR.abiertosHasta(8, idx.niveles);
+  // Su queja: atuendo completo sin accesorios → Don Detalle no da 5 y dice qué detalle y dónde buscarlo
+  const sinDetalles = vestir([["p-cola", "cafe"], ["a-tirantes", "amarillo"], ["b-shorts", "blanco"], ["z-sandalias", "rosa"]]);
+  const r = calificar(sinDetalles, idx.temas.get("playa"), idx, ab);
+  const don = r.jueces.find((j) => j.id === "detalle");
+  assert.ok(don.estrellas < 5);
+  assert.match(don.mejora, /Me hubiera gustado un detalle: unos lentes de sol \(en accesorios\) quedarían increíbles para un día de playa/);
+  assert.ok(don.positivos.length === 2, "dice más de una cosa buena");
+  // Muchos atuendos al azar (fijos) en todos los temas: siempre hay explicación y no se repite entre jueces
+  const ids = [...ab.prendas];
+  let n = 0;
+  for (let k = 0; k < 120; k++) {
+    let a = A.atuendoVacio();
+    for (let q = 0; q < 2 + (k % 6); q++) { const p = idx.prendas.get(ids[(k * 7 + q * 13) % ids.length]); a = A.poner(a, p, p.colores[(k + q) % p.colores.length]); }
+    for (const t of ab.temas) {
+      const x = calificar(a, idx.temas.get(t), idx, ab);
+      const mejoras = x.jueces.map((j) => j.mejora).filter(Boolean);
+      for (const j of x.jueces) {
+        if (j.estrellas < 5) assert.ok(j.mejora, `${j.nombre} dio ${j.estrellas} sin decir por qué`);
+        else assert.equal(j.mejora, null);
+        assert.ok(j.positivos.length >= 1 && j.positivos.length <= 2);
+        assert.doesNotMatch(j.positivos.join(" ") + (j.mejora || ""), /undefined|null|NaN|\$\{/);
+      }
+      assert.equal(new Set(mejoras).size, mejoras.length, "dos jueces no dicen lo mismo");
+      n++;
+    }
+  }
+  assert.ok(n > 500);
+  // En la pantalla: lo que esperaba cada juez, y el "¡Perfecto!" solo si nadie esperaba nada
+  const P = await import("../src/ui/pantallas.js");
+  const html = P.calificacion({ resultado: r, idx, tema: idx.temas.get("playa"), frase: "", voz: false, nivel: PR.nivelDe(0, idx.niveles), progreso: PR.progresoNuevo(), ganados: r.puntos, reducir: true });
+  assert.match(html, /class="esperaba"><b>Para 5 estrellas:<\/b> Me hubiera gustado/);
+  assert.doesNotMatch(html, /¡Perfecto!/);
+  const r15 = calificar(PLAYA, idx.temas.get("playa"), idx);
+  assert.match(P.calificacion({ resultado: r15, idx, tema: idx.temas.get("playa"), frase: "", voz: false, nivel: PR.nivelDe(0, idx.niveles), progreso: PR.progresoNuevo(), ganados: 15, reducir: true }), /¡Perfecto!/);
 });

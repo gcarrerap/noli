@@ -201,12 +201,13 @@ export function calificacion({ resultado, idx, tema, frase, voz, nivel, progreso
     const d = idx.jueces.find((x) => x.id === j.id);
     return `<article class="juez" style="--c:${d.color};--d:${reducir ? 0 : 0.4 + i * 0.9}s">
       <div class="cara" style="background:${d.color}">${ICONOS.persona}</div>
-      <div><h3>${esc(j.nombre)}</h3>${estrellas(j.estrellas)}<p>${esc(j.positivo)}</p></div></article>`;
+      <div><h3>${esc(j.nombre)}</h3>${estrellas(j.estrellas)}${(j.positivos || [j.positivo]).map((t) => `<p>${esc(t)}</p>`).join("")}
+        ${j.mejora ? `<p class="esperaba"><b>Para ${j.estrellas === 4 ? "5" : "más"} estrellas:</b> ${esc(j.mejora)}</p>` : ""}</div></article>`;
   };
   return `<section class="pantalla calificacion" aria-labelledby="tCal">
     <h1 id="tCal">${icono(tema.icono)} ${esc(tema.nombre)}</h1>
     <div class="jueces">${resultado.jueces.map(juez).join("")}</div>
-    <div class="consejo"><b>Consejo:</b> ${esc(resultado.consejo)}</div>
+    ${resultado.jueces.some((j) => j.mejora) ? "" : `<div class="consejo"><b>¡Perfecto!</b> ${esc(resultado.consejo)}</div>`}
     ${frase ? `<p class="ingles grande-txt"><span>Hoy traes puesto:</span> <b lang="en">${esc(frase)}</b>
       ${voz ? `<button class="redondo chico" data-accion="decir-frase" data-foco aria-label="Escuchar en inglés">${icono("bocina")}</button>` : ""}</p>` : ""}
     <p class="ganaste">+${ganados} puntos de estilo</p>
