@@ -1,6 +1,6 @@
 // Acciones: lo único que cambia el estado. La interfaz y el control remoto (app/remoto.js) solo llaman aquí.
 import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../services/index.js";
-import { mover, materias, ganancia, agregar, gastar, compactar, saldoVisible } from "../engine/index.js";
+import { mover, materias, jugableEn, ganancia, agregar, gastar, compactar, saldoVisible } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
 import * as sync from "./sync.js";
@@ -23,7 +23,7 @@ export const actions = {
       state.juegos = []; state.errores = [String(e.message || e)];
       console.error("[catálogo]", e);
     }
-    if (state.materia && !materias(state.juegos).includes(state.materia)) state.materia = null;
+    if (state.materia && !materias(state.juegos.filter((j) => jugableEn(j, state.modo))).includes(state.materia)) state.materia = null;
     state.foco = 0; state.cargando = false; notify();
     if (state.nube.perfil) sync.conectar(); // la nube después del catálogo: nunca lo retrasa
   },
@@ -60,7 +60,7 @@ export const actions = {
 
   abrir(id) {
     const j = state.juegos.find((x) => x.id === id);
-    if (!j) return;
+    if (!j || !jugableEn(j, state.modo)) return; // en la TV no se abre un juego que no es apto (#57)
     state.jugando = j; state.celebrar = null; notify();
   },
 

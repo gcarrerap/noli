@@ -45,6 +45,19 @@ export function validarManifiesto(m, idCarpeta) {
   const lugar = m.lugar ?? null;
   if (lugar !== null && !(txt(lugar) && ID.test(lugar))) errores.push(`${idCarpeta}: "lugar" debe ser el id de un edificio del mundo`);
 
+  // TV (#57): la TV no limita el diseño. "tv": true dice que el juego se juega completo con el control remoto (y entonces
+  // "controles" incluye "remoto"); "tv": false lo esconde en modo TV. Sin "tv", se deduce de "controles" (los juegos del
+  // repo sí deben ponerlo: lo exige tests/catalogo.test.js). "ocultoEnTv": partes de un juego apto para TV que en la TV
+  // se esconden (por ejemplo un nivel con cámara); el juego lo hace solo con Noli.modo === "tv".
+  const conRemoto = Array.isArray(controles) && controles.includes("remoto");
+  const tv = m.tv ?? conRemoto;
+  if (typeof tv !== "boolean") errores.push(`${idCarpeta}: "tv" debe ser true o false`);
+  else if (tv && !conRemoto) errores.push(`${idCarpeta}: "tv": true pide "remoto" en "controles"`);
+  else if (!tv && conRemoto) errores.push(`${idCarpeta}: "tv": false no va con "remoto" en "controles"`);
+  const ocultoEnTv = m.ocultoEnTv ?? [];
+  if (!Array.isArray(ocultoEnTv) || ocultoEnTv.some((x) => !txt(x))) errores.push(`${idCarpeta}: "ocultoEnTv" debe ser una lista de textos`);
+  else if (ocultoEnTv.length && tv === false) errores.push(`${idCarpeta}: "ocultoEnTv" solo va con "tv": true (con false se oculta todo el juego)`);
+
   if (errores.length) return { errores };
   return {
     juego: {
@@ -61,12 +74,26 @@ export function validarManifiesto(m, idCarpeta) {
       creditos,
       costo,
       lugar,
+      tv,
+      ocultoEnTv: ocultoEnTv.map((x) => x.trim()),
     },
   };
 }
 
-// ¿Se puede jugar con lo que hay? En la TV (sin dedo) el juego tiene que aceptar flechas o el teléfono remoto.
+// ¿Se puede jugar aquí? En modo TV solo los juegos declarados aptos ("tv": true, #57); en el teléfono, la tableta o
+// la computadora, todos.
 export function jugableEn(juego, modo) {
-  if (modo === "tv") return juego.controles.includes("flechas") || juego.controles.includes("remoto");
+  if (modo === "tv") return juego.tv === true;
   return true;
+}
+
+// Navegadores de smart TV (LG webOS, Samsung Tizen, Android/Google TV, Fire TV, Sony, HbbTV).
+const UA_TV = /web0s|webos|tizen|smart-?tv|hbbtv|netcast|googletv|android tv|bravia|\baft[a-z]/i;
+
+// Modo de la app: ?modo=tv o ?modo=tactil mandan; si no hay, una TV detectada por su navegador entra en modo TV.
+export function modoDe(search = "", ua = "") {
+  let p = null;
+  try { p = new URLSearchParams(search).get("modo"); } catch { p = null; }
+  if (p === "tv" || p === "tactil") return p;
+  return UA_TV.test(String(ua || "")) ? "tv" : "tactil";
 }

@@ -7,6 +7,8 @@
   "materia": "inglés",
   "edades": [6, 11],
   "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
   "entrada": "index.html",
   "version": "1",
   "creditos": "gasta",
