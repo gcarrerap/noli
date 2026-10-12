@@ -7,7 +7,7 @@ import fs from "node:fs";
 globalThis.localStorage = (() => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)) }; })();
 globalThis.window = globalThis;
 
-const { validarManifiesto, jugableEn, materias, filtrar, mover } = await import("../src/engine/index.js");
+const { validarManifiesto, jugableEn, modoDe, materias, filtrar, mover } = await import("../src/engine/index.js");
 const { esMensaje, mensaje, estrellas } = await import("../kit/protocolo.js");
 const { teclaAAccion } = await import("../kit/teclas.js");
 const { cargarCatalogo } = await import("../src/services/index.js");
@@ -19,7 +19,8 @@ test("manifiesto: completa los valores por omisión", () => {
   const { juego, errores } = validarManifiesto({ id: "sumas", titulo: " Sumas " }, "sumas");
   assert.equal(errores, undefined);
   assert.deepEqual(juego, { id: "sumas", titulo: "Sumas", descripcion: "", icono: "🎲", iconoArchivo: false, color: null, materia: "otros",
-    edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1", creditos: null, costo: null, lugar: null });
+    edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1", creditos: null, costo: null, lugar: null,
+    tv: false, ocultoEnTv: [] });
 });
 
 test("manifiesto: rechaza id distinto a la carpeta, rutas fuera de la carpeta y controles desconocidos", () => {
@@ -33,11 +34,45 @@ test("manifiesto: rechaza id distinto a la carpeta, rutas fuera de la carpeta y 
   assert.ok(validarManifiesto(null, "a").errores);
 });
 
-test("manifiesto: en la TV solo entran juegos que se juegan con flechas o con el teléfono", () => {
+test("manifiesto: en la TV solo entran los juegos aptos para TV (#57)", () => {
   const solo = validarManifiesto({ id: "a", titulo: "x", controles: ["tactil"] }, "a").juego;
+  assert.equal(solo.tv, false);
   assert.equal(jugableEn(solo, "tv"), false);
   assert.equal(jugableEn(solo, "tactil"), true);
-  assert.equal(jugableEn({ ...solo, controles: ["remoto"] }, "tv"), true);
+  // sin "remoto" no es apto, aunque acepte flechas (se juega con teclado en la computadora)
+  assert.equal(jugableEn(validarManifiesto({ id: "a", titulo: "x", controles: ["tactil", "flechas"] }, "a").juego, "tv"), false);
+  const tv = validarManifiesto({ id: "a", titulo: "x", controles: ["remoto"] }, "a").juego;
+  assert.equal(tv.tv, true);
+  assert.equal(jugableEn(tv, "tv"), true);
+  const camara = validarManifiesto({ id: "a", titulo: "x", controles: ["tactil"], tv: false }, "a").juego;
+  assert.equal(jugableEn(camara, "tv"), false);
+  assert.equal(jugableEn(camara, "tactil"), true);
+});
+
+test("manifiesto: \"tv\" y \"ocultoEnTv\" tienen que cuadrar con \"controles\"", () => {
+  const v = (m) => validarManifiesto({ id: "a", titulo: "x", ...m }, "a");
+  assert.match(v({ controles: ["tactil"], tv: true }).errores[0], /pide "remoto"/);
+  assert.match(v({ controles: ["tactil", "remoto"], tv: false }).errores[0], /no va con "remoto"/);
+  assert.match(v({ controles: ["remoto"], tv: "sí" }).errores[0], /true o false/);
+  assert.ok(v({ controles: ["remoto"], tv: true, ocultoEnTv: "nivel 3" }).errores);
+  assert.ok(v({ controles: ["remoto"], tv: true, ocultoEnTv: [""] }).errores);
+  assert.match(v({ controles: ["tactil"], tv: false, ocultoEnTv: ["cámara"] }).errores[0], /solo va con "tv": true/);
+  assert.deepEqual(v({ controles: ["remoto"], tv: true, ocultoEnTv: [" Nivel con cámara "] }).juego.ocultoEnTv, ["Nivel con cámara"]);
+});
+
+test("modo: ?modo= manda; si no, una smart TV se detecta por su navegador (#57)", () => {
+  const LG = "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.128 Safari/537.36 WebAppManager";
+  const SAMSUNG = "Mozilla/5.0 (SMART-TV; LINUX; Tizen 7.0) AppleWebKit/537.36 (KHTML, like Gecko) 94.0.4606.31/7.0 TV Safari/537.36";
+  const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+  const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
+  assert.equal(modoDe("", LG), "tv");
+  assert.equal(modoDe("", SAMSUNG), "tv");
+  assert.equal(modoDe("", IPHONE), "tactil");
+  assert.equal(modoDe("", ANDROID), "tactil");
+  assert.equal(modoDe("?modo=tv", IPHONE), "tv");
+  assert.equal(modoDe("?modo=tactil", LG), "tactil");
+  assert.equal(modoDe("?modo=otro", ""), "tactil");
+  assert.equal(modoDe(), "tactil");
 });
 
 // ---------- Catálogo ----------
@@ -176,6 +211,25 @@ test("app: cargar, navegar, abrir, reenviar la entrada al juego, terminar y regr
   actions.elegirMateria(null);
 });
 
+test("app: en modo TV el catálogo esconde y no abre los juegos que no son aptos para TV (#57)", async () => {
+  await actions.iniciar({ base, fetchFn: fetchFalso({
+    "catalogo.json": { juegos: ["tele", "camara", "flechas"] },
+    "tele/juego.json": { id: "tele", titulo: "Tele", controles: ["tactil", "flechas", "remoto"], tv: true },
+    "camara/juego.json": { id: "camara", titulo: "Cámara", controles: ["tactil"], tv: false },
+    "flechas/juego.json": { id: "flechas", titulo: "Flechas", controles: ["tactil", "flechas"] },
+  }) });
+  const antes = state.modo;
+  try {
+    state.modo = "tactil";
+    assert.deepEqual(visibles().map((j) => j.id), ["tele", "camara", "flechas"]);
+    state.modo = "tv";
+    assert.deepEqual(visibles().map((j) => j.id), ["tele"]);
+    actions.abrir("camara"); assert.equal(state.jugando, null);
+    actions.abrir("tele"); assert.equal(state.jugando.id, "tele");
+    actions.cerrar();
+  } finally { state.modo = antes; }
+});
+
 // ---------- Los juegos del repo ----------
 
 test("cada juego de minijuegos/catalogo.json tiene carpeta, manifiesto válido y página de entrada", () => {
@@ -188,5 +242,20 @@ test("cada juego de minijuegos/catalogo.json tiene carpeta, manifiesto válido y
     const { juego, errores } = validarManifiesto(JSON.parse(fs.readFileSync(new URL("juego.json", carpeta), "utf8")), id);
     assert.equal(errores, undefined, String(errores));
     assert.ok(fs.existsSync(new URL(juego.entrada, carpeta)), `${id}: falta ${juego.entrada}`);
+  }
+});
+
+test("cada juego del repo declara si es apto para TV y sus controles, y está en el inventario del README (#57)", () => {
+  const raiz = new URL("../minijuegos/", import.meta.url);
+  const readme = fs.readFileSync(new URL("../README.md", import.meta.url), "utf8");
+  const { juegos } = JSON.parse(fs.readFileSync(new URL("catalogo.json", raiz), "utf8"));
+  for (const id of juegos) {
+    const m = JSON.parse(fs.readFileSync(new URL(id + "/juego.json", raiz), "utf8"));
+    assert.equal(typeof m.tv, "boolean", `${id}: falta "tv": true o false en juego.json`);
+    assert.ok(Array.isArray(m.controles), `${id}: falta "controles" en juego.json`);
+    if (m.tv) assert.ok(Array.isArray(m.ocultoEnTv), `${id}: falta "ocultoEnTv" (lista, vacía si todo sirve en la TV)`);
+    const fila = readme.split("\n").find((l) => l.startsWith("| ") && l.includes("`" + id + "`") && /\| (Sí|No) \|/.test(l));
+    assert.ok(fila, `${id}: falta su renglón en la tabla «Juegos y TV» del README`);
+    assert.ok(fila.includes(m.tv ? "| Sí |" : "| No |"), `${id}: el README no dice lo mismo que juego.json sobre la TV`);
   }
 });

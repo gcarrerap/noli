@@ -7,6 +7,8 @@
   "materia": "matemáticas",
   "edades": [7, 9],
   "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
   "entrada": "index.html",
   "version": "1",
   "creditos": "gana"

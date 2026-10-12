@@ -23,6 +23,27 @@ La página principal es un **mundo mágico en 3D** (#25): Noelia camina y brinca
 
 Cada juego nuevo se agrega con su propio issue.
 
+### Juegos y TV
+
+**La TV no limita el diseño (#57).** Un juego puede usar lo que la TV no tiene (cámara, sensores de movimiento, arrastrar, multitouch, voz, mucho poder gráfico…): se diseña para teléfono, tableta o computadora y, si no se puede jugar con el control, **no aparece en modo TV**. Si solo una parte no sirve en la TV (un nivel con cámara, por ejemplo), esa parte se esconde en la TV y el resto se juega igual. Los créditos y el progreso son los mismos: jugar en el teléfono cuenta para todo.
+
+Cada `juego.json` lo dice con `"tv"` (`true` = se juega completo con el control; pide `"remoto"` en `"controles"`) y `"ocultoEnTv"` (lo que se esconde en la TV). La prueba del catálogo falla si un juego no lo declara o si esta tabla no dice lo mismo.
+
+| Juego | Apto para TV | Controles | Oculto en la TV |
+|---|---|---|---|
+| Sumas y restas (`sumas-restas`) | Sí | tactil, flechas, remoto | — |
+| Fábrica de Números (`fabrica-numeros`) | Sí | tactil, flechas, remoto | — |
+| Huerto en Filas (`huerto`) | Sí | tactil, flechas, remoto | — |
+| El Reloj del Dragón (`reloj-dragon`) | Sí | tactil, flechas, remoto | — |
+| Pizzería Partida (`pizzeria`) | Sí | tactil, flechas, remoto | — |
+| Puentes para el Bosque (`puentes`) | Sí | tactil, flechas, remoto | — |
+| La Tienda de Noli (`tienda`) | Sí | tactil, flechas, remoto | — |
+| Spelling (`spelling`) | Sí | tactil, flechas, remoto | — |
+| Robot de Palabras (`robot-palabras`) | Sí | tactil, flechas, remoto | — |
+| Pasarela (`pasarela`) | Sí | tactil, flechas, remoto | — |
+| Mi Casita (`mi-casita`) | Sí | tactil, flechas, remoto | — |
+| Cuenta y toca (`ejemplo`) | Sí | tactil, flechas, remoto | — |
+
 ## Cómo jugarlo
 
 ### En el teléfono o la tableta
@@ -33,7 +54,7 @@ Abre la página: es el mundo mágico. Camina con el **joystick** (pulgar izquier
 
 ### En la TV
 
-Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la misma dirección con `?modo=tv` al final (por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele. En el mundo: las flechas caminan, **OK** brinca (o entra, si estás en la puerta de un juego), el **botón rojo** siempre brinca y **Atrás** abre «¿A dónde vamos?». Dentro de un juego, **Atrás** regresa al mundo. Si la TV no puede con el 3D, es la cuadrícula de tarjetas.
+Pensado para LG (webOS) y Samsung (Tizen). Abre en el navegador de la TV la misma dirección; Noli reconoce el navegador de la TV y entra en modo TV solo (si no, agrega `?modo=tv` al final, por ejemplo `https://gcarrerap.github.io/noli/?modo=tv`; con `?modo=tactil` se fuerza el modo de teléfono). En modo TV solo salen los juegos aptos para TV ([Juegos y TV](#juegos-y-tv)). Todo se ve más grande y se juega con las **flechas y OK** del control de la tele. En el mundo: las flechas caminan, **OK** brinca (o entra, si estás en la puerta de un juego), el **botón rojo** siempre brinca y **Atrás** abre «¿A dónde vamos?». Dentro de un juego, **Atrás** regresa al mundo. Si la TV no puede con el 3D, es la cuadrícula de tarjetas.
 
 **Teléfono como control remoto:** en la TV, sube con las flechas hasta **📱 Usar mi teléfono** y aprieta OK. Sale un código de 4 números y un QR: apunta la cámara del teléfono al QR (o abre `https://gcarrerap.github.io/noli/control.html` y escribe el código). El teléfono queda como control: cruceta, OK y Atrás, igual que el de la tele, y **Brincar** para el mundo. Si el teléfono se bloquea o la TV recarga la página, se vuelven a conectar solos con el mismo código. Va directo del teléfono a la TV por WebRTC; si eso no conecta en unos segundos, por Firestore (dice "por internet" en el teléfono).
 
@@ -84,8 +105,10 @@ Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `nol
 2. Copia `minijuegos/ejemplo/` a `minijuegos/<id>/` y edita su `juego.json`:
    ```json
    { "id": "sumas", "titulo": "Sumas con manzanas", "icono": "🍎", "color": "#3ccf8e",
-     "materia": "números", "edades": [5, 7], "controles": ["tactil", "flechas"] }
+     "materia": "números", "edades": [5, 7], "controles": ["tactil", "flechas", "remoto"],
+     "tv": true, "ocultoEnTv": [] }
    ```
+   `"tv"` es obligatorio: `true` si se juega completo con el control (y entonces `"controles"` lleva `"remoto"`), `false` si necesita algo que la TV no tiene; así no sale en modo TV. Si solo una parte no sirve en la TV, va en `"ocultoEnTv"` y el juego la esconde cuando `Noli.modo === "tv"`. Agrega su renglón a la tabla [Juegos y TV](#juegos-y-tv).
 3. En el código del juego usa el kit para jugar con flechas/OK y avisar cuando termina:
    ```js
    import { Noli } from "../../kit/noli.js";
@@ -101,9 +124,9 @@ Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `nol
 Para juntar el PR hace falta, además:
 
 - Capturas de un teléfono en vertical, angosto, a 360 px y a 412 px de ancho: sin scroll horizontal y con el botón de la acción principal a la vista.
-- Probado en la TV, en horizontal (`?modo=tv`), jugado solo con el control (flechas, OK y Atrás), con captura.
+- Si es apto para TV (`"tv": true`): probado en la TV, en horizontal (`?modo=tv`), jugado solo con el control (flechas, OK y Atrás), con captura. Si no (`"tv": false`): captura del catálogo en modo TV donde el juego no aparece.
 - Guía la primera vez, o pistas claras en cada paso, para que una niña de 7 años entienda cómo jugar sin ayuda.
-- Visto bueno de claridad de Ñoño (diseño del juego).
+- Visto bueno de claridad de Ñoño (diseño del juego). La revisión no pide quitar una mecánica solo porque no funciona con el control: puede proponer un modo TV aparte, pero es opcional.
 
 Cada juego es autocontenido (sus propios estilos, rutas relativas), así que más adelante puede vivir en su propio repo y montarse aquí como **submódulo de git** sin tocar el catálogo (ver [DESIGN.md §6](DESIGN.md#6-juegos-como-submódulos)).
 
@@ -161,7 +184,7 @@ Corren con Node 18 o más nuevo, sin instalar nada:
 npm test
 ```
 
-Cubren: validación de manifiestos, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**, y el control remoto: códigos y salas, el QR (comparado con una librería de referencia), y una TV y un teléfono de mentira que se emparejan, mandan acciones, se pasan al respaldo por Firestore y se vuelven a conectar. Y el mundo (`tests/mundo.test.js`): que cada juego tenga lugar, que de la plaza se llegue caminando a todos, la física del brinco, que cada ruta de plataformas se suba brincando de verdad, los cristales, los letreros, la cámara y cuándo usar el menú 2D. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
+Cubren: validación de manifiestos (incluido que cada juego declare si es apto para TV y que cuadre con la tabla [Juegos y TV](#juegos-y-tv)), qué juegos se ven en modo TV y la detección de la TV, navegación con flechas en la cuadrícula, el protocolo y las teclas de las TVs, la carga del registro (un juego roto no tumba a los demás), las acciones de la app (abrir, reenviar la entrada al juego, guardar estrellas, regresar), el service worker, que **cada juego registrado tenga carpeta, manifiesto válido y página de entrada**, y el control remoto: códigos y salas, el QR (comparado con una librería de referencia), y una TV y un teléfono de mentira que se emparejan, mandan acciones, se pasan al respaldo por Firestore y se vuelven a conectar. Y el mundo (`tests/mundo.test.js`): que cada juego tenga lugar, que de la plaza se llegue caminando a todos, la física del brinco, que cada ruta de plataformas se suba brincando de verdad, los cristales, los letreros, la cámara y cuándo usar el menú 2D. Cada juego trae sus propias pruebas en su carpeta (`minijuegos/<id>/tests/`) y `npm test` las corre todas.
 
 ## Stack
 

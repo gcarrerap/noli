@@ -66,6 +66,8 @@ noli/
   "materia": "números",
   "edades": [4, 7],
   "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
   "entrada": "index.html",
   "version": "1"
 }
@@ -78,7 +80,9 @@ noli/
 | `descripcion`, `icono`, `color` | no | Tarjeta: una línea, el ícono y el color de fondo. `icono` es un archivo de la carpeta del juego (`"icono.svg"`, recomendado) o, para prototipos, un emoji. |
 | `materia` | no | Agrupa los filtros (`números`, `letras`, `inglés`, `colores`…). Por omisión `otros`. |
 | `edades` | no | `[mínima, máxima]`. Por ahora informativo; servirá para filtrar cuando haya muchos juegos. |
-| `controles` | no | Con qué se puede jugar: `tactil`, `flechas` (teclado/control de la TV), `remoto` (teléfono como control). Por omisión `["tactil", "flechas"]`. En modo TV solo tienen sentido los que aceptan `flechas` o `remoto`. |
+| `controles` | no | Con qué se puede jugar: `tactil`, `flechas` (teclado/control de la TV), `remoto` (teléfono como control). Por omisión `["tactil", "flechas"]`. |
+| `tv` | sí (en el repo) | ¿Es apto para TV? `true`: se juega completo con el control (flechas, OK y Atrás, o el teléfono como control) y entonces `controles` incluye `remoto`. `false`: necesita algo que la TV no tiene y **no aparece en modo TV** (§5.1). Si falta, el catálogo lo deduce de `controles` (apto si incluye `remoto`), pero `tests/catalogo.test.js` exige que cada juego del registro lo ponga. |
+| `ocultoEnTv` | no | Solo con `"tv": true`: lista de textos con las partes del juego que en la TV se esconden o se desactivan (un nivel con cámara, un modo con el acelerómetro…). El juego las esconde él mismo con `Noli.modo === "tv"`; el campo es el inventario. Por omisión `[]`. |
 | `entrada` | no | Página del juego, **relativa a su carpeta** (no se aceptan `..`, `/` ni URLs). Por omisión `index.html`. |
 | `version` | no | Versión propia del juego (útil cuando sea submódulo). |
 | `creditos` | no | Créditos (§12): `"gana"` (juego educativo: da créditos por sus estrellas y por el reto del día), `"gasta"` (los cobra, como la Pasarela) o nada (ni da ni gasta; por ejemplo `ejemplo`). |
@@ -131,11 +135,38 @@ moverFoco(accion);                // flechas entre los botones [data-foco] segú
 
 **En el teléfono** se toca la tarjeta y se juega con el dedo. La casita 🏠 regresa al catálogo.
 
-**En la TV (`?modo=tv`)** todo crece (`styles/tokens.css` escala con el ancho), la cuadrícula es de 4 columnas, el foco se ve desde el sillón (contorno grueso y halo amarillo) y la casita se oculta: se regresa con "atrás". Las flechas y OK del **control de la propia TV** ya funcionan, porque los navegadores de TV los mandan como teclas. El botón "atrás" cambia por marca (`kit/teclas.js`): Samsung Tizen `10009`, LG webOS `461`, Android TV `GoBack`/`Backspace`.
+**En la TV** (navegador de TV detectado, o `?modo=tv`; `?modo=tactil` fuerza el teléfono; `engine/manifiesto.js → modoDe`) todo crece (`styles/tokens.css` escala con el ancho), la cuadrícula es de 4 columnas, el foco se ve desde el sillón (contorno grueso y halo amarillo) y la casita se oculta: se regresa con "atrás". Las flechas y OK del **control de la propia TV** ya funcionan, porque los navegadores de TV los mandan como teclas. El botón "atrás" cambia por marca (`kit/teclas.js`): Samsung Tizen `10009`, LG webOS `461`, Android TV `GoBack`/`Backspace`.
 
 **TVs objetivo:** una **LG con webOS** y una **Samsung OLED de 77" (Tizen)**. En la LG, el Magic Remote además funciona como puntero: sus clics llegan como toques normales (`pointerdown`/`click`), así que las tarjetas y los juegos responden igual que al dedo. Lo que falta confirmar en cada TV (depende del año del modelo y de la versión de su navegador): que cargue módulos ES, que tenga WebRTC (`RTCDataChannel`) y qué códigos manda cada botón. Por eso el primer paso del control remoto es una página de diagnóstico (§5, fase 2).
 
 En el catálogo, las flechas se mueven en la cuadrícula (`engine/catalogo.js → mover`, sin dar la vuelta; "abajo" en una fila incompleta va a la última tarjeta), "arriba" desde la primera fila pasa a los filtros, y OK abre. Con el dedo no se ve el contorno de foco; con la primera tecla sí (`html.teclado`).
+
+### 5.1 La TV no limita el diseño (#57)
+
+El diseño de los juegos **no se recorta por la TV**. Si un juego o una función necesita algo que la TV no puede dar (cámara, sensores de movimiento, arrastrar, multitouch, voz, mucho poder gráfico…), se diseña igual para teléfono, tableta o computadora y **no se muestra en modo TV**:
+
+- **Se declara en `juego.json`** (§3): `"tv": true` solo si se juega completo con el control (y `controles` incluye `remoto`); si no, `"tv": false`. Un juego sin `remoto` no es apto para TV.
+- **El catálogo filtra:** en modo TV, la cuadrícula, los filtros de materia y el mundo enseñan solo los juegos aptos (`jugableEn` → `visibles()`), y `actions.abrir` no abre uno que no lo sea. En el teléfono y la tableta salen todos.
+- **Partes de un juego:** si solo una parte no sirve en la TV, esa parte se esconde o se desactiva cuando `Noli.modo === "tv"` y el resto sigue disponible; se anota en `"ocultoEnTv"`.
+- **Créditos y progreso** se comparten igual (§7, §12): jugar en el teléfono cuenta para todo.
+- **Revisiones:** no se pide quitar una mecánica solo porque no funciona con el control remoto. Se puede proponer un modo TV aparte, pero es opcional.
+
+Inventario (la prueba del catálogo revisa que cada juego lo declare y que la tabla del README diga lo mismo):
+
+| Juego | Apto para TV | Controles | Oculto en la TV |
+|---|---|---|---|
+| Sumas y restas (`sumas-restas`) | Sí | tactil, flechas, remoto | — |
+| Fábrica de Números (`fabrica-numeros`) | Sí | tactil, flechas, remoto | — |
+| Huerto en Filas (`huerto`) | Sí | tactil, flechas, remoto | — |
+| El Reloj del Dragón (`reloj-dragon`) | Sí | tactil, flechas, remoto | — |
+| Pizzería Partida (`pizzeria`) | Sí | tactil, flechas, remoto | — |
+| Puentes para el Bosque (`puentes`) | Sí | tactil, flechas, remoto | — |
+| La Tienda de Noli (`tienda`) | Sí | tactil, flechas, remoto | — |
+| Spelling (`spelling`) | Sí | tactil, flechas, remoto | — |
+| Robot de Palabras (`robot-palabras`) | Sí | tactil, flechas, remoto | — |
+| Pasarela (`pasarela`) | Sí | tactil, flechas, remoto | — |
+| Mi Casita (`mi-casita`) | Sí | tactil, flechas, remoto | — |
+| Cuenta y toca (`ejemplo`) | Sí | tactil, flechas, remoto | — |
 
 ### Fase 2: el teléfono como control remoto (#3)
 
@@ -214,16 +245,16 @@ Igual que en el dominó: `src/version.js` se cambia en cada publicación; si cam
 
 1. Abrir un issue con la plantilla de juego (`.github/ISSUE_TEMPLATE/juego.md`): qué enseña, edad y cómo se juega con el dedo y con flechas.
 2. Crear `minijuegos/<id>/` con `juego.json`, `index.html` y su código. Usar `minijuegos/ejemplo/` como plantilla.
-3. Importar el kit, atender `alEntrar` (flechas + OK) para que se pueda jugar en la TV, y llamar `Noli.terminar({ estrellas })` al acabar.
+3. Importar el kit, atender `alEntrar` (flechas + OK) si va a ser apto para TV, y llamar `Noli.terminar({ estrellas })` al acabar. Poner `"tv"` (y `"ocultoEnTv"` si hace falta) en `juego.json` (§5.1) y su renglón en la tabla «Juegos y TV» del README.
 4. Agregar el id a `minijuegos/catalogo.json`. En el mundo (§13) aparece solo con un portal; para darle un edificio, una línea en `mundo/lugares.json`.
 5. `npm test`, cambiar `src/version.js` y abrir el PR que cierra el issue.
 
 Para juntar ese PR hace falta, además:
 
 - Capturas de un teléfono en vertical, angosto, a 360 px y a 412 px de ancho: sin scroll horizontal y con el botón de la acción principal a la vista.
-- Probado en la TV, en horizontal (`?modo=tv`), jugado solo con el control (flechas, OK y Atrás), con captura.
+- Si es apto para TV (`"tv": true`): probado en la TV, en horizontal (`?modo=tv`), jugado solo con el control (flechas, OK y Atrás), con captura. Si no (`"tv": false`): captura del catálogo en modo TV donde el juego no aparece.
 - Guía la primera vez, o pistas claras en cada paso, para que una niña de 7 años entienda cómo jugar sin ayuda.
-- Visto bueno de claridad de Ñoño (diseño del juego).
+- Visto bueno de claridad de Ñoño (diseño del juego). La revisión no pide recortar una mecánica solo porque no funciona con el control remoto (§5.1).
 
 **Guía para los juegos:** pensados para 7 años: ya lee frases cortas, así que la guía de la primera vez o las pistas de cada paso van en texto breve (una línea, letra grande) con un ícono de apoyo; voz opcional. Botones grandes (mínimo ~64 px en teléfono; en la TV, legibles a 3 m), respuesta inmediata al tocar, errores suaves (se enseña la respuesta correcta, no se castiga), partidas cortas (1–3 minutos) y respeto a `prefers-reduced-motion`. **Juegos en 3D:** ver la Pasarela (`minijuegos/pasarela/docs/`) y el mundo (`docs/MUNDO.md`): Three.js r160.1 copiado en `kit/3d/vendor/` (sin CDN; un juego que quiera ser submódulo puede llevar su propia copia), presupuesto de dibujos y triángulos, y un respaldo 2D para las TVs que no puedan. `diagnostico.html` dice si el aparato tiene WebGL. **Sin emojis para nada que importe:** el navegador de la TV LG no tiene emojis a color y salen en blanco y negro (#5); dibujar con SVG. **Sin `await` al nivel del módulo** (algunos navegadores de TV no lo soportan): usar `Noli.datos.then(…)`. Las pruebas de cada juego viven en su carpeta (`minijuegos/<id>/tests/*.test.js`) para que viajen con él si se vuelve submódulo.
 
