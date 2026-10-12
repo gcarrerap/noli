@@ -14,6 +14,7 @@ La página principal es un **mundo mágico en 3D** (#25): Noelia camina y brinca
 | El Reloj del Dragón (`reloj-dragon`) | Matemáticas | 6–9 | #29: pone y lee la hora del día del dragón (en punto, y media, y cuarto, menos cuarto, de 5 en 5), mañana, tarde y noche, y cuánto falta eligiendo un cuarto, media hora o 1 hora; turnos de 6; sube con 8 de los últimos 10; reto Reloj misterioso |
 | Pizzería Partida (`pizzeria`) | Matemáticas | 6–9 | #31: corta en partes iguales, elige la galleta por lados o esquinas, decora fracciones y llena la bandeja de brownies; 7 niveles; sube con 8 de los últimos 10; reto del día (pizza gigante: 8 pedidos, 5 bien) y adornos en orden fijo |
 | Puentes para el Bosque (`puentes`) | Matemáticas | 6–9 | #30: mide huecos en centímetros y pulgadas, estima con una referencia a la vista y compara largos; 7 niveles; sube con 8 de los últimos 10; reto del día (Ojo de águila o Puente largo) sin reloj |
+| Safari de Datos (`safari-datos`) | Matemáticas | 6–9 | #33: cuenta los animales de cada recinto (con «Quietos»), arma la gráfica de dibujos o de barras con + y − y contesta 3 preguntas del cuidador leyéndola (cuántos hay, quién necesita más comida, cuántos más o menos, el total); 6 niveles (dibujos, barras, comparar, total, de 2 en 2, Detective que arregla la gráfica); sube con 8 de las últimas 10 preguntas; cada visita con 2 o 3 estrellas abre un animal; reto del día Censo o Detective, sin reloj |
 | La Tienda de Noli (`tienda`) | Matemáticas | 6–9 | #27: atiende la tienda, cuenta monedas y billetes, da el cambio y hace crecer el local. Dólares (por omisión) y pesos mexicanos, a elegir en el juego. 7 niveles, reto del día con racha |
 | Spelling (`spelling`) | Inglés | 6–11 | #8, #13, #15: dictado: dice la palabra en inglés con grabaciones que suenan en cualquier navegador (nunca la enseña) y la usa en una frase si se le pide; prueba de nivel al empezar; 16 listas (de *cat* a *necessary*), se pasa con 18 de 20; práctica opcional (escoger la bien escrita, armarla con letras); reto del día (spelling bee, detective, contrarreloj) con racha; sección **Sonidos de CH** (los 3 sonidos de *ch*: *chips*, *school*, *chef*) con banco de 133 palabras en 5 niveles (empieza fácil y sube) |
 | Robot de Palabras (`robot-palabras`) | Inglés | 7–10 | #36: clasifica palabras en inglés (pieza, moverse, cómo es), plurales y pasado; cada palabra se oye; la banda espera; 7 niveles (el 1 sube con 9 de 10); reto Puerta secreta (6 puertas, 4 a la primera) |
@@ -37,6 +38,7 @@ Cada `juego.json` lo dice con `"tv"` (`true` = se juega completo con el control;
 | El Reloj del Dragón (`reloj-dragon`) | Sí | tactil, flechas, remoto | — |
 | Pizzería Partida (`pizzeria`) | Sí | tactil, flechas, remoto | — |
 | Puentes para el Bosque (`puentes`) | Sí | tactil, flechas, remoto | — |
+| Safari de Datos (`safari-datos`) | Sí | tactil, flechas, remoto | — |
 | La Tienda de Noli (`tienda`) | Sí | tactil, flechas, remoto | — |
 | Spelling (`spelling`) | Sí | tactil, flechas, remoto | — |
 | Robot de Palabras (`robot-palabras`) | Sí | tactil, flechas, remoto | — |
