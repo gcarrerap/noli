@@ -1,0 +1,15 @@
+{
+  "id": "safari-datos",
+  "titulo": "Safari de Datos",
+  "descripcion": "Cuenta los animales del zoológico, haz la gráfica y contesta al cuidador.",
+  "icono": "icono.svg",
+  "color": "#f2b544",
+  "materia": "matemáticas",
+  "edades": [6, 9],
+  "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}
