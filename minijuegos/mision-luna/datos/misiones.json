@@ -1,0 +1,261 @@
+{
+  "_ayuda": "Las misiones, en orden de dificultad. Cada misión trae 4 textos (se juegan 3 al azar), 3 palabras espaciales para el viaje y la actividad de la Luna. En cada texto: oraciones en inglés (en) con su traducción (es) una por una; la pregunta con 3 opciones, 'correcta' es el índice de la buena (en pantalla se revuelven) y 'pista' son las oraciones donde está la respuesta ([] en las de idea principal). luna.tipo: 'calendario' (acomodar las fases; fases 4 = las principales, 8 = todas; huecos = cuántas acomoda) o 'noche' (¿cómo se verá en una o dos semanas?). Al cambiar un texto, volver a grabar con herramientas/grabar.py.",
+  "misiones": [
+    {
+      "n": 1,
+      "nombre": "Hola, Luna",
+      "en": "Hello, Moon",
+      "palabras": ["moon", "earth", "orbit"],
+      "luna": { "tipo": "calendario", "fases": 4, "huecos": 1 },
+      "foto": { "dibujo": "foto-llena", "titulo": "La Luna llena" },
+      "textos": [
+        {
+          "id": "m1a", "dibujo": "moon",
+          "en": ["The Moon is a big ball of rock.", "It is round like a ball.", "The Moon has no air and no water to drink.", "Nothing lives on the Moon."],
+          "es": ["La Luna es una gran bola de roca.", "Es redonda como una pelota.", "La Luna no tiene aire ni agua para beber.", "Nada vive en la Luna."],
+          "pregunta": { "tipo": "idea", "en": "What is this text mostly about?", "es": "¿De qué trata casi todo el texto?",
+            "opciones": [{ "en": "What the Moon is like", "es": "Cómo es la Luna" }, { "en": "How to bake a cake", "es": "Cómo hornear un pastel" }, { "en": "Animals that drink water", "es": "Animales que beben agua" }],
+            "correcta": 0, "pista": [] }
+        },
+        {
+          "id": "m1b", "dibujo": "orbit",
+          "en": ["The Moon goes around the Earth.", "This path is called an orbit.", "One trip around the Earth takes about a month.", "The Moon never stops moving."],
+          "es": ["La Luna da vueltas alrededor de la Tierra.", "Ese camino se llama órbita.", "Una vuelta alrededor de la Tierra tarda como un mes.", "La Luna nunca deja de moverse."],
+          "pregunta": { "tipo": "dato", "en": "What is the path of the Moon called?", "es": "¿Cómo se llama el camino de la Luna?",
+            "opciones": [{ "en": "an orbit", "es": "una órbita" }, { "en": "a rocket", "es": "un cohete" }, { "en": "a crater", "es": "un cráter" }],
+            "correcta": 0, "pista": [1] }
+        },
+        {
+          "id": "m1c", "dibujo": "sun",
+          "en": ["The Moon does not make its own light.", "Light from the Sun shines on the Moon.", "The light bounces off the Moon to our eyes.", "That is why the Moon looks bright at night."],
+          "es": ["La Luna no hace su propia luz.", "La luz del Sol brilla sobre la Luna.", "La luz rebota en la Luna y llega a nuestros ojos.", "Por eso la Luna se ve brillante en la noche."],
+          "pregunta": { "tipo": "dato", "en": "Where does the light of the Moon come from?", "es": "¿De dónde viene la luz de la Luna?",
+            "opciones": [{ "en": "the Sun", "es": "del Sol" }, { "en": "big lamps", "es": "de lámparas grandes" }, { "en": "fireflies", "es": "de luciérnagas" }],
+            "correcta": 0, "pista": [1] }
+        },
+        {
+          "id": "m1d", "dibujo": "earth",
+          "en": ["The Moon is smaller than the Earth.", "Almost four Moons could fit across the Earth.", "The Moon looks small because it is far away.", "It is about as far as ten trips around the Earth."],
+          "es": ["La Luna es más chica que la Tierra.", "Casi cuatro Lunas cabrían de lado a lado de la Tierra.", "La Luna se ve chiquita porque está muy lejos.", "Está tan lejos como diez vueltas alrededor de la Tierra."],
+          "pregunta": { "tipo": "dato", "en": "Why does the Moon look small?", "es": "¿Por qué la Luna se ve chiquita?",
+            "opciones": [{ "en": "It is far away.", "es": "Está lejos." }, { "en": "It is very new.", "es": "Es muy nueva." }, { "en": "It is made of cheese.", "es": "Es de queso." }],
+            "correcta": 0, "pista": [2] }
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "nombre": "Cráteres y rocas",
+      "en": "Craters and rocks",
+      "palabras": ["crater", "rock", "dust"],
+      "luna": { "tipo": "calendario", "fases": 4, "huecos": 2 },
+      "foto": { "dibujo": "foto-crater", "titulo": "Un cráter gigante" },
+      "textos": [
+        {
+          "id": "m2a", "dibujo": "crater",
+          "en": ["The Moon has many holes called craters.", "Rocks from space hit the Moon long ago.", "Each big rock made a round hole.", "Some craters are bigger than a city."],
+          "es": ["La Luna tiene muchos hoyos que se llaman cráteres.", "Hace mucho, rocas del espacio chocaron con la Luna.", "Cada roca grande hizo un hoyo redondo.", "Algunos cráteres son más grandes que una ciudad."],
+          "pregunta": { "tipo": "idea", "en": "What is this text mostly about?", "es": "¿De qué trata casi todo el texto?",
+            "opciones": [{ "en": "Craters on the Moon", "es": "Los cráteres de la Luna" }, { "en": "Cities on the Earth", "es": "Ciudades de la Tierra" }, { "en": "Holes in a sock", "es": "Hoyos en un calcetín" }],
+            "correcta": 0, "pista": [] }
+        },
+        {
+          "id": "m2b", "dibujo": "dust",
+          "en": ["The ground on the Moon is gray.", "It is covered with soft dust.", "The dust sticks to boots and suits.", "Astronauts said it smelled like used fireworks."],
+          "es": ["El suelo de la Luna es gris.", "Está cubierto de polvo suave.", "El polvo se pega a las botas y a los trajes.", "Los astronautas dijeron que olía a cohetes ya usados."],
+          "pregunta": { "tipo": "dato", "en": "What covers the ground on the Moon?", "es": "¿Qué cubre el suelo de la Luna?",
+            "opciones": [{ "en": "soft dust", "es": "polvo suave" }, { "en": "green grass", "es": "pasto verde" }, { "en": "white snow", "es": "nieve blanca" }],
+            "correcta": 0, "pista": [1] }
+        },
+        {
+          "id": "m2c", "dibujo": "crater",
+          "en": ["The Moon has no wind and no rain.", "So nothing wipes the craters away.", "Craters from long ago are still there today.", "On Earth, wind and rain change the land."],
+          "es": ["La Luna no tiene viento ni lluvia.", "Así que nada borra los cráteres.", "Los cráteres de hace mucho siguen ahí hoy.", "En la Tierra, el viento y la lluvia cambian el suelo."],
+          "pregunta": { "tipo": "dato", "en": "Why do the old craters stay on the Moon?", "es": "¿Por qué los cráteres viejos se quedan en la Luna?",
+            "opciones": [{ "en": "There is no wind or rain.", "es": "No hay viento ni lluvia." }, { "en": "People fix them.", "es": "La gente los arregla." }, { "en": "The Moon is very hot.", "es": "La Luna es muy caliente." }],
+            "correcta": 0, "pista": [0] }
+        },
+        {
+          "id": "m2d", "dibujo": "rock",
+          "en": ["Astronauts brought rocks home from the Moon.", "Scientists still study these rocks today.", "Some Moon rocks are older than any dinosaur.", "You can see a Moon rock in some museums."],
+          "es": ["Los astronautas trajeron rocas de la Luna.", "Los científicos todavía estudian esas rocas.", "Algunas rocas de la Luna son más viejas que cualquier dinosaurio.", "Puedes ver una roca de la Luna en algunos museos."],
+          "pregunta": { "tipo": "dato", "en": "Who studies the Moon rocks today?", "es": "¿Quién estudia hoy las rocas de la Luna?",
+            "opciones": [{ "en": "scientists", "es": "los científicos" }, { "en": "farmers", "es": "los granjeros" }, { "en": "bakers", "es": "los panaderos" }],
+            "correcta": 0, "pista": [1] }
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "nombre": "Día y noche",
+      "en": "Day and night",
+      "palabras": ["sun", "star", "earth"],
+      "luna": { "tipo": "noche", "fases": 4 },
+      "foto": { "dibujo": "foto-tierra", "titulo": "La Tierra desde la Luna" },
+      "textos": [
+        {
+          "id": "m3a", "dibujo": "dia-noche",
+          "en": ["The Earth spins like a top.", "It turns all the way around once a day.", "When your side faces the Sun, it is day.", "When your side faces away, it is night."],
+          "es": ["La Tierra gira como un trompo.", "Da una vuelta completa cada día.", "Cuando tu lado ve hacia el Sol, es de día.", "Cuando tu lado ve hacia el otro lado, es de noche."],
+          "pregunta": { "tipo": "idea", "en": "What is this text mostly about?", "es": "¿De qué trata casi todo el texto?",
+            "opciones": [{ "en": "Why we have day and night", "es": "Por qué hay día y noche" }, { "en": "How to play with a top", "es": "Cómo jugar con un trompo" }, { "en": "Why the Sun is hot", "es": "Por qué el Sol es caliente" }],
+            "correcta": 0, "pista": [] }
+        },
+        {
+          "id": "m3b", "dibujo": "star",
+          "en": ["The Sun is a star.", "It is the closest star to the Earth.", "Other stars look tiny because they are very far away.", "We see them at night when the sky is dark."],
+          "es": ["El Sol es una estrella.", "Es la estrella más cercana a la Tierra.", "Las otras estrellas se ven chiquitas porque están muy lejos.", "Las vemos en la noche, cuando el cielo está oscuro."],
+          "pregunta": { "tipo": "dato", "en": "What is the Sun?", "es": "¿Qué es el Sol?",
+            "opciones": [{ "en": "a star", "es": "una estrella" }, { "en": "a planet", "es": "un planeta" }, { "en": "a cloud", "es": "una nube" }],
+            "correcta": 0, "pista": [0] }
+        },
+        {
+          "id": "m3c", "dibujo": "moon",
+          "en": ["Sometimes you can see the Moon in the day.", "Look up on a clear morning or afternoon.", "The Moon is not only out at night.", "The bright Sun just makes it harder to see."],
+          "es": ["A veces puedes ver la Luna de día.", "Mira hacia arriba en una mañana o una tarde despejada.", "La Luna no solo sale en la noche.", "El Sol tan brillante hace que cueste más verla."],
+          "pregunta": { "tipo": "dato", "en": "When can you see the Moon?", "es": "¿Cuándo puedes ver la Luna?",
+            "opciones": [{ "en": "at night and sometimes in the day", "es": "de noche y a veces de día" }, { "en": "never", "es": "nunca" }, { "en": "only in the rain", "es": "solo cuando llueve" }],
+            "correcta": 0, "pista": [0, 2] }
+        },
+        {
+          "id": "m3d", "dibujo": "sun",
+          "en": ["The Sun does not really move across the sky.", "It looks like it moves because the Earth spins.", "In the morning, the Sun comes up in the east.", "In the evening, it goes down in the west."],
+          "es": ["En realidad el Sol no cruza el cielo.", "Parece que se mueve porque la Tierra gira.", "En la mañana, el Sol sale por el este.", "En la tarde, se mete por el oeste."],
+          "pregunta": { "tipo": "dato", "en": "Where does the Sun come up in the morning?", "es": "¿Por dónde sale el Sol en la mañana?",
+            "opciones": [{ "en": "in the east", "es": "por el este" }, { "en": "in the west", "es": "por el oeste" }, { "en": "under the sea", "es": "debajo del mar" }],
+            "correcta": 0, "pista": [2] }
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "nombre": "Las fases",
+      "en": "The phases",
+      "palabras": ["telescope", "moon", "orbit"],
+      "luna": { "tipo": "calendario", "fases": 8, "huecos": 3 },
+      "foto": { "dibujo": "foto-fases", "titulo": "Todas las fases" },
+      "textos": [
+        {
+          "id": "m4a", "dibujo": "fases",
+          "en": ["The Moon seems to change shape.", "These shapes are called phases.", "But the Moon is always round.", "We just see different parts of its sunny side."],
+          "es": ["Parece que la Luna cambia de forma.", "Esas formas se llaman fases.", "Pero la Luna siempre es redonda.", "Solo vemos distintas partes de su lado con sol."],
+          "pregunta": { "tipo": "idea", "en": "What is this text mostly about?", "es": "¿De qué trata casi todo el texto?",
+            "opciones": [{ "en": "The phases of the Moon", "es": "Las fases de la Luna" }, { "en": "How to draw a circle", "es": "Cómo dibujar un círculo" }, { "en": "Why the Sun is round", "es": "Por qué el Sol es redondo" }],
+            "correcta": 0, "pista": [] }
+        },
+        {
+          "id": "m4b", "dibujo": "foto-llena",
+          "en": ["When we see the whole bright side, it is a full moon.", "A full moon looks like a big round light.", "When we cannot see the bright side, it is a new moon.", "A new moon is very hard to see."],
+          "es": ["Cuando vemos todo el lado brillante, es luna llena.", "La luna llena se ve como una gran luz redonda.", "Cuando no vemos el lado brillante, es luna nueva.", "La luna nueva casi no se ve."],
+          "pregunta": { "tipo": "dato", "en": "What is the Moon called when it looks like a big round light?", "es": "¿Cómo se llama la Luna cuando se ve como una gran luz redonda?",
+            "opciones": [{ "en": "a full moon", "es": "luna llena" }, { "en": "a new moon", "es": "luna nueva" }, { "en": "a crescent moon", "es": "luna creciente" }],
+            "correcta": 0, "pista": [1] }
+        },
+        {
+          "id": "m4c", "dibujo": "fases",
+          "en": ["After a new moon, the Moon grows a little each night.", "First it is a thin crescent.", "Then it is half, and then it is full.", "After that, it gets smaller again."],
+          "es": ["Después de la luna nueva, la Luna crece un poco cada noche.", "Primero es una rebanadita delgada.", "Luego es media luna y después luna llena.", "Después de eso, se hace chica otra vez."],
+          "pregunta": { "tipo": "dato", "en": "What happens after a new moon?", "es": "¿Qué pasa después de la luna nueva?",
+            "opciones": [{ "en": "The Moon grows a little each night.", "es": "La Luna crece un poco cada noche." }, { "en": "The Moon falls down.", "es": "La Luna se cae." }, { "en": "The Moon turns green.", "es": "La Luna se pone verde." }],
+            "correcta": 0, "pista": [0] }
+        },
+        {
+          "id": "m4d", "dibujo": "telescope",
+          "en": ["All the phases take about a month.", "The word month comes from the word moon.", "Long ago, people used the Moon as a calendar.", "They counted full moons to keep track of time."],
+          "es": ["Todas las fases tardan como un mes.", "En inglés, la palabra month (mes) viene de moon (luna).", "Hace mucho, la gente usaba la Luna como calendario.", "Contaban las lunas llenas para saber cuánto tiempo pasaba."],
+          "pregunta": { "tipo": "dato", "en": "How long do all the phases take?", "es": "¿Cuánto tardan todas las fases?",
+            "opciones": [{ "en": "about a month", "es": "como un mes" }, { "en": "about a day", "es": "como un día" }, { "en": "about a year", "es": "como un año" }],
+            "correcta": 0, "pista": [0] }
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "nombre": "La gravedad",
+      "en": "Gravity",
+      "palabras": ["gravity", "rocket", "spacesuit"],
+      "luna": { "tipo": "noche", "fases": 8 },
+      "foto": { "dibujo": "foto-salto", "titulo": "Un salto gigante" },
+      "textos": [
+        {
+          "id": "m5a", "dibujo": "gravity",
+          "en": ["Gravity is a pull.", "The Earth pulls everything down to the ground.", "That is why a ball falls when you drop it.", "Gravity keeps our feet on the ground."],
+          "es": ["La gravedad es una jalada.", "La Tierra jala todo hacia el suelo.", "Por eso una pelota se cae cuando la sueltas.", "La gravedad mantiene nuestros pies en el suelo."],
+          "pregunta": { "tipo": "idea", "en": "What is this text mostly about?", "es": "¿De qué trata casi todo el texto?",
+            "opciones": [{ "en": "Gravity", "es": "La gravedad" }, { "en": "Playing soccer", "es": "Jugar futbol" }, { "en": "Shoes for your feet", "es": "Zapatos para tus pies" }],
+            "correcta": 0, "pista": [] }
+        },
+        {
+          "id": "m5b", "dibujo": "foto-salto",
+          "en": ["The Moon has gravity too.", "But its pull is much weaker than the pull of the Earth.", "On the Moon, you would weigh much less.", "You could jump very high!"],
+          "es": ["La Luna también tiene gravedad.", "Pero jala mucho menos que la Tierra.", "En la Luna pesarías mucho menos.", "¡Podrías saltar muy alto!"],
+          "pregunta": { "tipo": "dato", "en": "What could you do on the Moon?", "es": "¿Qué podrías hacer en la Luna?",
+            "opciones": [{ "en": "jump very high", "es": "saltar muy alto" }, { "en": "swim in a lake", "es": "nadar en un lago" }, { "en": "fly like a bird", "es": "volar como pájaro" }],
+            "correcta": 0, "pista": [3] }
+        },
+        {
+          "id": "m5c", "dibujo": "orbit",
+          "en": ["The gravity of the Earth pulls on the Moon.", "This pull keeps the Moon in its orbit.", "Without it, the Moon would fly away into space.", "The Moon pulls on the Earth too."],
+          "es": ["La gravedad de la Tierra jala a la Luna.", "Esa jalada mantiene a la Luna en su órbita.", "Sin ella, la Luna se iría volando al espacio.", "La Luna también jala a la Tierra."],
+          "pregunta": { "tipo": "dato", "en": "What keeps the Moon in its orbit?", "es": "¿Qué mantiene a la Luna en su órbita?",
+            "opciones": [{ "en": "the gravity of the Earth", "es": "la gravedad de la Tierra" }, { "en": "a long rope", "es": "una cuerda larga" }, { "en": "the wind", "es": "el viento" }],
+            "correcta": 0, "pista": [0, 1] }
+        },
+        {
+          "id": "m5d", "dibujo": "mar",
+          "en": ["The Moon pulls on the water in the oceans.", "The water rises and falls along the beach.", "These changes are called tides.", "Many beaches have two high tides each day."],
+          "es": ["La Luna jala el agua de los océanos.", "El agua sube y baja en la playa.", "Esos cambios se llaman mareas.", "Muchas playas tienen dos mareas altas cada día."],
+          "pregunta": { "tipo": "dato", "en": "What are the changes in the ocean called?", "es": "¿Cómo se llaman los cambios del océano?",
+            "opciones": [{ "en": "tides", "es": "mareas" }, { "en": "craters", "es": "cráteres" }, { "en": "phases", "es": "fases" }],
+            "correcta": 0, "pista": [2] }
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "nombre": "Astronautas",
+      "en": "Astronauts",
+      "palabras": ["astronaut", "footprint", "rocket"],
+      "luna": { "tipo": "calendario", "fases": 8, "huecos": 4 },
+      "foto": { "dibujo": "foto-huella", "titulo": "Una huella en la Luna" },
+      "textos": [
+        {
+          "id": "m6a", "dibujo": "astronaut",
+          "en": ["In 1969, people walked on the Moon for the first time.", "Their names were Neil Armstrong and Buzz Aldrin.", "Their trip was called Apollo 11.", "Millions of people watched on TV."],
+          "es": ["En 1969, unas personas caminaron en la Luna por primera vez.", "Se llamaban Neil Armstrong y Buzz Aldrin.", "Su viaje se llamó Apolo 11.", "Millones de personas lo vieron en la tele."],
+          "pregunta": { "tipo": "idea", "en": "What is this text mostly about?", "es": "¿De qué trata casi todo el texto?",
+            "opciones": [{ "en": "The first people on the Moon", "es": "Las primeras personas en la Luna" }, { "en": "How to watch TV", "es": "Cómo ver la tele" }, { "en": "A trip to the beach", "es": "Un viaje a la playa" }],
+            "correcta": 0, "pista": [] }
+        },
+        {
+          "id": "m6b", "dibujo": "spacesuit",
+          "en": ["Astronauts wear spacesuits on the Moon.", "A spacesuit gives them air to breathe.", "It keeps them safe from the heat and the cold.", "It is like a tiny spaceship you can wear."],
+          "es": ["Los astronautas usan trajes espaciales en la Luna.", "El traje espacial les da aire para respirar.", "Los protege del calor y del frío.", "Es como una nave espacial chiquita que te puedes poner."],
+          "pregunta": { "tipo": "dato", "en": "What does a spacesuit give astronauts?", "es": "¿Qué les da el traje espacial a los astronautas?",
+            "opciones": [{ "en": "air to breathe", "es": "aire para respirar" }, { "en": "food to eat", "es": "comida" }, { "en": "a pet dog", "es": "un perrito" }],
+            "correcta": 0, "pista": [1] }
+        },
+        {
+          "id": "m6c", "dibujo": "footprint",
+          "en": ["The astronauts left footprints in the Moon dust.", "There is no wind on the Moon.", "So the footprints are still there today.", "They could stay for a very long time."],
+          "es": ["Los astronautas dejaron huellas en el polvo de la Luna.", "En la Luna no hay viento.", "Así que las huellas siguen ahí hoy.", "Podrían quedarse ahí muchísimo tiempo."],
+          "pregunta": { "tipo": "dato", "en": "Why are the footprints still there?", "es": "¿Por qué las huellas siguen ahí?",
+            "opciones": [{ "en": "There is no wind.", "es": "No hay viento." }, { "en": "Someone painted them.", "es": "Alguien las pintó." }, { "en": "It rains a lot.", "es": "Llueve mucho." }],
+            "correcta": 0, "pista": [1] }
+        },
+        {
+          "id": "m6d", "dibujo": "rocket",
+          "en": ["A rocket carried the astronauts into space.", "It was taller than the Statue of Liberty.", "The trip to the Moon took about three days.", "Then they came back home to the Earth."],
+          "es": ["Un cohete llevó a los astronautas al espacio.", "Era más alto que la Estatua de la Libertad.", "El viaje a la Luna tardó como tres días.", "Luego regresaron a casa, a la Tierra."],
+          "pregunta": { "tipo": "dato", "en": "How long did the trip to the Moon take?", "es": "¿Cuánto tardó el viaje a la Luna?",
+            "opciones": [{ "en": "about three days", "es": "como tres días" }, { "en": "about three minutes", "es": "como tres minutos" }, { "en": "about three years", "es": "como tres años" }],
+            "correcta": 0, "pista": [2] }
+        }
+      ]
+    }
+  ],
+  "proximamente": [
+    { "id": "marte", "nombre": "Marte", "dibujo": "marte" },
+    { "id": "sol", "nombre": "El Sol", "dibujo": "sun" }
+  ]
+}

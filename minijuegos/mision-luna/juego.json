@@ -1,0 +1,15 @@
+{
+  "id": "mision-luna",
+  "titulo": "Misión Luna",
+  "descripcion": "Lee en inglés para llenar el cohete y explora la Luna.",
+  "icono": "icono.svg",
+  "color": "#3b3a8c",
+  "materia": "inglés",
+  "edades": [7, 10],
+  "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

@@ -1,0 +1,31 @@
+{
+  "_ayuda": "Palabras espaciales (cada una es una roca del museo) y las 8 fases de la Luna, vistas desde el hemisferio norte. El dibujo de cada palabra está en src/arte.js con el mismo id. Las grabaciones: audio/p/<id>.mp3 y audio/f/<n>.mp3 (herramientas/grabar.py).",
+  "palabras": [
+    { "id": "moon", "en": "moon", "es": "luna" },
+    { "id": "earth", "en": "Earth", "es": "la Tierra" },
+    { "id": "sun", "en": "Sun", "es": "el Sol" },
+    { "id": "star", "en": "star", "es": "estrella" },
+    { "id": "orbit", "en": "orbit", "es": "órbita" },
+    { "id": "crater", "en": "crater", "es": "cráter" },
+    { "id": "rock", "en": "rock", "es": "roca" },
+    { "id": "dust", "en": "dust", "es": "polvo" },
+    { "id": "telescope", "en": "telescope", "es": "telescopio" },
+    { "id": "gravity", "en": "gravity", "es": "gravedad" },
+    { "id": "rocket", "en": "rocket", "es": "cohete" },
+    { "id": "spacesuit", "en": "spacesuit", "es": "traje espacial" },
+    { "id": "astronaut", "en": "astronaut", "es": "astronauta" },
+    { "id": "footprint", "en": "footprint", "es": "huella" }
+  ],
+  "_parecidas": "Pares que no salen juntos como opciones: sus dibujos o su significado se parecen (el Sol es una estrella; la órbita trae la Tierra y la Luna).",
+  "parecidas": [["moon", "orbit"], ["earth", "orbit"], ["sun", "star"], ["astronaut", "spacesuit"], ["dust", "crater"], ["dust", "footprint"]],
+  "fases": [
+    { "n": 0, "en": "new moon", "es": "luna nueva" },
+    { "n": 1, "en": "waxing crescent", "es": "luna creciente" },
+    { "n": 2, "en": "first quarter", "es": "cuarto creciente" },
+    { "n": 3, "en": "waxing gibbous", "es": "gibosa creciente" },
+    { "n": 4, "en": "full moon", "es": "luna llena" },
+    { "n": 5, "en": "waning gibbous", "es": "gibosa menguante" },
+    { "n": 6, "en": "last quarter", "es": "cuarto menguante" },
+    { "n": 7, "en": "waning crescent", "es": "luna menguante" }
+  ]
+}
