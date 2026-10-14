@@ -299,5 +299,443 @@
     "formato": "16:9",
     "zona_texto": "arriba",
     "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Twilight in Mrs. Crump's yard: a stone bird bath shaped like a big flower, with a lime-green glowing seed sitting in the water; Mari reaching for it while Mrs. Crump holds a lantern; Zib's antennae glowing yellow; a stone owl statue nearby. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Mrs. Crump, a very tall thin elderly woman with pale rosy-cheeked skin, a long silver braid and small round wire glasses, wearing a huge floppy round-topped black hat with a brass star pin and a long plum cardigan over a gray moon-print dress. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c05-1",
+    "capitulo": 5,
+    "pagina": 1,
+    "personajes": [
+      "mari",
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Sunny Saturday morning at Harvest Hill Farm: a red barn, hay bales, a big pile of pumpkins and a tractor pulling a wagon full of hay with families on it; Mari in her yellow hoodie riding on the wagon with her backpack on her lap, Zib's three antennae peeking out of it; Mom and Dad beside her. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie with a backpack on her lap. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c05-2",
+    "capitulo": 5,
+    "pagina": 3,
+    "personajes": [
+      "mari",
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Inside the tall corn maze, golden corn stalks on both sides and a blue sky above; Mari walking with her right hand touching the corn wall, looking determined; Dad behind her smiling; Zib floating low near the ground with its antennae glowing yellow and pointing ahead. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c05-3",
+    "capitulo": 5,
+    "pagina": 5,
+    "personajes": [
+      "mari",
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: A friendly farmer dressed as a scarecrow sitting on a hay bale in the corn maze, laughing, lifting his silly pumpkin mask to show a kind bearded face; a basket of apples in his lap with one marble-sized lime-green glow-seed shining among the red apples; Mari laughing with her hand on her heart; Zib upside down in the air. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c06-1",
+    "capitulo": 6,
+    "pagina": 2,
+    "personajes": [
+      "zib",
+      "abuela",
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/zib.jpg",
+      "arte/personajes/abuela.jpg",
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Early morning in the cozy kitchen, soft blue light at the window: Zib sitting on the counter with its face covered in sugar next to a big open glass sugar jar; Abuela in a robe and slippers in the doorway, one hand on her cheek, smiling with surprise rather than fear; Pepper hiding on top of the refrigerator. Characters: Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c06-2",
+    "capitulo": 6,
+    "pagina": 4,
+    "personajes": [
+      "mari",
+      "zib",
+      "abuela"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/abuela.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Close-up of the glass sugar jar on the kitchen table, with a lime-green glow-seed shining through the white sugar at the bottom; Mari's hand reaching in with a big spoon; Abuela and Zib leaning in to watch, Zib's antennae glowing yellow. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in plaid blue-and-cream pajamas. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c06-3",
+    "capitulo": 6,
+    "pagina": 6,
+    "personajes": [
+      "mari",
+      "zib",
+      "abuela"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/abuela.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: The warm kitchen with a big clay pot of candied pumpkin steaming on the stove; Zib floating over a small plate glowing in rainbow colors from head to bottom, antennae sparkling; Mari laughing with a wooden spoon in her hand; Abuela beaming with her turquoise rebozo over her shoulders. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in plaid blue-and-cream pajamas. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c07-1",
+    "capitulo": 7,
+    "pagina": 2,
+    "personajes": [
+      "mari",
+      "zib",
+      "abuela"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/abuela.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: A cozy small-town library at night decorated for Halloween with paper pumpkins and warm orange string lights; kids in pajamas and costumes sitting on colorful cushions; a friendly librarian in a cape and top hat reading aloud; Mari in her cardboard helmet sitting next to Abuela, her backpack on her lap with Zib's antennae poking out. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie and her cardboard helmet. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c07-2",
+    "capitulo": 7,
+    "pagina": 4,
+    "personajes": [
+      "mari",
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: A quiet corner table of the library: a big open picture book showing the planets of our solar system in a curved row around a bright sun; Zib sitting right on the page looking sadly at the planets; Mari leaning over with her helmet pushed up, pointing at the night sky through a nearby window full of stars. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie with her cardboard helmet pushed up. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c07-3",
+    "capitulo": 7,
+    "pagina": 6,
+    "personajes": [
+      "mari",
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Mari kneeling by the bottom library shelf holding open a thin blue book about the Moon; a bright lime-green glow-seed lying in the middle of the pages, lighting up a picture of the moon phases from crescent to full; Zib above her shoulder with yellow antennae; the warm library lights behind them. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie and her cardboard helmet. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c08-1",
+    "capitulo": 8,
+    "pagina": 3,
+    "personajes": [
+      "mari",
+      "leo",
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/leo.jpg",
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Inside the school gym haunted house made of painted cardboard walls: a friendly bedsheet ghost hanging from a string, paper bats, fake cobwebs, soft purple and green lights and a little fog on the floor; Mari in her helmet and Leo in a knight costume with a cardboard shield holding hands and peeking around a corner; Pepper sneaking behind them. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c08-2",
+    "capitulo": 8,
+    "pagina": 5,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo",
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg",
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Comic moment in the haunted house: Pepper's puffed-up tail sticking out of Mari's open backpack; Zib floating out of the backpack in surprise with antennae flashing; Leo frozen with his mouth wide open in a big \"whoa\"; a floppy gray mop leaning on the cardboard wall behind them. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c08-3",
+    "capitulo": 8,
+    "pagina": 7,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: The last room of the haunted house: a pretend cauldron made from a painted trash can with fog spilling out; behind it a small fog machine with a lime-green glow-seed stuck in its opening, making the fog glow green; Leo pointing at it with his cardboard sword; Mari carefully reaching in; Zib's antennae bright yellow. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c09-1",
+    "capitulo": 9,
+    "pagina": 2,
+    "personajes": [
+      "mari",
+      "zib",
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: A rainy afternoon in Mari's cozy living room: rain streaking down the big window, a pillow fort made of blankets and couch cushions, a paper airplane on the floor; Zib floating by the window with drooping gray antennae looking out at the rain; Mari sitting on the rug in her yellow hoodie looking at Zib with a worried face; Pepper curled up on a cushion. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c09-2",
+    "capitulo": 9,
+    "pagina": 5,
+    "personajes": [
+      "mari",
+      "zib",
+      "abuela",
+      "crump"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/abuela.jpg",
+      "arte/personajes/crump.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Night in Mrs. Crump's round attic room with the domed roof open to a clearing sky full of stars and breaking clouds; Zib floating with its big eye pressed to the brass telescope; Mrs. Crump bending beside it pointing to the sky; Mari and Abuela watching together, holding hands, warm lantern light on their faces. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her yellow hoodie. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Mrs. Crump, a very tall thin elderly woman with pale rosy-cheeked skin, a long silver braid and small round wire glasses, wearing a huge floppy round-topped black hat with a brass star pin and a long plum cardigan over a gray moon-print dress. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c09-3",
+    "capitulo": 9,
+    "pagina": 7,
+    "personajes": [
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: View through the telescope eyepiece shown as a big round circle: a small bright orange star sparkling in deep blue space with a few faint stars around it; at the edge of the frame, Zib's happy face with antennae glowing soft pink. Characters: Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c10-1",
+    "capitulo": 10,
+    "pagina": 2,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo",
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg",
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Halloween evening on the front porch decorated with carved pumpkins and orange lights: Mari in her astronaut costume (cardboard helmet and white star hoodie), Leo as a knight with a cardboard pumpkin shield and foil helmet, Zib floating with a tiny orange candy bucket, and Pepper wearing purple felt bat wings; Dad in the doorway with a flashlight; a big rising moon behind the trees. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c10-2",
+    "capitulo": 10,
+    "pagina": 5,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Sidewalk on Maple Street at dusk with glowing porch lights: a tiny three-year-old boy in a round pumpkin costume holding up a lime-green glow-seed with a big proud grin; his dad smiling behind him; Mari kneeling in her astronaut costume holding out a big chocolate bar to trade; Leo and Zib watching hopefully. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c10-3",
+    "capitulo": 10,
+    "pagina": 7,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo",
+      "pepper",
+      "nave"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg",
+      "arte/personajes/pepper.jpg",
+      "arte/personajes/nave.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Night in the backyard pumpkin patch under a huge bright full moon: the pumpkin spaceship glowing from inside with lime-green light pouring through its seam and porthole, all eight seeds in place; Mari, Leo, Dad and Pepper with bat wings looking amazed; Zib floating above the ship with rainbow antennae. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. The pumpkin spaceship: an armchair-sized, perfectly round, glossy bright orange pumpkin with a seam around its middle, a short silver metal stem and a small round porthole glowing lime green. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c11-1",
+    "capitulo": 11,
+    "pagina": 2,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo",
+      "abuela",
+      "crump",
+      "nave"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg",
+      "arte/personajes/abuela.jpg",
+      "arte/personajes/crump.jpg",
+      "arte/personajes/nave.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Halloween night in the backyard pumpkin patch: a circle of people around the glowing pumpkin spaceship — Mari in her astronaut costume, Leo as a knight, Abuela with a pot of cocoa, Mrs. Crump with her lantern and floppy hat, Mari's mom and dad; a thin silver beam of moonlight coming down from the huge full moon to the ship; Zib floating in the middle. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Mrs. Crump, a very tall thin elderly woman with pale rosy-cheeked skin, a long silver braid and small round wire glasses, wearing a huge floppy round-topped black hat with a brass star pin and a long plum cardigan over a gray moon-print dress. The pumpkin spaceship: an armchair-sized, perfectly round, glossy bright orange pumpkin with a seam around its middle, a short silver metal stem and a small round porthole glowing lime green. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c11-2",
+    "capitulo": 11,
+    "pagina": 4,
+    "personajes": [
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: The dark back corner of the pumpkin patch, thick with tangled vines and big old pumpkins, a faint lime-green glow peeking out from deep underneath; Pepper the black cat with her purple felt bat wings crouched bravely at the edge of the vines, ears forward, eyes shining; the family's flashlight beam behind her. Characters: Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c11-3",
+    "capitulo": 11,
+    "pagina": 6,
+    "personajes": [
+      "mari",
+      "zib",
+      "pepper",
+      "nave"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/pepper.jpg",
+      "arte/personajes/nave.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Pepper with purple bat wings standing tall and proud beside the glowing pumpkin spaceship, a lime-green glow-seed just dropped in front of her; Zib leaning out of the open ship with happy pink antennae; Mari kneeling with her arms open, laughing with joy; the family cheering in the background. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. The pumpkin spaceship: an armchair-sized, perfectly round, glossy bright orange pumpkin with a seam around its middle, a short silver metal stem and a small round porthole glowing lime green. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c12-1",
+    "capitulo": 12,
+    "pagina": 2,
+    "personajes": [
+      "mari",
+      "zib"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "izquierda",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: Close-up of Mari's open hand holding a small purple teardrop-shaped seed with a soft glow; Zib's tiny three-fingered hand just letting go of it; warm golden light from the floating spaceship around them; Mari's face in her cardboard helmet with happy, teary eyes. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leave the left third of the image calm and simple for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c12-2",
+    "capitulo": 12,
+    "pagina": 4,
+    "personajes": [
+      "mari",
+      "zib",
+      "leo",
+      "abuela",
+      "crump",
+      "pepper",
+      "nave"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/zib.jpg",
+      "arte/personajes/leo.jpg",
+      "arte/personajes/abuela.jpg",
+      "arte/personajes/crump.jpg",
+      "arte/personajes/pepper.jpg",
+      "arte/personajes/nave.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "abajo",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: The glowing golden pumpkin spaceship rising up into the night sky along a silver beam of moonlight toward a huge full moon; far below, the small group in the backyard waving goodbye — Mari in her astronaut costume, Leo, Abuela, Mrs. Crump holding her hat, Mom and Dad, and Pepper; tiny Zib waving from the porthole. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, in her astronaut costume: silver cardboard box helmet and white hoodie with hand-drawn star patches. Mari's mom has dark hair in a bun and a red sweater; Mari's dad has short dark hair, a short beard and a green flannel shirt.. Zib, a small cute alien about the size of a house cat with a round jelly-bean-shaped lavender-purple body, a lighter lilac belly, two big round glossy navy eyes with tiny star sparkles, rosy cheeks, two tiny three-fingered arms, no legs, and three thin springy antennae with small glowing bulbs, floating a few inches above the ground. Leo, a 7-year-old boy with deep brown skin, short black curly hair and dimples, wearing a green-and-white striped long-sleeve shirt, jeans and red sneakers. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Mrs. Crump, a very tall thin elderly woman with pale rosy-cheeked skin, a long silver braid and small round wire glasses, wearing a huge floppy round-topped black hat with a brass star pin and a long plum cardigan over a gray moon-print dress. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. The pumpkin spaceship: an armchair-sized, perfectly round, glossy bright orange pumpkin with a seam around its middle, a short silver metal stem and a small round porthole glowing lime green. Leave the bottom third of the image calm and simple (grass, floor or table) for text. Wide 16:9 storybook composition."
+  },
+  {
+    "id": "c12-3",
+    "capitulo": 12,
+    "pagina": 6,
+    "personajes": [
+      "mari",
+      "abuela",
+      "pepper"
+    ],
+    "referencias": [
+      "arte/personajes/mari.jpg",
+      "arte/personajes/abuela.jpg",
+      "arte/personajes/pepper.jpg"
+    ],
+    "formato": "16:9",
+    "zona_texto": "arriba",
+    "prompt": "Children's picture book illustration, soft painterly digital art with gentle textures, rounded friendly shapes, expressive faces, warm cozy autumn mood with playful neon sci-fi glow accents. Palette: pumpkin orange (#F28C28), deep night purple (#3B2A5C), moss green (#6B8F47), cream (#F6EBD9), with lime glow (#9BF26B) and soft cyan (#5FD4E8) for alien technology. Warm rim lighting, night scenes lit by porch lights, lanterns and moonlight, never dark or scary. No text, no letters, no words in the image. Use the attached reference sheets for the exact look of each character and keep them identical. Scene: The next October: Abuela's pumpkin patch in warm autumn sunlight, and in the middle one small round pumpkin with a soft purple-and-green glow; Mari, one year older, kneeling beside it holding a homemade costume: a purple alien hat with three springy antennae; Abuela and Pepper beside her; a tiny green streak of light in the sky. Characters: Mari, a small 7-year-old girl with warm tan skin, light freckles, big dark brown eyes, a missing front tooth, and dark brown hair in two puffy pigtails tied with orange scrunchies, one year older, in her mustard-yellow hoodie and dark teal leggings. Abuela Lupe, a short, round Mexican grandmother with warm brown skin, smile lines, silver-gray hair in a low bun with a wooden clip and small gold hoop earrings, wearing a dark green dress, a flowered cream apron and a turquoise rebozo shawl with thin pink stripes. Pepper, a small slim black cat with big round amber-yellow eyes, a pink nose and a tiny white spot on her chest. Leave the top third of the image calm and simple (sky, wall or soft background) for text. Wide 16:9 storybook composition."
   }
 ]
