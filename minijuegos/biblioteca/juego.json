@@ -1,0 +1,15 @@
+{
+  "id": "biblioteca",
+  "titulo": "Biblioteca",
+  "descripcion": "Cuentos en inglés que se leen solos y te enseñan cada palabra.",
+  "icono": "icono.svg",
+  "color": "#3b2a5c",
+  "materia": "inglés",
+  "edades": [6, 10],
+  "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gana"
+}

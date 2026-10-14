@@ -1,0 +1,121 @@
+/* Biblioteca: noche de Halloween alrededor y página de papel crema para leer. */
+:root{
+  --noche:#2a1f45; --noche2:#3b2a5c; --papel:#fbf4e6; --tinta:#2a2138; --tinta-suave:#6e6278;
+  --calabaza:#f28c28; --calabaza-osc:#c96a12; --brillo:#9bf26b; --luna:#f6ebd9;
+  --resalta:#ffd54a; --actual:rgba(242,140,40,.16); --foco:#ffd54a; --halo:rgba(255,213,74,.35);
+  --ui:"Fredoka",system-ui,sans-serif; --lee:"Andika","Atkinson Hyperlegible",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+html{font-size:clamp(16px,2.2vmin,22px)}
+html[data-modo="tv"]{font-size:clamp(19px,2.6vmin,32px)}
+body{background:radial-gradient(120% 90% at 80% 0%,var(--noche2),var(--noche) 70%);color:var(--luna);font-family:var(--ui);
+  -webkit-tap-highlight-color:transparent;overflow:hidden}
+#juego{height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.cargando{text-align:center;margin-top:30vh;font-size:1.3rem}
+:focus{outline:none}
+html.teclado button:focus{outline:5px solid var(--foco);outline-offset:3px;box-shadow:0 0 0 9px var(--halo)}
+html[data-modo="tv"] button:focus{outline:5px solid var(--foco);outline-offset:3px;box-shadow:0 0 0 9px var(--halo)}
+.ico{width:1.4em;height:1.4em;flex:none}
+
+button{font:600 1rem var(--ui);color:inherit;background:rgba(246,235,217,.12);border:2px solid rgba(246,235,217,.25);
+  border-radius:999px;padding:.6em 1.1em;min-height:52px;cursor:pointer;display:inline-flex;align-items:center;gap:.45em;justify-content:center}
+button:disabled{opacity:.35;cursor:default}
+button.grande{font-size:1.15rem;padding:.7em 1.4em;min-height:60px}
+button.principal{background:var(--calabaza);border-color:var(--calabaza);color:#2a1407}
+button.redondo{width:56px;height:56px;padding:0;border-radius:50%}
+button.activo{background:var(--luna);color:var(--tinta);border-color:var(--luna)}
+
+/* ---------- Estante ---------- */
+.estante{height:100%;overflow-y:auto;padding:16px max(16px,4vw) 32px;display:flex;flex-direction:column;gap:18px}
+.portada{position:relative;border-radius:22px;overflow:hidden;background:var(--noche2);min-height:180px;flex:none}
+.portada-img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.portada-texto{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.portada h1{font-size:clamp(1.6rem,5vw,2.6rem);line-height:1.05;margin:0;color:var(--calabaza)}
+.portada p{margin:0 0 6px;opacity:.85}
+@media (min-aspect-ratio:4/3){
+  .portada-img{max-height:56vh}
+  .portada-texto{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(42,31,69,.92) 40%);padding-top:56px}
+}
+.estante h2{margin:6px 0 0;font-size:1.3rem;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.cuenta{font-size:.95rem;font-weight:500;opacity:.75}
+.caps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));gap:10px}
+.cap{border-radius:16px;justify-content:flex-start;text-align:left;padding:.7em .9em;min-height:64px;gap:.7em}
+.cap .num{flex:none;width:2em;height:2em;border-radius:50%;display:grid;place-items:center;background:var(--calabaza);color:#2a1407;font-weight:700}
+.cap .tit{flex:1;min-width:0;line-height:1.2}
+.cap .marca{color:var(--brillo)}
+.cap.cerrado{opacity:.6;border-style:dashed}
+.cap.cerrado .num{background:rgba(246,235,217,.25);color:var(--luna)}
+.cap.cerrado .marca{color:var(--luna)}
+
+/* ---------- Lector ---------- */
+.lector{height:100%;display:flex;flex-direction:column;gap:8px;padding:10px max(12px,2vw) 10px}
+.barra{display:flex;align-items:center;gap:10px;flex:none}
+.donde{flex:1;display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.donde span{opacity:.75;font-size:.9rem}
+.modos{display:flex;gap:4px;background:rgba(246,235,217,.1);padding:4px;border-radius:999px}
+.modos button{min-height:44px;padding:.35em .9em;border:0;background:transparent}
+.modos button.activo{background:var(--luna);color:var(--tinta)}
+
+.hoja{flex:1;min-height:0;background:var(--papel);color:var(--tinta);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.ilus{margin:0;flex:none;background:var(--noche2)}
+.ilus img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.ilus.vacia{height:clamp(64px,12vh,110px)}
+.ilus.vacia svg{display:block;width:100%;height:100%}
+.ilus.vacia .estrellas{fill:var(--luna);opacity:.8}
+.ilus.vacia .luna{fill:var(--luna)}
+.ilus.vacia .calabaza ellipse{fill:var(--calabaza)}
+.ilus.vacia .calabaza .gajo{fill:var(--calabaza-osc)}
+.ilus.vacia .tallo{fill:#6b8f47}
+.ilus.vacia .piso{fill:#1f1735}
+.texto{flex:1;min-height:0;overflow-y:auto;padding:16px clamp(16px,4vw,40px) 20px;font-family:var(--lee);font-size:1.45rem;line-height:1.75;
+  scroll-behavior:smooth}
+.texto p{margin:0 0 .8em}
+.titulo-cap{font-family:var(--ui);color:var(--calabaza-osc);font-size:1.6rem;line-height:1.15;margin:.1em 0 .6em}
+.titulo-cap span{display:block;font-size:.95rem;color:var(--tinta-suave);font-weight:600;letter-spacing:.04em}
+.o{border-radius:6px;transition:background-color .2s}
+.o.actual{background:var(--actual)}
+.w{border-radius:5px;padding:0 .06em;margin:0 -.06em;cursor:pointer;transition:background-color .08s}
+.w.em{font-style:italic}
+.w.suena{background:var(--resalta);box-shadow:0 0 0 2px var(--resalta)}
+.controles{flex:none;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.controles .principal{min-width:9.5em}
+.nota{text-align:center;margin:0;font-size:.95rem;opacity:.85}
+
+/* Pantalla ancha (TV, tableta acostada): ilustración a la izquierda y texto a la derecha */
+@media (min-aspect-ratio:5/4){
+  .con-ilus .hoja{flex-direction:row}
+  .con-ilus .ilus{width:58%;display:flex;align-items:center}
+  .con-ilus .ilus img{height:100%;aspect-ratio:auto;object-fit:cover}
+  .con-ilus .texto{width:42%}
+  .sin-ilus .texto{width:min(100%,46em);margin:0 auto}
+}
+html[data-modo="tv"] .texto{font-size:1.6rem;line-height:1.7}
+html[data-modo="tv"] .w.suena{box-shadow:0 0 0 3px var(--resalta)}
+
+/* ---------- Fin de capítulo ---------- */
+.fin{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:24px}
+.fin h1{font-size:clamp(2rem,7vw,3.4rem);margin:0;color:var(--calabaza)}
+.fin p{font-size:1.2rem;margin:0;max-width:28em}
+.sello{width:84px;height:84px;border-radius:50%;background:var(--brillo);color:var(--noche);display:grid;place-items:center}
+.sello .ico{width:52px;height:52px}
+.botones{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+
+.aviso{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,120%);background:var(--luna);color:var(--tinta);
+  padding:.7em 1.2em;border-radius:14px;font-weight:600;max-width:90vw;text-align:center;transition:transform .25s;margin:0}
+.aviso.ver{transform:translate(-50%,0)}
+
+/* Botones dentro del iframe del catálogo: deja lugar al botón de salir del catálogo */
+html.en-catalogo:not([data-modo="tv"]) .estante{padding-top:62px}
+html.en-catalogo:not([data-modo="tv"]) .barra{padding-left:52px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* Teléfono angosto: los cuatro botones caben en una fila */
+@media (max-width:400px){
+  .controles{gap:8px;flex-wrap:nowrap}
+  .controles .principal{min-width:0;padding:.6em 1em;flex:1;max-width:11em}
+  button.redondo{width:52px;height:52px}
+}
