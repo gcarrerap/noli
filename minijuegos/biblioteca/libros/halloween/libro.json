@@ -24838,7 +24838,7 @@
    "titulo": "The House at the End of Maple Street",
    "paginas": [
     {
-     "ilustracion": null,
+     "ilustracion": "c04-1",
      "parrafos": [
       [
        {
@@ -25840,7 +25840,7 @@
      "huella": "1727508e9faf",
      "audio": "audio/c04/p01.mp3",
      "duracion": 54.99,
-     "espera": "c04-1"
+     "espera": null
     },
     {
      "ilustracion": null,
@@ -27378,7 +27378,7 @@
      "espera": null
     },
     {
-     "ilustracion": null,
+     "ilustracion": "c04-2",
      "parrafos": [
       [
        {
@@ -28265,7 +28265,7 @@
      "huella": "002220a49eb7",
      "audio": "audio/c04/p04.mp3",
      "duracion": 51.59,
-     "espera": "c04-2"
+     "espera": null
     },
     {
      "ilustracion": null,
