@@ -9,12 +9,15 @@ import { pasoFisico, crearCuerpo, alturaBajo } from "../../kit/3d/fisica.js";
 import { seguirRuta } from "../../kit/3d/movimiento.js";
 import { crearMundo } from "./escena-mundo.js";
 import { lugarCercano, cristalTocado, rutaPorCaminos, puntoLibre, brazoCamara } from "../engine/mundo.js";
+import { libroTocado, nivelPista } from "../engine/libros.js";
 
 /**
  * @param {HTMLElement} cont
  * @param {object} m todo lo del mundo ya armado: { mundo, lugares, deco, mapa, caminos, cfg, cristales }
  * @param {{ tv: boolean, reducir: boolean, tiene: Set<string>, desde?: string, piel?: string, base?: string,
- *   alLugar: (l|null) => void, alCristal: (c) => void, alBajarMucho?: () => void }} op
+ *   alLugar: (l|null) => void, alCristal: (c) => void, alBajarMucho?: () => void,
+ *   libro?: { n, x, y, z }|null, alLibro?: (l) => void, alPista?: (nivel) => void }} op
+ *   libro: el libro escondido que toca buscar (#103); mundo.libros da los segundos de cada pista
  *   tiene: cristales que ya encontró; desde: id del juego de cuya puerta sale (al regresar de un juego)
  */
 export function crearVistaMundo(cont, m, op) {
@@ -23,6 +26,10 @@ export function crearVistaMundo(cont, m, op) {
   const mun = crearMundo(mundo, lugares, deco, cristales, { reducir: op.reducir });
   esc.scene.add(mun.grupo);
   for (const id of op.tiene) mun.quitarCristal(id, false);
+  // ---- El libro escondido (#103) ----
+  let libro = null, buscando = 0, pista = 0;
+  const ponerLibro = (l) => { libro = l || null; buscando = 0; pista = 0; mun.ponerLibro(libro); };
+  ponerLibro(op.libro);
 
   const av = crearAvatar({ piel: op.piel || "#ffd9c0", base: op.base || "#cbbfe6" });
   esc.scene.add(av.raiz);
@@ -92,6 +99,14 @@ export function crearVistaMundo(cont, m, op) {
     if ((l && l.id) !== (cerca && cerca.id)) { cerca = l; op.alLugar(l); }
     const cr = cristalTocado(c, cristales, op.tiene);
     if (cr) { op.tiene.add(cr.id); mun.quitarCristal(cr.id); op.alCristal(cr); }
+    if (libro) {
+      if (libroTocado(c, libro)) { const l = libro; libro = null; mun.tomarLibro(); if (op.alLibro) op.alLibro(l); }
+      else {
+        buscando += dt;
+        const n = nivelPista(buscando, mundo.libros || {});
+        if (n !== pista) { pista = n; mun.pistaLibro(n); if (op.alPista) op.alPista(n); }
+      }
+    }
 
     mun.animar(dt, reloj.t);
 
@@ -134,6 +149,9 @@ export function crearVistaMundo(cont, m, op) {
       return r;
     },
     resaltar: (ids) => mun.resaltar(ids),
+    /** Pone el siguiente libro escondido (o ninguno con null), sin pista */
+    ponerLibro,
+    get libro() { return libro; },
     /** Un cristal que se encontró en otro aparato (llegó de la nube): se quita sin animación */
     quitarCristal: (id) => mun.quitarCristal(id, false),
     /** Viste al personaje (atuendo e índices de la Pasarela) */

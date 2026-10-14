@@ -366,3 +366,65 @@ test("cámara: se acerca si un edificio alto queda entre ella y el personaje; lo
     for (const e of eds) assert.ok(Math.hypot(c.x - e.x, c.z - e.z) > e.r || b === 0.3, `cámara de ${s.sitio} dentro de ${e.id}`);
   }
 });
+
+// ---------- Libros escondidos (#103) ----------
+
+import { librosDe, estadoLibros, conHallazgo, nivelPista, libroTocado, revisarLibros } from "../src/engine/libros.js";
+
+test("libros: 12 capítulos en orden, cada uno en una plataforma alcanzable o en el piso a donde se llega caminando", () => {
+  const ls = librosDe(MUNDO), ok = plataformasAlcanzables(MUNDO);
+  assert.deepEqual(ls.map((l) => l.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  const { todos, mapa } = armar();
+  const caminos = crearCaminos(MUNDO, todos, mapa, CFG);
+  for (const l of MUNDO.libros.lugares) {
+    if (l.en) { assert.ok(ok.has(l.en), `capítulo ${l.capitulo} en ${l.en}`); continue; }
+    assert.ok(puntoLibre(l, mapa, CFG), `capítulo ${l.capitulo}: el piso está libre`);
+    let c = crearCuerpo(MUNDO.inicio.x, MUNDO.inicio.z), ruta = rutaPorCaminos(caminos, MUNDO.inicio, l);
+    assert.ok(ruta, `ruta al capítulo ${l.capitulo}`);
+    for (let i = 0; i < 60 * 40 && ruta.length; i++) { const s = seguirRuta(c, ruta); ruta = s.ruta; c = pasoFisico(c, { quiere: s.quiere }, 1 / 60, CFG, mapa).c; }
+    assert.ok(libroTocado(c, ls[l.capitulo - 1]), `llegó caminando al capítulo ${l.capitulo} y lo tocó`);
+  }
+  // Ningún libro comparte lugar con un cristal (se verían encimados)
+  for (const c of cristalesDe(MUNDO)) for (const l of ls) assert.ok(Math.hypot(c.x - l.x, c.z - l.z) > 1 || Math.abs(c.y - l.y) > 1.5, `capítulo ${l.n} y ${c.id}`);
+});
+
+test("libros: revisarLibros encuentra datos rotos", () => {
+  assert.deepEqual(revisarLibros(MUNDO), []);
+  const roto = { ...MUNDO, libros: { ...MUNDO.libros, porDia: 0, lugares: [{ capitulo: 2, en: "no-existe" }] } };
+  const e = revisarLibros(roto);
+  assert.ok(e.some((x) => /porDia/.test(x)) && e.some((x) => /capítulo 1/.test(x)) && e.some((x) => /sin lugar/.test(x)));
+});
+
+test("libros: aparecen en orden, a lo más 3 por día, y lo leído o lo que está leyendo cuenta como encontrado", () => {
+  const hoy = "2026-10-14", L = "halloween";
+  let d = null;
+  assert.equal(estadoLibros(d, L, 12, hoy, 3).siguiente, 1);
+  d = conHallazgo(d, L, 1, hoy); d = conHallazgo(d, L, 2, hoy);
+  assert.equal(estadoLibros(d, L, 12, hoy, 3).siguiente, 3);
+  d = conHallazgo(d, L, 3, hoy);
+  const lleno = estadoLibros(d, L, 12, hoy, 3);
+  assert.equal(lleno.siguiente, null); assert.ok(lleno.lleno);
+  assert.equal(estadoLibros(d, L, 12, "2026-10-15", 3).siguiente, 4, "al otro día sigue");
+  assert.deepEqual(conHallazgo(d, L, 3, hoy), d, "encontrar dos veces el mismo no cuenta doble");
+  // Lo que ya leyó con todo abierto cuenta como encontrado
+  const leyo = { v: 1, libros: { [L]: { leidos: [1, 2, 3, 4], pos: { c: 5, p: 3 }, modo: "yo" } } };
+  const e = estadoLibros(leyo, L, 12, hoy, 3);
+  assert.equal(e.siguiente, 6); assert.equal(e.tiene.size, 5);
+  const d2 = conHallazgo(leyo, L, 6, hoy);
+  assert.equal(d2.libros[L].modo, "yo", "no pierde lo demás de la Biblioteca");
+  assert.deepEqual(d2.libros[L].hoy, { dia: hoy, n: 1 });
+  // Todo encontrado
+  const todo = { libros: { [L]: { encontrados: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } } };
+  assert.ok(estadoLibros(todo, L, 12, hoy, 3).completo);
+});
+
+test("libros: la pista se enciende con el tiempo y el libro se toca al pararse ahí", () => {
+  const L = MUNDO.libros;
+  assert.equal(nivelPista(10, L), 0);
+  assert.equal(nivelPista(L.pistaSeg, L), 1);
+  assert.equal(nivelPista(L.faroSeg + 1, L), 2);
+  const l = librosDe(MUNDO)[1];
+  assert.ok(libroTocado({ x: l.x, y: l.y, z: l.z }, l));
+  assert.ok(!libroTocado({ x: l.x, y: 0, z: l.z }, l), "el de la plataforma no se toca desde el piso");
+  assert.ok(!libroTocado({ x: l.x + 2, y: l.y, z: l.z }, l));
+});

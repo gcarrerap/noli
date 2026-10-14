@@ -1,9 +1,10 @@
 // Lógica pura de la Biblioteca (sin DOM): qué capítulos se pueden leer, dónde va la lectura, qué palabra
 // suena en cada instante y cómo se guarda el progreso. Se prueba en Node (tests/biblioteca.test.js).
 
-// Mientras no existan los libros escondidos en el mundo (#103) todos los capítulos están abiertos.
-// Con la búsqueda activa, solo los que Noelia encontró (datos.encontrados).
-export const BUSQUEDA = false;
+// Búsqueda (#103): cada capítulo se encuentra escondido en el mundo de Noli (el mundo lo anota en
+// datos.libros.<id>.encontrados). Abierto = encontrado, ya leído o el que está leyendo (así nunca se cierra lo que ya
+// tenía), o todos si papá o mamá los abrieron ("todos"). Sin el mundo (menú sencillo) solo papás pueden abrirlos.
+export const BUSQUEDA = true;
 
 export const MODOS = ["leeme", "yo"];  // Léemelo (narra y pasa de página sola) · Yo leo (sin voz; tocar una palabra la dice)
 
@@ -22,6 +23,7 @@ export function progresoDe(datos, idLibro) {
     modo: MODOS.includes(pr.modo) ? pr.modo : "leeme",
     despacio: pr.despacio === true,
     guia: pr.guia === true,   // ya vio la guía de la primera vez
+    todos: pr.todos === true, // papás abrieron todos los capítulos
   };
 }
 
@@ -34,7 +36,7 @@ export function conProgreso(datos, idLibro, pr) {
 
 export function abierto(libro, pr, n, busqueda = BUSQUEDA) {
   if (!libro.capitulos.some((c) => c.n === n)) return false;
-  return !busqueda || pr.encontrados.includes(n);
+  return !busqueda || pr.todos || pr.encontrados.includes(n) || pr.leidos.includes(n) || (!!pr.pos && pr.pos.c === n);
 }
 
 export function capitulo(libro, n) {

@@ -78,7 +78,7 @@ test("las escenas no piden texto en la imagen y adjuntan hojas que existen", () 
 
 test("progreso: valores por omisión y guardar sin perder lo demás", () => {
   const pr = progresoDe(null, "halloween");
-  assert.deepEqual(pr, { pos: null, leidos: [], encontrados: [], modo: "leeme", despacio: false, guia: false });
+  assert.deepEqual(pr, { pos: null, leidos: [], encontrados: [], modo: "leeme", despacio: false, guia: false, todos: false });
   const d0 = { v: 1, libros: { halloween: { encontrados: [1, 2] }, otro: { leidos: [1] } } };
   const d1 = conProgreso(d0, "halloween", { ...progresoDe(d0, "halloween"), leidos: [1] });
   assert.deepEqual(d1.libros.halloween.encontrados, [1, 2]);
@@ -86,9 +86,12 @@ test("progreso: valores por omisión y guardar sin perder lo demás", () => {
   assert.equal(progresoDe({ libros: { halloween: { modo: "raro", pos: { c: "x" } } } }, "halloween").modo, "leeme");
 });
 
-test("capítulos abiertos: todos sin búsqueda; con búsqueda, solo los encontrados", () => {
+test("capítulos abiertos: todos sin búsqueda; con búsqueda, los encontrados, leídos, el que lee, o todos si papás", () => {
   const pr = progresoDe({ libros: { halloween: { encontrados: [1, 3] } } }, "halloween");
-  assert.equal(BUSQUEDA, false);
+  assert.equal(BUSQUEDA, true);
+  const pr2 = progresoDe({ libros: { halloween: { leidos: [5], pos: { c: 6, p: 2 } } } }, "halloween");
+  assert.ok(abierto(libro, pr2, 5, true) && abierto(libro, pr2, 6, true) && !abierto(libro, pr2, 7, true));
+  assert.ok(abierto(libro, progresoDe({ libros: { halloween: { todos: true } } }, "halloween"), 9, true));
   assert.ok(abierto(libro, pr, 2, false));
   assert.ok(abierto(libro, pr, 3, true));
   assert.ok(!abierto(libro, pr, 2, true));
@@ -106,7 +109,9 @@ test("dónde seguir: la página guardada, o el primer capítulo abierto sin leer
   assert.deepEqual(dondeSeguir(libro, progresoDe({ libros: { halloween: { pos: { c: 4, p: 2 } } } }, "halloween"), false), { c: 4, p: 2 });
   assert.deepEqual(dondeSeguir(libro, progresoDe({ libros: { halloween: { leidos: [1, 2] } } }, "halloween"), false), { c: 3, p: 0 });
   const pr = progresoDe({ libros: { halloween: { pos: { c: 5, p: 0 }, encontrados: [1, 2], leidos: [1] } } }, "halloween");
-  assert.deepEqual(dondeSeguir(libro, pr, true), { c: 2, p: 0 });
+  assert.deepEqual(dondeSeguir(libro, pr, true), { c: 5, p: 0 }, "el que está leyendo sigue abierto");
+  const pr3 = progresoDe({ libros: { halloween: { encontrados: [1, 2], leidos: [1] } } }, "halloween");
+  assert.deepEqual(dondeSeguir(libro, pr3, true), { c: 2, p: 0 });
   assert.equal(dondeSeguir(libro, progresoDe(null, "halloween"), true), null);
 });
 
