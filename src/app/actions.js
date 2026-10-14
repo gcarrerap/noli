@@ -58,10 +58,11 @@ export const actions = {
 
   enfocar(i) { if (i !== state.foco) { state.foco = i; notify("foco"); } },
 
-  abrir(id) {
+  // hash: para abrir el juego en un lugar (la Biblioteca en un capítulo: "#c3", #103)
+  abrir(id, { hash } = {}) {
     const j = state.juegos.find((x) => x.id === id);
     if (!j || !jugableEn(j, state.modo)) return; // en la TV no se abre un juego que no es apto (#57)
-    state.jugando = j; state.celebrar = null; notify();
+    state.jugando = hash ? { ...j, url: j.url.split("#")[0] + hash } : j; state.celebrar = null; notify();
   },
 
   cerrar() {

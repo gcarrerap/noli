@@ -8,3 +8,4 @@ export { REGLAS, MOTIVOS, TIPOS_CREDITOS, libroVacio, leerLibro, saldo, saldoVis
   gastar, unir, iguales, compactar, historial } from "./creditos.js";
 export { revisarMundo, colocarLugares, centroSitio, solidoDe, mapaMundo, fisicaDe, azar, decorar, todosLosSitios, lugarCercano,
   cristalesDe, cristalTocado, crearCaminos, rutaPorCaminos, puntoLibre, plataformasAlcanzables, elegirVista, acomodarLetreros, brazoCamara } from "./mundo.js";
+export { revisarLibros, librosDe, estadoLibros, conHallazgo, nivelPista, libroTocado } from "./libros.js";

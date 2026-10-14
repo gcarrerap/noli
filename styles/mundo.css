@@ -120,3 +120,10 @@
 /* Botón del menú 2D para ir al mundo */
 .chip-mundo{border-color:#c86bfa}
 .chip-mundo svg{flex:none}
+
+/* ---------- Libros escondidos (#103) ---------- */
+.mundo-contadores{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
+.mundo-hallazgo{text-align:center}
+.mundo-hallazgo-ico{margin:0}
+.mundo-hallazgo-ico svg{width:3.2rem;height:3.2rem}
+.mundo-hallazgo .fila{justify-content:center}

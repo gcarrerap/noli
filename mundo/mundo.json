@@ -57,5 +57,23 @@
     { "id": "c-cristal",  "en": "mirador-cristal", "color": "#ffd166" },
     { "id": "c-estrella", "en": "nube-estrella",   "color": "#ffe46b" }
   ],
+  "libros": {
+    "_ayuda": "Libros escondidos (#103): cada capítulo del libro de la Biblioteca es un libro mágico. Aparecen en orden, a lo más porDia al día; a los pistaSeg segundos de buscar sale una luz tenue y a los faroSeg un faro brillante. Cada lugar: 'en' (una plataforma) o x, z (en el piso, detrás de algo o en una esquina).",
+    "libro": "halloween", "juego": "biblioteca", "porDia": 3, "pistaSeg": 150, "faroSeg": 300,
+    "lugares": [
+      { "capitulo": 1,  "x": -9.8,  "z": -13.4, "_donde": "detrás del castillo" },
+      { "capitulo": 2,  "en": "hongo-2" },
+      { "capitulo": 3,  "x": 15.8,  "z": -5.1,  "_donde": "detrás de la fábrica del robot" },
+      { "capitulo": 4,  "en": "nenufar-3" },
+      { "capitulo": 5,  "x": 9.8,   "z": -13.4, "_donde": "detrás del árbol de las letras" },
+      { "capitulo": 6,  "en": "piedra-3" },
+      { "capitulo": 7,  "x": -30,   "z": 9,     "_donde": "la esquina de enfrente a la izquierda" },
+      { "capitulo": 8,  "en": "escalon-4" },
+      { "capitulo": 9,  "x": -8.2,  "z": -25.1, "_donde": "detrás de la torre del reloj" },
+      { "capitulo": 10, "x": 31,    "z": 9,     "_donde": "la esquina de enfrente a la derecha" },
+      { "capitulo": 11, "en": "nube-5" },
+      { "capitulo": 12, "x": 0,     "z": -34,   "_donde": "hasta el fondo, al centro" }
+    ]
+  },
   "decoracion": { "semilla": 7, "arbolesBorde": 3.4, "arbolesSueltos": 40, "hongos": 30, "flores": 110, "luciernagas": 44, "colores": ["#ffb3d1", "#b9a8ff", "#8fe0c0", "#ffd28a"] }
 }

@@ -61,14 +61,20 @@ function estante() {
           <h1>${esc(libro.titulo)}</h1>
           <p>${esc(libro.subtitulo || "")}</p>
           ${sigue ? `<button class="grande principal" data-foco="inicial" id="seguir">${icono("play")}
-            ${pr.pos ? `Seguir leyendo · cap. ${sigue.c}` : "Empezar a leer"}</button>` : ""}
+            ${pr.pos ? `Seguir leyendo · cap. ${sigue.c}` : "Empezar a leer"}</button>` : '<p class="busca">Busca el Capítulo 1: está escondido en el mundo de Noli.</p>'}
         </div>
       </div>
       <h2>Capítulos <span class="cuenta">${pr.leidos.length} de ${libro.capitulos.length} leídos</span></h2>
       <div class="caps">${tarjetas}</div>
+      ${libro.capitulos.some((c) => !abierto(libro, pr, c.n)) ? `<p class="papas"><button class="chico" data-foco id="todos">Papás: abrir todos los capítulos</button></p>` : ""}
     </section>`;
   const b = $("#seguir");
   if (b) b.onclick = () => abrir(sigue);
+  const t = $("#todos");
+  if (t) t.onclick = () => {
+    if (!t.dataset.seguro) { t.dataset.seguro = "1"; t.textContent = "¿Seguro? Toca otra vez para abrirlos"; return; }
+    pr.todos = true; guardar(); estante();
+  };
   $juego.querySelectorAll(".cap").forEach((el) => {
     el.onclick = () => {
       const n = +el.dataset.cap;

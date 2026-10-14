@@ -167,6 +167,36 @@ export function crearMundo(mundo, lugares, deco, cristales, op = {}) {
     }
   } });
 
+  // ---- El libro escondido (#103): uno a la vez, chiquito y con brillo tenue; la pista es una columna de luz ----
+  const libro = new THREE.Group(); libro.visible = false; libro.name = "libro";
+  const tomo = new THREE.Group();
+  tomo.add(new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.09, 0.34), material("#6b4bb8", { emisivo: 0.25 })));          // tapas
+  const hojas = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.07, 0.3), material("#fbf4e6", { emisivo: 0.15 }));
+  hojas.position.set(0.02, 0, 0); tomo.add(hojas);
+  const cinta = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.35), material("#f28c28", { emisivo: 0.4 }));
+  cinta.position.x = -0.1; tomo.add(cinta);
+  tomo.rotation.set(0.35, 0, 0.5);
+  libro.add(tomo);
+  const aura = new THREE.Mesh(new THREE.CircleGeometry(0.45, 18), material("#c9a6ff", { opacidad: 0.22, emisivo: 0.8, dobleCara: true }));
+  aura.rotation.x = -Math.PI / 2; aura.position.y = -0.48; libro.add(aura);
+  const faroMat = material("#b98cff", { opacidad: 0.2, emisivo: 1, dobleCara: true }).clone(); // propio: su opacidad cambia
+  const faro = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 16, 12, 1, true), faroMat);
+  faro.position.y = 7.5; faro.visible = false; libro.add(faro);
+  grupo.add(libro);
+  const lu = { y0: 0, tomado: -1, nivel: 0 };
+  animados.push({ animar(dt, tt) {
+    if (!libro.visible) return;
+    if (lu.tomado >= 0) {
+      lu.tomado += dt; libro.position.y += dt * 2.2; libro.scale.setScalar(1 + lu.tomado * 2.4);
+      if (lu.tomado > 0.5) libro.visible = false;
+      return;
+    }
+    tomo.rotation.y += dt * 0.9;
+    if (!op.reducir) tomo.position.y = Math.sin(tt * 1.7) * 0.08;
+    aura.scale.setScalar(lu.nivel ? 1.6 + Math.sin(tt * 3) * 0.25 : 1);
+    if (faro.visible) faroMat.opacity = (lu.nivel >= 2 ? 0.42 : 0.16) + (op.reducir ? 0 : Math.sin(tt * 2.4) * 0.06);
+  } });
+
   return {
     grupo,
     /** Dónde va el letrero de cada juego: Map(id → Vector3) */
@@ -203,6 +233,16 @@ export function crearMundo(mundo, lugares, deco, cristales, op = {}) {
     animar(dt, t) { for (const a of animados) a.animar(dt, t); },
     /** Enciende el anillo de los lugares de la materia elegida (null = ninguno) */
     resaltar(ids) { for (const [id, a] of resaltes) a.visible = !!ids && ids.has(id); },
+    /** Pone el libro escondido en { x, y, z } (o lo quita con null) */
+    ponerLibro(l) {
+      lu.tomado = -1; lu.nivel = 0; faro.visible = false; libro.scale.setScalar(1);
+      libro.visible = !!l;
+      if (l) libro.position.set(l.x, l.y + 0.55, l.z);
+    },
+    /** Se lo llevó: sube, crece y desaparece */
+    tomarLibro(animar = true) { if (animar && !op.reducir) lu.tomado = 0; else libro.visible = false; },
+    /** 0: sin pista · 1: luz tenue · 2: faro brillante */
+    pistaLibro(nivel) { lu.nivel = nivel; faro.visible = nivel > 0; },
     /** Un cristal recién tomado (con animación) o que ya se tenía (sin animación) */
     quitarCristal(id, animar = true) {
       const g = mallasCristal.get(id);

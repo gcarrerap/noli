@@ -3,6 +3,7 @@
 // si se usa el mundo 3D o el menú 2D. No sabe nada de Three.js ni del DOM; las pruebas lo corren en Node.
 // Ver docs/MUNDO.md.
 import { libre, alcanzables, chocaEn, FISICA } from "../../kit/3d/fisica.js";
+import { revisarLibros } from "./libros.js";
 
 const RAD = Math.PI / 180;
 
@@ -29,6 +30,7 @@ export function revisarMundo(mundo, lugares) {
   }
   for (const r of mundo.rutas || []) for (const id of r.plataformas || []) if (!ids.has(id)) e.push(`ruta ${r.id}: no existe la plataforma ${id}`);
   for (const c of mundo.cristales || []) if (!ids.has(c.en)) e.push(`cristal ${c.id}: no existe la plataforma ${c.en}`);
+  e.push(...revisarLibros(mundo));
   const ed = lugares.edificios || {};
   if (!ed.portal) e.push("lugares.edificios debe tener \"portal\" (el de los juegos sin edificio propio)");
   for (const [k, v] of Object.entries(ed)) if (!v || !num(v.radio) || !num(v.alto)) e.push(`edificio ${k}: faltan radio y alto`);

@@ -75,6 +75,29 @@ Issue: #25. En lugar de una cuadrícula de tarjetas, el menú principal es un **
 - **Todos los juegos se alcanzan caminando por el camino, sin brincar.** Las plataformas solo llevan a miradores y cristales: Noelia tiene 7 años y en la TV se juega con un control que tiene retraso, así que ningún juego queda detrás de un brinco difícil. (Hay una prueba que lo revisa: de la plaza se llega caminando a **cada** sitio, ocupado o no, sin subirse a nada.)
 - **Decoración** (`src/engine/mundo.js → decorar`, con semilla: siempre sale igual): una fila de árboles en el borde del fondo y de los lados (al frente no, porque ahí está la cámara), árboles sueltos, hongos chiquitos, flores, luciérnagas y estrellas en el cielo. Nunca hay un árbol en la plaza, en un camino (hacia cualquier sitio, aunque esté libre), junto a una puerta, un edificio, una plataforma o el estanque.
 
+## Libros escondidos (#103)
+
+Cada capítulo del libro de la Biblioteca (*Mari and the Pumpkin Spaceship*, #96) es un **libro mágico escondido** en el mundo. Son más difíciles de encontrar que los cristales: chiquitos, con un brillo morado tenue, detrás de los edificios, en las esquinas y arriba de las rutas.
+
+- **En orden y uno a la vez:** solo está en el mundo el siguiente capítulo que falta. Al tocarlo sale «¡Encontraste el Capítulo N!» con **Leer ahora** (abre la Biblioteca en ese capítulo: `#cN`) o **Seguir paseando**, y el siguiente aparece en otro lugar.
+- **A lo más `porDia` (3) por día**, para repartir la lectura; después: «¡Mañana hay otro libro escondido!». Con 12 capítulos son 4 días.
+- **Nunca se atora:** a los `pistaSeg` (150 s) buscando ese libro sale una columna de luz morada tenue encima de él, y a los `faroSeg` (300 s) un faro brillante que se ve de lejos; un aviso lo dice.
+- **Cuenta como encontrado** lo que ya leyó o está leyendo, para que activar la búsqueda nunca cierre un capítulo que ya tenía abierto.
+- **Dónde se guarda:** en los datos de la Biblioteca (`noli.datos.biblioteca` → `libros.halloween.encontrados` y `hoy: { dia, n }`), que es quien abre los capítulos; se sincroniza con la nube como cualquier juego. El catálogo es el dueño del almacenamiento (DESIGN §4), así que el mundo escribe ahí con `actions.guardarDatos`.
+- **Sin el mundo** (menú sencillo) no se pueden buscar: en la Biblioteca, «Papás: abrir todos los capítulos» (dos toques) los abre todos.
+- HUD: junto a los cristales, cuántos capítulos lleva (`1 / 12`); en el menú, cuántos lleva y si hay uno escondido.
+
+| Capítulo | Dónde | | Capítulo | Dónde |
+|---|---|---|---|---|
+| 1 | Detrás del castillo de números (piso) | | 7 | Esquina de enfrente, a la izquierda (piso) |
+| 2 | Hongo de en medio (`hongo-2`) | | 8 | Escalera de cristal, 4.º escalón |
+| 3 | Detrás de la fábrica del robot (piso) | | 9 | Detrás de la torre del reloj (piso) |
+| 4 | Último nenúfar (`nenufar-3`) | | 10 | Esquina de enfrente, a la derecha (piso) |
+| 5 | Detrás del árbol de las letras (piso) | | 11 | Camino de nubes, 5.ª nube |
+| 6 | Tercera piedra flotante | | 12 | Hasta el fondo, al centro (piso) |
+
+Datos en `mundo/mundo.json → libros` (`libro`, `juego`, `porDia`, `pistaSeg`, `faroSeg`, `lugares: [{ capitulo, en | x, z }]`); lógica pura en `src/engine/libros.js` (`estadoLibros`, `conHallazgo`, `nivelPista`, `libroTocado`); dibujo en `src/mundo/escena-mundo.js` (`ponerLibro`, `tomarLibro`, `pistaLibro`). Pruebas: cada libro en el piso se alcanza caminando (con la física) y se toca al llegar; los de plataforma están en una ruta que se sube brincando; orden, tope diario, lo leído cuenta y la pista.
+
 ## Archivos
 
 ```

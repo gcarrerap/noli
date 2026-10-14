@@ -119,3 +119,6 @@ html.en-catalogo:not([data-modo="tv"]) .barra{padding-left:52px}
   .controles .principal{min-width:0;padding:.6em 1em;flex:1;max-width:11em}
   button.redondo{width:52px;height:52px}
 }
+.papas{text-align:center;margin:8px 0 0}
+button.chico{font-size:.9rem;min-height:44px;opacity:.8;background:transparent}
+.busca{background:rgba(246,235,217,.14);border-radius:12px;padding:.6em .9em;margin:4px 0 0}

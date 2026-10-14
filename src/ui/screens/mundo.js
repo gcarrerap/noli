@@ -9,7 +9,7 @@
 import { state, actions } from "../../app/index.js";
 import { cargarMundo } from "../../services/index.js";
 import { revisarMundo, colocarLugares, decorar, todosLosSitios, mapaMundo, fisicaDe, crearCaminos, cristalesDe, materias,
-  jugableEn, acomodarLetreros } from "../../engine/index.js";
+  jugableEn, acomodarLetreros, librosDe, estadoLibros, conHallazgo, dia } from "../../engine/index.js";
 import { crearJoystick } from "../../../kit/3d/joystick.js";
 import { direccionDeTeclas, crearPulsador } from "../../../kit/3d/movimiento.js";
 import { moverFoco, focoInicial } from "../../../kit/foco.js";
@@ -27,6 +27,7 @@ const parametros = new URLSearchParams(location.search);
 const ICONO = {
   menu: `<svg viewBox="0 0 24 24" width="1.4em" height="1.4em" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z" fill="#fff4cc" stroke="#2b2236" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="#2b2236" stroke-width="1.4"/><circle cx="12" cy="11" r="1.6" fill="#ff6b4a"/></svg>`,
   cristal: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><path d="M12 2.5 18 9l-6 12.5L6 9z" fill="#9fe6ff" stroke="#2b2236" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 9h12M12 2.5 9.5 9l2.5 12.5L14.5 9z" fill="none" stroke="#2b2236" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  libro: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><path d="M4 5.5c2.7-1 5.4-1 8 .8 2.6-1.8 5.3-1.8 8-.8v13c-2.7-1-5.4-1-8 .8-2.6-1.8-5.3-1.8-8-.8z" fill="#c9a6ff" stroke="#2b2236" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.3v13" stroke="#2b2236" stroke-width="1.4"/><circle cx="18.5" cy="4.5" r="2" fill="#f28c28" stroke="#2b2236" stroke-width="1"/></svg>`,
   brincar: `<svg viewBox="0 0 24 24" width="1.7em" height="1.7em" aria-hidden="true"><path d="M12 3 4.5 12h4.6v8.5h5.8V12h4.6z" fill="currentColor"/></svg>`,
   sencillo: `<svg viewBox="0 0 24 24" width="1.2em" height="1.2em" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="#ffc43d" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="#4cb3ff" stroke="#2b2236" stroke-width="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="#3ccf8e" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="#ff6b4a" stroke="#2b2236" stroke-width="1.4"/></svg>`,
 };
@@ -124,10 +125,14 @@ async function armar() {
     const tiene = new Set(guardado && Array.isArray(guardado.cristales) ? guardado.cristales.filter((id) => cristales.some((c) => c.id === id)) : []);
     const reducir = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
     Object.assign(m, { mundo, lugares, cristales, tiene, cfg });
+    m.libros = prepararLibros(mundo, juegos);
     m.vista = mod.crearVistaMundo(m.raiz.querySelector("#mundoLienzo"), { mundo, lugares, deco, mapa, caminos, cfg, cristales }, {
       tv: state.modo === "tv", reducir, tiene, desde: volverA,
       alLugar: (l) => { m.cerca = l; dibujarAviso(); },
       alCristal: encontrarCristal,
+      libro: m.libros ? libroQueToca() : null,
+      alLibro: encontrarLibro,
+      alPista: (n) => toast(n >= 2 ? "Mira la luz morada: ahí está el libro escondido." : "Hay un libro escondido por aquí. Busca un brillo morado."),
       alBajarMucho: () => { if (!m.preguntoLento && !parametros.has("sinaviso")) { m.preguntoLento = true; abrirMenu("lento"); } },
     });
     volverA = null;
@@ -217,9 +222,11 @@ function actualizar() {
   for (const id of guardado && Array.isArray(guardado.cristales) ? guardado.cristales : []) {
     if (!M.tiene.has(id) && M.cristales.some((c) => c.id === id)) { M.tiene.add(id); M.vista.quitarCristal(id); }
   }
+  refrescarLibro();
   $("mundoHud").innerHTML = `
     <div class="mundo-hud-izq">${botonCreditos()}${botonNube()}</div>
-    <div class="mundo-cristales" title="Cristales encontrados">${ICONO.cristal}<b>${M.tiene.size}</b><span>/ ${M.cristales.length}</span></div>
+    <div class="mundo-contadores"><div class="mundo-cristales" title="Cristales encontrados">${ICONO.cristal}<b>${M.tiene.size}</b><span>/ ${M.cristales.length}</span></div>
+    ${M.libros ? `<div class="mundo-cristales mundo-libros" title="Capítulos encontrados">${ICONO.libro}<b>${estadoHoy().tiene.size}</b><span>/ ${M.libros.total}</span></div>` : ""}</div>
     <div class="mundo-hud-der">
       ${tv ? `<span class="mundo-pista" id="mundoPista">${pistaTv()}</span>` : ""}
       <button class="mundo-menu-btn" id="mundoMenuBtn" aria-label="Menú: ir a un juego">${ICONO.menu}<span>Menú</span></button>
@@ -308,6 +315,49 @@ function encontrarCristal(c) {
   if (b) { b.textContent = n; b.parentNode.classList.remove("brilla"); void b.offsetWidth; b.parentNode.classList.add("brilla"); }
 }
 
+// ---------- Libros escondidos (#103) ----------
+
+function prepararLibros(mundo, juegos) {
+  const L = mundo.libros;
+  if (!L || !juegos.some((j) => j.id === L.juego)) return null;
+  const pos = librosDe(mundo);
+  return { L, pos, total: pos.length };
+}
+
+function estadoHoy() {
+  const { L, total } = M.libros;
+  return estadoLibros(actions.datosDe(L.juego), L.libro, total, dia(Date.now()), L.porDia);
+}
+
+function libroQueToca() {
+  const e = estadoHoy();
+  return e.siguiente ? M.libros.pos.find((p) => p.n === e.siguiente) || null : null;
+}
+
+/** Si cambió lo encontrado (llegó de la nube, cambió el día, papás abrieron capítulos), pone el libro que toca */
+function refrescarLibro() {
+  if (!M.libros || !M.vista || M.menu === "libro") return;
+  const quiere = libroQueToca(), hay = M.vista.libro;
+  if ((quiere && quiere.n) !== (hay && hay.n)) M.vista.ponerLibro(quiere);
+}
+
+function encontrarLibro(l) {
+  const { L } = M.libros;
+  actions.guardarDatos(L.juego, conHallazgo(actions.datosDe(L.juego), L.libro, l.n, dia(Date.now())));
+  M.hallado = l.n;
+  const b = M.raiz.querySelector(".mundo-libros b");
+  if (b) { b.textContent = estadoHoy().tiene.size; b.parentNode.classList.remove("brilla"); void b.offsetWidth; b.parentNode.classList.add("brilla"); }
+  abrirMenu("libro");
+}
+
+function leerCapitulo(n) {
+  if (!M || !M.libros) return;
+  const id = M.libros.L.juego;
+  cerrarMenu();
+  volverA = id;
+  actions.abrir(id, { hash: "#c" + n });
+}
+
 function entrar(id) {
   if (!M) return;
   cerrarMenu();
@@ -333,6 +383,7 @@ function cerrarMenu() {
   const el = M.raiz.querySelector("#mundoMenu");
   el.hidden = true; el.innerHTML = "";
   dibujarAviso(); dibujarLetreros(true);
+  if (M.libros) refrescarLibro();
 }
 
 function dibujarMenu() {
@@ -347,6 +398,21 @@ function dibujarMenu() {
       <button class="mundo-boton" data-foco data-k="no" id="mLentoNo">Seguir en el mundo</button></div></div>`;
     el.querySelector("#mLentoSi").onclick = () => actions.ponerVista("2d", { recordar: true });
     el.querySelector("#mLentoNo").onclick = cerrarMenu;
+    return;
+  }
+  if (M.menu === "libro") {
+    const e = estadoHoy(), n = M.hallado;
+    const sigue = e.completo ? "¡Encontraste todos los capítulos del libro!"
+      : e.lleno ? `Por hoy ya encontraste ${M.libros.L.porDia}. ¡Mañana hay otro libro escondido!`
+      : "El siguiente capítulo ya está escondido en otro lugar del mundo.";
+    el.innerHTML = `<div class="mundo-menu-caja chica mundo-hallazgo">
+      <p class="mundo-hallazgo-ico">${ICONO.libro}</p>
+      <h2 id="mundoMenuTitulo">¡Encontraste el Capítulo ${n}!</h2>
+      <p>Ya lo puedes leer en la Biblioteca. ${esc(sigue)}</p>
+      <div class="fila"><button class="primario" data-foco="inicial" data-k="leer" id="mLeer">${ICONO.libro}Leer ahora</button>
+      <button class="mundo-boton" data-foco data-k="despues" id="mDespues">Seguir paseando</button></div></div>`;
+    el.querySelector("#mLeer").onclick = () => leerCapitulo(n);
+    el.querySelector("#mDespues").onclick = cerrarMenu;
     return;
   }
   const mats = materias(M.lugares.map((l) => l.juego));
@@ -364,6 +430,7 @@ function dibujarMenu() {
     ${mats.length > 1 ? `<p class="mundo-menu-sub">Brillan los juegos de:</p><nav class="chips mundo-chips" aria-label="Materias">
       ${[null, ...mats].map((m) => `<button class="chip${m === state.materia ? " sel" : ""}" data-foco data-k="mat-${esc(m || "")}" data-materia="${esc(m || "")}" aria-pressed="${m === state.materia}">${esc(nombreMateria(m))}</button>`).join("")}
     </nav>` : ""}
+    ${M.libros ? (() => { const e = estadoHoy(); return `<p class="mundo-menu-sub">${ICONO.libro}<span>Capítulos del libro: <b>${e.tiene.size} de ${M.libros.total}</b>. ${e.completo ? "¡Los encontraste todos!" : e.lleno ? "Mañana hay otro escondido." : "Hay uno escondido en el mundo: búscalo."}</span></p>`; })() : ""}
     <p class="mundo-menu-sub">${ICONO.cristal}<span>Cristales mágicos: <b>${M.tiene.size} de ${M.cristales.length}</b>. ${M.tiene.size < M.cristales.length ? "Búscalos brincando en las plataformas." : "¡Los encontraste todos!"}</span></p>
     <div class="fila">
       <button class="mundo-boton" data-foco data-k="creditos" id="mCreditos">${MONEDA}Créditos</button>
