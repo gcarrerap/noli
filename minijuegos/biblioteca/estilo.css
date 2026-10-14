@@ -61,7 +61,7 @@ button.activo{background:var(--luna);color:var(--tinta);border-color:var(--luna)
 .hoja{flex:1;min-height:0;background:var(--papel);color:var(--tinta);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;
   box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .ilus{margin:0;flex:none;background:var(--noche2)}
-.ilus img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.ilus img{display:block;width:100%;height:auto;max-height:46vh;object-fit:contain;margin:0 auto}
 .ilus.vacia{height:clamp(64px,12vh,110px)}
 .ilus.vacia svg{display:block;width:100%;height:100%}
 .ilus.vacia .estrellas{fill:var(--luna);opacity:.8}
@@ -88,7 +88,7 @@ button.activo{background:var(--luna);color:var(--tinta);border-color:var(--luna)
 @media (min-aspect-ratio:5/4){
   .con-ilus .hoja{flex-direction:row}
   .con-ilus .ilus{width:58%;display:flex;align-items:center}
-  .con-ilus .ilus img{height:100%;aspect-ratio:auto;object-fit:cover}
+  .con-ilus .ilus img{width:100%;height:100%;max-height:none;object-fit:contain}
   .con-ilus .texto{width:42%}
   .sin-ilus .texto{width:min(100%,46em);margin:0 auto}
 }
@@ -103,7 +103,7 @@ html[data-modo="tv"] .w.suena{box-shadow:0 0 0 3px var(--resalta)}
 .sello .ico{width:52px;height:52px}
 .botones{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px}
 
-.aviso{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,120%);background:var(--luna);color:var(--tinta);
+.aviso{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,120%);background:var(--luna);color:var(--tinta);
   padding:.7em 1.2em;border-radius:14px;font-weight:600;max-width:90vw;text-align:center;transition:transform .25s;margin:0}
 .aviso.ver{transform:translate(-50%,0)}
 
