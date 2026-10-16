@@ -55,3 +55,15 @@ test("sw: no se mete con peticiones de pedazos (audio con Range) y no falla si n
   assert.equal(res.status, 206);
   assert.equal(store.size, 0, "un 206 no se guarda");
 });
+
+test("sw: al activarse borra solo sus cachés viejos, nunca los de las otras apps del mismo dominio", async () => {
+  const deleted = [], listeners = {};
+  const ctx = {
+    self: { location: { origin: "https://gcarrerap.github.io" }, addEventListener: (t, f) => (listeners[t] = f), skipWaiting() {}, clients: { claim: async () => {} } },
+    caches: { open: async () => ({}), keys: async () => ["noli-v0", "noli-v1", "noli-v1", "mypata-v1", "mydomino-v1", "juegos-v1"].filter((k, i, a) => a.indexOf(k) === i), delete: async (k) => { deleted.push(k); return true; } },
+    fetch: async () => new Response("x"), URL, Response, module: { exports: {} },
+  };
+  vm.runInNewContext(fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8"), ctx);
+  let done; listeners.activate({ waitUntil: (p) => (done = p) }); await done;
+  assert.deepEqual(deleted, ["noli-v0"]);
+});

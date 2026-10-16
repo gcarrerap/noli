@@ -2,7 +2,8 @@
 // confirmar que el archivo sigue igual (cache: "no-cache"), así el navegador nunca se queda con una versión vieja.
 // Guarda una copia de cada archivo para usarla solo si no hay conexión (el catálogo y los juegos ya abiertos funcionan sin internet).
 // Firebase, Google y cualquier otro sitio no pasan por aquí.
-const CACHE = "noli-v1";
+const PREFIX = "noli-";
+const CACHE = PREFIX + "v1";
 
 // Decide qué hacer con una petición; devuelve una promesa de respuesta, o null para no intervenir
 function handle(request, origin) {
@@ -29,8 +30,10 @@ async function networkFirst(request) {
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil((async () => {
-  // Borra cachés de versiones anteriores de este archivo y toma control de las pestañas abiertas
-  for (const key of await caches.keys()) if (key !== CACHE) await caches.delete(key);
+  // Borra SOLO cachés viejos de esta app y toma control de las pestañas abiertas. Los cachés son por dominio: en
+  // gcarrerap.github.io viven también otras apps (Noli, La Pata, myDomino, Juegos de la Familia), y borrar todo lo
+  // que no sea CACHE les quitaba su copia para jugar sin conexión.
+  for (const key of await caches.keys()) if (key !== CACHE && key.startsWith(PREFIX)) await caches.delete(key);
   await self.clients.claim();
 })()));
 self.addEventListener("fetch", (event) => {
@@ -39,4 +42,4 @@ self.addEventListener("fetch", (event) => {
 });
 
 // Para las pruebas en Node
-if (typeof module !== "undefined") module.exports = { handle, networkFirst, CACHE };
+if (typeof module !== "undefined") module.exports = { handle, networkFirst, CACHE, PREFIX };
