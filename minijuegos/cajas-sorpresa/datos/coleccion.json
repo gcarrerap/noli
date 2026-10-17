@@ -1,0 +1,221 @@
+{
+ "_nota": "Las 24 piezas de los Brumitos (docs/brumitos/BIBLIA.md). 'cuerpo' y 'disfraz' solo pintan la imagen provisional. 'imagen': true cuando ya está el arte de Petra en arte/<id>-512.webp y arte/<id>-128.webp; 'silueta': true cuando está arte/<id>-silueta.svg.",
+ "piezas": [
+  {
+   "id": "calabacin",
+   "nombre": "Calabacín",
+   "rareza": "comun",
+   "cuerpo": "#bfeedd",
+   "disfraz": "#ff8a1f",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "sabanita",
+   "nombre": "Sabanita",
+   "rareza": "comun",
+   "cuerpo": "#ffd3bd",
+   "disfraz": "#ffffff",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "murci",
+   "nombre": "Murci",
+   "rareza": "comun",
+   "cuerpo": "#ffcfe1",
+   "disfraz": "#2b2236",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "michi",
+   "nombre": "Michi",
+   "rareza": "comun",
+   "cuerpo": "#fff1a8",
+   "disfraz": "#232028",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "brujita",
+   "nombre": "Brujita",
+   "rareza": "comun",
+   "cuerpo": "#dccdf7",
+   "disfraz": "#6a2fb8",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "momi",
+   "nombre": "Momi",
+   "rareza": "comun",
+   "cuerpo": "#c4e3fb",
+   "disfraz": "#f1e4c8",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "aranita",
+   "nombre": "Arañita",
+   "rareza": "comun",
+   "cuerpo": "#bfeedd",
+   "disfraz": "#1f1b24",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "vampirin",
+   "nombre": "Vampirín",
+   "rareza": "comun",
+   "cuerpo": "#ffd3bd",
+   "disfraz": "#c3122f",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "huesitos",
+   "nombre": "Huesitos",
+   "rareza": "comun",
+   "cuerpo": "#fff1a8",
+   "disfraz": "#26222d",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "catrinita",
+   "nombre": "Catrinita",
+   "rareza": "comun",
+   "cuerpo": "#ffcfe1",
+   "disfraz": "#ff9f1c",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "pirata",
+   "nombre": "Pirata",
+   "rareza": "comun",
+   "cuerpo": "#c4e3fb",
+   "disfraz": "#d7263d",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "dino",
+   "nombre": "Dino",
+   "rareza": "comun",
+   "cuerpo": "#dccdf7",
+   "disfraz": "#2fb34a",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "astro",
+   "nombre": "Astro",
+   "rareza": "comun",
+   "cuerpo": "#bfeedd",
+   "disfraz": "#f4f6fb",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "abejita",
+   "nombre": "Abejita",
+   "rareza": "comun",
+   "cuerpo": "#ffd3bd",
+   "disfraz": "#ffc400",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "hongui",
+   "nombre": "Hongui",
+   "rareza": "comun",
+   "cuerpo": "#c4e3fb",
+   "disfraz": "#e0262f",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "buhito",
+   "nombre": "Buhito",
+   "rareza": "comun",
+   "cuerpo": "#ffcfe1",
+   "disfraz": "#8a5a2b",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "hada-luna",
+   "nombre": "Hada Luna",
+   "rareza": "rara",
+   "cuerpo": "#dccdf7",
+   "disfraz": "#8f6bff",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "dragoncito",
+   "nombre": "Dragoncito",
+   "rareza": "rara",
+   "cuerpo": "#bfeedd",
+   "disfraz": "#e2262f",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "sirenita-brumi",
+   "nombre": "Sirena Brumi",
+   "rareza": "rara",
+   "cuerpo": "#ffcfe1",
+   "disfraz": "#14b8b0",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "unibrumi",
+   "nombre": "Unibrumi",
+   "rareza": "rara",
+   "cuerpo": "#fff1a8",
+   "disfraz": "#ff5fa2",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "mago-estelar",
+   "nombre": "Mago Estelar",
+   "rareza": "rara",
+   "cuerpo": "#c4e3fb",
+   "disfraz": "#1c2a7a",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "alebrije",
+   "nombre": "Alebrije",
+   "rareza": "rara",
+   "cuerpo": "#ffd3bd",
+   "disfraz": "#e3149a",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "reina-calabaza",
+   "nombre": "Reina Calabaza",
+   "rareza": "ultra",
+   "cuerpo": "#dccdf7",
+   "disfraz": "#ff7a00",
+   "imagen": false,
+   "silueta": false
+  },
+  {
+   "id": "fenix",
+   "nombre": "Fénix Dorado",
+   "rareza": "ultra",
+   "cuerpo": "#ffd3bd",
+   "disfraz": "#e8231c",
+   "imagen": false,
+   "silueta": false
+  }
+ ]
+}

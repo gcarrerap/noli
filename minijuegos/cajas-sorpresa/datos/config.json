@@ -1,0 +1,27 @@
+{
+ "_nota": "Economía de las cajas (issue #59). Si cambias un número, la prueba de la simulación falla a propósito: revisa que la colección siga completándose en más o menos un mes.",
+ "costo": 5,
+ "limiteDia": 2,
+ "limiteMax": 5,
+ "probabilidad": {
+  "comun": 0.75,
+  "rara": 0.2,
+  "ultra": 0.05
+ },
+ "garantia": {
+  "rara": 8,
+  "ultra": 25
+ },
+ "sinRepetir": 10,
+ "polvoPorRepetida": {
+  "comun": 1,
+  "rara": 3,
+  "ultra": 10
+ },
+ "precioPolvo": {
+  "comun": 5,
+  "rara": 15,
+  "ultra": 40
+ },
+ "historialMax": 100
+}
