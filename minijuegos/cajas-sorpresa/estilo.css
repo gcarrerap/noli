@@ -1,0 +1,225 @@
+/* Cajas Sorpresa: una tiendita de noche de Halloween. Estilos propios (el juego no usa los del catálogo). */
+:root {
+  --noche: #241a38;
+  --noche-2: #31244c;
+  --tarjeta: #3a2d5a;
+  --linea: #54447c;
+  --texto: #fff7ea;
+  --suave: #cfc2ea;
+  --naranja: #ff9a3c;
+  --naranja-2: #ffb15c;
+  --morado: #8f5bff;
+  --sol: #ffc43d;
+  --tinta: #2a1f3d;
+  --foco: #fff;
+  --halo: #ffc43d;
+  --sombra: 0 6px 0 rgba(0, 0, 0, .35), 0 12px 26px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+html[data-modo="tv"] { font-size: 20px; }
+html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 82% 6%, rgba(255, 226, 138, .22) 0, transparent 22%),
+    radial-gradient(circle at 10% 90%, rgba(143, 91, 255, .28) 0, transparent 40%),
+    linear-gradient(180deg, #1c1430, var(--noche) 40%, #2b1f44);
+  background-attachment: fixed;
+  color: var(--texto);
+  font-family: "Nunito", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+:focus { outline: none; }
+html.teclado [data-foco]:focus, html[data-modo="tv"] [data-foco]:focus {
+  outline: 5px solid var(--foco);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 10px rgba(255, 196, 61, .55);
+  position: relative;
+  z-index: 2;
+}
+main {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: max(10px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.cargando { margin: auto; color: var(--suave); font-size: 1.2rem; }
+
+/* ——— Textos ——— */
+.titulo { font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; font-size: 1.9rem; line-height: 1.1; margin: 4px 0 0; letter-spacing: .3px; }
+.sub { margin: 0; color: var(--suave); font-size: 1.05rem; line-height: 1.35; max-width: 34em; }
+.sub b, .grande b { color: var(--texto); }
+.grande { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-weight: 600; font-size: 1.35rem; line-height: 1.25; max-width: 22em; }
+.nueva { color: var(--sol); }
+.faltan { margin: 0; color: var(--naranja-2); font-weight: 700; }
+.cuenta { font-family: "Nunito", sans-serif; font-size: .8em; font-weight: 800; background: rgba(255, 255, 255, .12); border-radius: 999px; padding: 2px 10px; margin-left: 4px; white-space: nowrap; }
+.sub svg, .polvo-ganado svg { width: 1.2em; height: 1.2em; vertical-align: -.25em; }
+
+/* ——— Cabecera: créditos y polvo ——— */
+.cabecera { width: 100%; display: flex; justify-content: flex-end; gap: 8px; min-height: 40px; }
+.pastilla { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px; border-radius: 999px; background: rgba(0, 0, 0, .28); border: 2px solid var(--linea); font-weight: 800; font-size: 1.05rem; }
+.pastilla svg { width: 28px; height: 28px; }
+
+/* ——— Botones ——— */
+.menu { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; }
+.menu.fila { flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: 640px; }
+.menu.fila .boton { flex: 1 1 160px; }
+.boton {
+  min-height: 64px; padding: 10px 20px; border-radius: 20px;
+  background: var(--tarjeta); border: 3px solid var(--linea); box-shadow: var(--sombra);
+  font-family: "Fredoka", system-ui, sans-serif; font-weight: 600; font-size: 1.25rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform .08s;
+  white-space: nowrap;
+}
+.boton:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+.boton:disabled { opacity: .4; cursor: default; }
+.boton.principal { background: linear-gradient(180deg, var(--naranja-2), var(--naranja)); color: var(--tinta); border-color: var(--tinta); font-size: 1.45rem; }
+.boton.redondo { width: 64px; min-height: 64px; padding: 0; border-radius: 50%; font-size: 2rem; }
+.precio { display: inline-flex; align-items: center; gap: 3px; background: rgba(42, 31, 61, .14); border-radius: 999px; padding: 2px 10px 2px 4px; font-size: .95em; }
+.precio svg { width: 30px; height: 30px; }
+.enlace { min-height: 48px; padding: 8px 16px; color: var(--suave); text-decoration: underline; text-underline-offset: 4px; font-size: 1rem; border-radius: 12px; }
+
+/* ——— La tienda ——— */
+.tienda { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.escaparate, .lado { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.escaparate .boton.principal { width: 100%; max-width: 360px; min-height: 72px; }
+.caja-boton { padding: 0; border-radius: 24px; }
+.caja { width: 170px; height: auto; display: block; filter: drop-shadow(0 0 18px rgba(255, 154, 60, .35)); }
+.escaparate .caja { animation: flota 3.2s ease-in-out infinite; }
+@keyframes flota { 50% { transform: translateY(-6px) rotate(-1.5deg); } }
+.hoy { margin: 0; color: var(--suave); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.puntos { display: inline-flex; gap: 5px; }
+.puntos i { width: 14px; height: 14px; border-radius: 50%; background: var(--naranja); border: 2px solid var(--tinta); }
+.puntos i.usada { background: transparent; border-color: var(--linea); }
+.aviso { width: 100%; max-width: 380px; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--noche-2); border: 3px dashed var(--linea); border-radius: 20px; padding: 12px 16px; }
+.aviso p { margin: 0; font-size: 1.1rem; line-height: 1.3; }
+.aviso svg { flex: 0 0 44px; width: 44px; height: 44px; }
+.aviso.feliz { border-style: solid; border-color: var(--sol); }
+
+.garantias { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 6px; background: rgba(0, 0, 0, .2); border-radius: 18px; padding: 10px 14px; }
+.garantia { display: flex; align-items: center; gap: 10px; text-align: left; font-size: 1rem; line-height: 1.25; }
+.garantia .estrellas { width: 76px; justify-content: center; }
+.garantia b { color: var(--sol); font-size: 1.15em; }
+
+/* Estrellas de rareza */
+.estrellas { display: inline-flex; gap: 1px; flex: 0 0 auto; }
+.estrellas svg { width: 24px; height: 24px; }
+.estrellas.chica svg { width: 17px; height: 17px; }
+
+/* ——— ¿Qué trae? ——— */
+.probs { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 10px; }
+.fila-prob { display: flex; align-items: center; gap: 12px; background: var(--noche-2); border-radius: 18px; padding: 10px 14px; border-left: 8px solid var(--rareza); text-align: left; }
+.fila-prob p { margin: 0; font-size: 1.1rem; line-height: 1.3; }
+.cajitas { display: grid; gap: 2px; flex: 0 0 auto; }
+.cajitas { width: 112px; }
+.cajitas-4 { grid-template-columns: repeat(4, 1fr); padding: 0 6px; }
+.cajitas-5 { grid-template-columns: repeat(5, 1fr); }
+.cajitas-20 { grid-template-columns: repeat(10, 1fr); }
+.cajita { width: 100%; height: auto; display: block; }
+.reglas { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.reglas li { display: flex; align-items: center; gap: 12px; font-size: 1.05rem; line-height: 1.3; }
+.reglas li > svg, .reglas li > .estrellas { flex: 0 0 40px; width: 40px; }
+.reglas .mini { width: 40px; height: auto; }
+
+/* ——— Vitrina ——— */
+.rejilla { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 10px; }
+.tarjeta {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 4px 8px; border-radius: 16px; min-height: 64px;
+  background: var(--noche-2); border: 3px solid var(--rareza); box-shadow: 0 4px 0 rgba(0, 0, 0, .3);
+}
+.tarjeta.falta { border-style: dashed; background: rgba(0, 0, 0, .22); }
+.tarjeta .foto { width: 84px; height: 84px; display: block; }
+.mini-pieza { width: 84px; height: 84px; display: block; object-fit: contain; }
+.silueta, .tarjeta.falta .mini-pieza { color: #4d3f6e; }
+.tarjeta .nombre { font-weight: 800; font-size: .9rem; line-height: 1.1; min-height: 2.2em; display: flex; align-items: center; }
+.tarjeta.falta .nombre { color: var(--suave); }
+
+/* ——— Pieza grande (detalle y al abrir) ——— */
+.detalle, .revelar { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.marco {
+  position: relative; overflow: hidden;
+  width: min(68vw, 300px); aspect-ratio: 1; border-radius: 26px; padding: 10px;
+  background: radial-gradient(circle at 50% 40%, #f4efe9, #e2dbd3);
+  border: 8px solid var(--rareza);
+  box-shadow: 0 0 0 4px var(--tinta), 0 0 30px color-mix(in srgb, var(--rareza) 55%, transparent), var(--sombra);
+}
+.marco.vacio { background: rgba(0, 0, 0, .25); border-style: dashed; }
+.marco .grande { width: 100%; height: 100%; display: block; object-fit: contain; }
+.marco.vacio .grande { color: #4d3f6e; }
+.rareza { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; text-transform: capitalize; }
+.polvo-ganado { margin: 0; font-family: "Fredoka", sans-serif; font-size: 1.6rem; color: #e6d7ff; }
+.polvo-ganado svg { width: 34px; height: 34px; }
+
+/* Brillo de las raras y holográfico de las ultra raras: efectos CSS encima de la imagen */
+.marco-rara.brilla::after, .tarjeta.tiene.brillo-rara::after {
+  content: ""; position: absolute; inset: -20%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .55) 48%, transparent 58%);
+  animation: destello 3.4s ease-in-out infinite;
+}
+.marco-ultra.brilla::after, .tarjeta.tiene.brillo-ultra::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: color-dodge; opacity: .45;
+  background: linear-gradient(125deg, #ff7ad9, #ffe066, #6dfacd, #7aa8ff, #d78bff, #ff7ad9);
+  background-size: 300% 300%;
+  animation: holo 5s linear infinite;
+}
+@keyframes destello { 0% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
+@keyframes holo { to { background-position: 300% 0; } }
+
+/* ——— Abrir la caja ——— */
+.abriendo { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.escena .caja { width: 220px; animation: sacude .45s ease-in-out infinite; }
+.escena.abre .caja { animation: none; }
+.escena.abre .caja-tapa { animation: tapa .6s ease-in forwards; transform-origin: 110px 80px; }
+.escena.abre .caja { filter: drop-shadow(0 0 40px rgba(255, 226, 138, .9)); }
+@keyframes sacude { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg) translateY(-2px); } 75% { transform: rotate(5deg) translateY(-2px); } }
+@keyframes tapa { to { transform: translate(40px, -140px) rotate(28deg); opacity: 0; } }
+.aparece { animation: aparece .55s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes aparece { from { transform: scale(.4) translateY(40px); opacity: 0; } }
+
+/* ——— Guía ——— */
+.guia { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; max-width: 520px; }
+.guia-dibujo { width: 190px; height: 190px; display: grid; place-items: center; }
+.guia-dibujo > svg, .guia-dibujo > img { width: 100%; height: 100%; }
+.pasos { display: flex; gap: 8px; margin: 0; }
+.pasos i { width: 12px; height: 12px; border-radius: 50%; background: var(--linea); }
+.pasos i.activo { background: var(--sol); }
+
+/* ——— Para papás ——— */
+.papas { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.ajuste { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--noche-2); border-radius: 18px; padding: 10px 14px; font-size: 1.1rem; }
+.numero { display: flex; align-items: center; gap: 14px; }
+.numero b { font-family: "Fredoka", sans-serif; font-size: 1.8rem; min-width: 1.2em; text-align: center; }
+.datos { margin: 0; color: var(--suave); line-height: 1.4; }
+.papas h2 { margin: 6px 0 0; font-family: "Fredoka", sans-serif; font-size: 1.3rem; }
+.tabla { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--linea); text-align: left; }
+th { color: var(--suave); font-weight: 800; }
+
+/* ——— Pantallas anchas y TV: la caja a la izquierda, lo demás a la derecha ——— */
+@media (min-width: 720px) and (orientation: landscape) {
+  .tienda { flex-direction: row; align-items: center; justify-content: center; gap: 40px; flex: 1; }
+  .escaparate, .lado { width: auto; flex: 1 1 0; max-width: 420px; }
+  .caja { width: 230px; }
+  .rejilla { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+  .revelar, .detalle { flex: 1; display: grid; grid-template-columns: auto 1fr; column-gap: 36px; row-gap: 10px; justify-items: start; text-align: left; align-content: center; max-width: 880px; }
+  .revelar .marco, .detalle .marco { grid-row: 1 / span 7; align-self: center; }
+  .revelar .menu.fila, .detalle .menu.fila { justify-content: flex-start; max-width: 460px; margin-top: 6px; }
+}
+html[data-modo="tv"] .marco { width: min(36vh, 300px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
