@@ -14,13 +14,13 @@ LIBRO = Path(__file__).resolve().parent.parent / "libros" / "halloween"
 
 # Cómo va vestida Mari en cada escena (los demás siempre igual, salvo los disfraces de Halloween)
 MARI = {
-    "hoodie": "in her mustard-yellow hoodie with a small rocket patch and dark teal leggings",
-    "hoodie_casco": "in her mustard-yellow hoodie and dark teal leggings, wearing her homemade silver cardboard-box space helmet",
-    "mochila": "in her mustard-yellow hoodie and dark teal leggings, with a teal backpack",
+    "hoodie": "in her mustard-yellow hoodie with a small rocket patch, dark teal leggings and white sneakers",
+    "hoodie_casco": "in her mustard-yellow hoodie, dark teal leggings and white sneakers, wearing her homemade cardboard-box space helmet",
+    "mochila": "in her mustard-yellow hoodie, dark teal leggings and white sneakers, with a teal backpack",
     "pijama": "in blue-and-cream plaid pajamas",
-    "pijama_botas": "in blue-and-cream plaid pajamas, red rain boots and her homemade silver cardboard-box space helmet",
+    "pijama_botas": "in blue-and-cream plaid pajamas, red rain boots and her homemade cardboard-box space helmet",
     "astro": ("in her homemade astronaut costume: the silver cardboard-box helmet covered in uneven duct tape and a white "
-              "hoodie with hand-drawn star and planet patches, dark teal leggings"),
+              "hoodie (a hoodie, not a jumpsuit) with hand-drawn star and planet patches, dark teal leggings and white sneakers"),
     "mayor": "one year older, in her mustard-yellow hoodie and dark teal leggings",
 }
 EXTRA = {
@@ -29,6 +29,45 @@ EXTRA = {
     "papa": ("Mari's dad, a friendly man in his thirties with warm brown skin, short dark hair, a short neat beard, "
              "a green flannel shirt and jeans"),
 }
+# ---------- Continuidad (#123: la primera entrega de Petra cambió la hora del día, el casco y puso brillos verdes) ----------
+CASCO = ("Her space helmet is always the same homemade one: a plain cardboard box covered with uneven strips of silver duct "
+         "tape, one big round hole for her face and two small air holes on the sides; it has no lights, no buttons, no "
+         "screens, no stickers and it never glows.")
+VERDE = ("Only alien things glow lime green: Zib's antenna bulbs, the pumpkin spaceship and the glow-seeds. Nothing else "
+         "glows green or cyan: no green lanterns, no green fireflies, no green streaks or aurora in the sky, no gadgets.")
+LUNA_ANTES = ("If the moon is visible it is a waxing gibbous moon, almost full with a small dark sliver missing on one side "
+              "(never a crescent, never completely full), because Halloween has not arrived yet.")
+LUNA_HALLOWEEN = "If the moon is visible it is a big, completely round full moon (it is Halloween night)."
+
+# Hora del día de cada página (lo que más se le movió a Petra). Clave: id de página; si no está, se toma la del capítulo.
+MOMENTO_CAP = {1: "evening", 2: "a bright sunny morning", 3: "a bright sunny day", 4: "late afternoon", 5: "a bright sunny day",
+               6: "early morning", 7: "night", 8: "evening, indoors", 9: "a rainy afternoon", 10: "night", 11: "night", 12: "night"}
+MOMENTO = {
+    "c01-p01": "evening, indoors, dark blue sky in the window", "c01-p02": "evening, indoors", "c01-p03": "dusk, indoors",
+    "c01-p04": "night", "c01-p05": "night", "c01-p06": "night", "c01-p07": "night",
+    "c01-p08": "a bright sunny morning with a clear blue sky (daytime, not night)",
+    "c01-p09": "a bright sunny morning with a clear blue sky (daytime, not night)",
+    "c01-p10": "a bright sunny morning with a clear blue sky (daytime, not night)",
+    "c03-p09": "late afternoon", "c03-p10": "late afternoon",
+    "c04-p04": "sunset, pink and orange sky", "c04-p05": "dusk", "c04-p06": "dusk", "c04-p07": "evening, indoors",
+    "c04-p08": "evening, indoors", "c04-p09": "evening, indoors", "c04-p10": "evening, indoors", "c04-p11": "twilight",
+    "c04-p12": "night with the first stars",
+    "c05-p07": "night",
+    "c06-p01": "very early morning before sunrise, soft blue light", "c06-p07": "morning",
+    "c07-p07": "night",
+    "c08-p08": "rainy night",
+    "c09-p04": "evening after the rain", "c09-p05": "night", "c09-p06": "night", "c09-p07": "night", "c09-p08": "night",
+    "c10-p01": "sunset", "c10-p02": "sunset with the full moon rising",
+    "c12-p06": "an autumn sunset one year later",
+}
+# Detalles de una página que el dibujo no debe adelantar
+EXTRA_PAGINA = {
+    "c01-p01": "Nothing in the kitchen glows except warm lamps.",
+    "c01-p02": "She wears white sneakers (no boots).",
+    "c01-p08": "The pumpkin spaceship is closed and its small round window is dark (it does not glow yet).",
+    "c01-p09": "The small round window on the pumpkin is dark and does not glow yet.",
+}
+
 LEO_CABALLERO = " Leo is dressed as a knight: a silver foil helmet and a round cardboard shield painted with an orange pumpkin."
 PEPPER_ALAS = " Pepper wears tiny purple felt bat wings on her back."
 
@@ -439,14 +478,36 @@ def main():
             if q == "mari":
                 partes.append(f"{sin_ropa}, {MARI[ropa]}.")
             elif q == "nave":
-                partes.append(base["nave"][0].upper() + base["nave"][1:] + ".")
+                n = base["nave"][0].upper() + base["nave"][1:]
+                if pid in ("c01-p08", "c01-p09"):
+                    n = n.replace("a small round porthole glowing lime green", "a small round porthole that is still dark")
+                partes.append(n + ".")
             else:
                 partes.append(base[q] + ".")
         prohibido = []
         for q in quien:
             prohibido += [f"{q}: {n}" for n in nunca.get(q, [])]
+        cap = 0 if pid == "portada" else int(pid[1:3])
+        momento = "night" if pid == "portada" else MOMENTO.get(pid, MOMENTO_CAP[cap])
+        reglas = [VERDE]
+        if "mari" in quien and ropa in ("hoodie_casco", "pijama_botas", "astro"):
+            reglas.append(CASCO)
+        de_dia = any(w in momento for w in ("morning", "day", "afternoon")) and "evening" not in momento
+        if pid == "c02-p07":
+            reglas.append("It is daytime: blue sky and sunlight; the only thing in the sky is a pale, faint white daytime moon.")
+        elif "rain" in momento:
+            reglas.append("It is daytime but rainy: soft gray sky and rain outside, no moon and no stars.")
+        elif "before sunrise" in momento:
+            reglas.append("It is just before sunrise: soft pale blue light at the window, no moon.")
+        elif de_dia:
+            reglas.append("It is daytime: blue sky and sunlight, no stars and no moon in the sky.")
+        elif pid != "c12-p06":
+            reglas.append(LUNA_HALLOWEEN if cap >= 10 or pid == "portada" else LUNA_ANTES)
+        if pid in EXTRA_PAGINA:
+            reglas.append(EXTRA_PAGINA[pid])
         return (f"{estilo} Use the attached reference sheets for the exact look of each character and keep them identical "
-                f"(same face, hair, colors, clothes and proportions). Scene: {escena} Characters: {' '.join(partes)} "
+                f"(same face, hair, colors, clothes and proportions). Time of day: {momento}. Scene: {escena} "
+                f"Characters: {' '.join(partes)} Continuity rules: {' '.join(reglas)} "
                 + (f"Never: {'; '.join(prohibido)}. " if prohibido else "")
                 + "Wide 16:9 storybook illustration that fills the whole frame: no empty bands, no borders, no text.")
 
