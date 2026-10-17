@@ -82,12 +82,14 @@ Los números (16 comunes, 6 raras, 2 ultra raras) están en el issue #59. Los no
 
 ## Cómo trabaja Petra
 
+Petra recibe cada encargo en **su propio issue** y sube sus imágenes al repo con un PR. No pasa nada por el chat.
+
 1. **Primero las 3 piezas de prueba** (una de cada rareza): `calabacin`, `unibrumi` y `reina-calabaza`. Sus prompts están en [`prompts.json`](prompts.json).
-2. Guillermo revisa las pruebas y aprueba el estilo (o pide cambios a esta biblia).
-3. Con el estilo aprobado, Claude escribe los prompts de las otras 21 piezas.
+2. Guillermo revisa el PR de Petra y aprueba el estilo (o pide cambios a esta biblia).
+3. Con el estilo aprobado, Claude escribe los prompts de las otras 21 piezas y abre otro issue para Petra.
 4. **Para que todas se vean de la misma especie**, Petra usa la imagen aprobada de Calabacín como imagen de referencia al generar cada pieza nueva.
 
-Qué entrega Petra por pieza: una imagen **PNG cuadrada de al menos 1024 × 1024**, con el fondo `#ECE8E4`. Claude la convierte en `pieza-512.webp` y `pieza-128.webp`, y dibuja `pieza-silueta.svg` para el hueco vacío de la vitrina.
+Qué entrega Petra por pieza: una imagen **PNG cuadrada de al menos 1024 × 1024**, con el fondo `#ECE8E4`, en `docs/brumitos/originales/<id>.png` (el `id` de la tabla, por ejemplo `docs/brumitos/originales/calabacin.png`). Claude la convierte en `pieza-512.webp` y `pieza-128.webp` dentro del juego, y dibuja `pieza-silueta.svg` para el hueco vacío de la vitrina.
 
 ## Revisión de las pruebas
 
