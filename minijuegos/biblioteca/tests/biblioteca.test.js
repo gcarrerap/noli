@@ -59,10 +59,24 @@ test("las ilustraciones que dice libro.json existen en las dos medidas", () => {
   for (const id of ids) {
     for (const s of ["g", "c"]) assert.ok(existsSync(new URL(`arte/web/${id}-${s}.jpg`, BASE)), `falta arte/web/${id}-${s}.jpg`);
   }
-  // Toda ilustración de escenas.json tiene su página (o es la portada)
-  const escenas = JSON.parse(readFileSync(new URL("escenas.json", BASE), "utf8")).map((e) => e.id);
-  const enPaginas = new Set(paginas.flatMap(({ p }) => [p.ilustracion, p.espera]).filter(Boolean));
-  for (const e of escenas) if (e !== "portada") assert.ok(enPaginas.has(e), `${e} no está en ninguna página`);
+  // Cada página dice cuál es su ilustración propia (cNN-pMM): ya puesta o "espera"
+  for (const { c, i, p } of paginas) {
+    const propia = `c${String(c).padStart(2, "0")}-p${String(i + 1).padStart(2, "0")}`;
+    assert.ok(p.ilustracion === propia || p.espera === propia, `${propia}: falta en libro.json`);
+  }
+});
+
+test("paginas.json: un prompt por página (y la portada), con sus hojas de personaje, sin texto en la imagen", () => {
+  const pj = JSON.parse(readFileSync(new URL("paginas.json", BASE), "utf8"));
+  const ids = paginas.map(({ c, i }) => `c${String(c).padStart(2, "0")}-p${String(i + 1).padStart(2, "0")}`);
+  assert.deepEqual(pj.paginas.map((x) => x.id), ["portada", ...ids]);
+  const hojas = new Set([...readdirSync(new URL("arte/personajes/", BASE)).map((f) => "arte/personajes/" + f), ...pj.hojas.map((h) => h.archivo)]);
+  for (const x of pj.paginas) {
+    assert.equal(x.archivo, `arte/paginas/${x.id}.png`);
+    assert.match(x.prompt, /No text, no letters, no words in the image/);
+    assert.ok(x.referencias.length >= 1, `${x.id}: sin hojas`);
+    for (const r of x.referencias) assert.ok(hojas.has(r), `${x.id}: no existe la hoja ${r}`);
+  }
 });
 
 test("las escenas no piden texto en la imagen y adjuntan hojas que existen", () => {
