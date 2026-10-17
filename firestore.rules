@@ -7,11 +7,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ---- Noli (gcarrerap/noli, #7) ----
+    // Administrador de Noli (admin.html): su cuenta de Google es la única que puede listar perfiles y ponerles nombre.
+    function esAdminNoli() {
+      return request.auth != null && request.auth.token.email == 'carrera.perabeles@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
     // Perfil: su id es aleatorio de 24 caracteres y funciona como llave. Se puede leer con get (sabiendo el id),
-    // nunca listar, así que nadie descubre perfiles ajenos.
+    // nunca listar (salvo el administrador), así que nadie descubre perfiles ajenos.
     match /noli_perfiles/{perfil} {
       allow get, create: if request.auth != null && perfil.size() >= 20;
-      allow list, update, delete: if false;
+      allow list: if esAdminNoli();
+      allow update: if esAdminNoli() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre'])
+        && request.resource.data.nombre is string && request.resource.data.nombre.size() <= 60;
+      allow delete: if false;
       // Progreso por juego: { json (texto), actualizado (ms), dispositivo }
       match /juegos/{juego} {
         allow read: if request.auth != null && perfil.size() >= 20;

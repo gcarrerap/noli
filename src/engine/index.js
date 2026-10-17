@@ -9,3 +9,5 @@ export { REGLAS, MOTIVOS, TIPOS_CREDITOS, libroVacio, leerLibro, saldo, saldoVis
 export { revisarMundo, colocarLugares, centroSitio, solidoDe, mapaMundo, fisicaDe, azar, decorar, todosLosSitios, lugarCercano,
   cristalesDe, cristalTocado, crearCaminos, rutaPorCaminos, puntoLibre, plataformasAlcanzables, elegirVista, acomodarLetreros, brazoCamara } from "./mundo.js";
 export { revisarLibros, librosDe, estadoLibros, conHallazgo, nivelPista, libroTocado } from "./libros.js";
+export { DISPOSITIVO_ADMIN, ponerSaldo, saldoDe, CAMPOS_PASARELA, resumenPasarela, nivelPorPuntos, conPasarela, libroDe, conLibro, fecha,
+  resumenPerfil } from "./admin.js";

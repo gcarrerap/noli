@@ -37,6 +37,22 @@ export async function existePerfil(fs, perfil) {
   return (await fs.doc(`${PERFILES}/${perfil}`).get()).exists;
 }
 
+// ---------- Administrador (admin.html) ----------
+// Las reglas solo dejan listar perfiles y ponerles nombre a la cuenta de Google del administrador (firestore.rules).
+
+/** [{ perfil, creado, nombre }] de todos los perfiles */
+export async function listarPerfiles(fs) {
+  return (await fs.collection(PERFILES).get()).docs.map((s) => {
+    const d = s.data() || {};
+    return { perfil: s.id, creado: d.creado || 0, nombre: typeof d.nombre === "string" ? d.nombre : "" };
+  });
+}
+
+/** Ponerle nombre a un perfil (solo para reconocerlo en admin.html) */
+export async function nombrarPerfil(fs, perfil, nombre) {
+  await fs.doc(`${PERFILES}/${perfil}`).update({ nombre: String(nombre || "").trim().slice(0, 60) });
+}
+
 const juegos = (perfil) => `${PERFILES}/${perfil}/juegos`;
 const leerDoc = (snap) => {
   const d = snap.data();

@@ -61,3 +61,42 @@ async function iniciar(onUser, config) {
   });
   return firebase.firestore();
 }
+
+// ---------- Administrador (admin.html) ----------
+// La página de administrador NO entra como invitado: pide la cuenta de Google (las reglas dejan listar perfiles solo a
+// la del administrador). Popup primero; si el navegador lo bloquea (o en el teléfono no se puede), redirección.
+// Devuelve { fs, usuario } con usuario null si todavía no entra (la redirección regresa a la página ya con sesión).
+let adminApp = null;
+async function appAdmin(config) {
+  if (!config || !config.projectId) throw new Error("sin config");
+  await loadFirebaseSdk();
+  if (!adminApp) { adminApp = true; if (!(firebase.apps && firebase.apps.length)) firebase.initializeApp(config); }
+  return firebase.auth();
+}
+
+/** Revisa si ya hay sesión de Google (sin pedirla). */
+export async function sesionAdmin(config = window.FIREBASE_CONFIG) {
+  const auth = await appAdmin(config);
+  try { await auth.getRedirectResult(); } catch (e) { console.warn(e); }
+  const u = await new Promise((res) => { const fin = auth.onAuthStateChanged((x) => { fin(); res(x); }); });
+  return { fs: firebase.firestore(), usuario: u && !u.isAnonymous ? u : null };
+}
+
+/** Pide entrar con Google. */
+export async function entrarAdmin(config = window.FIREBASE_CONFIG) {
+  const auth = await appAdmin(config);
+  const prov = new firebase.auth.GoogleAuthProvider();
+  prov.setCustomParameters({ prompt: "select_account" });
+  try {
+    const r = await auth.signInWithPopup(prov);
+    return { fs: firebase.firestore(), usuario: r.user };
+  } catch (e) {
+    if (e && ["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/cancelled-popup-request"].includes(e.code)) {
+      await auth.signInWithRedirect(prov);
+      return { fs: firebase.firestore(), usuario: null };
+    }
+    throw e;
+  }
+}
+
+export async function salirAdmin() { if (window.firebase && firebase.apps && firebase.apps.length) await firebase.auth().signOut(); }
