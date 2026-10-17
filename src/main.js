@@ -11,7 +11,7 @@ import { renderNube, botonNube } from "./ui/components/nube.js";
 import { renderRemoto } from "./ui/components/remoto.js";
 import { renderCreditos, botonCreditos } from "./ui/components/creditos.js";
 import { elegirVista } from "./engine/index.js";
-import { ls } from "./services/index.js";
+import { ls, perfilDelLink } from "./services/index.js";
 import { hayWebGL } from "../kit/3d/webgl.js";
 
 // Menú principal: el mundo 3D o el menú 2D (#25). Sin WebGL, con ?menu2d o si en este aparato se escogió el menú
@@ -40,8 +40,14 @@ instalarPuente();
 alRemoto(aplicarAccion); // las acciones del teléfono entran igual que las teclas
 window.addEventListener("resize", () => { if (!state.jugando) medirColumnas(); });
 
+// Link de recuperación (#recuperar=<perfil>): se quita del URL para que no se quede en el historial ni al recargar,
+// y se pide confirmación porque reemplaza el progreso de este dispositivo.
+const recuperar = perfilDelLink(location.hash);
+if (recuperar) history.replaceState(null, "", location.pathname + location.search);
+const confirmado = recuperar && confirm("¿Recuperar en este dispositivo el progreso guardado en la nube? Lo que haya aquí se reemplaza.");
+
 render();
-actions.iniciar();
+actions.iniciar(confirmado ? { recuperar } : undefined);
 remoto.retomar(); // en la TV: si el control remoto estaba prendido antes de recargar, se vuelve a prender
 
 startUpdateChecks();

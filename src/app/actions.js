@@ -25,7 +25,8 @@ export const actions = {
     }
     if (state.materia && !materias(state.juegos.filter((j) => jugableEn(j, state.modo))).includes(state.materia)) state.materia = null;
     state.foco = 0; state.cargando = false; notify();
-    if (state.nube.perfil) sync.conectar(); // la nube después del catálogo: nunca lo retrasa
+    if (opts && opts.recuperar) await actions.recuperarNube(opts.recuperar); // abrieron un link de recuperación
+    else if (state.nube.perfil) sync.conectar(); // la nube después del catálogo: nunca lo retrasa
   },
 
   // ---------- Nube (#7) ----------
@@ -37,6 +38,9 @@ export const actions = {
   vincularOtro: (codigo) => sync.vincularOtro(codigo),
   desvincular: () => sync.desvincular(),
   reintentarNube: () => sync.conectar(),
+  // Link de recuperación: abrir la ventana de la nube para ver cómo va, y recuperar
+  recuperarNube(perfil) { state.nubeAbierta = true; notify(); return sync.recuperar(perfil); },
+  linkRecuperacion: (base) => sync.miLinkRecuperacion(base),
 
   elegirMateria(m) {
     state.materia = m || null; state.foco = 0;
