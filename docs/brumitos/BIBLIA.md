@@ -10,7 +10,7 @@ Los **Brumitos** son monstruitos originales que se disfrazan para Halloween. Son
 
 | Rasgo | Cómo es |
 |---|---|
-| Cuerpo | Cabeza y cuerpo son **una sola pera**, sin cuello: angosta arriba y ancha abajo, como una gota sentada. Cubierto de **terciopelo** corto y suave, en color **pastel**. |
+| Cuerpo | Cabeza y cuerpo son **una sola pera**, sin cuello: angosta arriba y ancha abajo, como una gota sentada. Hecho de **fieltro de lana** suave, en color **pastel**. |
 | Copete | Un **copete de humo** pastel que sale de la cabeza y se enrosca hacia arriba, medio transparente. |
 | Cuernitos | Dos **antenitas de caracol** delgadas y blanditas, un poco curvas, con una bolita en la punta. **Nunca** orejas puntiagudas de gato ni cuernos en forma de cono. |
 | Ojos | Dos ojos grandes, redondos y brillantes, oscuros, con un **destello en forma de estrella** en cada uno. |
@@ -20,13 +20,15 @@ Los **Brumitos** son monstruitos originales que se disfrazan para Halloween. Son
 
 ## Estilo de las imágenes
 
-- **Realista**: como una foto de estudio de un muñeco coleccionable de terciopelo, hecho a mano y de muy buena calidad. Se ve la textura del terciopelo y del disfraz.
+- **Realista**: como una foto de estudio de un muñeco coleccionable de **fieltro de lana**, hecho a mano y de muy buena calidad. Se ven las fibras del fieltro y la textura del disfraz.
+- **Imagen de referencia:** [`referencia/brumito.png`](referencia/brumito.png) (un Brumito sin disfraz que hizo Petra). De ahí salen la forma de pera, la cara y el fieltro. No trae antenitas ni copete de humo: esos los agrega el prompt.
+- **Variedad con el disfraz:** todos son la misma especie; lo que cambia la silueta de cada uno es el disfraz (alas, capa, cola, sombrero alto), para que cada hueco de la vitrina se vea distinto.
 - **Igual en las 24 piezas**: cuadrada (1:1), el Brumito al centro y de cuerpo entero, de tres cuartos, ocupando unos 70 % del alto. Fondo **plano** gris claro cálido (`#ECE8E4`), del mismo color de orilla a orilla, sin degradado, con solo una sombra suave debajo. Luz suave desde arriba a la izquierda.
 - **Sin texto**: nada de letras, números, logos, marcos, bordes ni estrellas. La marca de rareza (marco de color y 1, 2 o 3 estrellas) la pone el código.
 - **Acabado según la rareza**, pintado en la imagen:
   - **Común**: disfraz de tela mate.
   - **Rara**: detalles del disfraz con brillo **perlado** tornasol.
-  - **Ultra rara**: detalles del disfraz de **oro pulido**, y el terciopelo con un leve brillo perlado.
+  - **Ultra rara**: detalles del disfraz de **oro pulido**, y el fieltro con un leve brillo perlado.
   - El destello de las raras y el holográfico de las ultra raras son efectos CSS encima; no van en la imagen.
 
 ## Lo que nunca puede pasar
@@ -87,7 +89,7 @@ Petra recibe cada encargo en **su propio issue** y sube sus imágenes al repo co
 1. **Primero las 3 piezas de prueba** (una de cada rareza): `calabacin`, `unibrumi` y `reina-calabaza`. Sus prompts están en [`prompts.json`](prompts.json).
 2. Guillermo revisa el PR de Petra y aprueba el estilo (o pide cambios a esta biblia).
 3. Con el estilo aprobado, Claude escribe los prompts de las otras 21 piezas y abre otro issue para Petra.
-4. **Para que todas se vean de la misma especie**, Petra usa la imagen aprobada de Calabacín como imagen de referencia al generar cada pieza nueva.
+4. **Para que todas se vean de la misma especie**, Petra adjunta siempre [`referencia/brumito.png`](referencia/brumito.png) al generar cada pieza, y además la de Calabacín cuando ya esté aprobada.
 
 Qué entrega Petra por pieza: una imagen **PNG cuadrada de al menos 1024 × 1024**, con el fondo `#ECE8E4`, en `docs/brumitos/originales/<id>.png` (el `id` de la tabla, por ejemplo `docs/brumitos/originales/calabacin.png`). Claude la convierte en `pieza-512.webp` y `pieza-128.webp` dentro del juego, y dibuja `pieza-silueta.svg` para el hueco vacío de la vitrina.
 
@@ -95,7 +97,7 @@ Qué entrega Petra por pieza: una imagen **PNG cuadrada de al menos 1024 × 1024
 
 Antes de aprobar, cada imagen debe cumplir:
 
-- [ ] Cabeza y cuerpo en una sola pera de terciopelo, copete de humo, dos antenitas delgadas de caracol con bolita (no orejas), dos ojos con destello y dos dientes de conejo.
+- [ ] Cabeza y cuerpo en una sola pera de fieltro, copete de humo, dos antenitas delgadas de caracol con bolita (no orejas), dos ojos con destello y dos dientes de conejo.
 - [ ] No se parece a Labubu ni a Monsters Inc.
 - [ ] Se ve tierno, no da miedo.
 - [ ] Fondo plano `#ECE8E4` sin degradado, sin texto ni marcos.
