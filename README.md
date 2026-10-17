@@ -103,7 +103,28 @@ Sin internet se sigue jugando; lo nuevo se sube al regresar la conexión.
 
 ### Firebase
 
-Usa el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones `noli_` (`src/config.js`). **Antes de usar la nube o el control remoto hay que publicar las reglas** (y volver a publicarlas cuando cambien; con #25 aceptan la acción `brincar` del control remoto): copia [`firestore.rules`](firestore.rules) completo en **Firebase → Firestore → Reglas** y publícalas. Trae también los bloques de La Pata y el dominó (Firestore tiene un solo archivo de reglas por proyecto y publicar reemplaza todo), así que esas apps siguen funcionando igual. **Ojo:** si después se publican las reglas de myPata o myDomino, se borran las de Noli; hay que mantener los tres bloques juntos. El dominio `gcarrerap.github.io` ya está autorizado por el dominó.
+Usa su propio proyecto, `gcarrerap-noli` (#112), con colecciones `noli_` (`src/config.js`). Hasta octubre de 2026 compartía `dominomx` con el dominó y la pata.
+
+Para que funcione la nube, el control remoto y `admin.html`, el proyecto necesita:
+
+1. **Authentication → Método de acceso:** activar **Anónimo** (todos) y **Google** (solo `admin.html`).
+2. **Authentication → Configuración → Dominios autorizados:** agregar `gcarrerap.github.io`.
+3. **Firestore → Reglas:** copiar [`firestore.rules`](firestore.rules) completo y publicarlas (y volver a publicarlas cada vez que cambien). Como el proyecto es solo de Noli, publicar reemplaza todo sin afectar otras apps.
+
+#### Migrar el progreso desde `dominomx` (una sola vez)
+
+[`scripts/migrar-dominomx.mjs`](scripts/migrar-dominomx.mjs) copia `noli_perfiles` y sus `juegos` con los mismos ids, así cada dispositivo sigue vinculado sin hacer nada. No borra nada de `dominomx`. `noli_vinculos` y `noli_salas` no se copian (duran minutos).
+
+1. En la consola de Firebase de **cada** proyecto: Configuración del proyecto → Cuentas de servicio → **Generar nueva clave privada**. Guarda las dos llaves fuera del repo (por ejemplo en Descargas). Son secretas: nunca las subas a GitHub.
+2. En una carpeta con el repo, con Node 18 o más nuevo:
+   ```sh
+   npm install --no-save firebase-admin
+   node scripts/migrar-dominomx.mjs --viejo ~/Downloads/dominomx-xxxx.json --nuevo ~/Downloads/gcarrerap-noli-xxxx.json
+   ```
+   Primero corre sin cambiar nada y enseña cuántos perfiles y juegos copiaría. Si se ve bien, repite con `--escribir` al final.
+3. Borra las dos llaves. Si quieres, en la consola revoca también la clave (Cuentas de servicio → Administrar permisos).
+
+Se puede correr más de una vez: si un juego ya existe en el proyecto nuevo, se queda el más reciente (campo `actualizado`).
 
 ## Agregar un juego
 
@@ -156,7 +177,7 @@ noli/
 ├── control.html        # el teléfono como control remoto (src/control/main.js)
 ├── diagnostico.html    # qué manda el control de la TV y qué tiene su navegador
 ├── sw.js               # service worker: siempre la versión más reciente
-├── firestore.rules     # reglas del proyecto dominomx (Noli, La Pata y el dominó)
+├── firestore.rules     # reglas del proyecto gcarrerap-noli
 ├── kit/                # protocolo.js, teclas.js, foco.js (flechas entre botones), noli.js (SDK de los juegos)
 │   └── 3d/             # Three.js (vendor/), escena, personaje, formas, materiales, lotes, física, joystick (mundo y Pasarela)
 ├── mundo/              # mundo.json (plataformas, cristales, decoración) y lugares.json (dónde va cada juego)
@@ -177,6 +198,7 @@ noli/
 │   └── ui/             # render.js, entrada.js, labels.js, screens/ (mundo, catálogo, jugando), components/
 ├── styles/             # tokens (colores, tema, escala TV), base, catálogo, mundo, remoto, control
 ├── tests/              # node:test, sin dependencias (fakes/: Firebase y WebRTC de mentira)
+├── scripts/            # migrar-dominomx.mjs: copia única del progreso desde dominomx (#112)
 ├── package.json        # solo para correr las pruebas
 ├── DESIGN.md
 └── README.md
@@ -196,6 +218,6 @@ Cubren: validación de manifiestos (incluido que cada juego declare si es apto p
 
 - HTML, CSS y JavaScript (módulos ES nativos), sin frameworks ni compilación
 - Tipografías: Fredoka y Nunito (Google Fonts)
-- Firebase 10.12 (SDK compat del CDN, solo si la nube está activada): Authentication anónima y Cloud Firestore (proyecto `dominomx`, colecciones `noli_`)
-- Control remoto: WebRTC del navegador (`RTCDataChannel`), con señalización y respaldo en Firestore (proyecto `dominomx`, colección `noli_salas`, SDK compat del CDN, cargado solo al usarlo); QR generado aquí mismo (`engine/qr.js`)
+- Firebase 10.12 (SDK compat del CDN, solo si la nube está activada): Authentication anónima y Cloud Firestore (proyecto `gcarrerap-noli`, colecciones `noli_`)
+- Control remoto: WebRTC del navegador (`RTCDataChannel`), con señalización y respaldo en Firestore (proyecto `gcarrerap-noli`, colección `noli_salas`, SDK compat del CDN, cargado solo al usarlo); QR generado aquí mismo (`engine/qr.js`)
 - 3D (el mundo del menú principal y la Pasarela): Three.js r160.1 copiado en `kit/3d/vendor/` (MIT, WebGL 1, sin CDN), cargado solo cuando se usa

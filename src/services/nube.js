@@ -1,4 +1,4 @@
-// Progreso en la nube (Firestore, proyecto dominomx, colecciones "noli_"). Recibe la instancia de Firestore
+// Progreso en la nube (Firestore, proyecto gcarrerap-noli, colecciones "noli_"). Recibe la instancia de Firestore
 // (fs) para poder probarse con el Firebase de mentira. Ver DESIGN.md §7 y el issue #7.
 //
 //   noli_perfiles/{perfil}                     { creado }            perfil: id aleatorio y largo (la llave)
