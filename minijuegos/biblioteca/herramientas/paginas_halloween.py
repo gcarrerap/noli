@@ -35,6 +35,12 @@ CASCO = ("Her space helmet is always the same homemade one: a plain cardboard bo
          "screens, no stickers and it never glows.")
 VERDE = ("Only alien things glow lime green: Zib's antenna bulbs, the pumpkin spaceship and the glow-seeds. Nothing else "
          "glows green or cyan: no green lanterns, no green fireflies, no green streaks or aurora in the sky, no gadgets.")
+# Entrega 2 (#131): a Zib le salieron 2 antenas en 3 páginas y apareció una segunda "nave" de fondo
+ZIB_ANTENAS = ("Zib has exactly THREE antennae on top of its head (one on the left, one in the middle, one on the right), "
+               "each a thin spring with one glowing bulb; never two, never four. Zib's body is an upright jelly bean, "
+               "taller than wide, never lying sideways.")
+UNA_NAVE = ("There is only one spaceship in the whole story, the pumpkin spaceship: no other pods, vehicles, robots, "
+            "machines or sci-fi gadgets anywhere in the scene (also not in the garage or the background).")
 LUNA_ANTES = ("If the moon is visible it is a waxing gibbous moon, almost full with a small dark sliver missing on one side "
               "(never a crescent, never completely full), because Halloween has not arrived yet.")
 LUNA_HALLOWEEN = "If the moon is visible it is a big, completely round full moon (it is Halloween night)."
@@ -489,7 +495,9 @@ def main():
             prohibido += [f"{q}: {n}" for n in nunca.get(q, [])]
         cap = 0 if pid == "portada" else int(pid[1:3])
         momento = "night" if pid == "portada" else MOMENTO.get(pid, MOMENTO_CAP[cap])
-        reglas = [VERDE]
+        reglas = [VERDE, UNA_NAVE]
+        if "zib" in quien:
+            reglas.append(ZIB_ANTENAS)
         if "mari" in quien and ropa in ("hoodie_casco", "pijama_botas", "astro"):
             reglas.append(CASCO)
         de_dia = any(w in momento for w in ("morning", "day", "afternoon")) and "evening" not in momento
