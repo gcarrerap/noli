@@ -18,7 +18,6 @@ export function tono(hex, f) {
 }
 
 const CUERPO = "M100 52C76 52 66 74 69 96C44 112 38 160 62 178C70 184 82 186 100 186C118 186 130 184 138 178C162 160 156 112 131 96C134 74 124 52 100 52Z";
-const HUMO = "M100 54C90 44 92 30 102 26C96 18 106 8 116 14C126 6 140 16 132 26C142 32 134 44 122 42C118 50 108 56 100 54Z";
 
 // Estrellas de rareza (1, 2 o 3)
 export function estrellasRareza(rareza, clase = "estrellas") {
@@ -27,7 +26,7 @@ export function estrellasRareza(rareza, clase = "estrellas") {
   return `<span class="${clase}" role="img" aria-label="${r.estrellas} ${r.estrellas === 1 ? "estrella" : "estrellas"}: ${r.nombre}">${una.repeat(r.estrellas)}</span>`;
 }
 
-// Brumito provisional: la especie (pera de terciopelo, copete de humo, cuernitos, ojos con destello y dos
+// Brumito provisional: la especie (una sola pera de fieltro, antenitas de caracol, ojos con destello y dos
 // dientes de conejo) pintada con el color de su cuerpo y el de su disfraz.
 export function brumitoSvg(p, clase = "brumito") {
   const c = p.cuerpo, d = p.disfraz, borde = tono(c, -0.35), dBorde = tono(d, -0.35);
@@ -36,7 +35,6 @@ export function brumitoSvg(p, clase = "brumito") {
 <defs><radialGradient id="${id}-t" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="${tono(c, 0.45)}"/><stop offset=".6" stop-color="${c}"/><stop offset="1" stop-color="${tono(c, -0.12)}"/></radialGradient>
 <clipPath id="${id}-c"><path d="${CUERPO}"/></clipPath></defs>
 <ellipse cx="100" cy="190" rx="52" ry="7" fill="rgba(0,0,0,.18)"/>
-<path d="${HUMO}" fill="${tono(c, 0.55)}" opacity=".85" stroke="${tono(c, -0.1)}" stroke-width="2"/>
 <g stroke="${borde}" stroke-width="5" stroke-linecap="round" fill="none"><path d="M84 60Q78 46 72 40"/><path d="M116 60Q122 46 128 40"/></g>
 <circle cx="71" cy="38" r="7" fill="${tono(c, 0.2)}" stroke="${borde}" stroke-width="2.5"/><circle cx="129" cy="38" r="7" fill="${tono(c, 0.2)}" stroke="${borde}" stroke-width="2.5"/>
 <path d="${CUERPO}" fill="url(#${id}-t)" stroke="${borde}" stroke-width="3"/>
@@ -59,7 +57,7 @@ export function brumitoSvg(p, clase = "brumito") {
 // Silueta del hueco vacío (la misma para todos mientras Petra no entregue las suyas)
 export function siluetaSvg(p, clase = "silueta") {
   return `<svg class="${clase}" viewBox="0 0 200 200" role="img" aria-label="${esc(p.nombre)}, todavía no la tienes">
-<g fill="currentColor"><path d="${HUMO}"/><path d="M84 60Q78 46 72 40M116 60Q122 46 128 40" stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none"/>
+<g fill="currentColor"><path d="M84 60Q78 46 72 40M116 60Q122 46 128 40" stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none"/>
 <circle cx="71" cy="38" r="8"/><circle cx="129" cy="38" r="8"/><path d="${CUERPO}"/><ellipse cx="82" cy="184" rx="16" ry="8"/><ellipse cx="118" cy="184" rx="16" ry="8"/></g>
 <text x="100" y="138" text-anchor="middle" font-family="Fredoka, sans-serif" font-size="58" font-weight="700" fill="rgba(255,255,255,.55)">?</text></svg>`;
 }
