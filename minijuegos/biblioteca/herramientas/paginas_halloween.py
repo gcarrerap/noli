@@ -47,6 +47,10 @@ TEXTO = ("No screens, holograms, signs, labels or panels with writing or numbers
          "have simple pictures only.")
 SIN_NAVE = ("The pumpkin spaceship is NOT in this scene (it stays hidden in Abuela's backyard); do not draw it, and do not "
             "draw any flying saucer or UFO either.")
+# Entrega 4 (#135): a Mrs. Crump le salió sombrero de bruja en 6 de 12 páginas (y el capítulo es justo para decir que no es bruja)
+CRUMP_SOMBRERO = ("Mrs. Crump's hat is a huge floppy black hat with a very wide soft brim and a LOW, ROUNDED crown, like a big "
+                  "sun hat, with a small brass star pin; it is absolutely NOT a pointy cone witch hat. She has no broom and no "
+                  "cauldron.")
 LUNA_ANTES = ("If the moon is visible it is a waxing gibbous moon, almost full with a small dark sliver missing on one side "
               "(never a crescent, never completely full), because Halloween has not arrived yet.")
 LUNA_HALLOWEEN = "If the moon is visible it is a big, completely round full moon (it is Halloween night)."
@@ -78,6 +82,12 @@ EXTRA_PAGINA = {
     "c01-p02": "She wears white sneakers (no boots).",
     "c01-p08": "The pumpkin spaceship is closed and its small round window is dark (it does not glow yet).",
     "c01-p09": "The small round window on the pumpkin is dark and does not glow yet.",
+    "c04-p04": "Zib stays hidden inside Mari's backpack; only its three antenna tips poke out.",
+    "c04-p05": "Zib stays hidden inside Mari's backpack (Mrs. Crump has not seen it yet); only its antenna tips poke out.",
+    "c04-p06": "Zib stays hidden inside Mari's backpack.",
+    "c04-p07": "Zib stays hidden inside Mari's backpack.",
+    "c04-p08": "Zib stays hidden inside Mari's backpack.",
+    "c04-p11": "Zib hides behind Mari's back; Abuela does not notice it.",
     "c03-p01": "Zib stays hidden inside the backpack; only its face peeks out of the zipper.",
     "c03-p02": "Zib stays inside the backpack: only its three glowing antenna tips poke out of the top; Zib's body is not visible.",
     "c03-p03": "The pumpkin on the teacher's desk is an ordinary orange pumpkin with a brown stem (no window, no metal, no lights).",
@@ -512,6 +522,8 @@ def main():
             reglas.append(SIN_NAVE)
         if "zib" in quien:
             reglas.append(ZIB_ANTENAS)
+        if "crump" in quien:
+            reglas.append(CRUMP_SOMBRERO)
         if "mari" in quien and ropa in ("hoodie_casco", "pijama_botas", "astro"):
             reglas.append(CASCO)
         de_dia = any(w in momento for w in ("morning", "day", "afternoon")) and "evening" not in momento
