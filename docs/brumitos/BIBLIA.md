@@ -11,7 +11,6 @@ Los **Brumitos** son monstruitos originales que se disfrazan para Halloween. Son
 | Rasgo | Cómo es |
 |---|---|
 | Cuerpo | Cabeza y cuerpo son **una sola pera**, sin cuello: angosta arriba y ancha abajo, como una gota sentada. Hecho de **fieltro de lana** suave, en color **pastel**. |
-| Copete | Un **copete de humo** pastel que sale de la cabeza y se enrosca hacia arriba, medio transparente. |
 | Cuernitos | Dos **antenitas de caracol** delgadas y blanditas, un poco curvas, con una bolita en la punta. **Nunca** orejas puntiagudas de gato ni cuernos en forma de cono. |
 | Ojos | Dos ojos grandes, redondos y brillantes, oscuros, con un **destello en forma de estrella** en cada uno. |
 | Boca | Sonrisa pequeña con **exactamente dos dientes de conejo**, redondeados. |
@@ -21,7 +20,7 @@ Los **Brumitos** son monstruitos originales que se disfrazan para Halloween. Son
 ## Estilo de las imágenes
 
 - **Realista**: como una foto de estudio de un muñeco coleccionable de **fieltro de lana**, hecho a mano y de muy buena calidad. Se ven las fibras del fieltro y la textura del disfraz.
-- **Imagen de referencia:** [`referencia/brumito.png`](referencia/brumito.png) (un Brumito sin disfraz que hizo Petra). De ahí salen la forma de pera, la cara y el fieltro. No trae antenitas ni copete de humo: esos los agrega el prompt.
+- **Imagen de referencia:** [`referencia/brumito.png`](referencia/brumito.png) (un Brumito sin disfraz que hizo Petra). De ahí salen la forma de pera, la cara y el fieltro. No trae antenitas: esas las agrega el prompt. Su rizo de arriba **no** se copia: los Brumitos no tienen copete (lo decidió Guillermo en #117).
 - **Variedad con el disfraz:** todos son la misma especie; lo que cambia la silueta de cada uno es el disfraz (alas, capa, cola, sombrero alto), para que cada hueco de la vitrina se vea distinto.
 - **Igual en las 24 piezas**: cuadrada (1:1), el Brumito al centro y de cuerpo entero, de tres cuartos, ocupando unos 70 % del alto. Fondo **plano** gris claro cálido (`#ECE8E4`), del mismo color de orilla a orilla, sin degradado, con solo una sombra suave debajo. Luz suave desde arriba a la izquierda.
 - **Sin texto**: nada de letras, números, logos, marcos, bordes ni estrellas. La marca de rareza (marco de color y 1, 2 o 3 estrellas) la pone el código.
@@ -97,7 +96,7 @@ Qué entrega Petra por pieza: una imagen **PNG cuadrada de al menos 1024 × 1024
 
 Antes de aprobar, cada imagen debe cumplir:
 
-- [ ] Cabeza y cuerpo en una sola pera de fieltro, copete de humo, dos antenitas delgadas de caracol con bolita (no orejas), dos ojos con destello y dos dientes de conejo.
+- [ ] Cabeza y cuerpo en una sola pera de fieltro, sin copete, dos antenitas delgadas de caracol con bolita (no orejas), dos ojos con destello y dos dientes de conejo.
 - [ ] No se parece a Labubu ni a Monsters Inc.
 - [ ] Se ve tierno, no da miedo.
 - [ ] Fondo plano `#ECE8E4` sin degradado, sin texto ni marcos.
