@@ -15,6 +15,14 @@ export function nuevoIdPerfil(azar = (n) => crypto.getRandomValues(new Uint8Arra
   return [...azar(24)].map((b) => A[b % A.length]).join("");
 }
 
+// Link de recuperación: lleva el id del perfil en el "#" (no viaja al servidor). Abrirlo en un dispositivo lo vincula
+// a ese perfil y trae de la nube todo el progreso, reemplazando lo que haya ahí (sync.recuperar).
+export function linkRecuperacion(base, perfil) { return `${String(base).split("#")[0]}#recuperar=${perfil}`; }
+export function perfilDelLink(hash) {
+  const m = /(?:^#?|&)recuperar=([a-z0-9]{20,40})(?:&|$)/i.exec(String(hash || ""));
+  return m ? m[1].toLowerCase() : null;
+}
+
 export function nuevoCodigo(rnd = Math.random) {
   return String(Math.floor(rnd() * 1e6)).padStart(6, "0");
 }

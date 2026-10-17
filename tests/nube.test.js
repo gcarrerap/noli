@@ -124,3 +124,38 @@ test("desvincular: deja de sincronizar y conserva lo guardado aquí", async () =
   await pausa();
   assert.deepEqual((await nubeDe(perfil))[JUEGO].datos, { nivel: 7 }, "ya no sube");
 });
+
+test("link de recuperación: se arma con el perfil y se lee del #", async () => {
+  const { linkRecuperacion, perfilDelLink } = await import("../src/services/index.js");
+  const link = linkRecuperacion("https://gcarrerap.github.io/noli/#otra", perfil);
+  assert.equal(link, `https://gcarrerap.github.io/noli/#recuperar=${perfil}`);
+  assert.equal(perfilDelLink(new URL(link).hash), perfil);
+  assert.equal(perfilDelLink("#recuperar=corto"), null);
+  assert.equal(perfilDelLink(""), null);
+});
+
+test("recuperar con un link que no existe: no toca nada", async () => {
+  const nuevo = new Map();
+  dispositivo(nuevo);
+  nuevo.set("noli.datos." + JUEGO, JSON.stringify({ nivel: 1 }));
+  assert.equal(await actions.recuperarNube("abcdefghijkmnpqrstuvwxyz"), false);
+  assert.equal(state.nube.perfil, null);
+  assert.match(state.nube.error, /no corresponde/);
+  assert.deepEqual(JSON.parse(nuevo.get("noli.datos." + JUEGO)), { nivel: 1 });
+});
+
+test("recuperar: la nube gana aunque lo de aquí sea más nuevo, y lo que la nube no tiene se sube", async () => {
+  // La TV quedó desvinculada con nivel 8 (más nuevo que el 7 de la nube): al recuperar, se queda el 7
+  dispositivo(tv);
+  tv.set("noli.datos.otro-juego", JSON.stringify({ x: 1 }));
+  state.juegos = [{ id: JUEGO }, { id: "otro-juego" }];
+  reloj += 1000;
+  assert.equal(await actions.recuperarNube(perfil), true);
+  assert.equal(state.nube.perfil, perfil);
+  assert.equal(tv.get("noli.nube.perfil"), perfil);
+  assert.equal(state.nube.estado, "lista");
+  assert.match(state.nube.aviso, /recuperado/);
+  assert.deepEqual(JSON.parse(tv.get("noli.datos." + JUEGO)), { nivel: 7 });
+  assert.deepEqual((await nubeDe(perfil))["otro-juego"].datos, { x: 1 });
+  assert.equal(sync.miLinkRecuperacion("https://x/noli/"), `https://x/noli/#recuperar=${perfil}`);
+});

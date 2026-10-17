@@ -11,7 +11,7 @@
 // Si lo juntado tiene algo que la nube no, se vuelve a subir.
 import { ls, leerJsonLs, leerDatosJuego, guardarDatosJuego, initFirebase,
   crearPerfil, existePerfil, nuevoIdPerfil, subirJuego, leerJuegos, escucharJuegos,
-  crearVinculo, escucharVinculo, borrarVinculo, completarVinculo, VINCULO_DURA_MS } from "../services/index.js";
+  crearVinculo, escucharVinculo, borrarVinculo, completarVinculo, VINCULO_DURA_MS, linkRecuperacion } from "../services/index.js";
 import { leerLibro, unir, iguales } from "../engine/index.js";
 import { state, notify } from "./store.js";
 
@@ -232,6 +232,36 @@ export async function vincularOtro(codigo) {
     return false;
   }
 }
+
+// Recuperar con el link de recuperación (perfilDelLink): vincula este dispositivo a ese perfil y trae TODO lo de la
+// nube aunque lo de aquí sea más nuevo (por ejemplo, si el navegador borró el progreso y la niña volvió a empezar).
+// Se olvidan las fechas de aquí, así que en cada juego gana la nube; lo que la nube no tiene se queda y se sube.
+// Los créditos se juntan como siempre. Si el perfil no existe, no se toca nada.
+export async function recuperar(perfil) {
+  poner({ estado: "conectando", error: "", aviso: "" }, "nube");
+  try {
+    fs = await cfg.obtenerFs();
+    if (!(await existePerfil(fs, perfil))) {
+      poner({ estado: state.nube.perfil ? "lista" : "apagada", error: "Ese link de recuperación no corresponde a ningún progreso guardado." }, "nube");
+      return false;
+    }
+  } catch (e) {
+    poner({ estado: state.nube.perfil ? "sin-conexion" : "apagada", error: "No se pudo conectar con la nube. Revisa el internet y vuelve a abrir el link." }, "nube");
+    return false;
+  }
+  if (dejarDeEscuchar) { dejarDeEscuchar(); dejarDeEscuchar = null; }
+  for (const id of Object.keys(meta)) if (id !== CREDITOS) delete meta[id];
+  guardarMeta();
+  ls.set(K.perfil, perfil);
+  state.nube.perfil = perfil;
+  await conectar();
+  if (state.nube.estado !== "lista") return false;
+  poner({ aviso: "¡Progreso recuperado! Este dispositivo ya tiene lo que estaba en la nube." }, "nube");
+  return true;
+}
+
+// El link para guardar y abrir en un dispositivo que perdió el progreso (solo si hay perfil)
+export function miLinkRecuperacion(base) { return state.nube.perfil ? linkRecuperacion(base, state.nube.perfil) : null; }
 
 // Este dispositivo deja de sincronizar (lo guardado aquí se queda)
 export function desvincular() {

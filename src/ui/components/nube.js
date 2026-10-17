@@ -42,6 +42,7 @@ export function renderNube() {
   on("#nubeCancelar", actions.cancelarVinculo);
   on("#nubeReintentar", actions.reintentarNube);
   on("#nubeDesvincular", () => { if (confirm("¿Dejar de sincronizar este dispositivo? Lo guardado aquí se queda.")) actions.desvincular(); });
+  on("#nubeCompartir", () => compartirLink($("#nubeCompartir")));
   const input = $("#codigoOtro");
   if (input) {
     input.value = codigoEscrito;
@@ -51,6 +52,25 @@ export function renderNube() {
   }
   const f = habiaFoco && cont.querySelector("#" + habiaFoco);
   if (f) f.focus(); else focoInicial(cont);
+}
+
+// Link de recuperación de este perfil (ver sync.recuperar)
+const linkActual = () => actions.linkRecuperacion(location.origin + location.pathname) || "";
+const puedeCompartir = () => typeof navigator !== "undefined" && typeof navigator.share === "function";
+async function compartirLink(boton) {
+  const url = linkActual();
+  if (!url) return;
+  if (puedeCompartir()) {
+    try { await navigator.share({ title: "Noli: link de recuperación", url }); } catch {}
+    return;
+  }
+  let ok = false;
+  try { await navigator.clipboard.writeText(url); ok = true; } catch {}
+  if (!ok) { // sin portapapeles: seleccionar el texto para copiarlo a mano
+    const el = document.getElementById("nubeLink");
+    if (el && window.getSelection) { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  }
+  if (boton) { boton.textContent = ok ? "¡Copiado!" : "Cópialo de arriba"; setTimeout(() => { boton.textContent = "Copiar link"; }, 2000); }
 }
 
 function ventana(n) {
@@ -76,6 +96,13 @@ function ventana(n) {
       <label class="otro"><span>Para vincular otro dispositivo, escribe el código que enseña:</span>
         <span class="fila"><input id="codigoOtro" inputmode="numeric" pattern="[0-9]*" maxlength="7" autocomplete="off" placeholder="123 456" data-foco="inicial">
         <button class="boton primario" id="nubeVincularOtro" data-foco>Vincular</button></span></label>
+      <div class="recuperar">
+        <p><b>Link de recuperación</b> (para papá o mamá): guárdalo en tus notas. Si un dispositivo pierde el progreso,
+          ábrelo ahí y se recupera todo lo de la nube.</p>
+        <p class="link" id="nubeLink">${esc(linkActual())}</p>
+        <div class="botones"><button class="boton" id="nubeCompartir" data-foco>${puedeCompartir() ? "Compartir link" : "Copiar link"}</button></div>
+        <p class="nota">Quien tenga este link puede ver y cambiar el progreso: no lo publiques.</p>
+      </div>
       <div class="botones"><button class="boton chico" id="nubeDesvincular" data-foco>Desvincular este dispositivo</button></div>`;
   }
   return `<div class="fondo"><div class="ventana" role="dialog" aria-modal="true" aria-labelledby="nubeTitulo">
