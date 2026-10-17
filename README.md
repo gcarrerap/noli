@@ -95,8 +95,8 @@ Los juegos educativos dan **créditos**: 1 por cada estrella y 2 más por el ret
 
 El progreso (niveles, rachas, estrellas) se puede compartir entre la TV y el teléfono. Toca la **nube** arriba a la derecha del catálogo:
 
-1. **En el primer dispositivo** (el que ya tiene el progreso, por ejemplo el teléfono): **Es el primero: guardar en la nube**.
-2. **En cada dispositivo nuevo** (la TV): **Ya lo tengo en otro dispositivo: vincular**. La TV enseña un código de 6 números.
+1. **En el teléfono**: **Entrar con la cuenta de Google de Noelia**. Su progreso queda ligado a su cuenta: en un teléfono nuevo solo vuelve a entrar con ella. Es una cuenta de Family Link, así que la primera vez puede que haya que aprobar Noli desde Family Link. (Sin cuenta también se puede: **Es el primero: guardar en la nube sin cuenta**.)
+2. **En cada dispositivo nuevo** (la TV): **Ya lo tengo en otro dispositivo: vincular con código**. La TV enseña un código de 6 números (escribir una cuenta de Google con el control de la TV es muy incómodo).
 3. **En el teléfono**: nube → escribe ese código → **Vincular**. Listo: los dos tienen el mismo progreso y se actualizan solos.
 
 Sin internet se sigue jugando; lo nuevo se sube al regresar la conexión.
@@ -111,7 +111,9 @@ Para que funcione la nube, el control remoto y `admin.html`, el proyecto necesit
 2. **Authentication → Configuración → Dominios autorizados:** agregar `gcarrerap.github.io`.
 3. **Firestore → Reglas:** copiar [`firestore.rules`](firestore.rules) completo y publicarlas (y volver a publicarlas cada vez que cambien). Como el proyecto es solo de Noli, publicar reemplaza todo sin afectar otras apps.
 
-#### Migrar el progreso desde `dominomx` (una sola vez)
+#### Migrar el progreso desde `dominomx` (opcional)
+
+No hace falta: si un dispositivo vinculado no encuentra su perfil en el proyecto nuevo, lo vuelve a crear con el mismo id y sube lo que tiene guardado (#114). La migración solo sirve para traer los nombres de `admin.html` o el progreso de un dispositivo que ya no se usa.
 
 [`scripts/migrar-dominomx.mjs`](scripts/migrar-dominomx.mjs) copia `noli_perfiles` y sus `juegos` con los mismos ids, así cada dispositivo sigue vinculado sin hacer nada. No borra nada de `dominomx`. `noli_vinculos` y `noli_salas` no se copian (duran minutos).
 

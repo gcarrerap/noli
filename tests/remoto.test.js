@@ -364,6 +364,27 @@ test("firebase: el control remoto comparte la conexión de la nube y recibe el u
   delete globalThis.firebase;
 });
 
+test("firebase: entrar con la cuenta de Google (#114), redirección si no hay popup, y salir vuelve a invitado", async () => {
+  let fb = fakeFirebase();
+  globalThis.firebase = fb.firebase;
+  firebaseSvc._resetInitForTests();
+  assert.equal(firebaseSvc.usuarioGoogle(), null, "sin entrar");
+  const u = await firebaseSvc.entrarGoogle({ projectId: "gcarrerap-noli" });
+  assert.deepEqual(u, { uid: "g1", email: "memo@example.com" });
+  assert.ok(fb.calls.includes("prompt:select_account"));
+  await firebaseSvc.salirGoogle();
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(firebaseSvc.usuarioGoogle(), null, "otra vez invitado");
+  assert.equal(fb.calls.filter((c) => c === "signInAnonymously").length, 2);
+  fb = fakeFirebase({ popup: "auth/popup-blocked" });
+  globalThis.firebase = fb.firebase;
+  firebaseSvc._resetInitForTests();
+  assert.equal(await firebaseSvc.entrarGoogle({ projectId: "gcarrerap-noli" }), null);
+  assert.ok(fb.calls.includes("signInWithRedirect"));
+  firebaseSvc._resetInitForTests();
+  delete globalThis.firebase;
+});
+
 // ---------- El teléfono (app/telefono.js) ----------
 
 test("teléfono: el código sale de la liga del QR o del último usado; uno equivocado se olvida", async () => {

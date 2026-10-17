@@ -1,6 +1,6 @@
 // Conexión con Firebase (SDK compat del CDN, como global `firebase`), igual que en myDomino y myPata.
-// Es el único módulo que toca `firebase`. Noli solo usa la entrada anónima: el progreso se liga a un perfil
-// (ver services/nube.js), no a una cuenta.
+// Es el único módulo que toca `firebase`. Se entra como invitado (anónimo); en el teléfono se puede entrar con la
+// cuenta de Google de Noelia (#114) para que su perfil quede ligado a esa cuenta (ver services/nube.js).
 
 // El SDK se carga aquí, después de dibujar la pantalla, y no en el <head> de index.html: así el catálogo y los
 // juegos aparecen de inmediato aunque el CDN tarde o no responda, y solo se carga si la nube está activada.
@@ -40,6 +40,33 @@ export async function conectarFirebase(config = window.FIREBASE_CONFIG) {
   const fs = await initFirebase(undefined, config);
   if (!usuario) throw new Error("sin usuario");
   return { fs, uid: usuario.uid };
+}
+
+// ---------- Cuenta de Google de Noelia (#114) ----------
+// Popup primero; si el navegador no lo deja, redirección (la página se vuelve a abrir ya con la sesión: lo termina
+// app/sync.js → terminarEntrada). Devuelve { uid, email }, o null si se fue por redirección.
+const deGoogle = (u) => (u && !u.isAnonymous ? { uid: u.uid, email: u.email || "" } : null);
+export function usuarioGoogle() { return deGoogle(usuario); }
+export async function entrarGoogle(config = window.FIREBASE_CONFIG) {
+  await initFirebase(undefined, config);
+  const auth = firebase.auth();
+  const prov = new firebase.auth.GoogleAuthProvider();
+  prov.setCustomParameters({ prompt: "select_account" });
+  try {
+    const r = await auth.signInWithPopup(prov);
+    usuario = (r && r.user) || auth.currentUser || usuario;
+    return deGoogle(usuario);
+  } catch (e) {
+    if (e && ["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/cancelled-popup-request"].includes(e.code)) {
+      await auth.signInWithRedirect(prov);
+      return null;
+    }
+    throw e;
+  }
+}
+// Salir de la cuenta de Google: se vuelve a entrar como invitado solo (onAuthStateChanged de iniciar)
+export async function salirGoogle() {
+  if (deGoogle(usuario) && window.firebase) await firebase.auth().signOut(); // hay usuario: Firebase ya se inició
 }
 
 async function iniciar(onUser, config) {

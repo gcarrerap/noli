@@ -9,15 +9,21 @@
 // Excepción: los créditos ("_creditos", #20) no se pisan, se JUNTAN (engine/creditos.js → unir): son un libro de
 // movimientos y la unión de los dos lados nunca pierde lo que se ganó o gastó en otro dispositivo sin conexión.
 // Si lo juntado tiene algo que la nube no, se vuelve a subir.
+//
+// Cuenta de Google (#114): en el teléfono se puede entrar con la cuenta de Noelia. La cuenta apunta a un perfil
+// (noli_cuentas); la primera vez se liga al perfil de este dispositivo (o a uno nuevo). La TV sigue con el código.
+// Si el perfil de un dispositivo no existe en la nube (p. ej. al cambiar de proyecto de Firebase, #112), se vuelve
+// a crear con el mismo id y se sube lo de aquí.
 import { ls, leerJsonLs, leerDatosJuego, guardarDatosJuego, initFirebase,
   crearPerfil, existePerfil, nuevoIdPerfil, subirJuego, leerJuegos, escucharJuegos,
-  crearVinculo, escucharVinculo, borrarVinculo, completarVinculo, VINCULO_DURA_MS, linkRecuperacion } from "../services/index.js";
+  crearVinculo, escucharVinculo, borrarVinculo, completarVinculo, VINCULO_DURA_MS, linkRecuperacion,
+  leerCuenta, ligarCuenta, entrarGoogle, salirGoogle, usuarioGoogle } from "../services/index.js";
 import { leerLibro, unir, iguales } from "../engine/index.js";
 import { state, notify } from "./store.js";
 
 export const CATALOGO = "_catalogo";
 export const CREDITOS = "_creditos";
-const K = { perfil: "noli.nube.perfil", meta: "noli.nube.meta", dev: "noli.dev" };
+const K = { perfil: "noli.nube.perfil", meta: "noli.nube.meta", dev: "noli.dev", cuenta: "noli.nube.cuenta", entrando: "noli.nube.entrando" };
 
 // Id de este dispositivo (se guarda la primera vez). Marca los movimientos de créditos que crea este aparato.
 function idDispositivo() {
@@ -28,7 +34,8 @@ function idDispositivo() {
 let dispositivo = idDispositivo();
 export { dispositivo };
 
-let cfg = { obtenerFs: () => initFirebase(), espera: 1500, ahora: () => Date.now() };
+let cfg = { obtenerFs: () => initFirebase(), espera: 1500, ahora: () => Date.now(),
+  entrarGoogle: () => entrarGoogle(), salirGoogle: () => salirGoogle(), usuarioGoogle: () => usuarioGoogle() };
 let fs = null, dejarDeEscuchar = null, dejarVinculo = null, timerSubir = null, timerVinculo = null;
 let meta = leerJsonLs(K.meta, {});
 
@@ -49,7 +56,7 @@ export function _reiniciar() {
 
 function inicial() {
   return { estado: ls.get(K.perfil) ? "conectando" : "apagada", perfil: ls.get(K.perfil) || null, codigo: null, expira: 0,
-    error: "", aviso: "", ultima: 0 };
+    error: "", aviso: "", ultima: 0, cuenta: (ls.get(K.perfil) && ls.get(K.cuenta)) || null };
 }
 Object.assign(state.nube, inicial());
 
@@ -155,9 +162,8 @@ export async function conectar() {
   poner({ estado: "conectando", error: "" }, "nube");
   try {
     fs = await cfg.obtenerFs();
-    if (!(await existePerfil(fs, state.nube.perfil))) {
-      return poner({ estado: "error", error: "Este dispositivo estaba vinculado a un perfil que ya no existe. Desvincúlalo y vuelve a vincularlo." }, "nube");
-    }
+    // Perfil que no está en la nube (se cambió de proyecto, #112): se vuelve a crear con el mismo id y se sube lo de aquí
+    if (!(await existePerfil(fs, state.nube.perfil))) await crearPerfil(fs, state.nube.perfil, cfg.ahora());
     await reconciliar();
     if (dejarDeEscuchar) dejarDeEscuchar();
     dejarDeEscuchar = escucharJuegos(fs, state.nube.perfil, (lista) => { if (aplicarRemotos(lista)) poner({ ultima: cfg.ahora() }, "nube"); },
@@ -188,6 +194,65 @@ export async function activar() {
   } catch (e) {
     poner({ estado: "error", error: "No se pudo conectar con la nube. Revisa el internet e intenta otra vez." }, "nube");
   }
+}
+
+// ---------- Cuenta de Google de Noelia (#114) ----------
+
+const mensajeGoogle = (e) => "No se pudo entrar con Google" + (e && e.code ? ` (${e.code})` : "") +
+  ". Si es una cuenta de Family Link, puede que papá o mamá tengan que aprobar Noli desde Family Link.";
+
+export async function entrarConGoogle() {
+  poner({ estado: "conectando", error: "", aviso: "" }, "nube");
+  try {
+    fs = await cfg.obtenerFs();
+    ls.set(K.entrando, "1"); // por si se va por redirección: al regresar, terminarEntrada() sigue
+    const u = await cfg.entrarGoogle();
+    if (!u) return; // redirección
+    await usarCuenta(u);
+  } catch (e) {
+    ls.set(K.entrando, "");
+    const cancelo = e && ["auth/popup-closed-by-user", "auth/cancelled-popup-request", "auth/user-cancelled"].includes(e.code);
+    poner({ estado: state.nube.perfil ? "lista" : "apagada", error: cancelo ? "" : mensajeGoogle(e) }, "nube");
+    if (state.nube.perfil) conectar();
+  }
+}
+
+// Al abrir la página después de una redirección de Google
+export async function terminarEntrada() {
+  ls.set(K.entrando, "");
+  try {
+    fs = await cfg.obtenerFs();
+    const u = cfg.usuarioGoogle();
+    if (u) return await usarCuenta(u);
+  } catch (e) {
+    console.warn("[nube]", e);
+  }
+  if (state.nube.perfil) return conectar();
+  poner({ estado: "apagada" }, "nube");
+}
+
+// La cuenta ya tiene perfil: este dispositivo se cambia a ése (gana lo más nuevo, como al vincular). Si no tiene,
+// se le liga el de este dispositivo, o uno nuevo.
+async function usarCuenta(u) {
+  ls.set(K.entrando, "");
+  let perfil = await leerCuenta(fs, u.uid);
+  if (!perfil) {
+    perfil = state.nube.perfil || nuevoIdPerfil();
+    if (!(await existePerfil(fs, perfil))) await crearPerfil(fs, perfil, cfg.ahora());
+    await ligarCuenta(fs, u.uid, perfil, cfg.ahora());
+  }
+  if (dejarDeEscuchar) { dejarDeEscuchar(); dejarDeEscuchar = null; }
+  const cuenta = u.email || "Google";
+  ls.set(K.perfil, perfil); ls.set(K.cuenta, cuenta);
+  Object.assign(state.nube, { perfil, cuenta });
+  await conectar();
+  if (state.nube.estado === "lista") poner({ aviso: "¡Listo! El progreso de Noelia queda guardado en su cuenta de Google." }, "nube");
+}
+
+// Al abrir el catálogo: terminar una entrada con Google pendiente, o conectar si hay perfil
+export function iniciarNube() {
+  if (ls.get(K.entrando)) return terminarEntrada();
+  if (state.nube.perfil) return conectar();
 }
 
 // Dispositivo nuevo (la TV): enseña un código y espera a que el otro lo escriba
@@ -266,6 +331,7 @@ export function miLinkRecuperacion(base) { return state.nube.perfil ? linkRecupe
 // Este dispositivo deja de sincronizar (lo guardado aquí se queda)
 export function desvincular() {
   if (dejarDeEscuchar) { dejarDeEscuchar(); dejarDeEscuchar = null; }
-  ls.set(K.perfil, "");
-  poner({ ...inicial(), perfil: null, estado: "apagada", aviso: "Este dispositivo ya no se sincroniza." }, "nube");
+  ls.set(K.perfil, ""); ls.set(K.cuenta, "");
+  if (state.nube.cuenta) Promise.resolve().then(() => cfg.salirGoogle()).catch((e) => console.warn("[nube]", e));
+  poner({ ...inicial(), perfil: null, cuenta: null, estado: "apagada", aviso: "Este dispositivo ya no se sincroniza." }, "nube");
 }

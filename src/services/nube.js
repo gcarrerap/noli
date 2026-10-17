@@ -37,6 +37,19 @@ export async function existePerfil(fs, perfil) {
   return (await fs.doc(`${PERFILES}/${perfil}`).get()).exists;
 }
 
+// ---------- Cuenta de Google (#114) ----------
+// noli_cuentas/{uid de Google} = { perfil, creada }: qué perfil es el de esa cuenta. Solo la propia cuenta lo lee
+// y lo crea (firestore.rules); no se guarda el correo.
+export const CUENTAS = "noli_cuentas";
+export async function leerCuenta(fs, uid) {
+  const s = await fs.doc(`${CUENTAS}/${uid}`).get();
+  const d = s.exists ? s.data() || {} : {};
+  return typeof d.perfil === "string" && d.perfil.length >= 20 ? d.perfil : null;
+}
+export async function ligarCuenta(fs, uid, perfil, ahora = Date.now()) {
+  await fs.doc(`${CUENTAS}/${uid}`).set({ perfil, creada: ahora });
+}
+
 // ---------- Administrador (admin.html) ----------
 // Las reglas solo dejan listar perfiles y ponerles nombre a la cuenta de Google del administrador (firestore.rules).
 

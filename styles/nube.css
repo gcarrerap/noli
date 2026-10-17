@@ -33,3 +33,4 @@
 .ventana .recuperar{display:flex;flex-direction:column;gap:8px;border-top:2px dashed var(--line);padding-top:12px}
 .ventana .recuperar .link{font-family:ui-monospace,monospace;font-size:.85rem;word-break:break-all;background:var(--card);
   border:2px solid var(--line);border-radius:12px;padding:.5em .7em;user-select:all;-webkit-user-select:all}
+.ventana .cuenta{word-break:break-all}

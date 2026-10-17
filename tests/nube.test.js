@@ -159,3 +159,84 @@ test("recuperar: la nube gana aunque lo de aquí sea más nuevo, y lo que la nub
   assert.deepEqual((await nubeDe(perfil))["otro-juego"].datos, { x: 1 });
   assert.equal(sync.miLinkRecuperacion("https://x/noli/"), `https://x/noli/#recuperar=${perfil}`);
 });
+
+// ---------- Perfil que ya no está en la nube (#112) y cuenta de Google (#114) ----------
+
+test("perfil que no existe en la nube: se vuelve a crear con el mismo id y se sube lo de aquí", async () => {
+  const otra = new Map([["noli.nube.perfil", "z".repeat(24)], ["noli.datos." + JUEGO, JSON.stringify({ nivel: 9 })]]);
+  dispositivo(otra);
+  await sync.conectar();
+  assert.equal(state.nube.estado, "lista");
+  assert.equal(state.nube.error, "");
+  assert.ok(fs._docs.has(`${PERFILES}/${"z".repeat(24)}`));
+  assert.deepEqual((await nubeDe("z".repeat(24)))[JUEGO].datos, { nivel: 9 });
+});
+
+let google = null, salidas = 0;
+sync._configurar({ entrarGoogle: async () => { if (google instanceof Error) throw google; return google; },
+  usuarioGoogle: () => (google instanceof Error ? null : google), salirGoogle: async () => { salidas++; } });
+
+test("entrar con Google la primera vez: liga la cuenta al perfil de este dispositivo", async () => {
+  dispositivo(telefono);
+  google = { uid: "noeG", email: "noe@gmail.com" };
+  await actions.entrarConGoogle();
+  assert.equal(state.nube.perfil, perfil, "no cambia de perfil");
+  assert.equal(state.nube.cuenta, "noe@gmail.com");
+  assert.equal(state.nube.estado, "lista");
+  assert.match(state.nube.aviso, /cuenta de Google/);
+  assert.equal(fs._docs.get("noli_cuentas/noeG").perfil, perfil);
+  assert.ok(!JSON.stringify(fs._docs.get("noli_cuentas/noeG")).includes("@"), "no se guarda el correo");
+});
+
+test("entrar con Google en un teléfono nuevo: toma el perfil de la cuenta y junta lo de aquí", async () => {
+  const nuevo = new Map([["noli.datos.juego-nuevo", JSON.stringify({ y: 2 })]]);
+  dispositivo(nuevo);
+  state.juegos = [{ id: JUEGO }, { id: "juego-nuevo" }];
+  reloj += 1000;
+  await actions.entrarConGoogle();
+  assert.equal(state.nube.perfil, perfil);
+  assert.equal(nuevo.get("noli.nube.perfil"), perfil);
+  assert.equal(nuevo.get("noli.nube.cuenta"), "noe@gmail.com");
+  assert.ok(JSON.parse(nuevo.get("noli.datos." + JUEGO)), "trajo lo de la nube");
+  assert.deepEqual((await nubeDe(perfil))["juego-nuevo"].datos, { y: 2 }, "subió lo de aquí");
+});
+
+test("entrar con Google sin perfil ni cuenta: crea un perfil nuevo", async () => {
+  dispositivo(new Map());
+  google = { uid: "otraG", email: "" };
+  await actions.entrarConGoogle();
+  assert.match(state.nube.perfil, /^[a-z2-9]{24}$/);
+  assert.notEqual(state.nube.perfil, perfil);
+  assert.equal(fs._docs.get("noli_cuentas/otraG").perfil, state.nube.perfil);
+  assert.equal(state.nube.cuenta, "Google");
+});
+
+test("entrar con Google: cancelar no enseña error; un error de verdad sí (Family Link)", async () => {
+  dispositivo(new Map());
+  google = Object.assign(new Error("x"), { code: "auth/popup-closed-by-user" });
+  await actions.entrarConGoogle();
+  assert.equal(state.nube.estado, "apagada");
+  assert.equal(state.nube.error, "");
+  google = Object.assign(new Error("x"), { code: "auth/admin-restricted-operation" });
+  await actions.entrarConGoogle();
+  assert.match(state.nube.error, /Family Link/);
+  assert.equal(state.nube.perfil, null);
+});
+
+test("redirección de Google: al volver a abrir, se termina la entrada", async () => {
+  const red = new Map([["noli.nube.entrando", "1"]]);
+  dispositivo(red);
+  google = { uid: "noeG", email: "noe@gmail.com" };
+  await sync.iniciarNube();
+  assert.equal(state.nube.perfil, perfil);
+  assert.equal(red.get("noli.nube.entrando"), "");
+});
+
+test("desvincular con cuenta: sale de Google y olvida la cuenta", async () => {
+  const antes = salidas;
+  actions.desvincular();
+  await pausa();
+  assert.equal(salidas, antes + 1);
+  assert.equal(state.nube.cuenta, null);
+  assert.equal(state.nube.perfil, null);
+});

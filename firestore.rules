@@ -26,6 +26,17 @@ service cloud.firestore {
           && request.resource.data.actualizado is number;
       }
     }
+    // Cuenta de Google de Noelia (#114): qué perfil es el de esa cuenta. Solo la propia cuenta (entrando con Google,
+    // no como invitado) la lee y la crea; no se cambia ni se borra desde el juego, y no se guarda el correo.
+    match /noli_cuentas/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.resource.data.keys().hasOnly(['perfil', 'creada'])
+        && request.resource.data.perfil is string && request.resource.data.perfil.size() >= 20
+        && request.resource.data.creada is number;
+      allow list, update, delete: if false;
+    }
     // Códigos para vincular un dispositivo: 6 dígitos, duran 10 minutos. Se leen con get (no se pueden listar);
     // el dispositivo que ya tiene el perfil solo puede escribirle el perfil una vez.
     match /noli_vinculos/{codigo} {

@@ -26,13 +26,14 @@ export const actions = {
     if (state.materia && !materias(state.juegos.filter((j) => jugableEn(j, state.modo))).includes(state.materia)) state.materia = null;
     state.foco = 0; state.cargando = false; notify();
     if (opts && opts.recuperar) await actions.recuperarNube(opts.recuperar); // abrieron un link de recuperación
-    else if (state.nube.perfil) sync.conectar(); // la nube después del catálogo: nunca lo retrasa
+    else sync.iniciarNube(); // la nube después del catálogo: nunca lo retrasa
   },
 
   // ---------- Nube (#7) ----------
   abrirNube() { state.nubeAbierta = true; state.nube.aviso = ""; if (state.nube.estado !== "error") state.nube.error = ""; notify(); },
   cerrarNube() { if (state.nube.codigo) sync.cancelarVinculo(); state.nubeAbierta = false; notify(); },
   activarNube: () => sync.activar(),
+  entrarConGoogle: () => sync.entrarConGoogle(),
   empezarVinculo: () => sync.empezarVinculo(),
   cancelarVinculo: () => sync.cancelarVinculo(),
   vincularOtro: (codigo) => sync.vincularOtro(codigo),
