@@ -44,7 +44,7 @@ noli/
 │   ├── version.js             # versión publicada (cámbiala en cada publicación)
 │   ├── engine/                # manifiesto.js, catalogo.js, mundo.js (§13)
 │   ├── mundo/                 # escena del mundo (§13): escena-mundo.js, edificios.js, vista.js
-│   ├── config.js              # FIREBASE_CONFIG (dominomx; script clásico)
+│   ├── config.js              # FIREBASE_CONFIG (gcarrerap-noli; script clásico)
 │   ├── services/              # catalogo-repo.js, prefs.js, updates.js, firebase.js, nube.js
 │   ├── app/                   # store.js, actions.js, updates.js, sync.js
 │   └── ui/                    # render.js, entrada.js, labels.js, screens/{mundo,catalogo,jugando}.js, components/
@@ -186,7 +186,7 @@ Inventario (la prueba del catálogo revisa que cada juego lo declare y que la ta
 2. El teléfono abre `control.html` (o lee el QR) y se empareja.
 3. El teléfono manda acciones; en la TV entran por **`actions.entrada(accion)`**, el mismo punto que el teclado, así que ni el catálogo ni los juegos cambian.
 
-**Canal propuesto:** `RTCDataChannel` de WebRTC directo entre teléfono y TV (latencia de decenas de ms, sin servidor de por medio), con la **señalización por Firestore** que ya funciona en las llamadas de myPata (`services/call-signaling.js`: un solo lado ofrece, el otro responde). Si WebRTC no conecta (algunas redes con CGNAT), respaldo: las acciones van como documentos en Firestore (unos 100–300 ms, suficiente para juegos por turnos). **Firebase:** el proyecto `dominomx`, el mismo del dominó y la pata, con colecciones con prefijo `noli_` (`noli_salas`) y preferencias con prefijo `noli.`; sus reglas se agregan al `firestore.rules` compartido sin tocar las del dominó ni las de la pata. Al conectarse, se reutiliza `services/firebase.js` del dominó (SDK compat del CDN, cargado después de dibujar, entrada anónima).
+**Canal propuesto:** `RTCDataChannel` de WebRTC directo entre teléfono y TV (latencia de decenas de ms, sin servidor de por medio), con la **señalización por Firestore** que ya funciona en las llamadas de myPata (`services/call-signaling.js`: un solo lado ofrece, el otro responde). Si WebRTC no conecta (algunas redes con CGNAT), respaldo: las acciones van como documentos en Firestore (unos 100–300 ms, suficiente para juegos por turnos). **Firebase:** el proyecto propio `gcarrerap-noli` (#112; antes compartía `dominomx` con el dominó y la pata), con colecciones con prefijo `noli_` (`noli_salas`) y preferencias con prefijo `noli.`. Al conectarse, se reutiliza `services/firebase.js` del dominó (SDK compat del CDN, cargado después de dibujar, entrada anónima).
 
 **Cómo quedó (#3):**
 
@@ -223,7 +223,7 @@ GitHub Pages publica submódulos si son públicos y usan URL `https://`. Un jueg
 
 ### Nube (#7)
 
-El progreso se sincroniza entre la TV y el teléfono con Firestore (proyecto `dominomx`, colecciones `noli_`). Lo hace solo el catálogo (`app/sync.js`); los juegos no se enteran.
+El progreso se sincroniza entre la TV y el teléfono con Firestore (proyecto `gcarrerap-noli`, colecciones `noli_`). Lo hace solo el catálogo (`app/sync.js`); los juegos no se enteran.
 
 ```
 noli_perfiles/{perfil}                  { creado }                            perfil: 24 caracteres aleatorios
@@ -233,7 +233,7 @@ noli_vinculos/{código}                  { creado, expira, perfil }            6
 
 - **Perfil sin cuentas.** El id del perfil es la llave: las reglas dejan leerlo con `get` (sabiendo el id) pero no listar perfiles. La entrada es anónima, como en el dominó. Con un id de 24 caracteres (unos 124 bits), adivinarlo no es práctico. Lo que hay ahí es el progreso de un juego de sumas, no datos personales.
 - **Vincular sin teclear en la TV.** El dispositivo nuevo (la TV) **enseña** un código de 6 dígitos; el que ya tiene el perfil (el teléfono) lo **escribe**. El teléfono pone el id del perfil en `noli_vinculos/{código}`, la TV lo recibe, lo guarda y borra el código. El primer dispositivo crea el perfil con "Es el primero: guardar en la nube".
-- **Link de recuperación.** Con la nube activa, la ventana enseña `…/noli/#recuperar=<perfil>` (botón Compartir/Copiar). Abrirlo en un dispositivo pide confirmación, lo vincula a ese perfil y trae **todo** lo de la nube aunque lo de aquí sea más nuevo (se olvidan las fechas locales; lo que la nube no tiene se queda y se sube; los créditos se juntan). Va en el `#` para que no viaje al servidor, y se quita del URL al abrirlo. Si ningún dispositivo quedó vinculado, el link se arma a mano con el id de un documento de `noli_perfiles` en la consola de Firebase (`dominomx`).
+- **Link de recuperación.** Con la nube activa, la ventana enseña `…/noli/#recuperar=<perfil>` (botón Compartir/Copiar). Abrirlo en un dispositivo pide confirmación, lo vincula a ese perfil y trae **todo** lo de la nube aunque lo de aquí sea más nuevo (se olvidan las fechas locales; lo que la nube no tiene se queda y se sube; los créditos se juntan). Va en el `#` para que no viaje al servidor, y se quita del URL al abrirlo. Si ningún dispositivo quedó vinculado, el link se arma a mano con el id de un documento de `noli_perfiles` en la consola de Firebase (`gcarrerap-noli`).
 - **Administrador (`admin.html`).** Página sin liga desde Noli: entra con la cuenta de Google del administrador (`firestore.rules → esAdminNoli`, la única que puede **listar** perfiles y ponerles `nombre`). Enseña cada perfil ("cuenta") con créditos, Pasarela y libros, su link de recuperación, y deja sobrescribir: **créditos** (agrega un movimiento `regalo`/`ajuste` del dispositivo `admin` con la diferencia, porque el libro se junta y no se pisa, §12), **Pasarela** (`puntos`, `pasarelas`, `premios`; lo demás se queda) y **libros** (capítulos encontrados/leídos y "abrir todos"). Cada cambio se sube con `actualizado = ahora`, así gana en los dispositivos vinculados. "Cuenta nueva" crea un perfil vacío para llenarlo y abrir su link en un dispositivo que nunca tuvo nube. Lógica: `src/engine/admin.js`; página: `src/admin/main.js`; pruebas: `tests/admin.test.js`.
 - **Quién gana.** (Los créditos son la excepción: se juntan, no se pisan; ver §12.) Cada guardado marca `noli.nube.meta[id] = { actualizado, pendiente }`, haya nube o no. Al conectar y con cada cambio que llega (`onSnapshot`) gana, **por juego**, la versión con el `actualizado` más reciente. Lo pendiente se sube con una espera de 1.5 s y, si no hay internet, al regresar la conexión.
 - **Límite conocido:** si se juega el mismo juego en dos dispositivos sin conexión, al reconectar se queda el más reciente y lo del otro se pierde. Lo que ya había en un dispositivo antes de esta versión no tiene fecha, así que al vincularlo pierde contra la nube.

@@ -1,9 +1,6 @@
 rules_version = '2';
-// Reglas de Firestore del proyecto dominomx, que comparten tres apps: Noli (gcarrerap/noli), La Pata
-// (gcarrerap/myPata) y el dominó (gcarrerap/myDomino). Firestore tiene UN solo archivo de reglas por proyecto:
-// lo que se publique reemplaza todo, así que este archivo debe llevar los bloques de las tres apps.
-// Los bloques de La Pata y del dominó son copia exacta de myPata/firestore.rules (al 2026-10-08); si cambian allá,
-// hay que copiarlos aquí (y agregar el bloque de Noli allá) antes de volver a publicar.
+// Reglas de Firestore del proyecto gcarrerap-noli, que es solo de Noli (#112). Antes Noli vivía en dominomx junto
+// con La Pata y el dominó; ya no hay que copiar bloques de otras apps: publicar este archivo reemplaza todo y está bien.
 service cloud.firestore {
   match /databases/{database}/documents {
     // ---- Noli (gcarrerap/noli, #7) ----
@@ -68,35 +65,6 @@ service cloud.firestore {
         allow create: if request.auth != null
           && request.resource.data.accion in ['arriba', 'abajo', 'izquierda', 'derecha', 'ok', 'atras', 'brincar'];
       }
-    }
-    // ---- La Pata ----
-    // Mesas en línea: cualquier jugador con sesión (los invitados entran de forma anónima)
-    match /pata_mesas/{mesa} {
-      allow read, write: if request.auth != null;
-    }
-    // Rondas grabadas: los teléfonos solo pueden CREAR. Como el id de cada ronda es fijo, si dos teléfonos graban
-    // la misma ronda, el segundo intento es una actualización y se rechaza: nunca hay duplicados.
-    // Nadie las lee, cambia ni borra desde el juego; se leen con scripts/export-partidas.mjs (cuenta de servicio).
-    match /pata_rondas/{ronda} {
-      allow create: if request.auth != null
-        && request.resource.data.json is string
-        && request.resource.data.json.size() < 400000;
-      allow read, update, delete: if false;
-    }
-    // Llamadas de voz y video: quién está en la llamada de cada mesa (peers) y los mensajes para conectarse
-    // (signals). El audio y el video no pasan por Firestore, van directo entre teléfonos.
-    match /pata_llamadas/{mesa}/{document=**} {
-      allow read, write: if request.auth != null;
-    }
-    // ---- Dominó de la Familia (myDomino), mismo proyecto ----
-    match /mesas/{mesa} {
-      allow read, write: if request.auth != null;
-    }
-    match /manos/{mano} {
-      allow create: if request.auth != null
-        && request.resource.data.json is string
-        && request.resource.data.json.size() < 200000;
-      allow read, update, delete: if false;
     }
     match /{document=**} {
       allow read, write: if false;
