@@ -32,7 +32,8 @@ EXTRA = {
 # ---------- Continuidad (#123: la primera entrega de Petra cambió la hora del día, el casco y puso brillos verdes) ----------
 CASCO = ("Her space helmet is always the same homemade one: a plain cardboard box covered with uneven strips of silver duct "
          "tape, one big round hole for her face and two small air holes on the sides; it has no lights, no buttons, no "
-         "screens, no stickers and it never glows.")
+         "screens, no stickers and it never glows. It is a boxy cube with flat sides and sharp corners, with brown cardboard "
+         "showing between the tape strips; never a rounded metal or robot helmet.")
 VERDE = ("Only alien things glow lime green: Zib's antenna bulbs, the pumpkin spaceship and the glow-seeds. Nothing else "
          "glows green or cyan: no green lanterns, no green fireflies, no green streaks or aurora in the sky, no gadgets.")
 # Entrega 2 (#131): a Zib le salieron 2 antenas en 3 páginas y apareció una segunda "nave" de fondo
@@ -41,6 +42,11 @@ ZIB_ANTENAS = ("Zib has exactly THREE antennae on top of its head (one on the le
                "taller than wide, never lying sideways.")
 UNA_NAVE = ("There is only one spaceship in the whole story, the pumpkin spaceship: no other pods, vehicles, robots, "
             "machines or sci-fi gadgets anywhere in the scene (also not in the garage or the background).")
+# Entrega 3 (#133): pantallas con letras, la nave en la escuela, la calabaza del salón dibujada como nave y un platillo volador
+TEXTO = ("No screens, holograms, signs, labels or panels with writing or numbers anywhere; signs and book covers are blank or "
+         "have simple pictures only.")
+SIN_NAVE = ("The pumpkin spaceship is NOT in this scene (it stays hidden in Abuela's backyard); do not draw it, and do not "
+            "draw any flying saucer or UFO either.")
 LUNA_ANTES = ("If the moon is visible it is a waxing gibbous moon, almost full with a small dark sliver missing on one side "
               "(never a crescent, never completely full), because Halloween has not arrived yet.")
 LUNA_HALLOWEEN = "If the moon is visible it is a big, completely round full moon (it is Halloween night)."
@@ -72,6 +78,12 @@ EXTRA_PAGINA = {
     "c01-p02": "She wears white sneakers (no boots).",
     "c01-p08": "The pumpkin spaceship is closed and its small round window is dark (it does not glow yet).",
     "c01-p09": "The small round window on the pumpkin is dark and does not glow yet.",
+    "c03-p01": "Zib stays hidden inside the backpack; only its face peeks out of the zipper.",
+    "c03-p02": "Zib stays inside the backpack: only its three glowing antenna tips poke out of the top; Zib's body is not visible.",
+    "c03-p03": "The pumpkin on the teacher's desk is an ordinary orange pumpkin with a brown stem (no window, no metal, no lights).",
+    "c03-p07": ("The pumpkin on Ms. Patel's desk is an ordinary orange class pumpkin with a brown stem and its top cut like a "
+                "lid; it has no window, no metal parts and no lights; it is NOT the spaceship."),
+    "c03-p08": "The class pumpkin is an ordinary pumpkin full of pale seeds and goo; only the one seed glows.",
 }
 
 LEO_CABALLERO = " Leo is dressed as a knight: a silver foil helmet and a round cardboard shield painted with an orange pumpkin."
@@ -495,7 +507,9 @@ def main():
             prohibido += [f"{q}: {n}" for n in nunca.get(q, [])]
         cap = 0 if pid == "portada" else int(pid[1:3])
         momento = "night" if pid == "portada" else MOMENTO.get(pid, MOMENTO_CAP[cap])
-        reglas = [VERDE, UNA_NAVE]
+        reglas = [VERDE, UNA_NAVE, TEXTO]
+        if "nave" not in quien and pid != "portada":
+            reglas.append(SIN_NAVE)
         if "zib" in quien:
             reglas.append(ZIB_ANTENAS)
         if "mari" in quien and ropa in ("hoodie_casco", "pijama_botas", "astro"):
