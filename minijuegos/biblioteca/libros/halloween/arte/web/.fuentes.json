@@ -3,6 +3,16 @@
  "c01-2": "escenas/c01-2.jpg",
  "c01-3": "escenas/c01-3.jpg",
  "c01-4": "escenas/c01-4.jpg",
+ "c01-p01": "paginas/c01-p01.png",
+ "c01-p02": "paginas/c01-p02.png",
+ "c01-p03": "paginas/c01-p03.png",
+ "c01-p04": "paginas/c01-p04.png",
+ "c01-p05": "paginas/c01-p05.png",
+ "c01-p06": "paginas/c01-p06.png",
+ "c01-p07": "paginas/c01-p07.png",
+ "c01-p08": "paginas/c01-p08.png",
+ "c01-p09": "paginas/c01-p09.png",
+ "c01-p10": "paginas/c01-p10.png",
  "c02-1": "escenas/c02-1.jpg",
  "c02-2": "escenas/c02-2.jpg",
  "c02-3": "escenas/c02-3.jpg",
@@ -13,5 +23,5 @@
  "c03-4": "escenas/c03-4.jpg",
  "c04-1": "escenas/c04-1.jpg",
  "c04-2": "escenas/c04-2.jpg",
- "portada": "escenas/portada.jpg"
+ "portada": "paginas/portada.png"
 }
