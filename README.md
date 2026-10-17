@@ -22,6 +22,7 @@ La página principal es un **mundo mágico en 3D** (#25): Noelia camina y brinca
 | Biblioteca (`biblioteca`) | Inglés | 6–10 | #104: cuentos en inglés con voz grabada y la palabra que suena iluminada; Léemelo (narra y pasa de página sola) o Yo leo (tocar una palabra la dice); Despacio. Primer libro: *Mari and the Pumpkin Spaceship* (#96), 12 capítulos de Halloween, unas 3 horas de lectura |
 | Pasarela (`pasarela`) | Inglés (premio) | 6–11 | #19: juego de vestir en 3D: camina por un estudio hasta los percheros, vístete según el tema en 2:30, desfila y tres jueces te califican con un consejo; cada prenda y color en inglés; cuesta 3 créditos; maquillaje y joyería; al final escoge poses y bailes; los puntos de estilo abren poco a poco ropa, colores, temas y poses (30 niveles, de 1 a 3 cosas cada uno); la cámara enfoca lo que se prueba y se puede girar al personaje; modo sencillo 2D si el aparato no puede con el 3D. Documentación en [minijuegos/pasarela/docs](minijuegos/pasarela/docs/README.md) |
 | Mi Casita (`mi-casita`) | Matemáticas (premio) | 6–11 | #37: paga el mueble con las monedas exactas y lo acomoda en la cuadrícula. Cada visita cuesta 3 créditos y trae una bolsa fija (la de La Tienda: dólares o pesos). Si sale, ese día no se vuelve a cobrar. «Solo mirar» es gratis |
+| Cajas Sorpresa (`cajas-sorpresa`) | Premio | 6–11 | #59: con 5 créditos abre una caja sorpresa que trae un Brumito de una colección de 24 (comunes, raras y ultra raras). Máximo 2 cajas al día; los repetidos se vuelven polvo de estrellas para escoger el que falta. Sin dinero real |
 | Cuenta y toca (`ejemplo`) | Matemáticas | 4–7 | #1: ejemplo del contrato y plantilla para juegos nuevos |
 
 Cada juego nuevo se agrega con su propio issue.
@@ -48,6 +49,7 @@ Cada `juego.json` lo dice con `"tv"` (`true` = se juega completo con el control;
 | Biblioteca (`biblioteca`) | Sí | tactil, flechas, remoto | — |
 | Pasarela (`pasarela`) | Sí | tactil, flechas, remoto | — |
 | Mi Casita (`mi-casita`) | Sí | tactil, flechas, remoto | — |
+| Cajas Sorpresa (`cajas-sorpresa`) | Sí | tactil, flechas, remoto | — |
 | Cuenta y toca (`ejemplo`) | Sí | tactil, flechas, remoto | — |
 
 ## Cómo jugarlo

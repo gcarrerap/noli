@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<title>Cajas Sorpresa</title>
+<path d="M50 30C44 24 45 15 52 13C49 8 56 3 62 7C68 3 76 9 72 15C78 19 73 26 66 25C63 30 56 33 50 30Z" fill="#e6d7ff" stroke="#8f5bff" stroke-width="2.5"/>
+<rect x="16" y="46" width="68" height="44" rx="8" fill="#8f5bff" stroke="#2a1f3d" stroke-width="4"/>
+<rect x="44" y="46" width="12" height="44" fill="#ff9a3c" stroke="#2a1f3d" stroke-width="3"/>
+<rect x="11" y="34" width="78" height="15" rx="6" fill="#a777ff" stroke="#2a1f3d" stroke-width="4"/>
+<rect x="43" y="34" width="14" height="15" fill="#ffb15c" stroke="#2a1f3d" stroke-width="3"/>
+<path d="M29 66l2.4 4.9 5.4.7-4 3.7 1 5.3-4.8-2.6-4.8 2.6 1-5.3-4-3.7 5.4-.7z" fill="#ffe28a"/>
+<circle cx="72" cy="78" r="3" fill="#ffe28a"/>
+</svg>

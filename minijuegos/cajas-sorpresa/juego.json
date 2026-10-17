@@ -1,0 +1,16 @@
+{
+  "id": "cajas-sorpresa",
+  "titulo": "Cajas Sorpresa",
+  "descripcion": "Abre cajas sorpresa y junta los 24 Brumitos.",
+  "icono": "icono.svg",
+  "color": "#8f5bff",
+  "materia": "premios",
+  "edades": [6, 11],
+  "controles": ["tactil", "flechas", "remoto"],
+  "tv": true,
+  "ocultoEnTv": [],
+  "entrada": "index.html",
+  "version": "1",
+  "creditos": "gasta",
+  "costo": 5
+}
