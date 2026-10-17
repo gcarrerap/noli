@@ -38,10 +38,13 @@ export function renderNube() {
   on("#nubeCerrar", actions.cerrarNube);
   on(".fondo", (e) => { if (e.target === e.currentTarget) actions.cerrarNube(); });
   on("#nubeActivar", actions.activarNube);
+  on("#nubeGoogle", actions.entrarConGoogle);
   on("#nubeVincularEste", actions.empezarVinculo);
   on("#nubeCancelar", actions.cancelarVinculo);
   on("#nubeReintentar", actions.reintentarNube);
-  on("#nubeDesvincular", () => { if (confirm("¿Dejar de sincronizar este dispositivo? Lo guardado aquí se queda.")) actions.desvincular(); });
+  on("#nubeDesvincular", () => { if (confirm(state.nube.cuenta
+    ? "¿Salir de la cuenta de Google y dejar de sincronizar este dispositivo? Lo guardado aquí se queda."
+    : "¿Dejar de sincronizar este dispositivo? Lo guardado aquí se queda.")) actions.desvincular(); });
   on("#nubeCompartir", () => compartirLink($("#nubeCompartir")));
   const input = $("#codigoOtro");
   if (input) {
@@ -86,12 +89,17 @@ function ventana(n) {
     cuerpo = `
       <p>Guarda el progreso de Noelia en la nube para seguir en la TV o en el teléfono donde se quedó.</p>
       <div class="botones col">
-        <button class="boton primario" id="nubeVincularEste" data-foco="inicial">Ya lo tengo en otro dispositivo: vincular</button>
-        <button class="boton" id="nubeActivar" data-foco>Es el primero: guardar en la nube</button>
-      </div>`;
+        <button class="boton primario" id="nubeGoogle" data-foco>Entrar con la cuenta de Google de Noelia</button>
+        <button class="boton" id="nubeVincularEste" data-foco="inicial">Ya lo tengo en otro dispositivo: vincular con código</button>
+        <button class="boton" id="nubeActivar" data-foco>Es el primero: guardar en la nube sin cuenta</button>
+      </div>
+      <p class="nota">En la TV es más fácil vincular con código desde el teléfono que escribir la cuenta con el control.</p>`;
   } else {
     cuerpo = `
       <p>Este dispositivo comparte el progreso con los que estén vinculados.</p>
+      ${n.cuenta ? `<p class="cuenta">Cuenta de Google: <b>${esc(n.cuenta)}</b></p>`
+        : `<div class="botones col"><button class="boton" id="nubeGoogle" data-foco>Entrar con la cuenta de Google de Noelia</button></div>
+      <p class="nota">Así su progreso queda en su cuenta: en un teléfono nuevo solo entra con ella.</p>`}
       ${n.estado === "error" || n.estado === "sin-conexion" ? `<div class="botones"><button class="boton" id="nubeReintentar" data-foco>Reintentar</button></div>` : ""}
       <label class="otro"><span>Para vincular otro dispositivo, escribe el código que enseña:</span>
         <span class="fila"><input id="codigoOtro" inputmode="numeric" pattern="[0-9]*" maxlength="7" autocomplete="off" placeholder="123 456" data-foco="inicial">
@@ -103,7 +111,7 @@ function ventana(n) {
         <div class="botones"><button class="boton" id="nubeCompartir" data-foco>${puedeCompartir() ? "Compartir link" : "Copiar link"}</button></div>
         <p class="nota">Quien tenga este link puede ver y cambiar el progreso: no lo publiques.</p>
       </div>
-      <div class="botones"><button class="boton chico" id="nubeDesvincular" data-foco>Desvincular este dispositivo</button></div>`;
+      <div class="botones"><button class="boton chico" id="nubeDesvincular" data-foco>${n.cuenta ? "Salir de la cuenta y desvincular" : "Desvincular este dispositivo"}</button></div>`;
   }
   return `<div class="fondo"><div class="ventana" role="dialog" aria-modal="true" aria-labelledby="nubeTitulo">
     <header><h2 id="nubeTitulo">${NUBE_ICONO} Progreso en la nube</h2>
