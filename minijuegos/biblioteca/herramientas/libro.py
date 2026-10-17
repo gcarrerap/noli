@@ -3,7 +3,8 @@
 
 Lee  libros/<id>/texto/cap-NN.md   (páginas separadas con ---, ilustraciones marcadas con <!-- ilustracion: … -->)
      libros/<id>/escenas.json      (id de cada ilustración: portada, c01-1, c01-2, …)
-     libros/<id>/arte/escenas/*.jpg (las ilustraciones que ya existen; las que faltan se dejan en null)
+     libros/<id>/arte/escenas/*.jpg (las primeras ilustraciones, una cada varias páginas)
+     libros/<id>/arte/paginas/cNN-pMM.png (una ilustración por página, de Petra; ganan sobre las de escenas/)
 Escribe libros/<id>/libro.json, libros/<id>/audio/cNN/pMM.mp3 y libros/<id>/arte/web/<ilustracion>-{g,c}.jpg
 
 La voz es Piper en_US-ljspeech medium (dominio público), la misma de Spelling y Misión Luna. Cada página es un
@@ -245,17 +246,30 @@ def huella(pag):
 
 
 def ilustraciones_web(dir_libro):
-    """arte/escenas/<id>.jpg → arte/web/<id>-g.jpg (1600 px, TV) y <id>-c.jpg (800 px, teléfono)."""
-    hay = {}
-    for f in sorted((dir_libro / "arte" / "escenas").glob("*.jpg")):
+    """Copia reducida de cada ilustración para la web: arte/web/<id>-g.jpg (1600 px, TV) y <id>-c.jpg (800 px, teléfono).
+
+    Fuentes: arte/escenas/<id>.jpg (las primeras, una cada varias páginas) y arte/paginas/<id>.png (las de Petra, una
+    por página: c01-p01…, y portada). Si las dos tienen el mismo id (portada), gana la de arte/paginas/.
+    """
+    arte = dir_libro / "arte"
+    fuentes = {f.stem: f for f in sorted((arte / "escenas").glob("*.jpg"))}
+    for ext in ("png", "jpg"):
+        fuentes.update({f.stem: f for f in sorted((arte / "paginas").glob(f"*.{ext}"))})
+    marca = arte / "web" / ".fuentes.json"   # de qué archivo salió cada copia (para rehacerla si cambia la fuente)
+    antes = json.loads(marca.read_text(encoding="utf-8")) if marca.exists() else {}
+    ahora = {}
+    for stem, f in fuentes.items():
+        rel = str(f.relative_to(arte))
         for sufijo, ancho, q in (("g", 1600, 4), ("c", 800, 5)):
-            d = dir_libro / "arte" / "web" / f"{f.stem}-{sufijo}.jpg"
-            if not d.exists() or d.stat().st_mtime < f.stat().st_mtime:
+            d = arte / "web" / f"{stem}-{sufijo}.jpg"
+            if not d.exists() or d.stat().st_mtime < f.stat().st_mtime or antes.get(stem) != rel:
                 d.parent.mkdir(parents=True, exist_ok=True)
                 subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(f), "-vf", f"scale='min({ancho},iw)':-2",
                                 "-q:v", str(q), str(d)], check=True)
-        hay[f.stem] = True
-    return hay
+        ahora[stem] = rel
+    marca.parent.mkdir(parents=True, exist_ok=True)
+    marca.write_text(json.dumps(ahora, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    return ahora
 
 
 def main():
@@ -292,9 +306,12 @@ def main():
                 p["parrafos"], p["duracion"] = ant["parrafos"], ant.get("duracion")
             else:
                 p["audio"] = None
-            # La ilustración que le toca a la página: "ilustracion" si ya existe; "espera" si todavía no.
-            p["espera"] = p["ilustracion"] if p["ilustracion"] and p["ilustracion"] not in hay else None
-            p["ilustracion"] = p["ilustracion"] if p["ilustracion"] in hay else None
+            # Cada página tiene su ilustración (cNN-pMM, de Petra: #123). Mientras no llega, se usa la escena vieja que
+            # le tocaba a la página (si hay); "espera" dice qué ilustración falta.
+            propia = f"c{c['n']:02d}-p{k:02d}"
+            escena = p.pop("ilustracion")
+            p["ilustracion"] = propia if propia in hay else (escena if escena in hay else None)
+            p["espera"] = None if propia in hay else propia
             for par in p["parrafos"]:
                 for o in par:
                     o.pop("voz", None)

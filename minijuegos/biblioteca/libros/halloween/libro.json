@@ -12,7 +12,6 @@
    "titulo": "Something Fell in the Pumpkin Patch",
    "paginas": [
     {
-     "ilustracion": "c01-1",
      "parrafos": [
       [
        {
@@ -870,10 +869,10 @@
      "huella": "f168b1b1da2c",
      "audio": "audio/c01/p01.mp3",
      "duracion": 47.77,
-     "espera": null
+     "ilustracion": "c01-1",
+     "espera": "c01-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -1679,10 +1678,10 @@
      "huella": "40f58780f8f0",
      "audio": "audio/c01/p02.mp3",
      "duracion": 41.57,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c01-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -2448,10 +2447,10 @@
      "huella": "86145a2690ba",
      "audio": "audio/c01/p03.mp3",
      "duracion": 47.6,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c01-p03"
     },
     {
-     "ilustracion": "c01-2",
      "parrafos": [
       [
        {
@@ -3300,10 +3299,10 @@
      "huella": "dc5fb02d7989",
      "audio": "audio/c01/p04.mp3",
      "duracion": 51.53,
-     "espera": null
+     "ilustracion": "c01-2",
+     "espera": "c01-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -4077,10 +4076,10 @@
      "huella": "ccb862db8a10",
      "audio": "audio/c01/p05.mp3",
      "duracion": 43.49,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c01-p05"
     },
     {
-     "ilustracion": "c01-3",
      "parrafos": [
       [
        {
@@ -4831,10 +4830,10 @@
      "huella": "51a986cd31ed",
      "audio": "audio/c01/p06.mp3",
      "duracion": 46.45,
-     "espera": null
+     "ilustracion": "c01-3",
+     "espera": "c01-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -5594,10 +5593,10 @@
      "huella": "043cad165aed",
      "audio": "audio/c01/p07.mp3",
      "duracion": 46.54,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c01-p07"
     },
     {
-     "ilustracion": "c01-4",
      "parrafos": [
       [
        {
@@ -6361,10 +6360,10 @@
      "huella": "011bdd614a32",
      "audio": "audio/c01/p08.mp3",
      "duracion": 49.23,
-     "espera": null
+     "ilustracion": "c01-4",
+     "espera": "c01-p08"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -7053,10 +7052,10 @@
      "huella": "72e5db5bd5c3",
      "audio": "audio/c01/p09.mp3",
      "duracion": 39.97,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c01-p09"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -7711,7 +7710,8 @@
      "huella": "30b7b5af8767",
      "audio": "audio/c01/p10.mp3",
      "duracion": 39.72,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c01-p10"
     }
    ]
   },
@@ -7720,7 +7720,6 @@
    "titulo": "Hello-Treat!",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -8541,10 +8540,10 @@
      "huella": "114bd9ef8099",
      "audio": "audio/c02/p01.mp3",
      "duracion": 47.18,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c02-p01"
     },
     {
-     "ilustracion": "c02-1",
      "parrafos": [
       [
        {
@@ -9355,10 +9354,10 @@
      "huella": "1dc4977d1c27",
      "audio": "audio/c02/p02.mp3",
      "duracion": 42.95,
-     "espera": null
+     "ilustracion": "c02-1",
+     "espera": "c02-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -10145,10 +10144,10 @@
      "huella": "48458e84fa2c",
      "audio": "audio/c02/p03.mp3",
      "duracion": 46.82,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c02-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -11051,10 +11050,10 @@
      "huella": "c67b4a1a504a",
      "audio": "audio/c02/p04.mp3",
      "duracion": 56.78,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c02-p04"
     },
     {
-     "ilustracion": "c02-2",
      "parrafos": [
       [
        {
@@ -12086,10 +12085,10 @@
      "huella": "4bbe0a712930",
      "audio": "audio/c02/p05.mp3",
      "duracion": 63.74,
-     "espera": null
+     "ilustracion": "c02-2",
+     "espera": "c02-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -12981,10 +12980,10 @@
      "huella": "724e7961af38",
      "audio": "audio/c02/p06.mp3",
      "duracion": 54.88,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c02-p06"
     },
     {
-     "ilustracion": "c02-3",
      "parrafos": [
       [
        {
@@ -13980,10 +13979,10 @@
      "huella": "fa3cf8064f88",
      "audio": "audio/c02/p07.mp3",
      "duracion": 57.01,
-     "espera": null
+     "ilustracion": "c02-3",
+     "espera": "c02-p07"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -14823,10 +14822,10 @@
      "huella": "3a950a0bdfa4",
      "audio": "audio/c02/p08.mp3",
      "duracion": 50.49,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c02-p08"
     },
     {
-     "ilustracion": "c02-4",
      "parrafos": [
       [
        {
@@ -15673,10 +15672,10 @@
      "huella": "18758d756e25",
      "audio": "audio/c02/p09.mp3",
      "duracion": 50.84,
-     "espera": null
+     "ilustracion": "c02-4",
+     "espera": "c02-p09"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -16491,7 +16490,8 @@
      "huella": "d06b013551be",
      "audio": "audio/c02/p10.mp3",
      "duracion": 48.47,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c02-p10"
     }
    ]
   },
@@ -16500,7 +16500,6 @@
    "titulo": "The Best Costume Ever",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -17281,10 +17280,10 @@
      "huella": "43efa002e9e1",
      "audio": "audio/c03/p01.mp3",
      "duracion": 44.89,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c03-p01"
     },
     {
-     "ilustracion": "c03-1",
      "parrafos": [
       [
        {
@@ -18108,10 +18107,10 @@
      "huella": "63b9f4b14921",
      "audio": "audio/c03/p02.mp3",
      "duracion": 51.75,
-     "espera": null
+     "ilustracion": "c03-1",
+     "espera": "c03-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -18831,10 +18830,10 @@
      "huella": "7a79a2788d13",
      "audio": "audio/c03/p03.mp3",
      "duracion": 40.14,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c03-p03"
     },
     {
-     "ilustracion": "c03-2",
      "parrafos": [
       [
        {
@@ -19618,10 +19617,10 @@
      "huella": "3b14eab0d025",
      "audio": "audio/c03/p04.mp3",
      "duracion": 46.07,
-     "espera": null
+     "ilustracion": "c03-2",
+     "espera": "c03-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -20464,10 +20463,10 @@
      "huella": "5579c5b733bc",
      "audio": "audio/c03/p05.mp3",
      "duracion": 48.37,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c03-p05"
     },
     {
-     "ilustracion": "c03-3",
      "parrafos": [
       [
        {
@@ -21432,10 +21431,10 @@
      "huella": "605c4814eb43",
      "audio": "audio/c03/p06.mp3",
      "duracion": 55.35,
-     "espera": null
+     "ilustracion": "c03-3",
+     "espera": "c03-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -22213,10 +22212,10 @@
      "huella": "9fed6b79f98a",
      "audio": "audio/c03/p07.mp3",
      "duracion": 47.76,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c03-p07"
     },
     {
-     "ilustracion": "c03-4",
      "parrafos": [
       [
        {
@@ -23233,10 +23232,10 @@
      "huella": "e87861bbb324",
      "audio": "audio/c03/p08.mp3",
      "duracion": 59.7,
-     "espera": null
+     "ilustracion": "c03-4",
+     "espera": "c03-p08"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -23911,10 +23910,10 @@
      "huella": "bb9830fd781c",
      "audio": "audio/c03/p09.mp3",
      "duracion": 39.97,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c03-p09"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -24829,7 +24828,8 @@
      "huella": "a370540ebcfe",
      "audio": "audio/c03/p10.mp3",
      "duracion": 54.71,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c03-p10"
     }
    ]
   },
@@ -24838,7 +24838,6 @@
    "titulo": "The House at the End of Maple Street",
    "paginas": [
     {
-     "ilustracion": "c04-1",
      "parrafos": [
       [
        {
@@ -25840,10 +25839,10 @@
      "huella": "1727508e9faf",
      "audio": "audio/c04/p01.mp3",
      "duracion": 54.99,
-     "espera": null
+     "ilustracion": "c04-1",
+     "espera": "c04-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -26662,10 +26661,10 @@
      "huella": "ffd69363dbe8",
      "audio": "audio/c04/p02.mp3",
      "duracion": 47.38,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -27375,10 +27374,10 @@
      "huella": "6a143b642a75",
      "audio": "audio/c04/p03.mp3",
      "duracion": 41.33,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p03"
     },
     {
-     "ilustracion": "c04-2",
      "parrafos": [
       [
        {
@@ -28265,10 +28264,10 @@
      "huella": "002220a49eb7",
      "audio": "audio/c04/p04.mp3",
      "duracion": 51.59,
-     "espera": null
+     "ilustracion": "c04-2",
+     "espera": "c04-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -29103,10 +29102,10 @@
      "huella": "eeb2ce2b049a",
      "audio": "audio/c04/p05.mp3",
      "duracion": 52.24,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -29885,10 +29884,10 @@
      "huella": "d272250984ab",
      "audio": "audio/c04/p06.mp3",
      "duracion": 45.4,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -30406,10 +30405,10 @@
      "huella": "d9e777407a2d",
      "audio": "audio/c04/p07.mp3",
      "duracion": 31.08,
-     "espera": "c04-3"
+     "ilustracion": null,
+     "espera": "c04-p07"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -30976,10 +30975,10 @@
      "huella": "67f1f942c4a0",
      "audio": "audio/c04/p08.mp3",
      "duracion": 29.94,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p08"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -31741,10 +31740,10 @@
      "huella": "3b0b984602e0",
      "audio": "audio/c04/p09.mp3",
      "duracion": 46.34,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p09"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -32710,10 +32709,10 @@
      "huella": "4771754861c5",
      "audio": "audio/c04/p10.mp3",
      "duracion": 55.25,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p10"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -33610,10 +33609,10 @@
      "huella": "5bee1533c3a8",
      "audio": "audio/c04/p11.mp3",
      "duracion": 53.01,
-     "espera": "c04-4"
+     "ilustracion": null,
+     "espera": "c04-p11"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -34687,7 +34686,8 @@
      "huella": "b4d7dc6af047",
      "audio": "audio/c04/p12.mp3",
      "duracion": 64.02,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c04-p12"
     }
    ]
   },
@@ -34696,7 +34696,6 @@
    "titulo": "Lost in the Corn Maze",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -35594,10 +35593,10 @@
      "huella": "c6d52b9c5703",
      "audio": "audio/c05/p01.mp3",
      "duracion": 53.5,
-     "espera": "c05-1"
+     "ilustracion": null,
+     "espera": "c05-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -36389,10 +36388,10 @@
      "huella": "f33109f1d875",
      "audio": "audio/c05/p02.mp3",
      "duracion": 48.16,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c05-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -37174,10 +37173,10 @@
      "huella": "ea15a73a4d27",
      "audio": "audio/c05/p03.mp3",
      "duracion": 45.31,
-     "espera": "c05-2"
+     "ilustracion": null,
+     "espera": "c05-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -37937,10 +37936,10 @@
      "huella": "6eb18fd6ffa0",
      "audio": "audio/c05/p04.mp3",
      "duracion": 46.18,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c05-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -38865,10 +38864,10 @@
      "huella": "3ceb71f132be",
      "audio": "audio/c05/p05.mp3",
      "duracion": 52.83,
-     "espera": "c05-3"
+     "ilustracion": null,
+     "espera": "c05-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -39675,10 +39674,10 @@
      "huella": "f53c3dc4c98c",
      "audio": "audio/c05/p06.mp3",
      "duracion": 48.68,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c05-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -40589,7 +40588,8 @@
      "huella": "3da8ebcfe3a9",
      "audio": "audio/c05/p07.mp3",
      "duracion": 51.57,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c05-p07"
     }
    ]
   },
@@ -40598,7 +40598,6 @@
    "titulo": "Abuela Finds Out",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -41422,10 +41421,10 @@
      "huella": "c7a2c50b0f65",
      "audio": "audio/c06/p01.mp3",
      "duracion": 48.99,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c06-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -42211,10 +42210,10 @@
      "huella": "21601243ccc4",
      "audio": "audio/c06/p02.mp3",
      "duracion": 52.09,
-     "espera": "c06-1"
+     "ilustracion": null,
+     "espera": "c06-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -42989,10 +42988,10 @@
      "huella": "2cd530f07315",
      "audio": "audio/c06/p03.mp3",
      "duracion": 46.4,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c06-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -43709,10 +43708,10 @@
      "huella": "8a329fbc383d",
      "audio": "audio/c06/p04.mp3",
      "duracion": 43.35,
-     "espera": "c06-2"
+     "ilustracion": null,
+     "espera": "c06-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -44451,10 +44450,10 @@
      "huella": "c1f1f8b35f15",
      "audio": "audio/c06/p05.mp3",
      "duracion": 46.3,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c06-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -45467,10 +45466,10 @@
      "huella": "ee1459463782",
      "audio": "audio/c06/p06.mp3",
      "duracion": 59.99,
-     "espera": "c06-3"
+     "ilustracion": null,
+     "espera": "c06-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -46322,7 +46321,8 @@
      "huella": "d9d09437480b",
      "audio": "audio/c06/p07.mp3",
      "duracion": 50.66,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c06-p07"
     }
    ]
   },
@@ -46331,7 +46331,6 @@
    "titulo": "Reading Night at the Library",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -47078,10 +47077,10 @@
      "huella": "52892cb8dbba",
      "audio": "audio/c07/p01.mp3",
      "duracion": 46.2,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c07-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -47838,10 +47837,10 @@
      "huella": "2e74db57df3c",
      "audio": "audio/c07/p02.mp3",
      "duracion": 43.55,
-     "espera": "c07-1"
+     "ilustracion": null,
+     "espera": "c07-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -48585,10 +48584,10 @@
      "huella": "f17474c84efc",
      "audio": "audio/c07/p03.mp3",
      "duracion": 45.64,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c07-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -49384,10 +49383,10 @@
      "huella": "7129b43c27e7",
      "audio": "audio/c07/p04.mp3",
      "duracion": 48.37,
-     "espera": "c07-2"
+     "ilustracion": null,
+     "espera": "c07-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -50165,10 +50164,10 @@
      "huella": "e94e09f175aa",
      "audio": "audio/c07/p05.mp3",
      "duracion": 44.94,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c07-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -50852,10 +50851,10 @@
      "huella": "0f5af498f7f9",
      "audio": "audio/c07/p06.mp3",
      "duracion": 40.64,
-     "espera": "c07-3"
+     "ilustracion": null,
+     "espera": "c07-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -51807,7 +51806,8 @@
      "huella": "e55959e31beb",
      "audio": "audio/c07/p07.mp3",
      "duracion": 57.82,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c07-p07"
     }
    ]
   },
@@ -51816,7 +51816,6 @@
    "titulo": "The Not-So-Haunted House",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -52526,10 +52525,10 @@
      "huella": "0fdd8621e8a1",
      "audio": "audio/c08/p01.mp3",
      "duracion": 43.4,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c08-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -53162,10 +53161,10 @@
      "huella": "34f74bc25dfd",
      "audio": "audio/c08/p02.mp3",
      "duracion": 36.65,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c08-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -53933,10 +53932,10 @@
      "huella": "91992b628db7",
      "audio": "audio/c08/p03.mp3",
      "duracion": 46.28,
-     "espera": "c08-1"
+     "ilustracion": null,
+     "espera": "c08-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -54761,10 +54760,10 @@
      "huella": "8f21e4d891b5",
      "audio": "audio/c08/p04.mp3",
      "duracion": 48.55,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c08-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -55495,10 +55494,10 @@
      "huella": "fef6da427f6a",
      "audio": "audio/c08/p05.mp3",
      "duracion": 46.91,
-     "espera": "c08-2"
+     "ilustracion": null,
+     "espera": "c08-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -56166,10 +56165,10 @@
      "huella": "2894d0582794",
      "audio": "audio/c08/p06.mp3",
      "duracion": 40.63,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c08-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -56997,10 +56996,10 @@
      "huella": "8b26de1c7506",
      "audio": "audio/c08/p07.mp3",
      "duracion": 48.82,
-     "espera": "c08-3"
+     "ilustracion": null,
+     "espera": "c08-p07"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -57974,7 +57973,8 @@
      "huella": "f1d51a7629fe",
      "audio": "audio/c08/p08.mp3",
      "duracion": 57.3,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c08-p08"
     }
    ]
   },
@@ -57983,7 +57983,6 @@
    "titulo": "A Rainy Day and a Faraway Star",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -58778,10 +58777,10 @@
      "huella": "6ebe102b5773",
      "audio": "audio/c09/p01.mp3",
      "duracion": 45.61,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c09-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -59545,10 +59544,10 @@
      "huella": "b24280c73549",
      "audio": "audio/c09/p02.mp3",
      "duracion": 45.92,
-     "espera": "c09-1"
+     "ilustracion": null,
+     "espera": "c09-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -60348,10 +60347,10 @@
      "huella": "af2c5ad2711f",
      "audio": "audio/c09/p03.mp3",
      "duracion": 47.33,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c09-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -60984,10 +60983,10 @@
      "huella": "f87d4ecc6ab6",
      "audio": "audio/c09/p04.mp3",
      "duracion": 37.35,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c09-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -61803,10 +61802,10 @@
      "huella": "0ddf4bf5e5fd",
      "audio": "audio/c09/p05.mp3",
      "duracion": 45.22,
-     "espera": "c09-2"
+     "ilustracion": null,
+     "espera": "c09-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -62748,10 +62747,10 @@
      "huella": "9845045f0500",
      "audio": "audio/c09/p06.mp3",
      "duracion": 56.83,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c09-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -63261,10 +63260,10 @@
      "huella": "80130a43b6aa",
      "audio": "audio/c09/p07.mp3",
      "duracion": 31.25,
-     "espera": "c09-3"
+     "ilustracion": null,
+     "espera": "c09-p07"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -64269,7 +64268,8 @@
      "huella": "46ae0d9b76cf",
      "audio": "audio/c09/p08.mp3",
      "duracion": 63.41,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c09-p08"
     }
    ]
   },
@@ -64278,7 +64278,6 @@
    "titulo": "Trick or Treat!",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -65069,10 +65068,10 @@
      "huella": "d82305821d9e",
      "audio": "audio/c10/p01.mp3",
      "duracion": 46.32,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c10-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -65849,10 +65848,10 @@
      "huella": "6f5eb062f43d",
      "audio": "audio/c10/p02.mp3",
      "duracion": 48.08,
-     "espera": "c10-1"
+     "ilustracion": null,
+     "espera": "c10-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -66648,10 +66647,10 @@
      "huella": "0da1f83a61c1",
      "audio": "audio/c10/p03.mp3",
      "duracion": 46.21,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c10-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -67418,10 +67417,10 @@
      "huella": "7eba8526aaf9",
      "audio": "audio/c10/p04.mp3",
      "duracion": 45.89,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c10-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -68322,10 +68321,10 @@
      "huella": "23e963c1adae",
      "audio": "audio/c10/p05.mp3",
      "duracion": 52.93,
-     "espera": "c10-2"
+     "ilustracion": null,
+     "espera": "c10-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -69223,10 +69222,10 @@
      "huella": "570b92baf2d6",
      "audio": "audio/c10/p06.mp3",
      "duracion": 51.59,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c10-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -70335,7 +70334,8 @@
      "huella": "a0ab9666b1aa",
      "audio": "audio/c10/p07.mp3",
      "duracion": 67.82,
-     "espera": "c10-3"
+     "ilustracion": null,
+     "espera": "c10-p07"
     }
    ]
   },
@@ -70344,7 +70344,6 @@
    "titulo": "Countdown in the Pumpkin Patch",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -71236,10 +71235,10 @@
      "huella": "535089b3457e",
      "audio": "audio/c11/p01.mp3",
      "duracion": 54.37,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c11-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -72092,10 +72091,10 @@
      "huella": "4dd269693029",
      "audio": "audio/c11/p02.mp3",
      "duracion": 47.98,
-     "espera": "c11-1"
+     "ilustracion": null,
+     "espera": "c11-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -72901,10 +72900,10 @@
      "huella": "dcdab13f085e",
      "audio": "audio/c11/p03.mp3",
      "duracion": 47.64,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c11-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -73530,10 +73529,10 @@
      "huella": "e73e388414d3",
      "audio": "audio/c11/p04.mp3",
      "duracion": 36.65,
-     "espera": "c11-2"
+     "ilustracion": null,
+     "espera": "c11-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -74233,10 +74232,10 @@
      "huella": "9c981ea58341",
      "audio": "audio/c11/p05.mp3",
      "duracion": 43.16,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c11-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -74936,10 +74935,10 @@
      "huella": "a566da465272",
      "audio": "audio/c11/p06.mp3",
      "duracion": 43.38,
-     "espera": "c11-3"
+     "ilustracion": null,
+     "espera": "c11-p06"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -75736,7 +75735,8 @@
      "huella": "566618d52726",
      "audio": "audio/c11/p07.mp3",
      "duracion": 48.46,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c11-p07"
     }
    ]
   },
@@ -75745,7 +75745,6 @@
    "titulo": "See You Next Halloween",
    "paginas": [
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -76609,10 +76608,10 @@
      "huella": "f2d06988cdd3",
      "audio": "audio/c12/p01.mp3",
      "duracion": 48.31,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c12-p01"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -77500,10 +77499,10 @@
      "huella": "86263214c73d",
      "audio": "audio/c12/p02.mp3",
      "duracion": 54.85,
-     "espera": "c12-1"
+     "ilustracion": null,
+     "espera": "c12-p02"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -78359,10 +78358,10 @@
      "huella": "a7a4ef733a95",
      "audio": "audio/c12/p03.mp3",
      "duracion": 50.1,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c12-p03"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -79274,10 +79273,10 @@
      "huella": "eae1145eebed",
      "audio": "audio/c12/p04.mp3",
      "duracion": 56.28,
-     "espera": "c12-2"
+     "ilustracion": null,
+     "espera": "c12-p04"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -80108,10 +80107,10 @@
      "huella": "82260ebb4f3c",
      "audio": "audio/c12/p05.mp3",
      "duracion": 54.33,
-     "espera": null
+     "ilustracion": null,
+     "espera": "c12-p05"
     },
     {
-     "ilustracion": null,
      "parrafos": [
       [
        {
@@ -81147,7 +81146,8 @@
      "huella": "574476fb784d",
      "audio": "audio/c12/p06.mp3",
      "duracion": 62.58,
-     "espera": "c12-3"
+     "ilustracion": null,
+     "espera": "c12-p06"
     }
    ]
   }
