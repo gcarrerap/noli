@@ -8540,8 +8540,8 @@
      "huella": "114bd9ef8099",
      "audio": "audio/c02/p01.mp3",
      "duracion": 47.18,
-     "ilustracion": null,
-     "espera": "c02-p01"
+     "ilustracion": "c02-p01",
+     "espera": null
     },
     {
      "parrafos": [
@@ -9354,8 +9354,8 @@
      "huella": "1dc4977d1c27",
      "audio": "audio/c02/p02.mp3",
      "duracion": 42.95,
-     "ilustracion": "c02-1",
-     "espera": "c02-p02"
+     "ilustracion": "c02-p02",
+     "espera": null
     },
     {
      "parrafos": [
@@ -10144,8 +10144,8 @@
      "huella": "48458e84fa2c",
      "audio": "audio/c02/p03.mp3",
      "duracion": 46.82,
-     "ilustracion": null,
-     "espera": "c02-p03"
+     "ilustracion": "c02-p03",
+     "espera": null
     },
     {
      "parrafos": [
@@ -11050,8 +11050,8 @@
      "huella": "c67b4a1a504a",
      "audio": "audio/c02/p04.mp3",
      "duracion": 56.78,
-     "ilustracion": null,
-     "espera": "c02-p04"
+     "ilustracion": "c02-p04",
+     "espera": null
     },
     {
      "parrafos": [
@@ -12085,8 +12085,8 @@
      "huella": "4bbe0a712930",
      "audio": "audio/c02/p05.mp3",
      "duracion": 63.74,
-     "ilustracion": "c02-2",
-     "espera": "c02-p05"
+     "ilustracion": "c02-p05",
+     "espera": null
     },
     {
      "parrafos": [
@@ -12980,8 +12980,8 @@
      "huella": "724e7961af38",
      "audio": "audio/c02/p06.mp3",
      "duracion": 54.88,
-     "ilustracion": null,
-     "espera": "c02-p06"
+     "ilustracion": "c02-p06",
+     "espera": null
     },
     {
      "parrafos": [
@@ -13979,8 +13979,8 @@
      "huella": "fa3cf8064f88",
      "audio": "audio/c02/p07.mp3",
      "duracion": 57.01,
-     "ilustracion": "c02-3",
-     "espera": "c02-p07"
+     "ilustracion": "c02-p07",
+     "espera": null
     },
     {
      "parrafos": [
@@ -14822,8 +14822,8 @@
      "huella": "3a950a0bdfa4",
      "audio": "audio/c02/p08.mp3",
      "duracion": 50.49,
-     "ilustracion": null,
-     "espera": "c02-p08"
+     "ilustracion": "c02-p08",
+     "espera": null
     },
     {
      "parrafos": [
@@ -15672,8 +15672,8 @@
      "huella": "18758d756e25",
      "audio": "audio/c02/p09.mp3",
      "duracion": 50.84,
-     "ilustracion": "c02-4",
-     "espera": "c02-p09"
+     "ilustracion": "c02-p09",
+     "espera": null
     },
     {
      "parrafos": [
@@ -16490,8 +16490,8 @@
      "huella": "d06b013551be",
      "audio": "audio/c02/p10.mp3",
      "duracion": 48.47,
-     "ilustracion": null,
-     "espera": "c02-p10"
+     "ilustracion": "c02-p10",
+     "espera": null
     }
    ]
   },
