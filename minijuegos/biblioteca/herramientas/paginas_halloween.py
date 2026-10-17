@@ -38,7 +38,7 @@ VERDE = ("Only alien things glow lime green: Zib's antenna bulbs, the pumpkin sp
          "glows green or cyan: no green lanterns, no green fireflies, no green streaks or aurora in the sky, no gadgets.")
 # Entrega 2 (#131): a Zib le salieron 2 antenas en 3 páginas y apareció una segunda "nave" de fondo
 ZIB_ANTENAS = ("Zib has exactly THREE antennae on top of its head (one on the left, one in the middle, one on the right), "
-               "each a thin spring with one glowing bulb; never two, never four. Zib's body is an upright jelly bean, "
+               "each a thin spring with one glowing bulb; never two, never four. Count them: 1, 2, 3. Zib's body is an upright jelly bean, "
                "taller than wide, never lying sideways.")
 UNA_NAVE = ("There is only one spaceship in the whole story, the pumpkin spaceship: no other pods, vehicles, robots, "
             "machines or sci-fi gadgets anywhere in the scene (also not in the garage or the background).")
@@ -51,6 +51,8 @@ SIN_NAVE = ("The pumpkin spaceship is NOT in this scene (it stays hidden in Abue
 CRUMP_SOMBRERO = ("Mrs. Crump's hat is a huge floppy black hat with a very wide soft brim and a LOW, ROUNDED crown, like a big "
                   "sun hat, with a small brass star pin; it is absolutely NOT a pointy cone witch hat. She has no broom and no "
                   "cauldron.")
+SEMILLA = ("A glow-seed is a small round lime-green glowing marble, about the size of a grape, smooth and perfectly round "
+           "(never a teardrop, never cyan, never as big as an apple).")
 LUNA_ANTES = ("If the moon is visible it is a waxing gibbous moon, almost full with a small dark sliver missing on one side "
               "(never a crescent, never completely full), because Halloween has not arrived yet.")
 LUNA_HALLOWEEN = "If the moon is visible it is a big, completely round full moon (it is Halloween night)."
@@ -520,10 +522,14 @@ def main():
         reglas = [VERDE, UNA_NAVE, TEXTO]
         if "nave" not in quien and pid != "portada":
             reglas.append(SIN_NAVE)
+        # Lo que más se ha equivocado va al principio del prompt (entrega 5, #137: Zib otra vez con 2 antenas en 4 de 7)
+        primero = []
         if "zib" in quien:
-            reglas.append(ZIB_ANTENAS)
+            primero.append(ZIB_ANTENAS)
         if "crump" in quien:
-            reglas.append(CRUMP_SOMBRERO)
+            primero.append(CRUMP_SOMBRERO)
+        if "semilla" in escena.lower() or "seed" in escena.lower():
+            reglas.append(SEMILLA)
         if "mari" in quien and ropa in ("hoodie_casco", "pijama_botas", "astro"):
             reglas.append(CASCO)
         de_dia = any(w in momento for w in ("morning", "day", "afternoon")) and "evening" not in momento
@@ -539,7 +545,8 @@ def main():
             reglas.append(LUNA_HALLOWEEN if cap >= 10 or pid == "portada" else LUNA_ANTES)
         if pid in EXTRA_PAGINA:
             reglas.append(EXTRA_PAGINA[pid])
-        return (f"{estilo} Use the attached reference sheets for the exact look of each character and keep them identical "
+        importante = f"MOST IMPORTANT: {' '.join(primero)} " if primero else ""
+        return (f"{estilo} {importante}Use the attached reference sheets for the exact look of each character and keep them identical "
                 f"(same face, hair, colors, clothes and proportions). Time of day: {momento}. Scene: {escena} "
                 f"Characters: {' '.join(partes)} Continuity rules: {' '.join(reglas)} "
                 + (f"Never: {'; '.join(prohibido)}. " if prohibido else "")
