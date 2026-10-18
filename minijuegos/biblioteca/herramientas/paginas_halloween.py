@@ -539,6 +539,8 @@ def main():
             primero.append(ZIB_ANTENAS)
         if "crump" in quien:
             primero.append(CRUMP_SOMBRERO)
+        if "pepper" in quien:
+            primero.append("Pepper is an ordinary black cat: she has NO antennae and nothing on her glows.")
         if "semilla" in escena.lower() or "seed" in escena.lower():
             reglas.append(SEMILLA)
         if "mari" in quien and ropa in ("hoodie_casco", "pijama_botas", "astro"):
