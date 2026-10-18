@@ -76608,8 +76608,8 @@
      "huella": "f2d06988cdd3",
      "audio": "audio/c12/p01.mp3",
      "duracion": 48.31,
-     "ilustracion": null,
-     "espera": "c12-p01"
+     "ilustracion": "c12-p01",
+     "espera": null
     },
     {
      "parrafos": [
@@ -77499,8 +77499,8 @@
      "huella": "86263214c73d",
      "audio": "audio/c12/p02.mp3",
      "duracion": 54.85,
-     "ilustracion": null,
-     "espera": "c12-p02"
+     "ilustracion": "c12-p02",
+     "espera": null
     },
     {
      "parrafos": [
@@ -78358,8 +78358,8 @@
      "huella": "a7a4ef733a95",
      "audio": "audio/c12/p03.mp3",
      "duracion": 50.1,
-     "ilustracion": null,
-     "espera": "c12-p03"
+     "ilustracion": "c12-p03",
+     "espera": null
     },
     {
      "parrafos": [
@@ -79273,8 +79273,8 @@
      "huella": "eae1145eebed",
      "audio": "audio/c12/p04.mp3",
      "duracion": 56.28,
-     "ilustracion": null,
-     "espera": "c12-p04"
+     "ilustracion": "c12-p04",
+     "espera": null
     },
     {
      "parrafos": [
@@ -80107,8 +80107,8 @@
      "huella": "82260ebb4f3c",
      "audio": "audio/c12/p05.mp3",
      "duracion": 54.33,
-     "ilustracion": null,
-     "espera": "c12-p05"
+     "ilustracion": "c12-p05",
+     "espera": null
     },
     {
      "parrafos": [
@@ -81146,8 +81146,8 @@
      "huella": "574476fb784d",
      "audio": "audio/c12/p06.mp3",
      "duracion": 62.58,
-     "ilustracion": null,
-     "espera": "c12-p06"
+     "ilustracion": "c12-p06",
+     "espera": null
     }
    ]
   }
