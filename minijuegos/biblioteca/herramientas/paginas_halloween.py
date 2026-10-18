@@ -51,6 +51,12 @@ SIN_NAVE = ("The pumpkin spaceship is NOT in this scene (it stays hidden in Abue
 CRUMP_SOMBRERO = ("Mrs. Crump's hat is a huge floppy black hat with a very wide soft brim and a LOW, ROUNDED crown, like a big "
                   "sun hat, with a small brass star pin; it is absolutely NOT a pointy cone witch hat. She has no broom and no "
                   "cauldron.")
+# Entrega 7 (#141): la biblioteca salió al aire libre (porche con cielo estrellado)
+INTERIOR = {"c04-p07", "c04-p08", "c04-p09", "c04-p10", "c06-p01", "c06-p02", "c06-p03", "c06-p04", "c06-p05",
+            "c07-p02", "c07-p03", "c07-p04", "c07-p05", "c07-p06",
+            "c08-p02", "c08-p03", "c08-p04", "c08-p05", "c08-p06", "c08-p07", "c09-p01", "c09-p02", "c09-p03"}
+DENTRO = ("The whole scene happens INSIDE the building: walls and ceiling are visible, warm indoor lamps; the sky can only "
+          "be seen through a window. It is not on a porch, patio or terrace.")
 SEMILLA = ("A glow-seed is a small round lime-green glowing marble, about the size of a grape, smooth and perfectly round "
            "(never a teardrop, never cyan, never as big as an apple).")
 LUNA_ANTES = ("If the moon is visible it is a waxing gibbous moon, almost full with a small dark sliver missing on one side "
@@ -90,6 +96,11 @@ EXTRA_PAGINA = {
     "c04-p07": "Zib stays hidden inside Mari's backpack.",
     "c04-p08": "Zib stays hidden inside Mari's backpack.",
     "c04-p11": "Zib hides behind Mari's back; Abuela does not notice it.",
+    "c07-p01": "Zib stays hidden inside Mari's backpack; only its three antenna tips poke out.",
+    "c07-p02": "Zib stays inside Mari's backpack; only its face and antennae peek out of the zipper.",
+    "c08-p01": "Zib stays hidden inside Mari's backpack.",
+    "c08-p02": "Zib stays hidden inside Mari's backpack.",
+    "c08-p03": "Zib stays hidden inside Mari's backpack.",
     "c03-p01": "Zib stays hidden inside the backpack; only its face peeks out of the zipper.",
     "c03-p02": "Zib stays inside the backpack: only its three glowing antenna tips poke out of the top; Zib's body is not visible.",
     "c03-p03": "The pumpkin on the teacher's desk is an ordinary orange pumpkin with a brown stem (no window, no metal, no lights).",
@@ -543,6 +554,8 @@ def main():
             reglas.append("It is daytime: blue sky and sunlight, no stars and no moon in the sky.")
         elif pid != "c12-p06":
             reglas.append(LUNA_HALLOWEEN if cap >= 10 or pid == "portada" else LUNA_ANTES)
+        if pid in INTERIOR:
+            reglas.append(DENTRO)
         if pid in EXTRA_PAGINA:
             reglas.append(EXTRA_PAGINA[pid])
         importante = f"MOST IMPORTANT: {' '.join(primero)} " if primero else ""
