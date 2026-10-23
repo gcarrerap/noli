@@ -1,6 +1,6 @@
 // Acciones: lo único que cambia el estado. La interfaz y el control remoto (app/remoto.js) solo llaman aquí.
 import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../services/index.js";
-import { mover, materias, jugableEn, ganancia, agregar, gastar, compactar, saldoVisible } from "../engine/index.js";
+import { mover, materias, jugableEn, ganancia, agregar, gastar, premio, compactar, saldoVisible } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
 import * as sync from "./sync.js";
@@ -82,7 +82,7 @@ export const actions = {
     const e = aEstrellas(estrellas);
     const juego = state.juegos.find((x) => x.id === id);
     let ganados = 0, topado = false;
-    if (juego && juego.creditos === "gana") {
+    if (juego && juego.creditos === "gana" && !juego.premios) {
       const ahora = sync.ahora(), d = sync.dispositivo;
       const g = ganancia(state.creditos, { juego: id, estrellas: e, reto: reto === true, ahora });
       let libro = state.creditos;
@@ -96,6 +96,18 @@ export const actions = {
     ls.set("noli.progreso", JSON.stringify(state.progreso));
     sync.marcarCambio(sync.CATALOGO);
     state.celebrar = { id, estrellas: e, creditos: ganados, topado };
+    notify();
+  },
+
+  // Un juego cobra un premio de su juego.json → premios (#96). Si acaba de terminar, el aviso suma lo ganado.
+  premiar(id, nombre, clave) {
+    const juego = state.juegos.find((x) => x.id === id);
+    const cantidad = juego && juego.creditos === "gana" && juego.premios ? juego.premios[nombre] : undefined;
+    if (!Number.isInteger(cantidad)) return;
+    const r = premio(state.creditos, { juego: id, clave, cantidad, d: sync.dispositivo, f: sync.ahora() });
+    if (!r.ok) return;
+    guardarCreditos(r.libro);
+    if (state.celebrar && state.celebrar.id === id) state.celebrar = { ...state.celebrar, creditos: state.celebrar.creditos + r.n };
     notify();
   },
 

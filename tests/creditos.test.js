@@ -229,3 +229,26 @@ test("nube: dos dispositivos ganan y gastan sin conexión y al sincronizar no se
   await pausa();
   assert.equal(saldoActual(), esperado);
 });
+
+// ---------- Premios (#96) ----------
+
+test("premio: paga una vez por clave, sin tope diario, y unir no lo duplica", () => {
+  const f = Date.UTC(2026, 9, 22, 15);
+  let l = C.libroVacio();
+  for (let i = 0; i < 5; i++) l = C.agregar(l, { n: 3, j: "biblioteca", m: "estrellas", d: "a", f });
+  const r = C.premio(l, { juego: "biblioteca", clave: "halloween-c1", cantidad: 5, d: "a", f });
+  assert.equal(r.ok, true); assert.equal(C.saldo(r.libro), 20);
+  assert.equal(C.premio(r.libro, { juego: "biblioteca", clave: "halloween-c1", cantidad: 5, d: "a", f }).ok, false);
+  assert.equal(C.premio(l, { juego: "biblioteca", clave: "x", cantidad: 101, d: "a", f }).ok, false);
+  const otro = C.premio(C.libroVacio(), { juego: "biblioteca", clave: "halloween-c1", cantidad: 5, d: "b", f: f + 1 }).libro;
+  assert.equal(C.saldo(C.unir(r.libro, otro)), 20);
+});
+
+test("premios en juego.json: solo con \"gana\" y de 1 a 100", () => {
+  const base = { id: "x", titulo: "X", entrada: "index.html", controles: ["tactil"], tv: false };
+  assert.deepEqual(validarManifiesto({ ...base, creditos: "gana", premios: { capitulo: 5, libro: 50 } }, "x").juego.premios, { capitulo: 5, libro: 50 });
+  assert.ok(validarManifiesto({ ...base, premios: { capitulo: 5 } }, "x").errores);
+  assert.ok(validarManifiesto({ ...base, creditos: "gana", premios: { capitulo: 0 } }, "x").errores);
+  assert.equal(esMensaje(mensaje("premio", { premio: "capitulo", clave: "halloween-c1" })), true);
+  assert.equal(esMensaje(mensaje("premio", { premio: "capitulo" })), false);
+});

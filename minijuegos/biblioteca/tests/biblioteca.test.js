@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import {
-  progresoDe, conProgreso, abierto, mover, dondeSeguir, palabrasConTiempo, palabraEn, marcarLeido, contarPalabras, BUSQUEDA,
+  progresoDe, conProgreso, abierto, mover, dondeSeguir, palabrasConTiempo, palabraEn, marcarLeido, contarPalabras, premiosPendientes, BUSQUEDA,
 } from "../src/libro.js";
 
 const BASE = new URL("../libros/halloween/", import.meta.url);
@@ -92,7 +92,7 @@ test("las escenas no piden texto en la imagen y adjuntan hojas que existen", () 
 
 test("progreso: valores por omisión y guardar sin perder lo demás", () => {
   const pr = progresoDe(null, "halloween");
-  assert.deepEqual(pr, { pos: null, leidos: [], encontrados: [], modo: "leeme", despacio: false, guia: false, todos: false });
+  assert.deepEqual(pr, { pos: null, leidos: [], encontrados: [], modo: "leeme", despacio: false, guia: false, todos: false, pagados: [] });
   const d0 = { v: 1, libros: { halloween: { encontrados: [1, 2] }, otro: { leidos: [1] } } };
   const d1 = conProgreso(d0, "halloween", { ...progresoDe(d0, "halloween"), leidos: [1] });
   assert.deepEqual(d1.libros.halloween.encontrados, [1, 2]);
@@ -158,4 +158,23 @@ test("el juego no usa localStorage directo, ni await al nivel del módulo, ni ?.
     assert.ok(!/^\s*(const|let|var)?[^\n(]*\bawait\b/m.test(js.replace(/async[\s\S]*?\n\}/g, "")), `${f}: await al nivel del módulo`);
     assert.ok(!/\?\./.test(js), `${f}: ?. no corre en las TVs viejas`);
   }
+});
+
+// ---------- Monedas (#96): 5 por capítulo y 50 por el libro, una vez cada uno ----------
+
+test("premios: un capítulo leído cobra una vez; todo el libro cobra el bono", () => {
+  const juego = JSON.parse(readFileSync(new URL("../juego.json", import.meta.url), "utf8"));
+  assert.deepEqual(juego.premios, { capitulo: 5, libro: 50 });
+  let pr = progresoDe(null, "halloween");
+  assert.deepEqual(premiosPendientes(libro, pr, "halloween"), []);
+  pr = { ...pr, leidos: [1, 2] };
+  assert.deepEqual(premiosPendientes(libro, pr, "halloween").map((x) => x.clave), ["halloween-c1", "halloween-c2"]);
+  pr = { ...pr, pagados: ["halloween-c1", "halloween-c2"] };
+  assert.deepEqual(premiosPendientes(libro, pr, "halloween"), []);
+  const todos = libro.capitulos.map((c) => c.n);
+  pr = { ...pr, leidos: todos, pagados: todos.slice(0, -1).map((n) => `halloween-c${n}`) };
+  assert.deepEqual(premiosPendientes(libro, pr, "halloween"), [
+    { premio: "capitulo", clave: `halloween-c${todos.at(-1)}` }, { premio: "libro", clave: "halloween-libro" }]);
+  // lo cobrado se guarda con el progreso
+  assert.deepEqual(progresoDe(conProgreso(null, "halloween", { ...pr, pagados: ["halloween-libro"] }), "halloween").pagados, ["halloween-libro"]);
 });

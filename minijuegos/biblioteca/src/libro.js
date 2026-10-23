@@ -24,6 +24,7 @@ export function progresoDe(datos, idLibro) {
     despacio: pr.despacio === true,
     guia: pr.guia === true,   // ya vio la guía de la primera vez
     todos: pr.todos === true, // papás abrieron todos los capítulos
+    pagados: Array.isArray(pr.pagados) ? pr.pagados.filter((x) => typeof x === "string") : [], // premios ya cobrados
   };
 }
 
@@ -88,6 +89,22 @@ export function palabraEn(lista, t) {
 }
 
 // Un capítulo se termina al llegar a su última página. Devuelve los leídos nuevos (o los mismos).
+/**
+ * Premios que faltan por cobrar (juego.json → premios): "capitulo" por cada capítulo leído y "libro" al leerlos
+ * todos. La clave dice qué logro es, para que el catálogo pague cada uno una sola vez.
+ * @returns {{ premio: string, clave: string }[]}
+ */
+export function premiosPendientes(libro, pr, idLibro) {
+  const out = [];
+  for (const n of pr.leidos) {
+    const clave = `${idLibro}-c${n}`;
+    if (!pr.pagados.includes(clave)) out.push({ premio: "capitulo", clave });
+  }
+  const todos = libro.capitulos.every((c) => pr.leidos.includes(c.n));
+  if (todos && !pr.pagados.includes(`${idLibro}-libro`)) out.push({ premio: "libro", clave: `${idLibro}-libro` });
+  return out;
+}
+
 export function marcarLeido(pr, n) {
   return pr.leidos.includes(n) ? pr.leidos : [...pr.leidos, n].sort((a, b) => a - b);
 }

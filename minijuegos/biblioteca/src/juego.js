@@ -5,7 +5,7 @@
 // hasta que se toca ▶ o una palabra (que dice solo esa palabra).
 import { Noli, moverFoco } from "../../../kit/noli.js";
 import {
-  progresoDe, conProgreso, abierto, capitulo, mover, dondeSeguir, palabrasConTiempo, palabraEn, marcarLeido,
+  progresoDe, conProgreso, abierto, capitulo, mover, dondeSeguir, palabrasConTiempo, palabraEn, marcarLeido, premiosPendientes,
 } from "./libro.js";
 
 const LIBRO = "halloween";
@@ -206,6 +206,7 @@ function finCapitulo() {
   pr.pos = sig && abierto(libro, pr, n + 1) ? { c: n + 1, p: 0 } : pr.pos;
   guardar();
   if (!terminados.has(n)) { terminados.add(n); Noli.terminar({ estrellas: 3 }); }
+  cobrar();
   const ultimo = !sig;
   const siguienteAbierto = sig && abierto(libro, pr, n + 1);
   $juego.innerHTML = `
@@ -354,10 +355,21 @@ Noli.alEntrar((accion) => {
   return false;
 });
 
+// Monedas (juego.json → premios): 5 por capítulo leído y 50 al terminar el libro, cada uno una sola vez.
+// También cobra lo que se leyó antes de que hubiera premios.
+function cobrar() {
+  const pend = premiosPendientes(libro, pr, LIBRO);
+  if (!pend.length) return;
+  for (const x of pend) Noli.premiar(x.premio, x.clave);
+  pr.pagados = [...pr.pagados, ...pend.map((x) => x.clave)];
+  guardar();
+}
+
 // ---------- Arranque ----------
 
 Promise.all([Noli.datos, fetch(new URL("libro.json", BASE)).then((r) => r.json())]).then(([d, l]) => {
   libro = l; datos = d; pr = progresoDe(d, LIBRO);
+  cobrar();
   document.title = "Biblioteca";
   const m = /^#c(\d+)$/.exec(location.hash || "");
   const n = m ? +m[1] : 0;

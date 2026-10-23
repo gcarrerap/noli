@@ -19,7 +19,7 @@ test("manifiesto: completa los valores por omisión", () => {
   const { juego, errores } = validarManifiesto({ id: "sumas", titulo: " Sumas " }, "sumas");
   assert.equal(errores, undefined);
   assert.deepEqual(juego, { id: "sumas", titulo: "Sumas", descripcion: "", icono: "🎲", iconoArchivo: false, color: null, materia: "otros",
-    edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1", creditos: null, costo: null, lugar: null,
+    edades: null, controles: ["tactil", "flechas"], entrada: "index.html", version: "1", creditos: null, costo: null, premios: null, lugar: null,
     tv: false, ocultoEnTv: [] });
 });
 

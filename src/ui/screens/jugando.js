@@ -45,6 +45,7 @@ export function instalarPuente() {
     if (m.tipo === "listo") actual.frame.contentWindow.postMessage(hola(actual.id), location.origin);
     else if (m.tipo === "guardar") actions.guardarDatos(actual.id, m.datos);
     else if (m.tipo === "terminar") actions.terminar(actual.id, m.estrellas, m.reto === true);
+    else if (m.tipo === "premio") actions.premiar(actual.id, m.premio, m.clave);
     else if (m.tipo === "gastar") {
       const r = actions.gastar(actual.id, m.cantidad, m.motivo);
       actual.frame.contentWindow.postMessage(mensaje("gasto", { id: m.id, ok: r.ok, saldo: r.saldo }), location.origin);

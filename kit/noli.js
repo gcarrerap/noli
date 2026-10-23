@@ -7,6 +7,7 @@
 //   Noli.terminar({ estrellas: 3 });     // al terminar una partida (reto: true si fue el reto del día completado)
 //   const saldo = await Noli.creditos;   // créditos de Noelia (solo juegos con "creditos": "gasta"; si no, null)
 //   const { ok, saldo } = await Noli.gastar(3, "pasarela");  // cobrar créditos (#20); ok=false si no alcanza
+//   Noli.premiar("capitulo", "halloween-c3");  // cobrar un premio de juego.json → premios (una vez por clave)
 //   Noli.salir();                        // regresar al catálogo
 //
 // Dentro del catálogo (en un iframe) las acciones llegan del catálogo, que ya juntó dedo, teclado, control de
@@ -89,6 +90,8 @@ export const Noli = {
   },
   // reto: true cuando la partida fue el reto del día y se completó (el catálogo da el bono una vez al día)
   terminar({ estrellas = 0, reto = false } = {}) { aCatalogo(mensaje("terminar", { estrellas: aEstrellas(estrellas), reto: reto === true })); },
+  // Cobra un premio declarado en juego.json → "premios" (#96). El catálogo paga cada clave una sola vez.
+  premiar(premio, clave) { aCatalogo(mensaje("premio", { premio: String(premio), clave: String(clave).slice(0, 80) })); },
   // Promesa con el saldo de créditos (número), o null si el juego no declara "creditos": "gasta" en juego.json
   creditos,
   // Pide gastar `cantidad` créditos. Promesa con { ok, saldo }: ok=false si no alcanza o el catálogo no contestó
