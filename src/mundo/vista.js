@@ -10,6 +10,7 @@ import { seguirRuta } from "../../kit/3d/movimiento.js";
 import { crearMundo } from "./escena-mundo.js";
 import { lugarCercano, cristalTocado, rutaPorCaminos, puntoLibre, brazoCamara } from "../engine/mundo.js";
 import { libroTocado, nivelPista } from "../engine/libros.js";
+import { luzAhora } from "../engine/luz.js";
 
 /**
  * @param {HTMLElement} cont
@@ -68,9 +69,25 @@ export function crearVistaMundo(cont, m, op) {
     obj.p.set(c.x, camY + 1.2 + (alto - 1.2) * brazo, c.z + atras * brazo);
   }
 
-  const reloj = { t: 0 };
+  // ---- La luz sigue la hora real del aparato (src/engine/luz.js): el sol, el cielo, la niebla y las estrellas ----
+  const luzCfg = mundo.luz;
+  const { cielo: luzCielo, sol: luzSol } = esc.luces;
+  function aplicarLuz() {
+    if (!luzCfg) return;
+    const L = luzAhora(new Date(), luzCfg);
+    esc.scene.background.set(L.cielo);
+    esc.scene.fog.color.set(L.niebla);
+    luzCielo.color.set(L.luzCielo); luzCielo.groundColor.set(L.luzSuelo); luzCielo.intensity = L.luzCieloI;
+    luzSol.color.set(L.sol); luzSol.intensity = L.solI;
+    luzSol.position.set(L.direccion.x * 10, L.direccion.y * 10, L.direccion.z * 10);
+    mun.ajustarEstrellas(L.estrellas);
+  }
+  aplicarLuz();
+  const reloj = { t: 0, luz: 0 };
   esc.cadaCuadro((dt) => {
     reloj.t += dt;
+    reloj.luz += dt;
+    if (reloj.luz > 2) { reloj.luz = 0; aplicarLuz(); } // el sol se mueve despacio: cada 2 s basta
     // ---- Moverse ----
     let q = quiere;
     if (ruta.length) {
