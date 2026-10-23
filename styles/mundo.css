@@ -148,3 +148,4 @@
 .mundo-aviso span.dos{min-width:0;white-space:normal;line-height:1.15;text-align:left}
 .mundo-aviso.construir{flex-direction:column;gap:.35em;border-radius:24px;padding-top:.55em;padding-bottom:.55em}
 .mundo-aviso.construir span.dos{text-align:center}
+.mapa-svg{border-radius:14px}

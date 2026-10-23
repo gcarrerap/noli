@@ -118,6 +118,8 @@ El mundo es un **archipiélago de 10 islas**. El claro de siempre es **Isla Noli
 
 ![Camino de plataformas (algunas se mueven) hacia el Bosque Encantado](img/islas-plataformas-tv.jpg)
 
+![El mapa con el dibujo de Petra: lo visitado completo, lo cercano con «?» y lo demás bajo las nubes](img/islas-mapa-tv.jpg)
+
 ### Las islas y la red
 
 | Isla | Tema | | Isla | Tema |
@@ -177,10 +179,10 @@ Arriba en el mapa = hacia el fondo del mundo (−z), que es hacia donde mira la 
 
 ### El mapa
 
-Botón 🗺 en el HUD del teléfono y **Mapa** en "¿A dónde vamos?" (en la TV, ahí). Mientras llega el dibujo de Petra (#165), es un SVG hecho en código con las mismas posiciones:
+Botón 🗺 en el HUD del teléfono y **Mapa** en "¿A dónde vamos?" (en la TV, ahí). El fondo es el **dibujo de Petra** (#165: `mundo/arte/mapa.png`, y su copia para la web `mapa-1600.jpg`); encima se dibujan en SVG la niebla, los nombres, las conexiones y «Estás aquí». Cada isla dice dónde está en el dibujo (`islas.json → islas[].mapa: { u, v }`, de 0 a 1) y `puntoMapa` ubica al personaje (en una isla, alrededor de su centro; en un puente, entre las dos islas). Si `islas.json` no trae `mapa`, sale el mapa hecho en código con las posiciones del mundo.
 
 - Islas **visitadas**: completas, con su nombre (el nombre siempre en HTML/SVG: el arte no lleva texto).
-- Islas **vecinas** de una visitada (por cualquier conexión): silueta con «?».
+- Islas **vecinas** de una visitada (por cualquier conexión): un velo blanco con «?».
 - Las demás: tapadas por **nubes**.
 - Conexiones construidas: línea sólida (puente; azul si es de cristal) o de puntitos (plataformas). Las que se ven sin construir: punteadas tenues.
 - «Estás aquí»: el punto rojo.
@@ -206,6 +208,7 @@ Lógica: `vistaMapa` en `src/engine/islas.js`; dibujo: `mapaSvg` en `src/ui/scre
 | `topeEstrellas` | Estrellas del mundo por isla y juego (5). |
 | `costoMinimoEstrellas` | Lo menos que puede costar una conexión (20). |
 | `radio` | Radio de las islas nuevas (24 m). |
+| `mapa` | El dibujo del mapa: `imagen` (copia para la web), `ancho` y `alto` (su proporción) y `r` (radio de una isla en el dibujo, fracción del ancho). |
 | `mar` | `color`, `nivel` (altura del agua) y `orilla` (ancho de la arena). |
 | `plataformas` | Cómo se arman los caminos de plataformas: `r`, `hueco` (agua entre una y otra), `alto` (se alternan), `grosor` y `mover` (`distancia`, `periodo`, `pausa`). |
 | `islas` | `{ id, nombre, tema, centro: {x, z} \| forma, teletransportador?, colores: { suelo, orilla } }`. Isla Noli tiene `forma` = la caja de `mundo.limites` (una prueba lo revisa). Sin `teletransportador`, va en el centro. |

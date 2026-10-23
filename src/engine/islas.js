@@ -504,3 +504,43 @@ export function libresNoli(red) {
   const t = teletransportadorDe(red.por.get(INICIO));
   return { segmentos: salidasNoli(red).map((s) => ({ a: s.orilla, b: s.lejos, r: ANCHO_PUENTE / 2 + 1.2 })), puntos: [{ x: t.x, z: t.z, r: 2.4 }] };
 }
+
+// ---------- El mapa ilustrado (#165) ----------
+
+/**
+ * Dónde se dibuja en el mapa de Petra un punto del mundo: { u, v } (0 a 1 del dibujo), o null si no hay mapa ilustrado.
+ * En una isla: alrededor de su centro en el dibujo (las islas del dibujo no tienen la misma forma que las del mundo,
+ * así que se acomoda dentro del 75 % de su radio). En un puente o camino de plataformas: entre las dos islas.
+ */
+export function puntoMapa(red, x, z) {
+  const M = red.cfg.mapa;
+  if (!M || red.islas.some((i) => !i.mapa)) return null;
+  const rx = M.r, ry = M.r * (M.ancho / M.alto) * 0.62;
+  const centro = (i) => ({ u: i.mapa.u, v: i.mapa.v });
+  const enIsla = (i, x, z) => {
+    const f = i.f, c = i.c;
+    const ox = f.tipo === "caja" ? (x - c.x) / ((f.x1 - f.x0) / 2) : (x - c.x) / f.r;
+    const oz = f.tipo === "caja" ? (z - c.z) / ((f.z1 - f.z0) / 2) : (z - c.z) / f.r;
+    const l = Math.hypot(ox, oz), k = l > 1 ? 1 / l : 1;
+    return { u: i.mapa.u + ox * k * rx * 0.75, v: i.mapa.v + oz * k * ry * 0.75 };
+  };
+  const i = islaEn(red, x, z);
+  if (i) return enIsla(i, x, z);
+  // Lo más cercano: una conexión (por dónde va de una orilla a la otra) o la orilla de una isla
+  let mejor = null, md = Infinity;
+  for (const k of red.conexiones) {
+    const vx = k.p1.x - k.p0.x, vz = k.p1.z - k.p0.z;
+    const t = Math.max(0, Math.min(1, ((x - k.p0.x) * vx + (z - k.p0.z) * vz) / (vx * vx + vz * vz)));
+    const d = Math.hypot(x - (k.p0.x + vx * t), z - (k.p0.z + vz * t));
+    if (d < md) {
+      md = d;
+      const A = enIsla(red.por.get(k.de), k.p0.x, k.p0.z), B = enIsla(red.por.get(k.a), k.p1.x, k.p1.z);
+      mejor = { u: A.u + (B.u - A.u) * t, v: A.v + (B.v - A.v) * t };
+    }
+  }
+  for (const s of red.islas) {
+    const d = -aOrilla(s.f, x, z);
+    if (d < md) { md = d; mejor = enIsla(s, x, z); }
+  }
+  return mejor || centro(red.islas[0]);
+}
