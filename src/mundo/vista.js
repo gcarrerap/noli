@@ -9,6 +9,8 @@ import { pasoFisico, crearCuerpo, alturaBajo, arrastre, hayPiso, chocaEn } from 
 import { seguirRuta } from "../../kit/3d/movimiento.js";
 import { crearMundo } from "./escena-mundo.js";
 import { crearIslas } from "./escena-islas.js";
+import { crearBuho } from "./buho.js";
+import { juntoAlBuho } from "../engine/secreto.js";
 import { estadoRed, mapaIslas, limitesRed, islaEn, muelleEn, enTeletransportador, teletransportadorDe, aOrilla, posPlataforma,
   INICIO } from "../engine/islas.js";
 import { lugarCercano, cristalTocado, rutaPorCaminos, puntoLibre, brazoCamara } from "../engine/mundo.js";
@@ -24,6 +26,8 @@ import { luzAhora } from "../engine/luz.js";
  *   libro?: { n, x, y, z }|null, alLibro?: (l) => void, alPista?: (nivel) => void }} op
  *   libro: el libro escondido que toca buscar (#103); mundo.libros da los segundos de cada pista
  * Islas (#164): { datosIslas, alIsla(isla), alMuelle(muelle|null), alTele(isla|null), alCaida() }
+ * Búho (#166): { buho (mundo/buho.json), alBuho(junto: boolean), puedeTomar(): boolean } — puedeTomar: si es false
+ *   (modo secreto) no se toman cristales ni libros
  *   datosIslas: "_mundo" (islas visitadas, conexiones construidas); alIsla: pisó otra isla; alMuelle / alTele: está
  *   (o ya no) en un muelle o en un teletransportador; alCaida: cayó al agua y regresó al último punto firme
  *   tiene: cristales que ya encontró; desde: id del juego de cuya puerta sale (al regresar de un juego)
@@ -38,20 +42,28 @@ export function crearVistaMundo(cont, m, op) {
   // ---- Las islas (#164): mar, islas, puentes, plataformas, muelles y teletransportadores ----
   const isl = crearIslas(red, m.islas, { reducir: op.reducir });
   esc.scene.add(isl.grupo);
-  let datosIslas = op.datosIslas, estado = null, fisMapa = null, moviles = [], tRed = 0;
+  let datosIslas = op.datosIslas, todas = false, estado = null, fisMapa = null, moviles = [], tRed = 0;
   let islaActual = INICIO, muelle = null, tele = null;
   function rearmar(nueva) {
-    estado = estadoRed(red, datosIslas);
+    estado = estadoRed(red, datosIslas, { todas });
     const mi = mapaIslas(red, estado);
     // La física: lo de Isla Noli (plataformas, edificios, árboles) + barandales y plataformas de las islas; el piso solo
     // en las zonas (islas, puentes, muelles) y los límites, los de todo el archipiélago
     fisMapa = { solidos: [...mapa.solidos, ...mi.solidos], zonas: mi.zonas, limites: limitesRed(red) };
     moviles = fisMapa.solidos.filter((x) => x.plataforma && x.plataforma.mueve);
-    isl.dibujarConexiones(estado, nueva);
+    // En el modo secreto (#166) todas las conexiones existen; las que no se han construido de verdad se ven mágicas
+    const reales = new Set(datosIslas.conexiones || []);
+    isl.dibujarConexiones(estado, nueva, todas ? new Set(red.conexiones.map((k) => k.id).filter((id) => !reales.has(id))) : new Set());
     muelle = null;
   }
   rearmar();
   isl.enfocar(INICIO);
+
+  // ---- El búho sabio (#166) ----
+  const buhoDatos = op.buho || null;
+  const buho = buhoDatos ? crearBuho({ reducir: op.reducir }) : null;
+  let juntoBuho = false;
+  if (buho) { buho.grupo.position.set(buhoDatos.x, 0, buhoDatos.z); esc.scene.add(buho.grupo); }
   // ---- El libro escondido (#103) ----
   let libro = null, buscando = 0, pista = 0;
   const ponerLibro = (l) => { libro = l || null; buscando = 0; pista = 0; mun.ponerLibro(libro); };
@@ -165,9 +177,15 @@ export function crearVistaMundo(cont, m, op) {
     if ((mu && mu.id + mu.isla) !== (muelle && muelle.id + muelle.isla)) { muelle = mu; if (op.alMuelle) op.alMuelle(mu); }
     const te = c.enSuelo ? enTeletransportador(red, c) : null;
     if ((te && te.id) !== (tele && tele.id)) { tele = te; if (op.alTele) op.alTele(te); }
-    const cr = cristalTocado(c, cristales, op.tiene);
+    if (buho) {
+      const jb = c.enSuelo && juntoAlBuho(c, buhoDatos);
+      if (jb !== juntoBuho) { juntoBuho = jb; if (op.alBuho) op.alBuho(jb); }
+      buho.animar(dt, reloj.t, jb);
+    }
+    const toma = !op.puedeTomar || op.puedeTomar();
+    const cr = toma ? cristalTocado(c, cristales, op.tiene) : null;
     if (cr) { op.tiene.add(cr.id); mun.quitarCristal(cr.id); op.alCristal(cr); }
-    if (libro) {
+    if (libro && toma) {
       if (libroTocado(c, libro)) { const l = libro; libro = null; mun.tomarLibro(); if (op.alLibro) op.alLibro(l); }
       else {
         buscando += dt;
@@ -238,6 +256,18 @@ export function crearVistaMundo(cont, m, op) {
     teletransportar,
     /** Cambió lo guardado del mundo (se construyó algo, llegó de la nube, se visitó una isla). nueva: la recién construida */
     actualizarIslas(datos, nueva) { datosIslas = datos; rearmar(nueva); },
+    /** Modo secreto (#166): todas las conexiones aparecen (mágicas). Al apagarlo, si está en una isla que no conoce o
+     *  donde ya no hay piso (en una conexión mágica), aparece en la isla `regreso`. Devuelve true si lo regresó. */
+    secreto(on, regreso) {
+      todas = !!on; rearmar();
+      if (on) return false;
+      const i = islaEn(red, c.x, c.z), conocidas = new Set(datosIslas.visitadas || [INICIO]);
+      // Fuera de una isla: se queda si debajo hay algo de verdad (un puente o una plataforma construidos)
+      const fuera = i ? !conocidas.has(i.id) : alturaBajo(c.x, c.z, c.y + 0.05, fisMapa, cfg) < -1;
+      if (fuera) teletransportar(conocidas.has(regreso) ? regreso : INICIO);
+      return fuera;
+    },
+    get juntoBuho() { return juntoBuho; },
     get isla() { return islaActual; },
     get muelle() { return muelle; },
     get tele() { return tele; },
@@ -258,7 +288,7 @@ export function crearVistaMundo(cont, m, op) {
     /** Viste al personaje (atuendo e índices de la Pasarela) */
     vestir(atuendo, idx, piel) { av.vestir(atuendo, idx); if (piel) av.ponerPiel(piel); },
     /** Regresar de un juego: aparece frente a su puerta, viendo a la plaza */
-    volverDe(id) { salirDe(id); ruta = []; alLlegar = null; saltar = true; cerca = null; tele = null; muelle = null; },
+    volverDe(id) { salirDe(id); ruta = []; alLlegar = null; saltar = true; cerca = null; tele = null; muelle = null; juntoBuho = false; },
     /** Para diagnosticar (y las pruebas en el navegador): qué islas están armadas */
     get islasArmadas() { return isl.armadas; },
     pausar: (si) => esc.pausar(si),

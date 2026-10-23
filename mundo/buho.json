@@ -1,0 +1,32 @@
+{
+  "_ayuda": "El búho sabio de Isla Noli y el modo secreto (#166): hace una pregunta al azar; cualquier respuesta recibe una contestación simpática. Si la respuesta es la frase secreta (se compara su SHA-256, minúsculas, sin acentos ni espacios ni signos: aquí NUNCA va la frase), abre todas las conexiones por 'minutos' sin guardar nada. Para cambiar la frase: poner aquí el SHA-256 de la nueva frase normalizada (src/engine/secreto.js → normalizarFrase). Ver docs/MUNDO.md § Modo secreto.",
+  "x": 3.6, "z": 9, "radio": 0.55, "acercarse": 1.9,
+  "minutos": 10,
+  "hash": "42a726daf50182ce5b7ecdbf5757813928092b88e1d633571ee9e13285b1de0c",
+  "preguntas": [
+    "¿Cuál es tu color favorito?",
+    "¿Qué animal te gustaría ser?",
+    "¿Qué comiste hoy?",
+    "¿Cuál es tu juego favorito de Noli?",
+    "¿Qué te gustaría construir en una isla?",
+    "¿Cómo se llama tu mejor amiga?",
+    "¿Qué te hace reír mucho?",
+    "¿Qué número te gusta más?",
+    "¿A dónde te gustaría viajar?",
+    "¿Qué sabor de helado es el mejor?",
+    "¿Qué te gustaría aprender este año?",
+    "¿Qué superpoder te gustaría tener?",
+    "¿Qué canción te sabes de memoria?",
+    "¿Cuál es tu estación del año favorita?",
+    "¿Qué le pondrías a un pastel gigante?"
+  ],
+  "respuestas": [
+    "¡Qué bonito!",
+    "¡Uh, uh! Me gusta mucho.",
+    "¡Qué buena respuesta!",
+    "Mmm… lo voy a anotar en mi libro de sabiduría.",
+    "¡Eso me hace mover las plumas de gusto!",
+    "¡Qué interesante! Los búhos aprendemos algo nuevo cada día.",
+    "¡Uh, uh! A mí también."
+  ]
+}

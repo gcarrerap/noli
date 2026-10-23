@@ -10,7 +10,8 @@ import { state, actions } from "../../app/index.js";
 import { cargarMundo, BASE_MUNDO } from "../../services/index.js";
 import { revisarMundo, colocarLugares, decorar, todosLosSitios, mapaMundo, fisicaDe, crearCaminos, cristalesDe, materias,
   jugableEn, acomodarLetreros, librosDe, estadoLibros, conHallazgo, dia, revisarIslas, armarIslas, libresNoli, salidasNoli,
-  teletransportadorDe, puedeConstruir, construir, conVisita, disponibles, vistaMapa, estrellasDeJuego, puntoMapa } from "../../engine/index.js";
+  teletransportadorDe, puedeConstruir, construir, conVisita, disponibles, vistaMapa, estrellasDeJuego, puntoMapa, revisarBuho, solidoBuho,
+  esFraseSecreta, relojSecreto, otraPregunta } from "../../engine/index.js";
 import { crearJoystick } from "../../../kit/3d/joystick.js";
 import { direccionDeTeclas, crearPulsador } from "../../../kit/3d/movimiento.js";
 import { moverFoco, focoInicial } from "../../../kit/foco.js";
@@ -32,6 +33,7 @@ const ICONO = {
   brincar: `<svg viewBox="0 0 24 24" width="1.7em" height="1.7em" aria-hidden="true"><path d="M12 3 4.5 12h4.6v8.5h5.8V12h4.6z" fill="currentColor"/></svg>`,
   mapa: `<svg viewBox="0 0 24 24" width="1.4em" height="1.4em" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#8fd3f4" stroke="#2b2236" stroke-width="1.6"/><ellipse cx="9" cy="10" rx="3.4" ry="2.6" fill="#bfe6a4" stroke="#2b2236" stroke-width="1.1"/><ellipse cx="15.5" cy="15" rx="2.6" ry="2" fill="#ffd3e8" stroke="#2b2236" stroke-width="1.1"/><path d="M11.5 11.5l2.6 2.4" stroke="#2b2236" stroke-width="1.2" stroke-dasharray="1.2 1"/></svg>`,
   tele: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><ellipse cx="12" cy="18" rx="8" ry="3" fill="#d9c8ff" stroke="#2b2236" stroke-width="1.4"/><path d="M7 17V8M17 17V8" stroke="#c9a6ff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 4.5l1.2 2.5 2.6.3-2 1.8.6 2.6-2.4-1.4-2.4 1.4.6-2.6-2-1.8 2.6-.3z" fill="#ffd166" stroke="#2b2236" stroke-width="1"/></svg>`,
+  buho: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><ellipse cx="12" cy="14" rx="7.5" ry="8" fill="#b07a4a" stroke="#2b2236" stroke-width="1.4"/><path d="M5 6.5l2.5 3M19 6.5l-2.5 3" stroke="#2b2236" stroke-width="1.4"/><circle cx="9" cy="12" r="2.8" fill="#fff" stroke="#e6b13a" stroke-width="1.2"/><circle cx="15" cy="12" r="2.8" fill="#fff" stroke="#e6b13a" stroke-width="1.2"/><circle cx="9" cy="12" r="1.2" fill="#2b2236"/><circle cx="15" cy="12" r="1.2" fill="#2b2236"/><path d="M12 14l-1.2 1.6h2.4z" fill="#f39a2e"/><path d="M6.5 5.5h11l-5.5-2.5z" fill="#7b4fc0" stroke="#2b2236" stroke-width="1"/></svg>`,
   sencillo: `<svg viewBox="0 0 24 24" width="1.2em" height="1.2em" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="#ffc43d" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="#4cb3ff" stroke="#2b2236" stroke-width="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="#3ccf8e" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="#ff6b4a" stroke="#2b2236" stroke-width="1.4"/></svg>`,
 };
 
@@ -111,26 +113,30 @@ async function armar() {
   try {
     if (!cache) {
       const [datos, mod] = await Promise.all([cargarMundo(), import("../../mundo/vista.js")]);
-      const errores = [...revisarMundo(datos.mundo, datos.lugares), ...revisarIslas(datos.islas, datos.mundo, fisicaDe(datos.mundo))];
+      const errores = [...revisarMundo(datos.mundo, datos.lugares), ...revisarIslas(datos.islas, datos.mundo, fisicaDe(datos.mundo)), ...revisarBuho(datos.buho)];
       if (errores.length) throw new Error("mundo/: " + errores.join("; "));
       cache = { ...datos, mod };
     }
     if (M !== m) return; // lo quitaron mientras cargaba
-    const { mundo, lugares: L, islas, mod } = cache;
+    const { mundo, lugares: L, islas, buho, mod } = cache;
     const red = armarIslas(islas);
     actions.topeEstrellas = islas.topeEstrellas;
     const juegos = state.juegos.filter((j) => jugableEn(j, state.modo));
     const lugares = colocarLugares(juegos, L);
-    const deco = decorar(mundo, todosLosSitios(L), libresNoli(red));
+    const libres = libresNoli(red);
+    libres.puntos.push({ x: buho.x, z: buho.z, r: buho.radio + 1.6 }); // el búho (#166)
+    const deco = decorar(mundo, todosLosSitios(L), libres);
     const cfg = fisicaDe(mundo);
     const mapa = mapaMundo(mundo, lugares, deco);
+    mapa.solidos.push(solidoBuho(buho));
     const salidas = salidasNoli(red);
     const caminos = crearCaminos(mundo, lugares, mapa, cfg, [...salidas.map((x) => x.adentro), ...salidas.map((x) => x.lejos), teletransportadorDe(red.por.get("noli"))]);
     const cristales = cristalesDe(mundo);
     const guardado = actions.datosMundo();
     const tiene = new Set(guardado && Array.isArray(guardado.cristales) ? guardado.cristales.filter((id) => cristales.some((c) => c.id === id)) : []);
     const reducir = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    Object.assign(m, { mundo, lugares, cristales, tiene, cfg, red, muelle: null, tele: null, claveIslas: claveIslas(guardado) });
+    Object.assign(m, { mundo, lugares, cristales, tiene, cfg, red, muelle: null, tele: null, claveIslas: claveIslas(guardado), buho,
+      junto: false, secreto: null, ultimaConocida: "noli", pregunta: "", contesta: "" });
     m.libros = prepararLibros(mundo, juegos);
     m.vista = mod.crearVistaMundo(m.raiz.querySelector("#mundoLienzo"), { mundo, lugares, deco, mapa, caminos, cfg, cristales, red, islas }, {
       tv: state.modo === "tv", reducir, tiene, desde: volverA,
@@ -145,6 +151,9 @@ async function armar() {
       alMuelle: (x) => { m.muelle = x; dibujarAviso(); },
       alTele: (x) => { m.tele = x; dibujarAviso(); },
       alCaida: () => toast("¡Splash! Regresaste a la isla."),
+      buho,
+      alBuho: (x) => { m.junto = x; dibujarAviso(); },
+      puedeTomar: () => !m.secreto,
     });
     volverA = null;
     m.estado = "listo";
@@ -182,7 +191,7 @@ function instalar(m) {
   const joy = crearJoystick($("mundoJoy"), (d) => { m.joy = d; });
   m.quitar.push(() => joy.quitar());
   on($("mundoBrincar"), "pointerdown", (e) => { e.preventDefault(); if (!m.menu) m.vista.brincar(); });
-  $("mundoAviso").onclick = () => { if (m.cerca) entrar(m.cerca.id); else if (m.muelle) construirAqui(); else if (m.tele) abrirMenu("tele"); };
+  $("mundoAviso").onclick = () => { if (m.cerca) entrar(m.cerca.id); else if (m.muelle) construirAqui(); else if (m.tele) abrirMenu("tele"); else if (m.junto) hablarConBuho(); };
 
   // Tocar el piso: caminar hasta ahí
   on($("mundoLienzo"), "pointerup", (e) => {
@@ -243,6 +252,7 @@ function actualizar() {
     <div class="mundo-hud-izq">${botonCreditos()}${botonNube()}</div>
     <div class="mundo-contadores"><div class="mundo-cristales" title="Cristales encontrados">${ICONO.cristal}<b>${M.tiene.size}</b><span>/ ${M.cristales.length}</span></div>
     <div class="mundo-cristales mundo-estrellas" title="Estrellas del mundo para construir">${ESTRELLA_MUNDO}<b>${disp.estrellas}</b></div>
+    ${M.secreto ? `<div class="mundo-cristales mundo-secreto" title="Magia del búho">${ICONO.buho}<b id="mundoReloj">${relojSecreto(M.secreto.hasta, Date.now())}</b></div>` : ""}
     ${M.libros ? `<div class="mundo-cristales mundo-libros" title="Capítulos encontrados">${ICONO.libro}<b>${estadoHoy().tiene.size}</b><span>/ ${M.libros.total}</span></div>` : ""}</div>
     <div class="mundo-hud-der">
       ${tv ? `<span class="mundo-pista" id="mundoPista">${pistaTv()}</span>` : ""}
@@ -302,15 +312,15 @@ function dibujarLetreros(forzar) {
 }
 
 // En la TV, arriba: qué hace OK aquí (en la puerta de un juego entra; en cualquier otro lado brinca)
-const pistaTv = () => `<kbd>OK</kbd> ${M && M.cerca ? "entrar" : M && M.muelle ? "construir" : M && M.tele ? "viajar" : "brincar"} · <kbd>Atrás</kbd> menú`;
+const pistaTv = () => `<kbd>OK</kbd> ${M && M.cerca ? "entrar" : M && M.muelle ? "construir" : M && M.tele ? "viajar" : M && M.junto ? "hablar" : "brincar"} · <kbd>Atrás</kbd> menú`;
 
 function dibujarAviso() {
   const b = M && M.raiz.querySelector("#mundoAviso");
   if (!b) return;
   const p = M.raiz.querySelector("#mundoPista");
   if (p) p.innerHTML = pistaTv();
-  const l = M.cerca, mu = !l && M.muelle, te = !l && !mu && M.tele;
-  b.hidden = !(l || mu || te) || M.menu;
+  const l = M.cerca, mu = !l && M.muelle, te = !l && !mu && M.tele, bu = !l && !mu && !te && M.junto;
+  b.hidden = !(l || mu || te || bu) || M.menu;
   b.classList.toggle("construir", !!mu);
   if (b.hidden) return;
   const pista = state.modo === "tv" || document.documentElement.classList.contains("teclado") ? `<kbd>OK</kbd>` : "";
@@ -329,9 +339,12 @@ function dibujarAviso() {
       b.innerHTML = p.ok ? `<span class="dos">${pista} Construir <b>${esc(NOMBRE_CONEXION(k))}</b></span>${costo}`
         : `<span class="dos">${esc(faltanTexto(p.faltan))}</span>${costo}`;
     }
-  } else {
+  } else if (te) {
     b.style.setProperty("--c", "#9b7bff");
     b.innerHTML = `${pista}${ICONO.tele}<span>Viajar con el <b>teletransportador</b></span>`;
+  } else {
+    b.style.setProperty("--c", "#a0703f");
+    b.innerHTML = `${pista}${ICONO.buho}<span>Hablar con el <b>búho</b></span>`;
   }
   dibujarLetreros(true);
 }
@@ -360,6 +373,8 @@ const NOMBRE_CONEXION = (k) => (k.tipo === "plataformas" ? "el camino de platafo
 
 function llegarAIsla(isla) {
   const antes = actions.datosMundo();
+  if (antes.visitadas.includes(isla.id)) M.ultimaConocida = isla.id;
+  if (M.secreto) { toast(isla.nombre); return; } // modo secreto (#166): no se marca como conocida
   const nueva = !antes.visitadas.includes(isla.id);
   const d = conVisita(antes, isla.id);
   if (d !== antes) { actions.guardarMundo(d); M.claveIslas = claveIslas(actions.datosMundo()); if (nueva) M.vista.actualizarIslas(actions.datosMundo()); }
@@ -388,6 +403,59 @@ function faltanTexto(f) {
   if (f.cristales) partes.push(`${f.cristales} ${f.cristales === 1 ? "cristal" : "cristales"}`);
   if (f.estrellas) partes.push(`${f.estrellas} ${f.estrellas === 1 ? "estrella" : "estrellas"}`);
   return `Te ${f.cristales + f.estrellas === 1 ? "falta" : "faltan"} ${partes.join(" y ")}.${f.estrellas ? " Gana estrellas en los juegos." : " Búscalos brincando en las plataformas."}`;
+}
+
+// ---------- El búho y el modo secreto (#166) ----------
+
+function hablarConBuho() {
+  if (!M) return;
+  M.pregunta = otraPregunta(M.buho.preguntas, M.pregunta);
+  M.contesta = ""; M.borrador = "";
+  abrirMenu("buho");
+}
+
+/** Lo que contestó: la frase secreta abre la magia; cualquier otra cosa, una respuesta simpática y otra pregunta */
+function responderBuho(texto) {
+  if (!M) return;
+  if (!String(texto || "").trim()) return;
+  if (esFraseSecreta(texto, M.buho.hash)) {
+    activarSecreto();
+    M.contesta = "¡Uh, uh! Los puentes mágicos están abiertos.";
+  } else {
+    const r = M.buho.respuestas;
+    M.contesta = r[Math.floor(Math.random() * r.length)];
+    M.pregunta = otraPregunta(M.buho.preguntas, M.pregunta);
+  }
+  dibujarMenu();
+}
+
+/** Todas las conexiones por unos minutos, sin guardar nada (solo vive aquí, en memoria) */
+function activarSecreto() {
+  const m = M;
+  if (m.secreto) clearInterval(m.secreto.timer);
+  const hasta = Date.now() + m.buho.minutos * 60000;
+  const timer = setInterval(() => {
+    if (M !== m || !m.secreto) return clearInterval(timer);
+    const r = m.raiz.querySelector("#mundoReloj");
+    if (r) r.textContent = relojSecreto(m.secreto.hasta, Date.now());
+    if (Date.now() >= m.secreto.hasta) terminarSecreto();
+  }, 1000);
+  m.quitar.push(() => clearInterval(timer));
+  m.secreto = { hasta, timer };
+  m.vista.secreto(true);
+  m.muelle = null;
+  actualizar();
+}
+
+function terminarSecreto() {
+  const m = M;
+  if (!m || !m.secreto) return;
+  clearInterval(m.secreto.timer);
+  m.secreto = null;
+  m.vista.secreto(false, m.ultimaConocida);
+  toast("La magia del búho se acabó.");
+  if (m.menu === "tele" || m.menu === "mapa") dibujarMenu();
+  actualizar();
 }
 
 function encontrarCristal(c) {
@@ -502,15 +570,41 @@ function dibujarMenu() {
     el.innerHTML = `<div class="mundo-menu-caja mundo-mapa">
       <h2 id="mundoMenuTitulo">${ICONO.mapa}Mapa de las islas</h2>
       ${mapaSvg()}
-      <p class="mundo-menu-sub"><span>Las islas que ya visitaste se ven completas; las que tienen <b>?</b> están cerca. ¡Construye puentes para llegar!</span></p>
+      <p class="mundo-menu-sub">${M.secreto ? `${ICONO.buho}<span>Magia del búho: se ve todo el mapa (quedan <b>${relojSecreto(M.secreto.hasta, Date.now())}</b>).</span>` : `<span>Las islas que ya visitaste se ven completas; las que tienen <b>?</b> están cerca. ¡Construye puentes para llegar!</span>`}</p>
       <div class="fila"><button class="primario" data-foco="inicial" data-k="cerrar" id="mCerrar">Seguir paseando</button></div></div>`;
     el.querySelector("#mCerrar").onclick = cerrarMenu;
     el.onclick = (e) => { if (e.target === el) cerrarMenu(); };
     return;
   }
+  if (M.menu === "buho") {
+    const sec = M.secreto;
+    el.innerHTML = `<div class="mundo-menu-caja chica mundo-buho">
+      <p class="mundo-hallazgo-ico">${ICONO.buho}</p>
+      ${M.contesta ? `<p class="buho-dice">${esc(M.contesta)}</p>` : ""}
+      <h2 id="mundoMenuTitulo">${esc(M.pregunta)}</h2>
+      <form id="mBuhoForm" class="buho-form" autocomplete="off">
+        <input id="mBuhoTexto" type="text" data-foco="inicial" data-k="texto" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Tu respuesta" placeholder="Escribe aquí">
+        <button class="primario" data-foco data-k="responder" type="submit">Responder</button>
+      </form>
+      ${sec ? `<p class="mundo-menu-sub"><span>Magia del búho: quedan <b>${relojSecreto(sec.hasta, Date.now())}</b>.</span></p>` : ""}
+      <div class="fila">
+        ${sec ? `<button class="mundo-boton" data-foco data-k="terminar" id="mBuhoFin">Terminar la magia</button>` : ""}
+        <button class="mundo-boton" data-foco data-k="adios" id="mCerrar">Adiós, búho</button>
+      </div></div>`;
+    const f = el.querySelector("#mBuhoForm"), campo = f.querySelector("#mBuhoTexto");
+    campo.value = M.borrador || ""; // si se vuelve a dibujar mientras escribe, no se pierde lo escrito
+    campo.oninput = () => { M.borrador = campo.value; };
+    f.onsubmit = (e) => { e.preventDefault(); const t = campo.value; M.borrador = ""; responderBuho(t); };
+    if (sec) el.querySelector("#mBuhoFin").onclick = () => { terminarSecreto(); cerrarMenu(); };
+    el.querySelector("#mCerrar").onclick = cerrarMenu;
+    el.onclick = (e) => { if (e.target === el) cerrarMenu(); };
+    const b = el.querySelector(`[data-k="${enfocado || "texto"}"]`);
+    if (b) b.focus();
+    return;
+  }
   if (M.menu === "tele") {
     const datos = actions.datosMundo(), aqui = M.vista.isla;
-    const destinos = M.red.islas.filter((i) => datos.visitadas.includes(i.id) && i.id !== aqui);
+    const destinos = M.red.islas.filter((i) => (M.secreto || datos.visitadas.includes(i.id)) && i.id !== aqui);
     el.innerHTML = `<div class="mundo-menu-caja chica">
       <h2 id="mundoMenuTitulo">${ICONO.tele}¿A qué isla viajamos?</h2>
       ${destinos.length ? `<div class="mundo-ir mundo-islas">${destinos.map((i, n) => `<button class="ir" data-isla="${esc(i.id)}" data-k="isla-${esc(i.id)}" ${n === 0 ? 'data-foco="inicial"' : "data-foco"} style="--c:#9b7bff">
@@ -564,7 +658,7 @@ function dibujarMenu() {
  *  Petra (#165, islas.json → mapa) las nubes y los «?» van encima del dibujo; sin él, un mapa hecho en código.
  *  Arriba = hacia el fondo del mundo (−z), como en el juego. */
 function mapaSvg() {
-  const red = M.red, v = vistaMapa(red, actions.datosMundo());
+  const red = M.red, v = vistaMapa(red, actions.datosMundo(), { todo: !!M.secreto });
   const ilustrado = mapaIlustrado(red, v);
   if (ilustrado) return ilustrado;
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -646,7 +740,9 @@ export function accionMundo(accion) {
     const caja = M.raiz.querySelector("#mundoMenu");
     if (accion === "atras") return cerrarMenu();
     if (moverFoco(accion, caja)) return;
-    if (accion === "ok" && caja.contains(document.activeElement)) document.activeElement.click();
+    const a = document.activeElement;
+    if (accion === "ok" && a && a.tagName === "INPUT" && a.form) a.form.requestSubmit();
+    else if (accion === "ok" && caja.contains(a)) a.click();
     else if (accion === "ok") focoInicial(caja);
     return;
   }
@@ -661,5 +757,6 @@ export function accionMundo(accion) {
   if (accion === "ok" && M.cerca) return entrar(M.cerca.id);
   if (accion === "ok" && M.muelle) return construirAqui();
   if (accion === "ok" && M.tele) return abrirMenu("tele");
+  if (accion === "ok" && M.junto) return hablarConBuho();
   if (accion === "ok" || accion === "brincar") { if (pulsar(performance.now())) M.vista.brincar(); }
 }

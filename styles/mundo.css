@@ -149,3 +149,10 @@
 .mundo-aviso.construir{flex-direction:column;gap:.35em;border-radius:24px;padding-top:.55em;padding-bottom:.55em}
 .mundo-aviso.construir span.dos{text-align:center}
 .mapa-svg{border-radius:14px}
+
+/* ---------- El búho (#166) ---------- */
+.mundo-buho .buho-dice{font-family:var(--display);font-size:1.15rem;color:#7a5530;margin:0 0 .4em}
+.buho-form{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:.2em 0 .6em}
+.buho-form input{flex:1 1 12rem;min-width:0;font:inherit;font-size:1.2rem;padding:.6em .9em;border-radius:999px;border:2px solid #d9c8ff;background:#fff;color:#2b2236}
+.buho-form input:focus{outline:3px solid #9b7bff;outline-offset:2px}
+.mundo-secreto{background:rgba(255,244,214,.95)}
