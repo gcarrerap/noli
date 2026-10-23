@@ -75,6 +75,16 @@ Issue: #25. En lugar de una cuadrícula de tarjetas, el menú principal es un **
 - **Todos los juegos se alcanzan caminando por el camino, sin brincar.** Las plataformas solo llevan a miradores y cristales: Noelia tiene 7 años y en la TV se juega con un control que tiene retraso, así que ningún juego queda detrás de un brinco difícil. (Hay una prueba que lo revisa: de la plaza se llega caminando a **cada** sitio, ocupado o no, sin subirse a nada.)
 - **Decoración** (`src/engine/mundo.js → decorar`, con semilla: siempre sale igual): una fila de árboles en el borde del fondo y de los lados (al frente no, porque ahí está la cámara), árboles sueltos, hongos chiquitos, flores, luciérnagas y estrellas en el cielo. Nunca hay un árbol en la plaza, en un camino (hacia cualquier sitio, aunque esté libre), junto a una puerta, un edificio, una plataforma o el estanque.
 
+## Luz y hora (#hora-real)
+
+La luz del mundo sigue la **hora real del aparato**: de día, el sol recorre el cielo y todo se ve como antes; al oscurecer, el cielo se pone índigo, el sol se vuelve una luz azul tenue (la luna), salen las estrellas y la niebla se funde con la noche. En el atardecer y el amanecer el cielo se tiñe de naranja cerca del horizonte.
+
+- **Dónde se calcula:** `src/engine/luz.js` (lógica pura: `posicionSol`, `luzAhora`, `mezclarColor`). Usa el algoritmo solar simplificado de NOAA con la latitud y longitud de `mundo/mundo.json → luz` (por omisión, Independence, KY). Con eso, el sol sale a eso de las 8:00 y se pone a eso de las 18:46 EDT el 22 de octubre.
+- **Qué cambia:** el cielo y la niebla (`scene.background`, `scene.fog`), la luz de ambiente (`HemisphereLight`), la luz del sol (`DirectionalLight`, que se mueve según el sol) y las estrellas (`ajustarEstrellas`, visibles solo de noche).
+- **Cada cuánto:** `src/mundo/vista.js` (`aplicarLuz`) la actualiza cada 2 s. El sol se mueve despacio; no hace falta más.
+- **Colores:** `mundo/mundo.json → luz` (`dia`, `noche`, `horizonte`). Para cambiar la noche, editar ahí; no hace falta tocar código.
+- **Pruebas:** `tests/luz.test.js` (horas conocidas de salida y puesta, este a oeste, vector unitario, de día igual que antes, noche con estrellas, atardecer).
+
 ## Libros escondidos (#103)
 
 Cada capítulo del libro de la Biblioteca (*Mari and the Pumpkin Spaceship*, #96) es un **libro mágico escondido** en el mundo. Son más difíciles de encontrar que los cristales: chiquitos, con un brillo morado tenue, detrás de los edificios, en las esquinas y arriba de las rutas.
@@ -148,7 +158,8 @@ tests/mundo.test.js           pruebas (abajo)
 | `limites` | `{ x0, x1, z0, z1 }`: hasta dónde se puede caminar (m). x hacia la derecha de la pantalla, z hacia abajo (la cámara mira hacia −z). |
 | `inicio` | `{ x, z }`: donde aparece el personaje. |
 | `plaza.radio` | Radio de la plaza. |
-| `cielo`, `niebla` | Color del cielo y `[desde, hasta]` de la niebla (m). |
+| `cielo`, `niebla` | Color del cielo y `[desde, hasta]` de la niebla (m). Respaldo de `luz`. |
+| `luz` | La hora real: `lat`, `lon` y los colores de `dia`, `noche` y `horizonte` (ver § Luz y hora). |
 | `colores` | `pasto`, `pasto2` (manchitas), `plaza`, `camino`, `agua`. |
 | `movimiento` | Física (abajo, § Física). |
 | `estanque` | `{ x, z, r }`. |

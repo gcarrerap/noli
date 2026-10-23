@@ -105,6 +105,8 @@ export function crearEscena(cont, op) {
 
   return {
     THREE, scene, camara, renderer,
+    /** Las luces de la escena (para que el mundo siga la hora real: src/engine/luz.js) */
+    luces: { cielo, sol },
     /** fn(dt segundos, ahora ms) en cada cuadro; devuelve la función para quitarla */
     cadaCuadro(fn) { alCuadro.add(fn); return () => alCuadro.delete(fn); },
     /** Posición en pantalla (px, relativo al contenedor) de un punto 3D, o null si está detrás de la cámara */

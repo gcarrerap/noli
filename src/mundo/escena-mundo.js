@@ -125,7 +125,8 @@ export function crearMundo(mundo, lugares, deco, cristales, op = {}) {
     const a = (i / 28) * Math.PI * 2;
     estrellas.push({ x: Math.sin(a) * 34, y: 9 + (i % 5) * 1.6, z: -10 + Math.cos(a) * 30 });
   }
-  instancias(new THREE.OctahedronGeometry(0.35), material("#fff3a6", { emisivo: 0.9 }), estrellas, (e, t) => { t.position.set(e.x, e.y, e.z); t.scale.set(1, 1.3, 0.4); t.rotation.set(0, Math.atan2(-e.x, -e.z), 0); });
+  const estrellasIM = instancias(new THREE.OctahedronGeometry(0.35), material("#fff3a6", { emisivo: 0.9 }), estrellas, (e, t) => { t.position.set(e.x, e.y, e.z); t.scale.set(1, 1.3, 0.4); t.rotation.set(0, Math.atan2(-e.x, -e.z), 0); });
+  estrellasIM.visible = false; // de día no se ven: la hora real las enciende (ajustarEstrellas)
 
   // Luciérnagas: se mueven (se actualizan sus matrices cada cuadro; son pocas)
   const luz = instancias(new THREE.IcosahedronGeometry(0.07, 0), material("#fff27a", { emisivo: 1 }), deco.luciernagas, (f, t) => { t.position.set(f.x, f.y, f.z); t.scale.setScalar(1); });
@@ -201,6 +202,8 @@ export function crearMundo(mundo, lugares, deco, cristales, op = {}) {
     grupo,
     /** Dónde va el letrero de cada juego: Map(id → Vector3) */
     marcas,
+    /** f: 0 de día, 1 de noche (la hora real): las estrellas se encienden al oscurecer */
+    ajustarEstrellas(f) { estrellasIM.visible = f > 0.02; },
     /**
      * Encoge (con magia) los árboles que quedan entre la cámara y el personaje, para que nunca lo tapen, y vuelve a
      * parar los que ya no estorban. cam y obj: posiciones (x, z) de la cámara y del personaje.
