@@ -31,7 +31,7 @@ export async function cargarCatalogo({ base = BASE, fetchFn = fetch } = {}) {
 // El mundo del menú principal (#25): mundo/mundo.json y mundo/lugares.json
 export const BASE_MUNDO = new URL("../../mundo/", import.meta.url);
 export async function cargarMundo({ base = BASE_MUNDO, fetchFn = fetch } = {}) {
-  const [mundo, lugares, islas] = await Promise.all([leerJson(new URL("mundo.json", base), fetchFn), leerJson(new URL("lugares.json", base), fetchFn),
-    leerJson(new URL("islas.json", base), fetchFn)]);
-  return { mundo, lugares, islas };
+  const [mundo, lugares, islas, buho] = await Promise.all([leerJson(new URL("mundo.json", base), fetchFn), leerJson(new URL("lugares.json", base), fetchFn),
+    leerJson(new URL("islas.json", base), fetchFn), leerJson(new URL("buho.json", base), fetchFn)]);
+  return { mundo, lugares, islas, buho };
 }

@@ -18,3 +18,4 @@ export { formaDe, centroIsla, dentro, aOrilla, orillaHacia, armarIslas, platafor
   disponibles, puedeConstruir, construir, conVisita, estrellasPosibles, estadoRed, solidoPlataforma, mapaIslas, limitesRed, islaEn,
   muelleEn, teletransportadorDe, enTeletransportador, vistaMapa, TOPE_ESTRELLAS, INICIO as ISLA_INICIO, salidasNoli, libresNoli,
   ANCHO_PUENTE, puntoMapa } from "./islas.js";
+export { normalizarFrase, sha256, esFraseSecreta, relojSecreto, otraPregunta, revisarBuho, solidoBuho, juntoAlBuho } from "./secreto.js";

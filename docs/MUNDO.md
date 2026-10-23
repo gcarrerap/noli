@@ -244,13 +244,40 @@ tests/islas.test.js         pruebas (abajo)
 - Física: en el mar se cae; **cada puente se cruza caminando** y empujando de lado no se cae; sin construir, el muelle se detiene en su punta; **cada camino de plataformas se cruza brincando de verdad, de ida y de vuelta, con las móviles moviéndose**; las móviles van y vienen con pausas.
 - Isla Noli: de la plaza se llega caminando a la entrada de cada puente y al teletransportador (con edificios en todos los sitios), y no hay árboles en los pasillos.
 
+## Modo secreto del búho (#166)
+
+Para que papá pruebe las islas **sin desbloquearle nada a Noelia**.
+
+| El búho | Su pregunta | Un puente mágico |
+|---|---|---|
+| ![Búho](img/buho-mundo.jpg) | ![Pregunta](img/buho-pregunta.jpg) | ![Puente mágico](img/buho-puente-magico.jpg) |
+
+- En Isla Noli, cerca del teletransportador, vive un **búho sabio** sobre un tronquito (`mundo/buho.json → x, z`), armado con formas a partir de la hoja de Petra (`mundo/arte/buho.png`, `src/mundo/buho.js`). No se le atraviesa (es un sólido), respira y voltea a ver a Noelia cuando está cerca.
+- Junto a él sale «Hablar con el búho» (OK o tocar). Hace una **pregunta al azar** (`preguntas`) con un campo para escribir. En la TV, el campo abre el teclado de la tele. Cualquier respuesta recibe una contestación simpática (`respuestas`) y otra pregunta: para Noelia es solo un personaje.
+- Si la respuesta es **la frase secreta**, se abre la magia por **10 minutos** (`minutos`). La frase se normaliza (minúsculas, sin acentos, sin espacios ni signos) y se compara su **SHA-256** con `hash`. **En el repo no va la frase, solo su hash.** El SHA-256 está en JS puro (`src/engine/secreto.js`) porque `crypto.subtle` puede no estar en las TVs. Para cambiar la frase: poner en `hash` el SHA-256 de la nueva frase normalizada.
+- **Durante la magia:**
+  - Todas las conexiones aparecen, y las que no están construidas de verdad se ven **mágicas** (transparentes y brillando). Los puentes se cruzan y las plataformas se brincan igual que las de verdad.
+  - El teletransportador lleva a **cualquier** isla y el mapa enseña todo.
+  - Un relojito con el búho en el HUD.
+  - **Nada se guarda:** no se marcan islas visitadas, no se toman cristales ni libros escondidos, no se construye nada y no se sube nada a la nube. El modo vive solo en memoria: si se recarga la página, o en la TV al abrir un juego, se acaba.
+  - Para terminar antes: hablar con el búho → «Terminar la magia».
+- **Al terminar:** si está en una isla que conoce, se queda. Si está en una isla que no conoce o en una conexión mágica (sin nada de verdad debajo), aparece en el teletransportador de la última isla conocida donde estuvo, con «La magia del búho se acabó».
+- **Pruebas** (`tests/secreto.test.js`, con una frase de ejemplo, nunca la real):
+  - La normalización.
+  - El SHA-256 contra el de Node.
+  - Que las variantes de la frase abren y otras no.
+  - El reloj, las preguntas y `buho.json`.
+  - Que el búho no tapa puertas, salidas ni el teletransportador, que se llega caminando y que solo se le habla de cerca.
+  - Que en el modo todas las conexiones existen y al apagarlo regresan las de verdad.
+
 ## Archivos
 
 ```
 mundo/
 ├── mundo.json                tamaño, plaza, colores, movimiento y brinco, plataformas, rutas, cristales, decoración
 ├── lugares.json              edificios (radio de choque y alto), sitios, y en qué sitio y edificio va cada juego
-└── islas.json                las islas, la red de puentes y plataformas, y sus costos (#164, § Las islas)
+├── islas.json                las islas, la red de puentes y plataformas, y sus costos (#164, § Las islas)
+└── buho.json                 el búho y el modo secreto: lugar, minutos, hash de la frase, preguntas (#166)
 kit/3d/                       lo 3D que comparten el mundo y la Pasarela
 ├── vendor/                   Three.js r160.1, GLTFLoader y BufferGeometryUtils (MIT)
 ├── escena.js                 renderer, cámara, luces, ciclo de cuadros, calidad que se ajusta sola, pausar, liberar
