@@ -304,6 +304,8 @@ def main():
                 print(f"cap {c['n']} pág {k}: {e}/{t} oraciones palabra por palabra", file=sys.stderr)
             elif ant and ant.get("huella") == p["huella"] and destino.exists():
                 p["parrafos"], p["duracion"] = ant["parrafos"], ant.get("duracion")
+                if ant.get("voces"):
+                    p["voces"] = ant["voces"]
             else:
                 p["audio"] = None
             # Cada página tiene su ilustración (cNN-pMM, de Petra: #123). Mientras no llega, se usa la escena vieja que
