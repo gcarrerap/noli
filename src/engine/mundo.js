@@ -147,8 +147,10 @@ function aSegmento(p, a, b) {
  * Árboles, hongos chiquitos, flores y luciérnagas. Los árboles nunca quedan en la plaza, en un camino (de la plaza a
  * cualquier sitio, ocupado o no), junto a un edificio, una plataforma o el estanque.
  * @param {object[]} sitiosTodos lugares de TODOS los sitios (colocados con un portal), para dejar libres sus caminos
+ * @param {{ segmentos?: { a, b, r }[], puntos?: { x, z, r }[] }} [libres] más lugares sin árboles (#164: los pasillos
+ *   hacia los puentes de Isla Noli y su teletransportador)
  */
-export function decorar(mundo, sitiosTodos) {
+export function decorar(mundo, sitiosTodos, libres = {}) {
   const d = mundo.decoracion || {}, rnd = azar(d.semilla || 1), l = mundo.limites;
   const plaza = (mundo.plaza && mundo.plaza.radio) || 5;
   const plats = (mundo.plataformas || []).map(solidoDe);
@@ -165,6 +167,8 @@ export function decorar(mundo, sitiosTodos) {
       if (Math.hypot(p.x - cx, p.z - cz) < r + 1.4 + holgura) return false;
     }
     if (est && Math.hypot(p.x - est.x, p.z - est.z) < est.r + 0.8 + holgura) return false;
+    for (const sg of libres.segmentos || []) if (aSegmento(p, sg.a, sg.b) < sg.r + holgura) return false;
+    for (const q of libres.puntos || []) if (Math.hypot(p.x - q.x, p.z - q.z) < q.r + holgura) return false;
     return true;
   };
   const colores = d.colores || ["#ffb3d1"];
@@ -241,12 +245,13 @@ export function cristalTocado(pos, cristales, tiene) {
  * Puntos por donde se puede caminar para ir de un lado a otro: un anillo alrededor de la fuente y la puerta de cada
  * sitio. Las conexiones entre ellos (sin chocar) se calculan una vez.
  */
-export function crearCaminos(mundo, sitiosTodos, mapa, cfg) {
+export function crearCaminos(mundo, sitiosTodos, mapa, cfg, extra = []) {
   const plaza = (mundo.plaza && mundo.plaza.radio) || 5;
   const nodos = [];
   for (let i = 0; i < 12; i++) nodos.push({ x: Math.sin(i * 30 * RAD) * plaza * 0.62, z: -Math.cos(i * 30 * RAD) * plaza * 0.62 });
   for (const s of sitiosTodos) nodos.push({ ...s.punto });
   nodos.push({ x: mundo.inicio.x, z: mundo.inicio.z });
+  for (const p of extra) nodos.push({ x: p.x, z: p.z }); // #164: la entrada de cada puente de Isla Noli y su teletransportador
   const vecinos = nodos.map(() => []);
   for (let i = 0; i < nodos.length; i++) for (let j = i + 1; j < nodos.length; j++) {
     if (libre(nodos[i], nodos[j], mapa, cfg)) {

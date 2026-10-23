@@ -1,6 +1,7 @@
 // Acciones: lo único que cambia el estado. La interfaz y el control remoto (app/remoto.js) solo llaman aquí.
 import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../services/index.js";
-import { mover, materias, jugableEn, ganancia, agregar, gastar, premio, compactar, saldoVisible } from "../engine/index.js";
+import { mover, materias, jugableEn, ganancia, agregar, gastar, premio, compactar, saldoVisible, sumarEstrellas, normalizarMundo, TOPE_ESTRELLAS,
+  ISLA_INICIO } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
 import * as sync from "./sync.js";
@@ -57,17 +58,22 @@ export const actions = {
     if (state.vista === vista) return;
     state.vista = vista; state.foco = 0; notify();
   },
-  // Lo que se guarda del mundo (los cristales encontrados). Se guarda y sincroniza como los datos de un juego.
-  datosMundo() { return leerDatosJuego(MUNDO); },
-  guardarMundo(datos) { guardarDatosJuego(MUNDO, datos); sync.marcarCambio(MUNDO); },
+  // Lo que se guarda del mundo (#25, #164): cristales encontrados, islas visitadas, conexiones construidas y estrellas
+  // del mundo (siempre en la versión 2: engine/islas.js → normalizar). Se sincroniza juntando, no pisando (sync.js).
+  datosMundo() { return normalizarMundo(leerDatosJuego(MUNDO)); },
+  guardarMundo(datos) { guardarDatosJuego(MUNDO, normalizarMundo(datos)); sync.marcarCambio(MUNDO); },
+  // El tope de estrellas del mundo por isla y juego (mundo/islas.json; el mundo lo pone al cargar)
+  topeEstrellas: TOPE_ESTRELLAS,
 
   enfocar(i) { if (i !== state.foco) { state.foco = i; notify("foco"); } },
 
   // hash: para abrir el juego en un lugar (la Biblioteca en un capítulo: "#c3", #103)
-  abrir(id, { hash } = {}) {
+  // isla: de qué isla del mundo se abrió (#164: sus estrellas del mundo cuentan para esa isla; sin isla, Isla Noli)
+  abrir(id, { hash, isla } = {}) {
     const j = state.juegos.find((x) => x.id === id);
     if (!j || !jugableEn(j, state.modo)) return; // en la TV no se abre un juego que no es apto (#57)
-    state.jugando = hash ? { ...j, url: j.url.split("#")[0] + hash } : j; state.celebrar = null; notify();
+    state.jugando = hash ? { ...j, url: j.url.split("#")[0] + hash } : j; state.celebrar = null;
+    state.islaJuego = isla || ISLA_INICIO; notify();
   },
 
   cerrar() {
@@ -91,11 +97,18 @@ export const actions = {
       if (libro !== state.creditos) guardarCreditos(libro);
       ganados = g.total; topado = g.topado;
     }
+    // Estrellas del mundo (#164): las de las partidas de los juegos educativos, hasta el tope por isla y juego. El reto
+    // del día no da (se repite cada día).
+    let mundo = 0;
+    if (juego && juego.creditos === "gana" && reto !== true && e > 0) {
+      const r = sumarEstrellas(leerDatosJuego(MUNDO), { isla: state.islaJuego || ISLA_INICIO, juego: id, estrellas: e, tope: actions.topeEstrellas });
+      if (r.ganadas) { actions.guardarMundo(r.datos); mundo = r.ganadas; }
+    }
     const p = state.progreso[id] || { estrellas: 0, veces: 0, ultima: 0 };
     state.progreso = { ...state.progreso, [id]: { estrellas: Math.max(p.estrellas, e), veces: p.veces + 1, ultima: Date.now() } };
     ls.set("noli.progreso", JSON.stringify(state.progreso));
     sync.marcarCambio(sync.CATALOGO);
-    state.celebrar = { id, estrellas: e, creditos: ganados, topado };
+    state.celebrar = { id, estrellas: e, creditos: ganados, topado, mundo };
     notify();
   },
 

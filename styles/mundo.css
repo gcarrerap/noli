@@ -127,3 +127,24 @@
 .mundo-hallazgo-ico{margin:0}
 .mundo-hallazgo-ico svg{width:3.2rem;height:3.2rem}
 .mundo-hallazgo .fila{justify-content:center}
+
+/* ---------- Islas (#164): estrellas del mundo, costo de los puentes, mapa y teletransportador ---------- */
+.mundo-cristales .estrella-mundo{width:1.3em;height:1.3em}
+.mundo .letrero .pie .em{display:inline-flex;align-items:center;gap:.1em;margin-left:.2em;color:#1f6fb5;font-weight:600}
+.mundo .letrero .pie .em.completo{color:#3a8f5e}
+.mundo .letrero .pie .estrella-mundo{width:1em;height:1em}
+.mundo-aviso .costo-puente{flex:none;overflow:visible;display:inline-flex;align-items:center;gap:.2em;background:rgba(255,255,255,.92);color:#2b2236;border-radius:999px;padding:0 .5em;font-size:.9em;white-space:nowrap}
+.mundo-aviso .costo-puente svg{width:1.1em;height:1.1em}
+.mundo-aviso > svg{flex:none}
+.mundo-menu-sub .estrella-mundo{width:1.3em;height:1.3em;flex:none}
+.mundo-menu-caja h2 svg{vertical-align:-.2em;margin-right:.3em}
+.mundo-mapa{width:min(760px, 100%)}
+.mapa-svg{display:block;width:100%;max-height:62vh;margin:0 auto .4em}
+.mapa-svg .nombre-isla{font-family:var(--display);font-weight:600;fill:#2b2236;paint-order:stroke;stroke:#ffffff;stroke-width:2.4px}
+.mapa-svg .interroga{font-family:var(--display);font-weight:700;fill:#6b5aa0}
+.mapa-svg .nube-mapa ellipse{fill:#ffffff;opacity:.96}
+.mundo-islas .ir .isla-ico{border:3px solid rgba(255,255,255,.9)}
+.mundo-menu-btn.solo-icono{padding-left:.6rem;padding-right:.6rem}
+.mundo-aviso span.dos{min-width:0;white-space:normal;line-height:1.15;text-align:left}
+.mundo-aviso.construir{flex-direction:column;gap:.35em;border-radius:24px;padding-top:.55em;padding-bottom:.55em}
+.mundo-aviso.construir span.dos{text-align:center}

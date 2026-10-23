@@ -14,6 +14,11 @@
 //     de caer cuenta (`memoria`), porque el control de la TV tiene retraso.
 //   - En el aire se sigue mandando con el joystick; si se suelta, conserva la velocidad con la que brincó.
 //   - Caer nunca castiga: no hay daño ni hoyos. Lo más bajo es el piso.
+//   - Islas (#164): si el mapa trae `zonas`, el piso (y = 0) solo existe dentro de ellas (islas, puentes, muelles). Fuera
+//     está el mar: no hay piso y el personaje cae (quien llama lo regresa al último punto firme). Sin `zonas`, todo es
+//     piso, como antes.
+//   - Barandales: sólidos de tipo "segmento" (una pared delgada de a a b). Plataformas que se mueven: el mundo mueve
+//     su sólido y `arrastre` dice cuánto se lleva al personaje parado encima.
 
 /** Ajustes por omisión (el mundo los cambia en mundo/mundo.json → movimiento) */
 export const FISICA = Object.freeze({
@@ -32,15 +37,24 @@ export const FISICA = Object.freeze({
 
 const ajustes = (cfg) => Object.assign({}, FISICA, cfg || {});
 
+/** Distancia del punto (x, z) al segmento de (ax, az) a (bx, bz) */
+export function aSegmento(x, z, ax, az, bx, bz) {
+  const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1e-12;
+  const t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / l2));
+  return Math.hypot(x - (ax + vx * t), z - (az + vz * t));
+}
+
 /** Distancia horizontal de un punto a la huella de un sólido (0 si está adentro) */
 export function distanciaHuella(s, x, z) {
   if (s.tipo === "cilindro") return Math.max(0, Math.hypot(x - s.x, z - s.z) - s.r);
+  if (s.tipo === "segmento") return Math.max(0, aSegmento(x, z, s.ax, s.az, s.bx, s.bz) - s.g);
   const dx = Math.max(s.x0 - x, 0, x - s.x1), dz = Math.max(s.z0 - z, 0, z - s.z1);
   return Math.hypot(dx, dz);
 }
 
 /** Distancia más corta entre las huellas de dos sólidos (0 si se enciman) */
 export function separacion(a, b) {
+  if (a.tipo === "segmento" || b.tipo === "segmento") { const o = a.tipo === "segmento" ? b : a, sg = a.tipo === "segmento" ? a : b, c = centro(o); return Math.max(0, distanciaHuella(sg, c.x, c.z) - (o.tipo === "cilindro" ? o.r : Math.hypot(o.x1 - o.x0, o.z1 - o.z0) / 2)); }
   if (a.tipo === "cilindro" && b.tipo === "cilindro") return Math.max(0, Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r);
   if (a.tipo === "cilindro") return Math.max(0, distanciaHuella(b, a.x, a.z) - a.r);
   if (b.tipo === "cilindro") return Math.max(0, distanciaHuella(a, b.x, b.z) - b.r);
@@ -49,7 +63,26 @@ export function separacion(a, b) {
 }
 
 /** Centro de la huella de un sólido */
-export const centro = (s) => (s.tipo === "cilindro" ? { x: s.x, z: s.z } : { x: (s.x0 + s.x1) / 2, z: (s.z0 + s.z1) / 2 });
+export const centro = (s) => (s.tipo === "cilindro" ? { x: s.x, z: s.z } : s.tipo === "segmento" ? { x: (s.ax + s.bx) / 2, z: (s.az + s.bz) / 2 } : { x: (s.x0 + s.x1) / 2, z: (s.z0 + s.z1) / 2 });
+
+/**
+ * ¿Hay piso (y = 0) en (x, z)? Sin `mapa.zonas`, siempre. Con zonas, solo dentro de alguna (con el mismo margen de
+ * orilla que las plataformas). Zonas: { tipo: "circulo", x, z, r } · { tipo: "caja", x0, x1, z0, z1 } ·
+ * { tipo: "tira", ax, az, bx, bz, ancho } (un puente o un muelle).
+ */
+export function hayPiso(x, z, mapa, cfg) {
+  if (!mapa.zonas) return true;
+  const m = ajustes(cfg).radio * ajustes(cfg).margen;
+  for (const zn of mapa.zonas) {
+    if (zn.tipo === "circulo") { if (Math.hypot(x - zn.x, z - zn.z) <= zn.r + m) return true; }
+    else if (zn.tipo === "tira") { if (aSegmento(x, z, zn.ax, zn.az, zn.bx, zn.bz) <= zn.ancho / 2 + m) return true; }
+    else if (x >= zn.x0 - m && x <= zn.x1 + m && z >= zn.z0 - m && z <= zn.z1 + m) return true;
+  }
+  return false;
+}
+
+/** Lo más bajo a lo que se cae en el mar (quien llama regresa al personaje antes de llegar) */
+export const FONDO = -60;
 
 /**
  * ¿Choca de lado el personaje parado en (x, y, z)?
@@ -68,9 +101,24 @@ export function chocaEn(x, y, z, mapa, cfg) {
 /** Altura de lo más alto que hay debajo de (x, z) sin pasar de `yMax` (el piso es 0) */
 export function alturaBajo(x, z, yMax, mapa, cfg) {
   const c = ajustes(cfg), m = c.radio * c.margen;
-  let h = 0;
+  let h = hayPiso(x, z, mapa, c) ? 0 : FONDO;
   for (const s of mapa.solidos) if (s.y1 <= yMax + 1e-6 && s.y1 > h && distanciaHuella(s, x, z) <= m) h = s.y1;
   return h;
+}
+
+/**
+ * Cuánto se lleva al personaje la plataforma móvil en la que está parado en este cuadro: { dx, dz } (0 si no está en
+ * una). Los sólidos que se mueven traen `mov: { dx, dz }` (lo que se movieron en este cuadro).
+ */
+export function arrastre(c, mapa, cfg) {
+  if (!c.enSuelo) return { dx: 0, dz: 0 };
+  const k = ajustes(cfg), m = k.radio * k.margen;
+  let mejor = null;
+  for (const s of mapa.solidos) {
+    if (Math.abs(s.y1 - c.y) > 0.03 || distanciaHuella(s, c.x, c.z) > m) continue;
+    if (!mejor || s.y1 > mejor.y1) mejor = s;
+  }
+  return mejor && mejor.mov ? { dx: mejor.mov.dx, dz: mejor.mov.dz } : { dx: 0, dz: 0 };
 }
 
 /** Un cuerpo nuevo parado en el piso */

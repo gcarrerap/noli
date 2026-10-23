@@ -252,3 +252,53 @@ test("premios en juego.json: solo con \"gana\" y de 1 a 100", () => {
   assert.equal(esMensaje(mensaje("premio", { premio: "capitulo", clave: "halloween-c1" })), true);
   assert.equal(esMensaje(mensaje("premio", { premio: "capitulo" })), false);
 });
+
+// ---------- Estrellas del mundo (#164) ----------
+
+const SPELLING = { id: "spelling", titulo: "Spelling", creditos: "gana" };
+
+test("estrellas del mundo: los juegos educativos dan hasta 5 por isla; el reto del día y los que gastan no dan", () => {
+  dispositivo(new Map()); state.juegos = [...JUEGOS, SPELLING];
+  state.islaJuego = "noli";
+  const est = (isla, j) => ((actions.datosMundo().estrellas.dadas[isla] || {})[j]) || 0;
+  actions.terminar("sumas-restas", 3);
+  assert.equal(state.celebrar.mundo, 3); assert.equal(est("noli", "sumas-restas"), 3);
+  actions.terminar("sumas-restas", 3);
+  assert.equal(state.celebrar.mundo, 2, "hasta el tope de 5"); assert.equal(est("noli", "sumas-restas"), 5);
+  actions.terminar("sumas-restas", 3);
+  assert.equal(state.celebrar.mundo, 0, "ya no da más: hay que usar otros juegos");
+  actions.terminar("spelling", 3, true);
+  assert.equal(state.celebrar.mundo, 0, "el reto del día no da estrellas del mundo");
+  actions.terminar("pasarela", 3);
+  assert.equal(state.celebrar.mundo, 0, "un juego que gasta no da");
+  state.islaJuego = "numeros";
+  actions.terminar("sumas-restas", 2);
+  assert.equal(est("numeros", "sumas-restas"), 2, "el mismo juego en otra isla tiene su propio tope");
+  state.islaJuego = "noli";
+});
+
+test("estrellas del mundo: dos aparatos sin conexión juntan islas, estrellas y puentes sin perder ni duplicar", async () => {
+  const a = new Map(), b = new Map();
+  dispositivo(a);
+  await actions.activarNube();
+  const perfil = state.nube.perfil;
+  dispositivo(b);
+  b.set("noli.nube.perfil", perfil); sync._reiniciar(); state.creditos = C.libroVacio();
+  await sync.conectar();
+  fs.offline = true;
+  // En uno visita una isla; en el otro gana estrellas
+  dispositivo(a);
+  reloj += 1000; actions.guardarMundo({ ...actions.datosMundo(), visitadas: ["noli", "cristal"], conexiones: ["noli-cristal"] });
+  dispositivo(b);
+  reloj += 1000; state.juegos = [...JUEGOS, SPELLING]; state.islaJuego = "noli"; actions.terminar("spelling", 3);
+  await pausa();
+  fs.offline = false;
+  await sync.conectar(); await pausa();
+  dispositivo(a); await sync.conectar(); await pausa();
+  const m = actions.datosMundo();
+  assert.deepEqual(m.visitadas.sort(), ["cristal", "noli"]);
+  assert.deepEqual(m.conexiones, ["noli-cristal"]);
+  assert.equal(m.estrellas.dadas.noli.spelling, 3);
+  dispositivo(b); await sync.conectar(); await pausa();
+  assert.deepEqual(actions.datosMundo().visitadas.sort(), ["cristal", "noli"]);
+});

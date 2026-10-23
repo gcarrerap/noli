@@ -9,12 +9,13 @@
 import { state, actions } from "../../app/index.js";
 import { cargarMundo } from "../../services/index.js";
 import { revisarMundo, colocarLugares, decorar, todosLosSitios, mapaMundo, fisicaDe, crearCaminos, cristalesDe, materias,
-  jugableEn, acomodarLetreros, librosDe, estadoLibros, conHallazgo, dia } from "../../engine/index.js";
+  jugableEn, acomodarLetreros, librosDe, estadoLibros, conHallazgo, dia, revisarIslas, armarIslas, libresNoli, salidasNoli,
+  teletransportadorDe, puedeConstruir, construir, conVisita, disponibles, vistaMapa, estrellasDeJuego } from "../../engine/index.js";
 import { crearJoystick } from "../../../kit/3d/joystick.js";
 import { direccionDeTeclas, crearPulsador } from "../../../kit/3d/movimiento.js";
 import { moverFoco, focoInicial } from "../../../kit/foco.js";
 import { teclaAAccion } from "../../../kit/teclas.js";
-import { botonCreditos, MONEDA } from "../components/creditos.js";
+import { botonCreditos, MONEDA, ESTRELLA_MUNDO } from "../components/creditos.js";
 import { botonNube } from "../components/nube.js";
 import { chipRemoto, instalarChipRemoto } from "../components/remoto.js";
 import { esc } from "../dom.js";
@@ -29,6 +30,8 @@ const ICONO = {
   cristal: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><path d="M12 2.5 18 9l-6 12.5L6 9z" fill="#9fe6ff" stroke="#2b2236" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 9h12M12 2.5 9.5 9l2.5 12.5L14.5 9z" fill="none" stroke="#2b2236" stroke-width="1" stroke-linejoin="round"/></svg>`,
   libro: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><path d="M4 5.5c2.7-1 5.4-1 8 .8 2.6-1.8 5.3-1.8 8-.8v13c-2.7-1-5.4-1-8 .8-2.6-1.8-5.3-1.8-8-.8z" fill="#c9a6ff" stroke="#2b2236" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.3v13" stroke="#2b2236" stroke-width="1.4"/><circle cx="18.5" cy="4.5" r="2" fill="#f28c28" stroke="#2b2236" stroke-width="1"/></svg>`,
   brincar: `<svg viewBox="0 0 24 24" width="1.7em" height="1.7em" aria-hidden="true"><path d="M12 3 4.5 12h4.6v8.5h5.8V12h4.6z" fill="currentColor"/></svg>`,
+  mapa: `<svg viewBox="0 0 24 24" width="1.4em" height="1.4em" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#8fd3f4" stroke="#2b2236" stroke-width="1.6"/><ellipse cx="9" cy="10" rx="3.4" ry="2.6" fill="#bfe6a4" stroke="#2b2236" stroke-width="1.1"/><ellipse cx="15.5" cy="15" rx="2.6" ry="2" fill="#ffd3e8" stroke="#2b2236" stroke-width="1.1"/><path d="M11.5 11.5l2.6 2.4" stroke="#2b2236" stroke-width="1.2" stroke-dasharray="1.2 1"/></svg>`,
+  tele: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><ellipse cx="12" cy="18" rx="8" ry="3" fill="#d9c8ff" stroke="#2b2236" stroke-width="1.4"/><path d="M7 17V8M17 17V8" stroke="#c9a6ff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 4.5l1.2 2.5 2.6.3-2 1.8.6 2.6-2.4-1.4-2.4 1.4.6-2.6-2-1.8 2.6-.3z" fill="#ffd166" stroke="#2b2236" stroke-width="1"/></svg>`,
   sencillo: `<svg viewBox="0 0 24 24" width="1.2em" height="1.2em" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="#ffc43d" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="#4cb3ff" stroke="#2b2236" stroke-width="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="#3ccf8e" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="#ff6b4a" stroke="#2b2236" stroke-width="1.4"/></svg>`,
 };
 
@@ -108,25 +111,28 @@ async function armar() {
   try {
     if (!cache) {
       const [datos, mod] = await Promise.all([cargarMundo(), import("../../mundo/vista.js")]);
-      const errores = revisarMundo(datos.mundo, datos.lugares);
+      const errores = [...revisarMundo(datos.mundo, datos.lugares), ...revisarIslas(datos.islas, datos.mundo, fisicaDe(datos.mundo))];
       if (errores.length) throw new Error("mundo/: " + errores.join("; "));
       cache = { ...datos, mod };
     }
     if (M !== m) return; // lo quitaron mientras cargaba
-    const { mundo, lugares: L, mod } = cache;
+    const { mundo, lugares: L, islas, mod } = cache;
+    const red = armarIslas(islas);
+    actions.topeEstrellas = islas.topeEstrellas;
     const juegos = state.juegos.filter((j) => jugableEn(j, state.modo));
     const lugares = colocarLugares(juegos, L);
-    const deco = decorar(mundo, todosLosSitios(L));
+    const deco = decorar(mundo, todosLosSitios(L), libresNoli(red));
     const cfg = fisicaDe(mundo);
     const mapa = mapaMundo(mundo, lugares, deco);
-    const caminos = crearCaminos(mundo, lugares, mapa, cfg);
+    const salidas = salidasNoli(red);
+    const caminos = crearCaminos(mundo, lugares, mapa, cfg, [...salidas.map((x) => x.adentro), ...salidas.map((x) => x.lejos), teletransportadorDe(red.por.get("noli"))]);
     const cristales = cristalesDe(mundo);
     const guardado = actions.datosMundo();
     const tiene = new Set(guardado && Array.isArray(guardado.cristales) ? guardado.cristales.filter((id) => cristales.some((c) => c.id === id)) : []);
     const reducir = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    Object.assign(m, { mundo, lugares, cristales, tiene, cfg });
+    Object.assign(m, { mundo, lugares, cristales, tiene, cfg, red, muelle: null, tele: null, claveIslas: claveIslas(guardado) });
     m.libros = prepararLibros(mundo, juegos);
-    m.vista = mod.crearVistaMundo(m.raiz.querySelector("#mundoLienzo"), { mundo, lugares, deco, mapa, caminos, cfg, cristales }, {
+    m.vista = mod.crearVistaMundo(m.raiz.querySelector("#mundoLienzo"), { mundo, lugares, deco, mapa, caminos, cfg, cristales, red, islas }, {
       tv: state.modo === "tv", reducir, tiene, desde: volverA,
       alLugar: (l) => { m.cerca = l; dibujarAviso(); },
       alCristal: encontrarCristal,
@@ -134,6 +140,11 @@ async function armar() {
       alLibro: encontrarLibro,
       alPista: (n) => toast(n >= 2 ? "Mira la luz morada: ahí está el libro escondido." : "Hay un libro escondido por aquí. Busca un brillo morado."),
       alBajarMucho: () => { if (!m.preguntoLento && !parametros.has("sinaviso")) { m.preguntoLento = true; abrirMenu("lento"); } },
+      datosIslas: guardado,
+      alIsla: llegarAIsla,
+      alMuelle: (x) => { m.muelle = x; dibujarAviso(); },
+      alTele: (x) => { m.tele = x; dibujarAviso(); },
+      alCaida: () => toast("¡Splash! Regresaste a la isla."),
     });
     volverA = null;
     m.estado = "listo";
@@ -171,7 +182,7 @@ function instalar(m) {
   const joy = crearJoystick($("mundoJoy"), (d) => { m.joy = d; });
   m.quitar.push(() => joy.quitar());
   on($("mundoBrincar"), "pointerdown", (e) => { e.preventDefault(); if (!m.menu) m.vista.brincar(); });
-  $("mundoAviso").onclick = () => { if (m.cerca) entrar(m.cerca.id); };
+  $("mundoAviso").onclick = () => { if (m.cerca) entrar(m.cerca.id); else if (m.muelle) construirAqui(); else if (m.tele) abrirMenu("tele"); };
 
   // Tocar el piso: caminar hasta ahí
   on($("mundoLienzo"), "pointerup", (e) => {
@@ -223,24 +234,31 @@ function actualizar() {
   for (const id of guardado && Array.isArray(guardado.cristales) ? guardado.cristales : []) {
     if (!M.tiene.has(id) && M.cristales.some((c) => c.id === id)) { M.tiene.add(id); M.vista.quitarCristal(id); }
   }
+  // Islas visitadas o conexiones construidas que llegaron de la nube (o del administrador)
+  const clave = claveIslas(guardado);
+  if (clave !== M.claveIslas) { M.claveIslas = clave; M.vista.actualizarIslas(guardado); }
+  const disp = disponibles(guardado, M.red, M.cristales.map((c) => c.id));
   refrescarLibro();
   $("mundoHud").innerHTML = `
     <div class="mundo-hud-izq">${botonCreditos()}${botonNube()}</div>
     <div class="mundo-contadores"><div class="mundo-cristales" title="Cristales encontrados">${ICONO.cristal}<b>${M.tiene.size}</b><span>/ ${M.cristales.length}</span></div>
+    <div class="mundo-cristales mundo-estrellas" title="Estrellas del mundo para construir">${ESTRELLA_MUNDO}<b>${disp.estrellas}</b></div>
     ${M.libros ? `<div class="mundo-cristales mundo-libros" title="Capítulos encontrados">${ICONO.libro}<b>${estadoHoy().tiene.size}</b><span>/ ${M.libros.total}</span></div>` : ""}</div>
     <div class="mundo-hud-der">
       ${tv ? `<span class="mundo-pista" id="mundoPista">${pistaTv()}</span>` : ""}
+      ${tv ? "" : `<button class="mundo-menu-btn solo-icono" id="mundoMapaBtn" aria-label="Mapa de las islas" title="Mapa">${ICONO.mapa}</button>`}
       <button class="mundo-menu-btn" id="mundoMenuBtn" aria-label="Menú: ir a un juego">${ICONO.menu}<span>Menú</span></button>
     </div>`;
   $("creditosBtn").onclick = actions.abrirCreditos;
   $("nubeBtn").onclick = actions.abrirNube;
   $("mundoMenuBtn").onclick = () => abrirMenu();
+  if ($("mundoMapaBtn")) $("mundoMapaBtn").onclick = () => abrirMenu("mapa");
 
   // Letreros: uno por juego (se acomodan cada cuadro sobre su edificio)
   const sel = state.materia;
   $("mundoLetreros").innerHTML = M.lugares.map((l) => {
     const j = l.juego, p = state.progreso[j.id];
-    const pie = j.creditos === "gasta" && j.costo ? `<span class="costo">${MONEDA}${j.costo}</span>` : estrellasHtml(p ? p.estrellas : 0);
+    const pie = (j.creditos === "gasta" && j.costo ? `<span class="costo">${MONEDA}${j.costo}</span>` : estrellasHtml(p ? p.estrellas : 0)) + estrellasMundoHtml(j, guardado);
     const apagado = sel && j.materia !== sel ? " apagado" : "";
     return `<button class="letrero${apagado}" data-id="${esc(j.id)}" style="--c:${esc(j.color || "#c86bfa")}" tabindex="-1" aria-label="${esc(j.titulo)}">
       <span class="ico">${j.iconoUrl ? `<img src="${esc(j.iconoUrl)}" alt="">` : esc(j.icono)}</span>
@@ -284,19 +302,37 @@ function dibujarLetreros(forzar) {
 }
 
 // En la TV, arriba: qué hace OK aquí (en la puerta de un juego entra; en cualquier otro lado brinca)
-const pistaTv = () => `<kbd>OK</kbd> ${M && M.cerca ? "entrar" : "brincar"} · <kbd>Atrás</kbd> menú`;
+const pistaTv = () => `<kbd>OK</kbd> ${M && M.cerca ? "entrar" : M && M.muelle ? "construir" : M && M.tele ? "viajar" : "brincar"} · <kbd>Atrás</kbd> menú`;
 
 function dibujarAviso() {
   const b = M && M.raiz.querySelector("#mundoAviso");
   if (!b) return;
   const p = M.raiz.querySelector("#mundoPista");
   if (p) p.innerHTML = pistaTv();
-  const l = M.cerca;
-  b.hidden = !l || M.menu;
-  if (!l) return;
+  const l = M.cerca, mu = !l && M.muelle, te = !l && !mu && M.tele;
+  b.hidden = !(l || mu || te) || M.menu;
+  b.classList.toggle("construir", !!mu);
+  if (b.hidden) return;
   const pista = state.modo === "tv" || document.documentElement.classList.contains("teclado") ? `<kbd>OK</kbd>` : "";
-  b.style.setProperty("--c", l.juego.color || "#c86bfa");
-  b.innerHTML = `${pista}<span>Entrar a <b>${esc(l.juego.titulo)}</b></span>`;
+  if (l) {
+    b.style.setProperty("--c", l.juego.color || "#c86bfa");
+    b.innerHTML = `${pista}<span>Entrar a <b>${esc(l.juego.titulo)}</b></span>`;
+  } else if (mu) {
+    const k = M.red.porCon.get(mu.id), datos = actions.datosMundo();
+    const p = puedeConstruir(datos, M.red, mu.id, M.cristales.map((c) => c.id));
+    const destino = M.red.por.get(mu.isla === k.de ? k.a : k.de).nombre;
+    b.style.setProperty("--c", k.material === "cristal" ? "#4cb3ff" : "#c9925f");
+    if (p.pronto) b.innerHTML = `<span>Hacia <b>${esc(destino)}</b>: muy pronto</span>`;
+    else {
+      const d = disponibles(datos, M.red, M.cristales.map((c) => c.id));
+      const costo = `<span class="costo-puente">${ICONO.cristal}${Math.min(d.cristales, p.costo.cristales)}/${p.costo.cristales} ${ESTRELLA_MUNDO}${Math.min(d.estrellas, p.costo.estrellas)}/${p.costo.estrellas}</span>`;
+      b.innerHTML = p.ok ? `<span class="dos">${pista} Construir <b>${esc(NOMBRE_CONEXION(k))}</b></span>${costo}`
+        : `<span class="dos">${esc(faltanTexto(p.faltan))}</span>${costo}`;
+    }
+  } else {
+    b.style.setProperty("--c", "#9b7bff");
+    b.innerHTML = `${pista}${ICONO.tele}<span>Viajar con el <b>teletransportador</b></span>`;
+  }
   dibujarLetreros(true);
 }
 
@@ -308,9 +344,55 @@ function toast(txt) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("ver"), 3200);
 }
 
+// ---------- Islas (#164) ----------
+
+/** Lo que cambia las islas que se dibujan (visitadas y construidas) */
+const claveIslas = (d) => `${[...d.visitadas].sort().join(",")}|${[...d.conexiones].sort().join(",")}`;
+
+/** En el letrero de un juego educativo: cuántas estrellas del mundo le quedan por dar en Isla Noli */
+function estrellasMundoHtml(j, datos) {
+  if (j.creditos !== "gana") return "";
+  const tope = actions.topeEstrellas, n = estrellasDeJuego(datos, "noli", j.id);
+  return `<span class="em${n >= tope ? " completo" : ""}" title="Estrellas del mundo">${ESTRELLA_MUNDO}${n >= tope ? "¡Completo!" : `${n}/${tope}`}</span>`;
+}
+
+const NOMBRE_CONEXION = (k) => (k.tipo === "plataformas" ? "el camino de plataformas" : k.material === "cristal" ? "el puente de cristal" : "el puente");
+
+function llegarAIsla(isla) {
+  const antes = actions.datosMundo();
+  const nueva = !antes.visitadas.includes(isla.id);
+  const d = conVisita(antes, isla.id);
+  if (d !== antes) { actions.guardarMundo(d); M.claveIslas = claveIslas(actions.datosMundo()); if (nueva) M.vista.actualizarIslas(actions.datosMundo()); }
+  if (nueva) toast(`¡Llegaste a ${isla.nombre}!`);
+}
+
+/** Construir en el muelle donde está parado (si le alcanza) */
+function construirAqui() {
+  const mu = M && M.muelle;
+  if (!mu) return;
+  const k = M.red.porCon.get(mu.id), datos = actions.datosMundo(), validos = M.cristales.map((c) => c.id);
+  const p = puedeConstruir(datos, M.red, mu.id, validos);
+  if (p.pronto) return toast(`Pronto se podrá construir ${NOMBRE_CONEXION(k)} hacia ${M.red.por.get(mu.isla === k.de ? k.a : k.de).nombre}.`);
+  if (!p.ok) return toast(faltanTexto(p.faltan));
+  const d = construir(datos, M.red, mu.id, validos);
+  actions.guardarMundo(d);
+  M.claveIslas = claveIslas(actions.datosMundo());
+  M.vista.actualizarIslas(actions.datosMundo(), mu.id);
+  M.muelle = null;
+  toast(`¡Construiste ${NOMBRE_CONEXION(k)}! Ya puedes ir a ${M.red.por.get(mu.isla === k.de ? k.a : k.de).nombre}.`);
+  actualizar();
+}
+
+function faltanTexto(f) {
+  const partes = [];
+  if (f.cristales) partes.push(`${f.cristales} ${f.cristales === 1 ? "cristal" : "cristales"}`);
+  if (f.estrellas) partes.push(`${f.estrellas} ${f.estrellas === 1 ? "estrella" : "estrellas"}`);
+  return `Te ${f.cristales + f.estrellas === 1 ? "falta" : "faltan"} ${partes.join(" y ")}.${f.estrellas ? " Gana estrellas en los juegos." : " Búscalos brincando en las plataformas."}`;
+}
+
 function encontrarCristal(c) {
   const n = M.tiene.size, total = M.cristales.length;
-  actions.guardarMundo({ v: 1, cristales: [...M.tiene] });
+  actions.guardarMundo({ ...actions.datosMundo(), cristales: [...new Set([...actions.datosMundo().cristales, ...M.tiene])] });
   toast(n >= total ? "¡Encontraste todos los cristales mágicos!" : `¡Encontraste un cristal! Llevas ${n} de ${total}.`);
   const b = M.raiz.querySelector(".mundo-cristales b");
   if (b) { b.textContent = n; b.parentNode.classList.remove("brilla"); void b.offsetWidth; b.parentNode.classList.add("brilla"); }
@@ -416,6 +498,30 @@ function dibujarMenu() {
     el.querySelector("#mDespues").onclick = cerrarMenu;
     return;
   }
+  if (M.menu === "mapa") {
+    el.innerHTML = `<div class="mundo-menu-caja mundo-mapa">
+      <h2 id="mundoMenuTitulo">${ICONO.mapa}Mapa de las islas</h2>
+      ${mapaSvg()}
+      <p class="mundo-menu-sub"><span>Las islas que ya visitaste se ven completas; las que tienen <b>?</b> están cerca. ¡Construye puentes para llegar!</span></p>
+      <div class="fila"><button class="primario" data-foco="inicial" data-k="cerrar" id="mCerrar">Seguir paseando</button></div></div>`;
+    el.querySelector("#mCerrar").onclick = cerrarMenu;
+    el.onclick = (e) => { if (e.target === el) cerrarMenu(); };
+    return;
+  }
+  if (M.menu === "tele") {
+    const datos = actions.datosMundo(), aqui = M.vista.isla;
+    const destinos = M.red.islas.filter((i) => datos.visitadas.includes(i.id) && i.id !== aqui);
+    el.innerHTML = `<div class="mundo-menu-caja chica">
+      <h2 id="mundoMenuTitulo">${ICONO.tele}¿A qué isla viajamos?</h2>
+      ${destinos.length ? `<div class="mundo-ir mundo-islas">${destinos.map((i, n) => `<button class="ir" data-isla="${esc(i.id)}" data-k="isla-${esc(i.id)}" ${n === 0 ? 'data-foco="inicial"' : "data-foco"} style="--c:#9b7bff">
+        <span class="ico isla-ico" style="background:${esc(i.colores.suelo)}"></span><span class="nombre">${esc(i.nombre)}</span></button>`).join("")}</div>`
+        : `<p>Todavía no visitas otras islas. ¡Construye un puente para llegar a una!</p>`}
+      <div class="fila"><button class="${destinos.length ? "mundo-boton" : "primario"}" data-foco${destinos.length ? "" : '="inicial"'} data-k="cerrar" id="mCerrar">Quedarme aquí</button></div></div>`;
+    for (const b of el.querySelectorAll("[data-isla]")) b.onclick = () => { const id = b.dataset.isla; cerrarMenu(); M.vista.teletransportar(id); toast(`¡Bienvenida a ${M.red.por.get(id).nombre}!`); };
+    el.querySelector("#mCerrar").onclick = cerrarMenu;
+    el.onclick = (e) => { if (e.target === el) cerrarMenu(); };
+    return;
+  }
   const mats = materias(M.lugares.map((l) => l.juego));
   const tv = state.modo === "tv";
   el.innerHTML = `<div class="mundo-menu-caja">
@@ -433,7 +539,9 @@ function dibujarMenu() {
     </nav>` : ""}
     ${M.libros ? (() => { const e = estadoHoy(); return `<p class="mundo-menu-sub">${ICONO.libro}<span>Capítulos del libro: <b>${e.tiene.size} de ${M.libros.total}</b>. ${e.completo ? "¡Los encontraste todos!" : e.lleno ? "Mañana hay otro escondido." : "Hay uno escondido en el mundo: búscalo."}</span></p>`; })() : ""}
     <p class="mundo-menu-sub">${ICONO.cristal}<span>Cristales mágicos: <b>${M.tiene.size} de ${M.cristales.length}</b>. ${M.tiene.size < M.cristales.length ? "Búscalos brincando en las plataformas." : "¡Los encontraste todos!"}</span></p>
+    ${(() => { const d = disponibles(actions.datosMundo(), M.red, M.cristales.map((c) => c.id)); return `<p class="mundo-menu-sub">${ESTRELLA_MUNDO}<span>Para construir puentes tienes <b>${d.cristales} ${d.cristales === 1 ? "cristal" : "cristales"}</b> y <b>${d.estrellas} ${d.estrellas === 1 ? "estrella" : "estrellas"} del mundo</b>. Las estrellas se ganan en los juegos (hasta ${actions.topeEstrellas} en cada uno).</span></p>`; })()}
     <div class="fila">
+      <button class="mundo-boton" data-foco data-k="mapa" id="mMapa">${ICONO.mapa}Mapa</button>
       <button class="mundo-boton" data-foco data-k="creditos" id="mCreditos">${MONEDA}Créditos</button>
       <button class="mundo-boton" data-foco data-k="nube" id="mNube">Nube</button>
       ${tv ? chipRemoto().replace('class="chip remoto', 'data-foco data-k="remoto" class="chip remoto') : ""}
@@ -441,6 +549,7 @@ function dibujarMenu() {
       <button class="primario" data-foco data-k="cerrar" id="mCerrar">Seguir paseando</button>
     </div></div>`;
   for (const b of el.querySelectorAll("[data-ira]")) b.onclick = () => { const id = b.dataset.ira; cerrarMenu(); M.vista.irA(id); };
+  el.querySelector("#mMapa").onclick = () => abrirMenu("mapa");
   for (const b of el.querySelectorAll("[data-materia]")) b.onclick = () => actions.elegirMateria(b.dataset.materia || null);
   el.querySelector("#mCreditos").onclick = actions.abrirCreditos;
   el.querySelector("#mNube").onclick = actions.abrirNube;
@@ -449,6 +558,44 @@ function dibujarMenu() {
   el.onclick = (e) => { if (e.target === el) cerrarMenu(); };
   instalarChipRemoto(el);
   if (enfocado) { const b = el.querySelector(`[data-k="${enfocado}"]`); if (b) b.focus(); }
+}
+
+/** El mapa (#164): lo visitado completo, lo vecino como silueta con «?», lo demás tapado por nubes. Provisional (SVG)
+ *  mientras llega el dibujo de Petra (#165); arriba = hacia el fondo del mundo (−z), como en el juego. */
+function mapaSvg() {
+  const red = M.red, v = vistaMapa(red, actions.datosMundo());
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (const i of red.islas) {
+    const f = i.f, a = f.tipo === "caja" ? [f.x0, f.x1, f.z0, f.z1] : [f.x - f.r, f.x + f.r, f.z - f.r, f.z + f.r];
+    x0 = Math.min(x0, a[0]); x1 = Math.max(x1, a[1]); z0 = Math.min(z0, a[2]); z1 = Math.max(z1, a[3]);
+  }
+  const m = 14; x0 -= m; x1 += m; z0 -= m; z1 += m;
+  const n = (x) => x.toFixed(1);
+  const lineas = red.conexiones.map((k) => {
+    const e = v.conexiones[k.id];
+    if (e === "oculta") return "";
+    const estilo = e === "hecha" ? (k.tipo === "puente" ? `stroke="${k.material === "cristal" ? "#4cb3ff" : "#a7744a"}" stroke-width="3.2"` : `stroke="#7a62c9" stroke-width="3" stroke-dasharray="1 3.2" stroke-linecap="round"`)
+      : `stroke="#ffffff" stroke-width="1.6" stroke-dasharray="3 3" opacity="0.8"`;
+    return `<line x1="${n(k.p0.x)}" y1="${n(k.p0.z)}" x2="${n(k.p1.x)}" y2="${n(k.p1.z)}" ${estilo}/>`;
+  }).join("");
+  const nombres = [];
+  const islas = red.islas.map((i) => {
+    const e = v.islas[i.id], f = i.f, c = i.c;
+    const forma = (fill, extra = "") => f.tipo === "caja"
+      ? `<rect x="${n(f.x0)}" y="${n(f.z0)}" width="${n(f.x1 - f.x0)}" height="${n(f.z1 - f.z0)}" rx="8" fill="${fill}" ${extra}/>`
+      : `<circle cx="${n(f.x)}" cy="${n(f.z)}" r="${n(f.r)}" fill="${fill}" ${extra}/>`;
+    if (e === "visitada") return `<g class="isla">${forma(i.colores.orilla || "#e9d9b4")}${f.tipo === "caja" ? `<rect x="${n(f.x0 + 2)}" y="${n(f.z0 + 2)}" width="${n(f.x1 - f.x0 - 4)}" height="${n(f.z1 - f.z0 - 4)}" rx="7" fill="${i.colores.suelo}"/>` : `<circle cx="${n(f.x)}" cy="${n(f.z)}" r="${n(f.r - 2)}" fill="${i.colores.suelo}"/>`}</g>${void nombres.push(`<text x="${n(c.x)}" y="${n(f.tipo === "caja" ? c.z + 3 : f.z + f.r + 9)}" text-anchor="middle" font-size="8.5" class="nombre-isla">${esc(i.nombre)}</text>`) || ""}`;
+    if (e === "vista") return `<g class="isla vista">${forma("#c9d3e6", 'opacity="0.85" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3 2"')}
+      <text x="${n(c.x)}" y="${n(c.z + 8)}" text-anchor="middle" font-size="22" class="interroga">?</text></g>`;
+    const r = f.tipo === "caja" ? 20 : f.r;
+    return `<g class="nube-mapa"><ellipse cx="${n(c.x - r * 0.35)}" cy="${n(c.z + 2)}" rx="${n(r * 0.75)}" ry="${n(r * 0.55)}"/><ellipse cx="${n(c.x + r * 0.4)}" cy="${n(c.z + 4)}" rx="${n(r * 0.7)}" ry="${n(r * 0.5)}"/><ellipse cx="${n(c.x)}" cy="${n(c.z - 6)}" rx="${n(r * 0.6)}" ry="${n(r * 0.5)}"/></g>`;
+  }).join("");
+  const p = M.vista.pos;
+  return `<svg class="mapa-svg" viewBox="${n(x0)} ${n(z0)} ${n(x1 - x0)} ${n(z1 - z0)}" role="img" aria-label="Mapa de las islas">
+    <rect x="${n(x0)}" y="${n(z0)}" width="${n(x1 - x0)}" height="${n(z1 - z0)}" rx="14" fill="#8fd3f4"/>
+    ${lineas}${islas}${nombres.join("")}
+    <g class="aqui" transform="translate(${n(p.x)} ${n(p.z)})"><circle r="5.5" fill="#ff4f6d" stroke="#ffffff" stroke-width="2"/><circle r="1.8" fill="#ffffff"/></g>
+  </svg>`;
 }
 
 // ---------- Entrada: teclado, control de la TV y teléfono como control ----------
@@ -476,5 +623,7 @@ export function accionMundo(accion) {
   }
   if (accion === "atras") return abrirMenu();
   if (accion === "ok" && M.cerca) return entrar(M.cerca.id);
+  if (accion === "ok" && M.muelle) return construirAqui();
+  if (accion === "ok" && M.tele) return abrirMenu("tele");
   if (accion === "ok" || accion === "brincar") { if (pulsar(performance.now())) M.vista.brincar(); }
 }

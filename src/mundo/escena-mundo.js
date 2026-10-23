@@ -33,13 +33,16 @@ export function crearMundo(mundo, lugares, deco, cristales, op = {}) {
   for (const [a, b, r] of [[10, 12, 5], [40, 8, 4], [52, 40, 6], [22, 44, 4], [34, 26, 3]]) { x.beginPath(); x.arc(a, b, r, 0, Math.PI * 2); x.fill(); }
   const tex = new THREE.CanvasTexture(cv);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace;
-  const W = l.x1 - l.x0 + 70, D = l.z1 - l.z0 + 70;
+  // Isla Noli (#164): el pasto llega justo a sus límites; alrededor está el mar (escena-islas.js)
+  const W = l.x1 - l.x0, D = l.z1 - l.z0;
   tex.repeat.set(W / 4, D / 4);
   const piso = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshLambertMaterial({ map: tex }));
   piso.rotation.x = -Math.PI / 2; piso.position.set((l.x0 + l.x1) / 2, 0, (l.z0 + l.z1) / 2); piso.name = "piso";
   grupo.add(piso);
 
   const plano = (geom, hex, pos, o = {}) => lote.poner(geom, hex, { pos, rot: [-90, o.giro || 0, 0], esc: o.esc, op: o.op });
+  // El cuerpo de la isla debajo del pasto, hasta el agua
+  lote.poner(new THREE.BoxGeometry(W, 3, D), C.orilla || "#e9d9b4", { pos: [(l.x0 + l.x1) / 2, -1.52, (l.z0 + l.z1) / 2] });
 
   // ---- Plaza, caminos y estanque (planos un poquito arriba del pasto) ----
   const R = (mundo.plaza && mundo.plaza.radio) || 5;

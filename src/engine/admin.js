@@ -2,6 +2,7 @@
 // Lógica pura: arma los datos nuevos de cada juego a partir de lo que hay en la nube. La red la hace src/admin/main.js.
 // Ver DESIGN.md §7 → "Administrador".
 import { leerLibro, saldo, agregar } from "./creditos.js";
+import { normalizar as normalizarMundo } from "./islas.js";
 
 /** Dispositivo con el que se marcan los cambios del administrador (en el libro de créditos y en la nube) */
 export const DISPOSITIVO_ADMIN = "admin";
@@ -202,6 +203,7 @@ export function resumenJuego(juego, datos, estrellas) {
 
 // ---------- Estrellas del catálogo y cristales del mundo ----------
 
+
 /** Las estrellas de la mejor partida de un juego (lo que guarda el catálogo en "_catalogo") */
 export const estrellasDe = (catalogo, juego) => {
   const e = catalogo && catalogo[juego] && catalogo[juego].estrellas;
@@ -225,7 +227,33 @@ export const cristalesEncontrados = (datos) =>
 export function conCristales(datos, ids, validos) {
   const ok = new Set(validos);
   const d = datos && typeof datos === "object" ? datos : {};
-  return { ...d, v: 1, cristales: [...new Set(ids)].filter((id) => ok.has(id)) };
+  const cristales = [...new Set(ids)].filter((id) => ok.has(id));
+  // v2 (#164): se junta entre aparatos; subir rev hace que lo del administrador gane (engine/islas.js → unirMundo)
+  if (d.v >= 2) return { ...d, cristales, rev: (Number.isInteger(d.rev) ? d.rev : 0) + 1 };
+  return { ...d, v: 1, cristales };
+}
+
+/**
+ * El mundo con otras islas visitadas, conexiones construidas y estrellas del mundo (#164). Sube rev: al juntarse con
+ * lo de los aparatos, gana lo del administrador (si no, la unión volvería a poner lo que se quitó).
+ * @param {{ visitadas?: string[], conexiones?: string[], estrellas?: { [isla]: { [juego]: number } } }} cambios
+ */
+export function conIslas(datos, cambios, { islas = [], conexiones = [], tope = 5 } = {}) {
+  const d = normalizarMundo(datos);
+  const okI = new Set(islas), okC = new Set(conexiones);
+  const out = { ...d, rev: d.rev + 1 };
+  if (cambios.visitadas) out.visitadas = [...new Set(["noli", ...cambios.visitadas])].filter((id) => okI.has(id));
+  if (cambios.conexiones) out.conexiones = [...new Set(cambios.conexiones)].filter((id) => okC.has(id));
+  if (cambios.estrellas) {
+    const dadas = JSON.parse(JSON.stringify(d.estrellas.dadas));
+    for (const [isla, js] of Object.entries(cambios.estrellas)) for (const [j, n] of Object.entries(js)) {
+      if (!Number.isInteger(n) || n < 0 || n > tope) throw new Error(`Las estrellas del mundo van de 0 a ${tope}.`);
+      dadas[isla] = dadas[isla] || {};
+      if (n) dadas[isla][j] = n; else delete dadas[isla][j];
+    }
+    out.estrellas = { dadas };
+  }
+  return out;
 }
 
 /** Sobrescribir los datos completos de un juego con un JSON escrito a mano */
