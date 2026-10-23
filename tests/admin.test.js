@@ -99,3 +99,95 @@ test("listar y nombrar perfiles; un dispositivo vinculado recibe lo que escribe 
   assert.deepEqual(local.disenos, [{ id: "d1" }], "lo que diseñó se queda");
   assert.equal(saldo(state.creditos), 25);
 });
+
+// ---------- #160: nivel, monedas, estrellas y cristales de cada juego ----------
+
+const { CAMPOS_JUEGO, leerRuta, ponerRuta, valorCampo, conCampos, resumenJuego, estrellasDe, conEstrellas, cristalesEncontrados,
+  conCristales, leerJson } = await import("../src/engine/index.js");
+
+test("#160: cada juego del catálogo con campos existe, y los topes son los de cada juego", async () => {
+  const { juegos } = JSON.parse(readFileSync(new URL("../minijuegos/catalogo.json", import.meta.url)));
+  for (const id of Object.keys(CAMPOS_JUEGO)) assert.ok(juegos.includes(id), `${id} está en el catálogo`);
+  const topes = {
+    "sumas-restas": ["niveles.js", "NIVELES"], "fabrica-numeros": ["niveles.js", "NIVELES"], huerto: ["niveles.js", "NIVELES"],
+    "reloj-dragon": ["niveles.js", "NIVELES"], "safari-datos": ["niveles.js", "NIVELES"], puentes: ["niveles.js", "NIVELES_MAX"],
+    pizzeria: ["pedidos.js", "NIVELES_MAX"], "robot-palabras": ["textos.js", "NIVELES"], spelling: ["palabras.js", "LISTAS"],
+  };
+  for (const [id, [archivo, nombre]] of Object.entries(topes)) {
+    const m = await import(`../minijuegos/${id}/src/${archivo}`);
+    const tope = Array.isArray(m[nombre]) ? m[nombre].length : m[nombre];
+    assert.equal(CAMPOS_JUEGO[id].campos[0].max, tope, `${id}: el nivel llega hasta ${tope}`);
+  }
+  const misiones = JSON.parse(readFileSync(new URL("../minijuegos/mision-luna/datos/misiones.json", import.meta.url))).misiones.length;
+  assert.equal(CAMPOS_JUEGO["mision-luna"].campos[0].max, misiones);
+});
+
+test("#160: rutas con puntos, sin cambiar lo que recibe", () => {
+  const d = { tienda: { monedas: 3, mejoras: ["letrero"] } };
+  const n = ponerRuta(d, "tienda.monedas", 40);
+  assert.equal(leerRuta(n, "tienda.monedas"), 40); assert.deepEqual(n.tienda.mejoras, ["letrero"]);
+  assert.equal(d.tienda.monedas, 3);
+  assert.equal(leerRuta(ponerRuta(null, "porMoneda.mxn.nivel", 2), "porMoneda.mxn.nivel"), 2);
+  assert.equal(leerRuta({}, "a.b.c"), undefined);
+});
+
+test("#160: sobrescribir el nivel escoge ese nivel y deja lo demás", () => {
+  const antes = { v: 1, nivel: 2, elegido: 1, niveles: { 1: { total: 9 } }, dias: { x: 1 }, deco: { slots: {} } };
+  const d = conCampos("fabrica-numeros", antes, { nivel: 6 });
+  assert.deepEqual([d.nivel, d.elegido], [6, 6]);
+  assert.deepEqual(d.niveles, antes.niveles); assert.deepEqual(d.deco, antes.deco);
+  assert.equal(antes.nivel, 2);
+  assert.equal(conCampos("fabrica-numeros", d, { nivel: 6 }), null, "sin cambios");
+  assert.throws(() => conCampos("fabrica-numeros", d, { nivel: 9 }), /1 a 8/);
+  assert.throws(() => conCampos("fabrica-numeros", d, { nivel: 0 }));
+  assert.throws(() => conCampos("sumas-restas", d, { nivel: 1.5 }));
+  // sumas-restas no tiene "elegido"
+  assert.equal("elegido" in conCampos("sumas-restas", { v: 1, nivel: 1 }, { nivel: 4 }), false);
+  // sin nada guardado empieza con la versión del juego
+  assert.deepEqual(conCampos("spelling", null, { lista: 5 }), { v: 2, lista: 5, elegida: 5 });
+});
+
+test("#160: La Tienda: nivel por moneda y monedas de la tienda", () => {
+  const antes = { v: 1, moneda: "usd", porMoneda: { usd: { nivel: 2, elegido: 2, niveles: { 1: {} } } }, tienda: { monedas: 5, mejoras: ["letrero"] } };
+  const def = CAMPOS_JUEGO.tienda.campos;
+  assert.deepEqual(def.map((c) => valorCampo(antes, c)), [2, 1, 5]);
+  const d = conCampos("tienda", antes, { "porMoneda.usd.nivel": 4, "porMoneda.mxn.nivel": 1, "tienda.monedas": 120 });
+  assert.deepEqual(d.porMoneda.usd, { nivel: 4, elegido: 4, niveles: { 1: {} } });
+  assert.equal(d.porMoneda.mxn, undefined, "si nunca jugó con pesos y se deja en 1, no se crea");
+  assert.deepEqual(conCampos("tienda", antes, { "porMoneda.mxn.nivel": 3 }).porMoneda.mxn, { nivel: 3, elegido: 3 });
+  assert.deepEqual(d.tienda, { monedas: 120, mejoras: ["letrero"] });
+  assert.match(resumenJuego("tienda", antes), /Nivel con dólares 2\/7 · Monedas de la tienda 5/);
+  assert.doesNotMatch(resumenJuego("tienda", antes), /pesos/, "no ha jugado con pesos");
+});
+
+test("#160: resumen de cada juego para su categoría", () => {
+  assert.equal(resumenJuego("sumas-restas", null), "Sin jugar");
+  assert.equal(resumenJuego("sumas-restas", { v: 1, nivel: 3 }, 2), "Nivel 3/12 · ⭐⭐");
+  assert.equal(resumenJuego("ejemplo", { v: 1 }), "Con datos");
+  assert.match(resumenJuego("cajas-sorpresa", { v: 1, polvo: 7, abiertas: 4, tengo: { a: 1, b: 2, c: 0 } }), /Polvo de estrellas 7 · Cajas abiertas 4 · 2 Brumitos/);
+  assert.match(resumenJuego("mision-luna", { v: 1, abierta: 3, rocas: { a: 1 }, fotos: {} }), /Misión abierta 3\/6 · 1 rocas, 0 fotos/);
+});
+
+test("#160: estrellas del catálogo y cristales del mundo", () => {
+  const cat = { huerto: { estrellas: 1, veces: 4, ultima: 9 } };
+  assert.equal(estrellasDe(cat, "huerto"), 1); assert.equal(estrellasDe(cat, "puentes"), 0);
+  assert.deepEqual(conEstrellas(cat, "huerto", 3).huerto, { estrellas: 3, veces: 4, ultima: 9 });
+  assert.deepEqual(conEstrellas(null, "puentes", 2), { puentes: { estrellas: 2, veces: 0, ultima: 0 } });
+  assert.equal(conEstrellas(cat, "huerto", 1), null);
+  assert.throws(() => conEstrellas(cat, "huerto", 4));
+  const mundo = JSON.parse(readFileSync(new URL("../mundo/mundo.json", import.meta.url)));
+  const ids = mundo.cristales.map((c) => c.id);
+  const d = conCristales({ v: 1, cristales: [ids[0]], otra: 1 }, [ids[1], ids[1], "no-existe"], ids);
+  assert.deepEqual(d, { v: 1, cristales: [ids[1]], otra: 1 });
+  assert.deepEqual(cristalesEncontrados(d), [ids[1]]); assert.deepEqual(cristalesEncontrados(null), []);
+});
+
+test("#160: el JSON escrito a mano debe ser un objeto", () => {
+  assert.deepEqual(leerJson('{"v":1,"nivel":3}'), { v: 1, nivel: 3 });
+  assert.throws(() => leerJson("[1,2]"), /objeto/);
+  assert.throws(() => leerJson("{nivel:3"), /no es válido/);
+});
+
+test("#160: la página de administrador no tiene liga desde Noli", () => {
+  for (const f of ["index.html", "src/main.js"]) assert.doesNotMatch(readFileSync(new URL(`../${f}`, import.meta.url), "utf8"), /admin\.html/);
+});
