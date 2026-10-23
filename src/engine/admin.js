@@ -106,6 +106,136 @@ export function conLibro(datos, idLibro, { leidos, encontrados, todos }) {
   return { ...d, v: 1, libros: { ...(d.libros || {}), [idLibro]: nuevo } };
 }
 
+// ---------- Juegos: nivel, monedas… (#160) ----------
+
+/**
+ * Lo que se puede sobrescribir de cada juego, campo por campo. `ruta` es dónde vive el número en lo que guarda el juego
+ * (con puntos para entrar a objetos); `sigue` es otro campo que se pone igual (el nivel "elegido", para que juegue el
+ * nivel nuevo). `v` es la versión con la que se empieza si el juego todavía no tiene nada guardado.
+ * Los topes son los mismos que usa cada juego al cargar (minijuegos/<id>/src/progreso.js → cargar).
+ */
+export const CAMPOS_JUEGO = {
+  "sumas-restas": { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 12 }] },
+  "fabrica-numeros": { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 8, sigue: "elegido" }] },
+  huerto: { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 6, sigue: "elegido" }] },
+  "reloj-dragon": { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 8, sigue: "elegido" },
+    { ruta: "album", nombre: "Estampas del álbum", min: 0, max: 3 }] },
+  pizzeria: { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 7, sigue: "elegido" },
+    { ruta: "propinas", nombre: "Propinas", min: 0 }] },
+  puentes: { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 7, sigue: "elegido" }] },
+  "safari-datos": { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 6, sigue: "elegido" },
+    { ruta: "zoo", nombre: "Animales nuevos en el zoo", min: 0, max: 8 }] },
+  tienda: { v: 1, campos: [{ ruta: "porMoneda.usd.nivel", nombre: "Nivel con dólares", min: 1, max: 7, sigue: "porMoneda.usd.elegido" },
+    { ruta: "porMoneda.mxn.nivel", nombre: "Nivel con pesos", min: 1, max: 7, sigue: "porMoneda.mxn.elegido" },
+    { ruta: "tienda.monedas", nombre: "Monedas de la tienda", min: 0 }] },
+  spelling: { v: 2, campos: [{ ruta: "lista", nombre: "Lista", min: 1, max: 16, sigue: "elegida" }] },
+  "robot-palabras": { v: 1, campos: [{ ruta: "nivel", nombre: "Nivel", min: 1, max: 7, sigue: "elegido" }] },
+  "mision-luna": { v: 1, campos: [{ ruta: "abierta", nombre: "Misión abierta", min: 1, max: 6, sigue: "elegida" }] },
+  "mi-casita": { v: 1, campos: [{ ruta: "visitas", nombre: "Visitas", min: 0 }] },
+  "cajas-sorpresa": { v: 1, campos: [{ ruta: "polvo", nombre: "Polvo de estrellas", min: 0 }, { ruta: "abiertas", nombre: "Cajas abiertas", min: 0 }] },
+};
+
+/** Lee un valor por ruta ("tienda.monedas") */
+export function leerRuta(datos, ruta) {
+  let x = datos;
+  for (const k of ruta.split(".")) { if (!x || typeof x !== "object") return undefined; x = x[k]; }
+  return x;
+}
+
+/** Copia de `datos` con un valor puesto en la ruta (crea los objetos que falten; no cambia lo que recibe) */
+export function ponerRuta(datos, ruta, valor) {
+  const [k, ...resto] = ruta.split(".");
+  const base = datos && typeof datos === "object" && !Array.isArray(datos) ? datos : {};
+  return { ...base, [k]: resto.length ? ponerRuta(base[k], resto.join("."), valor) : valor };
+}
+
+/** Valor de un campo como lo vería el juego (si no hay nada, el mínimo) */
+export function valorCampo(datos, campo) {
+  const x = leerRuta(datos, campo.ruta);
+  const n = Number.isInteger(x) ? x : campo.min;
+  return Math.max(campo.min, campo.max != null ? Math.min(campo.max, n) : n);
+}
+
+/**
+ * Los datos de un juego con campos nuevos. Lo demás (historial, días, retos, adornos…) se queda.
+ * @param {string} juego id del juego
+ * @param {*} datos lo que hay en la nube (o null)
+ * @param {Record<string, number>} cambios { ruta: valor }
+ * @returns {object|null} null si no cambia nada
+ */
+export function conCampos(juego, datos, cambios) {
+  const def = CAMPOS_JUEGO[juego];
+  if (!def) throw new Error(`${juego}: no tiene campos para editar.`);
+  let d = datos && typeof datos === "object" && !Array.isArray(datos) ? datos : { v: def.v };
+  if (d.v == null) d = { ...d, v: def.v };
+  let cambio = d !== datos;
+  for (const c of def.campos) {
+    if (!(c.ruta in cambios)) continue;
+    const v = cambios[c.ruta];
+    if (!Number.isInteger(v) || v < c.min || (c.max != null && v > c.max))
+      throw new Error(`${c.nombre}: debe ser un número entero de ${c.min}${c.max != null ? ` a ${c.max}` : " o más"}.`);
+    if (leerRuta(d, c.ruta) === v && (!c.sigue || leerRuta(d, c.sigue) === v)) continue;
+    if (leerRuta(d, c.ruta) === undefined && v === c.min) continue; // no estaba y se queda en lo que el juego ya supone
+    d = ponerRuta(d, c.ruta, v);
+    if (c.sigue) d = ponerRuta(d, c.sigue, v);
+    cambio = true;
+  }
+  return cambio ? d : null;
+}
+
+/** Resumen corto de un juego para el título de su categoría */
+export function resumenJuego(juego, datos, estrellas) {
+  const partes = [];
+  const def = CAMPOS_JUEGO[juego];
+  const hay = datos && typeof datos === "object";
+  if (def && hay) for (const c of def.campos) {
+    if (c.ruta.startsWith("porMoneda.") && leerRuta(datos, c.ruta) === undefined) continue; // no ha jugado con esa moneda
+    partes.push(`${c.nombre} ${valorCampo(datos, c)}${c.max != null && c.min === 1 ? `/${c.max}` : ""}`);
+  }
+  if (hay && juego === "robot-palabras" && Array.isArray(datos.piezas)) partes.push(`${datos.piezas.length} piezas`);
+  if (hay && juego === "mision-luna") partes.push(`${Object.keys(datos.rocas || {}).length} rocas, ${Object.keys(datos.fotos || {}).length} fotos`);
+  if (hay && juego === "mi-casita" && Array.isArray(datos.puestos)) partes.push(`${datos.puestos.length} muebles`);
+  if (hay && juego === "cajas-sorpresa") partes.push(`${Object.values(datos.tengo || {}).filter((n) => n >= 1).length} Brumitos`);
+  if (estrellas) partes.push(`${"⭐".repeat(estrellas)}`);
+  return partes.join(" · ") || (hay ? "Con datos" : "Sin jugar");
+}
+
+// ---------- Estrellas del catálogo y cristales del mundo ----------
+
+/** Las estrellas de la mejor partida de un juego (lo que guarda el catálogo en "_catalogo") */
+export const estrellasDe = (catalogo, juego) => {
+  const e = catalogo && catalogo[juego] && catalogo[juego].estrellas;
+  return Number.isInteger(e) ? Math.max(0, Math.min(3, e)) : 0;
+};
+
+/** El catálogo con otras estrellas para un juego (veces y última se quedan). null si no cambia */
+export function conEstrellas(catalogo, juego, estrellas) {
+  if (!Number.isInteger(estrellas) || estrellas < 0 || estrellas > 3) throw new Error("Las estrellas van de 0 a 3.");
+  const c = catalogo && typeof catalogo === "object" ? catalogo : {};
+  const antes = c[juego] || { estrellas: 0, veces: 0, ultima: 0 };
+  if (antes.estrellas === estrellas) return null;
+  return { ...c, [juego]: { veces: 0, ultima: 0, ...antes, estrellas } };
+}
+
+/** Cristales que ya encontró en el mundo ("_mundo": { v: 1, cristales: [ids] }) */
+export const cristalesEncontrados = (datos) =>
+  (datos && Array.isArray(datos.cristales) ? datos.cristales.filter((x) => typeof x === "string") : []);
+
+/** El mundo con otros cristales encontrados (solo ids que existen) */
+export function conCristales(datos, ids, validos) {
+  const ok = new Set(validos);
+  const d = datos && typeof datos === "object" ? datos : {};
+  return { ...d, v: 1, cristales: [...new Set(ids)].filter((id) => ok.has(id)) };
+}
+
+/** Sobrescribir los datos completos de un juego con un JSON escrito a mano */
+export function leerJson(texto) {
+  let d;
+  try { d = JSON.parse(texto); } catch (e) { throw new Error("El JSON no es válido: " + e.message); }
+  if (!d || typeof d !== "object" || Array.isArray(d)) throw new Error("Debe ser un objeto { … }.");
+  return d;
+}
+
 // ---------- Perfiles ----------
 
 /** Fecha y hora legible (es-MX) o "—" */

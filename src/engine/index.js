@@ -10,4 +10,5 @@ export { revisarMundo, colocarLugares, centroSitio, solidoDe, mapaMundo, fisicaD
   cristalesDe, cristalTocado, crearCaminos, rutaPorCaminos, puntoLibre, plataformasAlcanzables, elegirVista, acomodarLetreros, brazoCamara } from "./mundo.js";
 export { revisarLibros, librosDe, estadoLibros, conHallazgo, nivelPista, libroTocado } from "./libros.js";
 export { DISPOSITIVO_ADMIN, ponerSaldo, saldoDe, CAMPOS_PASARELA, resumenPasarela, nivelPorPuntos, conPasarela, libroDe, conLibro, fecha,
-  resumenPerfil } from "./admin.js";
+  resumenPerfil, CAMPOS_JUEGO, leerRuta, ponerRuta, valorCampo, conCampos, resumenJuego, estrellasDe, conEstrellas, cristalesEncontrados,
+  conCristales, leerJson } from "./admin.js";
