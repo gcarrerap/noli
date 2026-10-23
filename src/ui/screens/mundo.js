@@ -192,7 +192,8 @@ function instalar(m) {
     let dir = { x: 0, z: 0 };
     // Con el menú o una ventana abierta (nube, créditos, control remoto) las flechas son para esa ventana
     if (!m.menu && !state.nubeAbierta && !state.creditosAbierto && !state.remoto.panel) {
-      if (Math.hypot(m.joy.x, m.joy.z) > 0.05) dir = m.joy;
+      // El joystick va de 0 a `turbo` veces la velocidad: entre más lejos del centro, más rápido
+      if (Math.hypot(m.joy.x, m.joy.z) > 0.05) { const t = (m.cfg && m.cfg.turbo) || 1; dir = { x: m.joy.x * t, z: m.joy.z * t }; }
       else {
         const d = direccionDeTeclas(m.teclas.hasta, performance.now());
         for (const k of FLECHAS) if (m.teclas.apretadas[k]) { const e = direccionDeTeclas({ [k]: Infinity }, 0); d.x += e.x; d.z += e.z; }

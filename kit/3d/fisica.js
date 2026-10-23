@@ -17,7 +17,8 @@
 
 /** Ajustes por omisión (el mundo los cambia en mundo/mundo.json → movimiento) */
 export const FISICA = Object.freeze({
-  velocidad: 3.4,   // m/s caminando
+  velocidad: 3.4,   // m/s caminando (entrada de largo 1: flechas, cruceta, "Ir a…")
+  turbo: 1,         // hasta cuántas veces `velocidad` llega el joystick empujado hasta la orilla (la entrada puede medir hasta esto)
   giro: 420,        // grados/s que gira el cuerpo hacia donde camina (solo se ve; el paso va a donde apunta la entrada)
   radio: 0.35,      // m
   alto: 1.3,        // m, de los pies a la cabeza
@@ -78,8 +79,8 @@ export const crearCuerpo = (x, z, ang = 0, y = 0) => ({ x, y, z, ang, vy: 0, vx:
 /**
  * Un cuadro de física.
  * @param {object} c cuerpo (de crearCuerpo); no se modifica
- * @param {{ quiere: {x: number, z: number}, brincar?: boolean }} entrada dirección en pantalla (largo 0 a 1) y si se
- *   apretó brincar en este cuadro
+ * @param {{ quiere: {x: number, z: number}, brincar?: boolean }} entrada dirección en pantalla (largo 0 a `turbo`; 1 es
+ *   caminar a `velocidad`) y si se apretó brincar en este cuadro
  * @param {number} dt segundos (quien llama lo limita; 50 ms máximo)
  * @param {object} cfg ajustes (FISICA)
  * @param {object} mapa { solidos, limites }
@@ -90,7 +91,8 @@ export function pasoFisico(c0, entrada, dt, cfg, mapa) {
   const c = Object.assign({}, c0);
   let q = entrada.quiere || { x: 0, z: 0 };
   let largo = Math.hypot(q.x, q.z);
-  if (largo > 1) { q = { x: q.x / largo, z: q.z / largo }; largo = 1; }
+  const tope = Math.max(1, k.turbo || 1);
+  if (largo > tope) { q = { x: q.x * tope / largo, z: q.z * tope / largo }; largo = tope; }
   const mueve = largo >= 0.08;
   let brinco = false, aterrizo = false;
 

@@ -210,7 +210,8 @@ El piso es plano (y = 0) con **sólidos** encima: cajas o cilindros con piso (`y
 
 | Ajuste (`mundo.json → movimiento`) | Valor | Qué hace |
 |---|---|---|
-| `velocidad` | 3.4 m/s | Caminando. Del inicio al fondo del mundo son unos 13 s. |
+| `velocidad` | 3.4 m/s | Caminando (flechas, cruceta, "Ir a…" y el joystick a la mitad). Del inicio al fondo del mundo son unos 13 s. |
+| `turbo` | 2 | El joystick empujado hasta la orilla va a `turbo` × `velocidad` (6.8 m/s). Entre más lejos del centro, más rápido. |
 | `giro` | 420 °/s | Qué tan rápido voltea el cuerpo hacia donde camina (solo se ve). |
 | `escalon` | 0.3 m | Lo más bajito que esto se sube caminando, sin brincar. |
 | `brinco` | 1.25 m | Lo que sube un brinco. |
