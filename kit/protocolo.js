@@ -11,6 +11,8 @@
 //                      { tipo: "terminar", estrellas, reto }  terminó una partida (0 a 3 estrellas); reto: true si
 //                                                        fue el reto del día completado (da créditos extra, #20)
 //                      { tipo: "gastar", id, cantidad, motivo }  pedir créditos (#20); el catálogo valida y descuenta
+//                      { tipo: "premio", premio, clave }  cobrar un premio de juego.json → premios (#96); cada clave
+//                                                        (el logro: "halloween-c3") se paga una sola vez
 //                      { tipo: "guardar", datos }        guardar el progreso del juego (objeto JSON); el catálogo
 //                                                        es el dueño del almacenamiento (hoy localStorage, luego nube)
 //                      { tipo: "salir" }                 regresar al catálogo
@@ -25,7 +27,7 @@ export const ACCIONES = ["arriba", "abajo", "izquierda", "derecha", "ok", "atras
 // "brincar", que solo usa el mundo 3D del menú principal (#25). A los juegos no se les manda "brincar".
 export const ACCIONES_CONTROL = ACCIONES.concat(["brincar"]);
 
-export const TIPOS = ["hola", "entrada", "listo", "terminar", "guardar", "salir", "gastar", "gasto"];
+export const TIPOS = ["hola", "entrada", "listo", "terminar", "guardar", "salir", "gastar", "gasto", "premio"];
 
 export function mensaje(tipo, datos = {}) {
   return { noli: PROTOCOLO, tipo, ...datos };
@@ -37,6 +39,7 @@ export function esMensaje(m) {
   if (m.tipo === "entrada") return ACCIONES.includes(m.accion);
   if (m.tipo === "guardar") return !!m.datos && typeof m.datos === "object";
   if (m.tipo === "gastar") return typeof m.id === "string" && m.id.length > 0 && m.id.length <= 64 && Number.isInteger(m.cantidad) && m.cantidad > 0;
+  if (m.tipo === "premio") return typeof m.premio === "string" && m.premio.length > 0 && m.premio.length <= 40 && typeof m.clave === "string" && m.clave.length > 0 && m.clave.length <= 80;
   if (m.tipo === "gasto") return typeof m.id === "string" && typeof m.ok === "boolean";
   return true;
 }

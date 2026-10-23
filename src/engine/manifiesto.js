@@ -39,6 +39,13 @@ export function validarManifiesto(m, idCarpeta) {
   const costo = m.costo ?? null;
   if (costo !== null && !(Number.isInteger(costo) && costo > 0 && costo <= 100)) errores.push(`${idCarpeta}: "costo" debe ser un entero de 1 a 100`);
   if (costo !== null && creditos !== "gasta") errores.push(`${idCarpeta}: "costo" solo va con "creditos": "gasta"`);
+  // Premios (#96): monedas fijas por logros con nombre ({ "capitulo": 5, "libro": 50 }). Un juego con premios no da
+  // créditos por estrellas: paga solo con premios.
+  const premios = m.premios ?? null;
+  if (premios !== null && !(premios && typeof premios === "object" && !Array.isArray(premios)
+    && Object.entries(premios).every(([k, v]) => ID.test(k) && Number.isInteger(v) && v > 0 && v <= 100)))
+    errores.push(`${idCarpeta}: "premios" debe ser { nombre: créditos de 1 a 100 }`);
+  if (premios !== null && creditos !== "gana") errores.push(`${idCarpeta}: "premios" solo va con "creditos": "gana"`);
 
   // Mundo del menú principal (#25): qué edificio tiene el juego ("torre", "arbol", "escenario", "portal"…, ver
   // mundo/lugares.json → edificios). Si no se pone (o no existe), el mundo le pone un portal.
@@ -73,6 +80,7 @@ export function validarManifiesto(m, idCarpeta) {
       version: m.version != null ? String(m.version) : "1",
       creditos,
       costo,
+      premios,
       lugar,
       tv,
       ocultoEnTv: ocultoEnTv.map((x) => x.trim()),

@@ -15,7 +15,7 @@
 /**
  * Reglas de los créditos. Es el único lugar donde se cambian (el costo de la Pasarela vive en el juego:
  * minijuegos/pasarela/datos/config.json).
- * @type {{ porEstrella: number, porReto: number, topeDiario: number, diasCompactar: number, maxGasto: number, maxRegalo: number }}
+ * @type {{ porEstrella: number, porReto: number, topeDiario: number, diasCompactar: number, maxGasto: number, maxRegalo: number, maxPremio: number }}
  */
 export const REGLAS = Object.freeze({
   porEstrella: 1,   // créditos por cada estrella de una partida (0 a 3)
@@ -24,12 +24,14 @@ export const REGLAS = Object.freeze({
   diasCompactar: 60,// los movimientos propios más viejos que esto se suman en un "cierre" para que el libro no crezca
   maxGasto: 100,    // lo más que un juego puede pedir en un solo gasto
   maxRegalo: 100,   // lo más que papá o mamá pueden regalar o quitar de una vez
+  maxPremio: 100,   // lo más que vale un premio de un juego ("premios" en juego.json)
 });
 
 /** Motivos de un movimiento, con el texto que se ve en el historial. */
 export const MOTIVOS = Object.freeze({
   estrellas: "Estrellas",
   reto: "Reto del día",
+  premio: "Premio",
   gasto: "Gastado",
   regalo: "Regalo de papás",
   ajuste: "Ajuste de papás",
@@ -134,10 +136,25 @@ export function idMov(d, f, rnd = Math.random) {
  * @param {{v:1, movs:Array, cierres:Object}} libro
  * @param {{ n: number, j?: string, m: string, d: string, f: number, id?: string }} mov
  */
-export function agregar(libro, { n, j = "", m, d, f, id }) {
+export function agregar(libro, { n, j = "", m, d, f, id, k }) {
   if (!Number.isInteger(n) || n === 0) return libro;
   if (!MOTIVOS[m]) throw new Error("motivo desconocido: " + m);
-  return { ...libro, movs: [...libro.movs, { id: id || idMov(d, f), f, n, j, m, d }] };
+  return { ...libro, movs: [...libro.movs, { id: id || idMov(d, f), f, n, j, m, d, ...(k ? { k } : {}) }] };
+}
+
+/**
+ * Premio de un juego (#96): una cantidad fija por un logro con nombre (por ejemplo "capitulo" o "libro" en la
+ * Biblioteca), declarada en "premios" de su juego.json. Cada clave (el logro concreto: "halloween-c3") se paga
+ * una sola vez; no cuenta para el tope diario. El juego también anota lo que ya cobró, por si un movimiento viejo
+ * ya se compactó.
+ * @param {{movs:Array}} libro
+ * @param {{ juego: string, clave: string, cantidad: number, d: string, f: number }} p
+ * @returns {{ ok: boolean, libro: object, n: number }}
+ */
+export function premio(libro, { juego, clave, cantidad, d, f }, reglas = REGLAS) {
+  if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > reglas.maxPremio || !clave) return { ok: false, libro, n: 0 };
+  if (libro.movs.some((m) => m.m === "premio" && m.j === juego && m.k === clave)) return { ok: false, libro, n: 0 };
+  return { ok: true, libro: agregar(libro, { n: cantidad, j: juego, m: "premio", d, f, k: clave }), n: cantidad };
 }
 
 /**
@@ -164,11 +181,14 @@ export function gastar(libro, { cantidad, juego, d, f }, reglas = REGLAS) {
 export function unir(a, b) {
   const cierres = { ...a.cierres };
   for (const [d, c] of Object.entries(b.cierres)) if (!cierres[d] || c.hasta > cierres[d].hasta) cierres[d] = c;
-  const porId = new Map();
-  for (const m of [...a.movs, ...b.movs]) {
+  const porId = new Map(), premios = new Set();
+  for (const m of [...a.movs, ...b.movs].sort((x, y) => x.f - y.f || (x.id < y.id ? -1 : 1))) {
     const c = cierres[m.d];
     if (c && m.f <= c.hasta) continue;
-    if (!porId.has(m.id)) porId.set(m.id, m);
+    if (porId.has(m.id)) continue;
+    // un premio cobrado en dos dispositivos sin conexión se queda una sola vez (el primero)
+    if (m.m === "premio" && m.k) { const llave = m.j + "|" + m.k; if (premios.has(llave)) continue; premios.add(llave); }
+    porId.set(m.id, m);
   }
   const movs = [...porId.values()].sort((x, y) => x.f - y.f || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
   return { v: 1, movs, cierres };
