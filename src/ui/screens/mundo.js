@@ -7,10 +7,10 @@
 // mundo: en el teléfono el mundo solo se pausa; en la TV se libera (poca memoria) y se vuelve a armar al regresar.
 // Si algo falla al armarlo, la app regresa al menú 2D (nunca pantalla en blanco). Ver docs/MUNDO.md.
 import { state, actions } from "../../app/index.js";
-import { cargarMundo } from "../../services/index.js";
+import { cargarMundo, BASE_MUNDO } from "../../services/index.js";
 import { revisarMundo, colocarLugares, decorar, todosLosSitios, mapaMundo, fisicaDe, crearCaminos, cristalesDe, materias,
   jugableEn, acomodarLetreros, librosDe, estadoLibros, conHallazgo, dia, revisarIslas, armarIslas, libresNoli, salidasNoli,
-  teletransportadorDe, puedeConstruir, construir, conVisita, disponibles, vistaMapa, estrellasDeJuego } from "../../engine/index.js";
+  teletransportadorDe, puedeConstruir, construir, conVisita, disponibles, vistaMapa, estrellasDeJuego, puntoMapa } from "../../engine/index.js";
 import { crearJoystick } from "../../../kit/3d/joystick.js";
 import { direccionDeTeclas, crearPulsador } from "../../../kit/3d/movimiento.js";
 import { moverFoco, focoInicial } from "../../../kit/foco.js";
@@ -560,10 +560,13 @@ function dibujarMenu() {
   if (enfocado) { const b = el.querySelector(`[data-k="${enfocado}"]`); if (b) b.focus(); }
 }
 
-/** El mapa (#164): lo visitado completo, lo vecino como silueta con «?», lo demás tapado por nubes. Provisional (SVG)
- *  mientras llega el dibujo de Petra (#165); arriba = hacia el fondo del mundo (−z), como en el juego. */
+/** El mapa (#164): lo visitado completo, lo vecino como silueta con «?», lo demás tapado por nubes. Con el dibujo de
+ *  Petra (#165, islas.json → mapa) las nubes y los «?» van encima del dibujo; sin él, un mapa hecho en código.
+ *  Arriba = hacia el fondo del mundo (−z), como en el juego. */
 function mapaSvg() {
   const red = M.red, v = vistaMapa(red, actions.datosMundo());
+  const ilustrado = mapaIlustrado(red, v);
+  if (ilustrado) return ilustrado;
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   for (const i of red.islas) {
     const f = i.f, a = f.tipo === "caja" ? [f.x0, f.x1, f.z0, f.z1] : [f.x - f.r, f.x + f.r, f.z - f.r, f.z + f.r];
@@ -595,6 +598,39 @@ function mapaSvg() {
     <rect x="${n(x0)}" y="${n(z0)}" width="${n(x1 - x0)}" height="${n(z1 - z0)}" rx="14" fill="#8fd3f4"/>
     ${lineas}${islas}${nombres.join("")}
     <g class="aqui" transform="translate(${n(p.x)} ${n(p.z)})"><circle r="5.5" fill="#ff4f6d" stroke="#ffffff" stroke-width="2"/><circle r="1.8" fill="#ffffff"/></g>
+  </svg>`;
+}
+
+/** El mapa con el dibujo de Petra; null si islas.json no lo trae (o le falta el lugar de alguna isla) */
+function mapaIlustrado(red, v) {
+  const A = red.cfg.mapa, aqui = M.vista.pos, p = puntoMapa(red, aqui.x, aqui.z);
+  if (!A || !A.imagen || !p) return null;
+  const W = A.ancho, H = A.alto, rx = A.r * W, ry = rx * 0.62, n = (x) => x.toFixed(1);
+  const pos = (i) => ({ x: i.mapa.u * W, y: i.mapa.v * H });
+  const lineas = red.conexiones.map((k) => {
+    const e = v.conexiones[k.id];
+    if (e === "oculta") return "";
+    const a = pos(red.por.get(k.de)), b = pos(red.por.get(k.a));
+    const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+    // De orilla a orilla del dibujo (no del centro: no se pinta sobre las islas)
+    const ka = Math.min(0.45, 1 / Math.hypot(dx / l / rx, dy / l / ry) / l * 0.9), kb = 1 - ka;
+    const estilo = e === "hecha" ? (k.tipo === "puente" ? `stroke="${k.material === "cristal" ? "#2f9be0" : "#8a5a36"}" stroke-width="9" stroke-linecap="round"` : `stroke="#6a4fc4" stroke-width="9" stroke-dasharray="1 14" stroke-linecap="round"`)
+      : `stroke="#ffffff" stroke-width="5" stroke-dasharray="14 12" opacity="0.9"`;
+    return `<line x1="${n(a.x + dx * ka)}" y1="${n(a.y + dy * ka)}" x2="${n(a.x + dx * kb)}" y2="${n(a.y + dy * kb)}" ${estilo}/>`;
+  }).join("");
+  let encima = "", nombres = "";
+  for (const i of red.islas) {
+    const e = v.islas[i.id], c = pos(i);
+    if (e === "visitada") nombres += `<text x="${n(c.x)}" y="${n(c.y + ry + 34)}" text-anchor="middle" font-size="34" class="nombre-isla">${esc(i.nombre)}</text>`;
+    else if (e === "vista") encima += `<ellipse cx="${n(c.x)}" cy="${n(c.y)}" rx="${n(rx * 1.05)}" ry="${n(ry * 1.15)}" fill="#ffffff" opacity="0.62"/>
+      <text x="${n(c.x)}" y="${n(c.y + 34)}" text-anchor="middle" font-size="96" class="interroga">?</text>`;
+    else encima += `<g class="nube-mapa"><ellipse cx="${n(c.x - rx * 0.5)}" cy="${n(c.y + ry * 0.2)}" rx="${n(rx * 0.85)}" ry="${n(ry * 1.05)}"/><ellipse cx="${n(c.x + rx * 0.5)}" cy="${n(c.y + ry * 0.25)}" rx="${n(rx * 0.85)}" ry="${n(ry * 1.0)}"/><ellipse cx="${n(c.x)}" cy="${n(c.y - ry * 0.55)}" rx="${n(rx * 0.9)}" ry="${n(ry * 1.05)}"/><ellipse cx="${n(c.x)}" cy="${n(c.y + ry * 0.6)}" rx="${n(rx * 1.05)}" ry="${n(ry * 0.8)}"/></g>`;
+  }
+  const src = new URL(A.imagen, BASE_MUNDO).href;
+  return `<svg class="mapa-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de las islas">
+    <image href="${esc(src)}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+    ${encima}${lineas}${nombres}
+    <g class="aqui" transform="translate(${n(p.u * W)} ${n(p.v * H)})"><circle r="20" fill="#ff4f6d" stroke="#ffffff" stroke-width="7"/><circle r="7" fill="#ffffff"/></g>
   </svg>`;
 }
 

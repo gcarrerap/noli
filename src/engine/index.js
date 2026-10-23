@@ -17,4 +17,4 @@ export { formaDe, centroIsla, dentro, aOrilla, orillaHacia, armarIslas, platafor
   variosCaminos, revisarIslas, revisarSaltos, normalizar as normalizarMundo, unirMundo, mismoMundo, sumarEstrellas, estrellasDeJuego,
   disponibles, puedeConstruir, construir, conVisita, estrellasPosibles, estadoRed, solidoPlataforma, mapaIslas, limitesRed, islaEn,
   muelleEn, teletransportadorDe, enTeletransportador, vistaMapa, TOPE_ESTRELLAS, INICIO as ISLA_INICIO, salidasNoli, libresNoli,
-  ANCHO_PUENTE } from "./islas.js";
+  ANCHO_PUENTE, puntoMapa } from "./islas.js";

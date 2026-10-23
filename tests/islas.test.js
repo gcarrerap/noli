@@ -318,3 +318,24 @@ test("Isla Noli: de la plaza se llega caminando a la entrada de cada puente y al
     assert.ok(Math.hypot(a.x - (s.a.x + vx * u), a.z - (s.a.z + vz * u)) >= s.r, "un árbol en el pasillo de un puente");
   }
 });
+
+// ---------- El mapa ilustrado de Petra (#165) ----------
+
+test("mapa ilustrado: existe la imagen, cada isla sabe dónde está en el dibujo y el personaje se ubica en él", async () => {
+  const { puntoMapa } = await import("../src/engine/islas.js");
+  assert.ok(fs.existsSync(new URL("../mundo/" + ISLAS.mapa.imagen, import.meta.url)), "falta la imagen del mapa");
+  for (const i of RED.islas) assert.ok(i.mapa && i.mapa.u > 0 && i.mapa.u < 1 && i.mapa.v > 0 && i.mapa.v < 1, i.id);
+  // Arriba en el dibujo = al fondo del mundo: las Nubes arriba de todo, Noli abajo
+  const v = (id) => RED.por.get(id).mapa.v;
+  assert.ok(v("nubes") < v("numeros") && v("numeros") < v("cristal") && v("cristal") < v("noli"));
+  const cerca = (p, q, tol = 0.02) => Math.abs(p.u - q.u) < tol && Math.abs(p.v - q.v) < tol;
+  const noli = RED.por.get("noli"), cris = RED.por.get("cristal");
+  assert.ok(cerca(puntoMapa(RED, noli.c.x, noli.c.z), noli.mapa), "en el centro de Noli");
+  assert.ok(cerca(puntoMapa(RED, cris.c.x, cris.c.z), cris.mapa), "en el centro de Cristal");
+  // A medio puente: entre las dos islas del dibujo
+  const k = RED.porCon.get("noli-cristal"), m = puntoMapa(RED, (k.p0.x + k.p1.x) / 2, (k.p0.z + k.p1.z) / 2);
+  assert.ok(m.v < noli.mapa.v && m.v > cris.mapa.v, "a medio puente");
+  // En el mar, junto a una isla: no se sale del dibujo
+  const p = puntoMapa(RED, 500, 500);
+  assert.ok(p.u >= 0 && p.u <= 1 && p.v >= 0 && p.v <= 1);
+});
