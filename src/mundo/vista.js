@@ -5,28 +5,53 @@
 import * as THREE from "../../kit/3d/vendor/three.module.min.js";
 import { crearEscena } from "../../kit/3d/escena.js";
 import { crearAvatar } from "../../kit/3d/avatar.js";
-import { pasoFisico, crearCuerpo, alturaBajo } from "../../kit/3d/fisica.js";
+import { pasoFisico, crearCuerpo, alturaBajo, arrastre, hayPiso, chocaEn } from "../../kit/3d/fisica.js";
 import { seguirRuta } from "../../kit/3d/movimiento.js";
 import { crearMundo } from "./escena-mundo.js";
+import { crearIslas } from "./escena-islas.js";
+import { estadoRed, mapaIslas, limitesRed, islaEn, muelleEn, enTeletransportador, teletransportadorDe, aOrilla, posPlataforma,
+  INICIO } from "../engine/islas.js";
 import { lugarCercano, cristalTocado, rutaPorCaminos, puntoLibre, brazoCamara } from "../engine/mundo.js";
 import { libroTocado, nivelPista } from "../engine/libros.js";
 import { luzAhora } from "../engine/luz.js";
 
 /**
  * @param {HTMLElement} cont
- * @param {object} m todo lo del mundo ya armado: { mundo, lugares, deco, mapa, caminos, cfg, cristales }
+ * @param {object} m todo lo del mundo ya armado: { mundo, lugares, deco, mapa, caminos, cfg, cristales, red, islas }
+ *   red: las islas (engine/islas.js → armarIslas); islas: mundo/islas.json
  * @param {{ tv: boolean, reducir: boolean, tiene: Set<string>, desde?: string, piel?: string, base?: string,
  *   alLugar: (l|null) => void, alCristal: (c) => void, alBajarMucho?: () => void,
  *   libro?: { n, x, y, z }|null, alLibro?: (l) => void, alPista?: (nivel) => void }} op
  *   libro: el libro escondido que toca buscar (#103); mundo.libros da los segundos de cada pista
+ * Islas (#164): { datosIslas, alIsla(isla), alMuelle(muelle|null), alTele(isla|null), alCaida() }
+ *   datosIslas: "_mundo" (islas visitadas, conexiones construidas); alIsla: pisó otra isla; alMuelle / alTele: está
+ *   (o ya no) en un muelle o en un teletransportador; alCaida: cayó al agua y regresó al último punto firme
  *   tiene: cristales que ya encontró; desde: id del juego de cuya puerta sale (al regresar de un juego)
  */
 export function crearVistaMundo(cont, m, op) {
-  const { mundo, lugares, deco, mapa, caminos, cfg, cristales } = m;
+  const { mundo, lugares, deco, mapa, caminos, cfg, cristales, red } = m;
   const esc = crearEscena(cont, { tv: op.tv, alBajarMucho: op.alBajarMucho, fondo: mundo.cielo || "#eee3ff", niebla: mundo.niebla || [22, 52], lejos: 58 });
   const mun = crearMundo(mundo, lugares, deco, cristales, { reducir: op.reducir });
   esc.scene.add(mun.grupo);
   for (const id of op.tiene) mun.quitarCristal(id, false);
+
+  // ---- Las islas (#164): mar, islas, puentes, plataformas, muelles y teletransportadores ----
+  const isl = crearIslas(red, m.islas, { reducir: op.reducir });
+  esc.scene.add(isl.grupo);
+  let datosIslas = op.datosIslas, estado = null, fisMapa = null, moviles = [], tRed = 0;
+  let islaActual = INICIO, muelle = null, tele = null;
+  function rearmar(nueva) {
+    estado = estadoRed(red, datosIslas);
+    const mi = mapaIslas(red, estado);
+    // La física: lo de Isla Noli (plataformas, edificios, árboles) + barandales y plataformas de las islas; el piso solo
+    // en las zonas (islas, puentes, muelles) y los límites, los de todo el archipiélago
+    fisMapa = { solidos: [...mapa.solidos, ...mi.solidos], zonas: mi.zonas, limites: limitesRed(red) };
+    moviles = fisMapa.solidos.filter((x) => x.plataforma && x.plataforma.mueve);
+    isl.dibujarConexiones(estado, nueva);
+    muelle = null;
+  }
+  rearmar();
+  isl.enfocar(INICIO);
   // ---- El libro escondido (#103) ----
   let libro = null, buscando = 0, pista = 0;
   const ponerLibro = (l) => { libro = l || null; buscando = 0; pista = 0; mun.ponerLibro(libro); };
@@ -40,9 +65,11 @@ export function crearVistaMundo(cont, m, op) {
 
   // ---- Dónde empieza: en la plaza, o frente a la puerta del juego del que regresa ----
   let c = crearCuerpo(mundo.inicio.x, mundo.inicio.z, 0);
+  let firme = { x: c.x, z: c.z, ang: 0 }; // último punto firme de una isla (al caer al agua regresa aquí)
+  const irAIsla = (id) => { if (islaActual !== id) { islaActual = id; isl.enfocar(id); } };
   const salirDe = (id) => {
     const l = lugares.find((x) => x.id === id);
-    if (l) c = crearCuerpo(l.punto.x, l.punto.z, l.mira + 180); // de espaldas al edificio, viendo a la plaza
+    if (l) { c = crearCuerpo(l.punto.x, l.punto.z, l.mira + 180); firme = { x: c.x, z: c.z, ang: c.ang }; irAIsla(INICIO); } // de espaldas al edificio, viendo a la plaza
   };
   if (op.desde) salirDe(op.desde);
 
@@ -98,22 +125,46 @@ export function crearVistaMundo(cont, m, op) {
       if (atorado.t > 1.4 && ruta.length) { const fin = ruta[ruta.length - 1]; c = crearCuerpo(fin.x, fin.z, c.ang); ruta = []; }
       if (!ruta.length && alLlegar) { const f = alLlegar; alLlegar = null; f(); }
     }
-    const r = pasoFisico(c, { quiere: q, brincar }, dt, cfg, mapa);
+    // Las plataformas que se mueven (#164): su sólido y su malla; y si está parado en una, se lo lleva
+    tRed += dt;
+    for (const s of moviles) { const p = posPlataforma(s.plataforma, tRed); s.mov = { dx: p.x - s.x, dz: p.z - s.z }; s.x = p.x; s.z = p.z; }
+    isl.moverPlataformas(tRed);
+    const ar = arrastre(c, fisMapa, cfg);
+    if ((ar.dx || ar.dz) && !chocaEn(c.x + ar.dx, c.y, c.z + ar.dz, fisMapa, cfg)) c = Object.assign({}, c, { x: c.x + ar.dx, z: c.z + ar.dz });
+    const r = pasoFisico(c, { quiere: q, brincar }, dt, cfg, fisMapa);
     brincar = false;
     c = r.c;
-    if (c.y < -5 || !isFinite(c.x + c.z + c.y)) c = crearCuerpo(mundo.inicio.x, mundo.inicio.z, 0); // por si acaso
+    // Último punto firme: en el suelo de una isla, a más de 1 m de la orilla
+    if (c.enSuelo && Math.abs(c.y) < 1e-6) {
+      const i = islaEn(red, c.x, c.z);
+      if (i) {
+        if (aOrilla(i.f, c.x, c.z) > 1) firme = { x: c.x, z: c.z, ang: c.ang };
+        if (i.id !== islaActual) { irAIsla(i.id); if (op.alIsla) op.alIsla(i); }
+      }
+    }
+    // Cayó al agua: regresa al último punto firme de la isla (sin castigo)
+    if (c.y < -0.9 || !isFinite(c.x + c.z + c.y)) {
+      c = crearCuerpo(firme.x, firme.z, firme.ang); ruta = []; alLlegar = null; saltar = true;
+      if (op.alCaida) op.alCaida();
+    }
     animacion = !c.enSuelo ? "brinco" : r.caminando ? "caminar" : "quieto";
 
     av.raiz.position.set(c.x, c.y, c.z);
     av.raiz.rotation.y = (c.ang + 180) * Math.PI / 180;
     av.animar(animacion, dt, Math.min(cfg.turbo || 1, Math.hypot(q.x, q.z))); // corriendo, los pasos van más rápido
-    const h = alturaBajo(c.x, c.z, c.y + 0.01, mapa, cfg);
+    const h = alturaBajo(c.x, c.z, c.y + 0.01, fisMapa, cfg);
+    av.sombra.visible = h > -1;
     av.sombra.position.set(c.x, h + 0.02, c.z);
     av.sombra.scale.setScalar(Math.max(0.45, 1 - (c.y - h) * 0.22));
 
     // ---- Puertas y cristales ----
     const l = lugarCercano(c, lugares);
     if ((l && l.id) !== (cerca && cerca.id)) { cerca = l; op.alLugar(l); }
+    // Muelles (para construir) y teletransportadores (#164)
+    const mu = c.y < 0.05 && c.enSuelo ? muelleEn(estado, c.x, c.z) : null;
+    if ((mu && mu.id + mu.isla) !== (muelle && muelle.id + muelle.isla)) { muelle = mu; if (op.alMuelle) op.alMuelle(mu); }
+    const te = c.enSuelo ? enTeletransportador(red, c) : null;
+    if ((te && te.id) !== (tele && tele.id)) { tele = te; if (op.alTele) op.alTele(te); }
     const cr = cristalTocado(c, cristales, op.tiene);
     if (cr) { op.tiene.add(cr.id); mun.quitarCristal(cr.id); op.alCristal(cr); }
     if (libro) {
@@ -126,6 +177,7 @@ export function crearVistaMundo(cont, m, op) {
     }
 
     mun.animar(dt, reloj.t);
+    isl.animar(dt, reloj.t);
 
     // ---- Cámara ----
     camaraObjetivo(dt);
@@ -136,6 +188,24 @@ export function crearVistaMundo(cont, m, op) {
     esc.camara.lookAt(cam.m);
     mun.despejar({ x: cam.p.x, z: cam.p.z }, c, dt, k === 1);
   });
+
+  /** Aparece en el teletransportador de una isla */
+  function teletransportar(id) {
+    const i = red.por.get(id);
+    if (!i) return;
+    const t = teletransportadorDe(i);
+    c = crearCuerpo(t.x, t.z + 2.2, 0); // junto al círculo, del lado de la cámara: se ve llegar
+    firme = { x: c.x, z: c.z, ang: 0 };
+    ruta = []; alLlegar = null; saltar = true; cerca = null; tele = null; muelle = null;
+    irAIsla(id);
+  }
+
+  /** ¿Hay piso en toda la línea de a a b? (tocar el piso de otra isla no camina por el agua) */
+  const conPiso = (a, b) => {
+    const d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(d / 0.5));
+    for (let i = 0; i <= n; i++) if (!hayPiso(a.x + (b.x - a.x) * i / n, a.z + (b.z - a.z) * i / n, fisMapa, cfg)) return false;
+    return true;
+  };
 
   const caminarA = (destino, alFin) => {
     const r = rutaPorCaminos(caminos, c, destino);
@@ -153,10 +223,24 @@ export function crearVistaMundo(cont, m, op) {
     irA(id) {
       const l = lugares.find((x) => x.id === id);
       if (!l) return Promise.resolve();
+      // Los juegos están en Isla Noli: desde otra isla (o un puente) se llega por el teletransportador
+      if (islaActual !== INICIO || !islaEn(red, c.x, c.z)) teletransportar(INICIO);
       return new Promise((res) => caminarA(l.punto, () => { c = Object.assign({}, c, { ang: l.mira }); res(); }));
     },
-    /** Camina sola hasta un punto del piso tocado */
-    irAPunto(x, z) { if (puntoLibre({ x, z }, mapa, cfg)) caminarA({ x, z }); },
+    /** Camina sola hasta un punto del piso tocado (en Isla Noli por los caminos; en las demás islas, en línea recta) */
+    irAPunto(x, z) {
+      const p = { x, z };
+      if (!hayPiso(x, z, fisMapa, cfg) || chocaEn(x, 0, z, fisMapa, cfg) || c.y > 0.05) return;
+      if (islaActual === INICIO && islaEn(red, x, z) === red.por.get(INICIO) && puntoLibre(p, mapa, cfg)) caminarA(p);
+      else if (conPiso(c, p)) { ruta = [p]; atorado = { t: 0, d: Infinity }; alLlegar = null; }
+    },
+    /** Viajar con el teletransportador a una isla */
+    teletransportar,
+    /** Cambió lo guardado del mundo (se construyó algo, llegó de la nube, se visitó una isla). nueva: la recién construida */
+    actualizarIslas(datos, nueva) { datosIslas = datos; rearmar(nueva); },
+    get isla() { return islaActual; },
+    get muelle() { return muelle; },
+    get tele() { return tele; },
     /** Punto del piso bajo un toque en la pantalla (o null) */
     alPiso: (px, py) => esc.alPiso(px, py),
     /** Posición en pantalla del letrero de cada juego, con su distancia a la cámara: Map(id → {x, y, d}) */
@@ -174,7 +258,9 @@ export function crearVistaMundo(cont, m, op) {
     /** Viste al personaje (atuendo e índices de la Pasarela) */
     vestir(atuendo, idx, piel) { av.vestir(atuendo, idx); if (piel) av.ponerPiel(piel); },
     /** Regresar de un juego: aparece frente a su puerta, viendo a la plaza */
-    volverDe(id) { salirDe(id); ruta = []; alLlegar = null; saltar = true; cerca = null; },
+    volverDe(id) { salirDe(id); ruta = []; alLlegar = null; saltar = true; cerca = null; tele = null; muelle = null; },
+    /** Para diagnosticar (y las pruebas en el navegador): qué islas están armadas */
+    get islasArmadas() { return isl.armadas; },
     pausar: (si) => esc.pausar(si),
     cadaCuadro: (fn) => esc.cadaCuadro(fn),
     get cercano() { return cerca; },

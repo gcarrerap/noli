@@ -10,6 +10,9 @@ import { focoInicial } from "../../../kit/foco.js";
 /** Moneda de Noli (SVG): estrella sobre círculo dorado. */
 export const MONEDA = `<svg class="moneda" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ffc43d" stroke="#2b2236" stroke-width="1.6"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="#e0a100" stroke-width="1.2"/><path d="M12 6.8l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="#fff4cc" stroke="#e0a100" stroke-width=".8" stroke-linejoin="round"/></svg>`;
 
+// Estrella del mundo (#164): azul con brillo, distinta de la moneda dorada de los créditos (Noelia no debe confundirlas)
+export const ESTRELLA_MUNDO = `<svg class="estrella-mundo" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="#5fb8ff" stroke="#2b2236" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.6 9.4l1.3-.2.6-1.3" fill="none" stroke="#e8f6ff" stroke-width="1.4" stroke-linecap="round"/><circle cx="19.3" cy="4.3" r="1.3" fill="#bfe8ff"/></svg>`;
+
 /** La pastilla del catálogo con el saldo. */
 export function botonCreditos() {
   const s = saldoActual();

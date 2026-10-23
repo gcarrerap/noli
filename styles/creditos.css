@@ -17,5 +17,5 @@
 .ventana .mas{color:#1f8a5a}.ventana .menos{color:#c4553f}
 .ventana ul.historial{max-height:14rem;overflow:auto}
 .celebrar .ganados{display:flex;align-items:center;justify-content:center;gap:.3em;font-family:var(--display);font-size:1.3rem;margin-top:.2em}
-.celebrar .ganados .moneda{width:1.5em;height:1.5em}
+.celebrar .ganados .moneda,.celebrar .ganados .estrella-mundo{width:1.5em;height:1.5em}
 .celebrar .ganados.nota{font-size:1rem;opacity:.8}

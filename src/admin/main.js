@@ -7,19 +7,19 @@ import { sesionAdmin, entrarAdmin, salirAdmin, listarPerfiles, nombrarPerfil, le
   nuevoIdPerfil, linkRecuperacion } from "../services/index.js";
 import { DISPOSITIVO_ADMIN, ponerSaldo, saldoDe, resumenPasarela, conPasarela, libroDe, conLibro, fecha, resumenPerfil,
   CAMPOS_JUEGO, valorCampo, conCampos, resumenJuego, estrellasDe, conEstrellas, cristalesEncontrados, conCristales,
-  leerJson } from "../engine/index.js";
+  leerJson, conIslas, armarIslas, normalizarMundo, disponibles } from "../engine/index.js";
 
 export const ADMIN = "carrera.perabeles@gmail.com"; // igual que esAdminNoli() en firestore.rules
 const LIBROS = ["halloween"];                       // libros de la Biblioteca (minijuegos/biblioteca/libros/)
 const CATALOGO = "_catalogo", MUNDO = "_mundo", CREDITOS = "_creditos";
-const NOMBRES = { [CREDITOS]: "Créditos", [CATALOGO]: "Estrellas del catálogo", [MUNDO]: "Mundo (cristales)" };
+const NOMBRES = { [CREDITOS]: "Créditos", [CATALOGO]: "Estrellas del catálogo", [MUNDO]: "Mundo (cristales, islas, estrellas del mundo)" };
 const BASE = new URL("../../", import.meta.url);
 const SITIO = new URL("./", BASE).href;
 
 const S = {
   estado: "cargando", fs: null, usuario: null, perfiles: [], elegido: "", abierto: null, abiertas: new Set(["cuenta"]),
   aviso: "", error: "", ocupado: false,
-  ctx: { desbloqueos: null, libros: [], juegos: [], cristales: [] },
+  ctx: { desbloqueos: null, libros: [], juegos: [], cristales: [], islas: null },
 };
 const app = document.getElementById("app");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -36,12 +36,13 @@ async function cargarContexto() {
   try {
     const { juegos } = await json("minijuegos/catalogo.json");
     S.ctx.juegos = await Promise.all(juegos.map(async (id) => {
-      try { const j = await json(`minijuegos/${id}/juego.json`); return { id, titulo: j.titulo || id, icono: j.icono ? `minijuegos/${id}/${j.icono}` : "", estrellas: j.creditos === "gana" && !j.premios }; }
-      catch { return { id, titulo: id, icono: "", estrellas: false }; }
+      try { const j = await json(`minijuegos/${id}/juego.json`); return { id, titulo: j.titulo || id, icono: j.icono ? `minijuegos/${id}/${j.icono}` : "", estrellas: j.creditos === "gana" && !j.premios, gana: j.creditos === "gana" }; }
+      catch { return { id, titulo: id, icono: "", estrellas: false, gana: false }; }
     }));
   } catch (e) { console.warn(e); }
   try { S.ctx.cristales = ((await json("mundo/mundo.json")).cristales || []).map((c) => ({ id: c.id, color: c.color, en: c.en })); }
   catch (e) { console.warn(e); }
+  try { S.ctx.islas = armarIslas(await json("mundo/islas.json")); } catch (e) { console.warn(e); }
 }
 
 // ---------- Datos ----------
@@ -194,13 +195,30 @@ function detalle(p) {
 
   const tiene = new Set(cristalesEncontrados(datosDe(p, MUNDO)));
   const nombreCristal = (c) => c.id.replace(/^c-/, "").replace(/-/g, " ");
-  cats.push(categoria("mundo", "💎 Mundo", `${S.ctx.cristales.filter((c) => tiene.has(c.id)).length}/${S.ctx.cristales.length} cristales`, `
+  const red = S.ctx.islas, mundo = normalizarMundo(datosDe(p, MUNDO));
+  const disp = red ? disponibles(mundo, red, S.ctx.cristales.map((c) => c.id)) : null;
+  const tope = red ? red.cfg.topeEstrellas : 5;
+  const islasHtml = !red ? "" : `
+    <form id="fIslas">
+      <p>Para construir tiene <b>${disp.cristales}</b> cristales y <b>${disp.estrellas}</b> estrellas del mundo (lo encontrado y ganado, menos lo gastado en lo construido).</p>
+      <p class="nota">Islas que ya visitó (en el mapa se ven completas; Isla Noli siempre).</p>
+      <div class="cristales">${red.islas.map((i) => `<label class="check"><input type="checkbox" name="isla" value="${esc(i.id)}"${mundo.visitadas.includes(i.id) ? " checked" : ""}${i.id === "noli" ? " disabled" : ""}>
+        <span class="gema" style="background:${esc(i.colores.suelo)}"></span> ${esc(i.nombre)}</label>`).join("")}</div>
+      <p class="nota">Puentes y caminos de plataformas construidos (quitar uno devuelve lo que costó).</p>
+      <div class="cristales">${red.conexiones.map((k) => `<label class="check"><input type="checkbox" name="conexion" value="${esc(k.id)}"${mundo.conexiones.includes(k.id) ? " checked" : ""}>
+        ${esc(red.por.get(k.de).nombre)} → ${esc(red.por.get(k.a).nombre)} <span class="nota">(${k.tipo === "puente" ? "puente" : "plataformas"}${k.costo ? `: ${k.costo.cristales} 💎 + ${k.costo.estrellas} ⭐` : ", muy pronto"})</span></label>`).join("")}</div>
+      <p class="nota">Estrellas del mundo que ya dio cada juego en Isla Noli (de 0 a ${tope}).</p>
+      <div class="campos">${S.ctx.juegos.filter((j) => j.gana).map((j) => numero(`em:${j.id}`, j.titulo, (mundo.estrellas.dadas.noli || {})[j.id] || 0, 0, tope)).join("")}</div>
+      <button class="primario"${dis}>Guardar islas y estrellas del mundo</button>
+    </form>`;
+  cats.push(categoria("mundo", "💎 Mundo", `${S.ctx.cristales.filter((c) => tiene.has(c.id)).length}/${S.ctx.cristales.length} cristales${red ? ` · ${mundo.visitadas.length}/${red.islas.length} islas · ${disp.estrellas} ⭐` : ""}`, `
     <form id="fCristales">
       <p class="nota">Cristales mágicos que ya encontró arriba de las plataformas del mundo.</p>
       <div class="cristales">${S.ctx.cristales.map((c) => `<label class="check"><input type="checkbox" name="cristal" value="${esc(c.id)}"${tiene.has(c.id) ? " checked" : ""}>
         <span class="gema" style="background:${esc(c.color)}"></span> ${esc(nombreCristal(c))}</label>`).join("")}</div>
       <button class="primario"${dis}>Guardar cristales</button>
     </form>
+    ${islasHtml}
     ${crudo(p, MUNDO)}`));
 
   for (const j of S.ctx.juegos) {
@@ -329,6 +347,18 @@ function conectar() {
     const ids = [...e.target.querySelectorAll('input[name="cristal"]:checked')].map((x) => x.value);
     if (!confirm(`¿Dejar ${ids.length} cristales encontrados?`)) return;
     guardar(perfil, [[MUNDO, (d) => conCristales(d, ids, S.ctx.cristales.map((c) => c.id))]], "Cristales guardados.");
+  });
+  on("#fIslas", "onsubmit", (e) => {
+    e.preventDefault();
+    const red = S.ctx.islas;
+    const visitadas = [...e.target.querySelectorAll('input[name="isla"]:checked')].map((x) => x.value);
+    const conexiones = [...e.target.querySelectorAll('input[name="conexion"]:checked')].map((x) => x.value);
+    const noli = {};
+    for (const el of e.target.querySelectorAll('input[name^="em:"]')) noli[el.name.slice(3)] = entero(el.value);
+    const op = { islas: red.islas.map((i) => i.id), conexiones: red.conexiones.map((k) => k.id), tope: red.cfg.topeEstrellas };
+    try { conIslas(null, { estrellas: { noli } }, op); } catch (err) { return mal(err.message); }
+    if (!confirm(`¿Sobrescribir el mundo?\nIslas visitadas: ${visitadas.length + (visitadas.includes("noli") ? 0 : 1)}\nConstruidas: ${conexiones.length}`)) return;
+    guardar(perfil, [[MUNDO, (d) => conIslas(d, { visitadas, conexiones, estrellas: { noli } }, op)]], "Islas y estrellas del mundo guardadas.");
   });
   for (const f of app.querySelectorAll("form.fJuego")) f.onsubmit = (e) => {
     e.preventDefault();

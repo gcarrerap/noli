@@ -8,7 +8,9 @@
 //
 // Excepción: los créditos ("_creditos", #20) no se pisan, se JUNTAN (engine/creditos.js → unir): son un libro de
 // movimientos y la unión de los dos lados nunca pierde lo que se ganó o gastó en otro dispositivo sin conexión.
-// Si lo juntado tiene algo que la nube no, se vuelve a subir.
+// Si lo juntado tiene algo que la nube no, se vuelve a subir. Lo mismo el mundo ("_mundo", #164): cristales, islas
+// visitadas y conexiones se unen y las estrellas del mundo toman el máximo (engine/islas.js → unirMundo); así un
+// puente construido en dos aparatos se cobra una vez. Si el administrador lo sobrescribió (rev), gana su versión.
 //
 // Cuenta de Google (#114): en el teléfono se puede entrar con la cuenta de Noelia. La cuenta apunta a un perfil
 // (noli_cuentas); la primera vez se liga al perfil de este dispositivo (o a uno nuevo). La TV sigue con el código.
@@ -18,11 +20,17 @@ import { ls, leerJsonLs, leerDatosJuego, guardarDatosJuego, initFirebase,
   crearPerfil, existePerfil, nuevoIdPerfil, subirJuego, leerJuegos, escucharJuegos,
   crearVinculo, escucharVinculo, borrarVinculo, completarVinculo, VINCULO_DURA_MS, linkRecuperacion,
   leerCuenta, ligarCuenta, entrarGoogle, salirGoogle, usuarioGoogle } from "../services/index.js";
-import { leerLibro, unir, iguales } from "../engine/index.js";
+import { leerLibro, unir, iguales, unirMundo, mismoMundo, normalizarMundo } from "../engine/index.js";
 import { state, notify } from "./store.js";
 
 export const CATALOGO = "_catalogo";
 export const CREDITOS = "_creditos";
+export const MUNDO = "_mundo";
+// Lo que se junta en lugar de pisarse: cómo leerlo, juntarlo y compararlo
+const JUNTAR = {
+  [CREDITOS]: { leer: (d) => leerLibro(d), unir, iguales },
+  [MUNDO]: { leer: (d) => normalizarMundo(d), unir: unirMundo, iguales: mismoMundo },
+};
 const K = { perfil: "noli.nube.perfil", meta: "noli.nube.meta", dev: "noli.dev", cuenta: "noli.nube.cuenta", entrando: "noli.nube.entrando" };
 
 // Id de este dispositivo (se guarda la primera vez). Marca los movimientos de créditos que crea este aparato.
@@ -114,7 +122,7 @@ export async function subirPendientes() {
 function aplicarRemotos(lista) {
   let cambio = false;
   for (const r of lista) {
-    if (r.juego === CREDITOS) { if (juntarCreditos(r)) cambio = true; continue; }
+    if (JUNTAR[r.juego]) { if (juntar(r)) cambio = true; continue; }
     const m = meta[r.juego];
     if (m && m.actualizado >= r.actualizado) continue; // lo de aquí es igual o más nuevo
     escribirLocal(r.juego, r.datos);
@@ -125,17 +133,18 @@ function aplicarRemotos(lista) {
   return cambio;
 }
 
-// Créditos: juntar el libro de la nube con el de aquí. Si lo de aquí trae algo que la nube no tiene, queda pendiente
+// Créditos y mundo: juntar lo de la nube con lo de aquí. Si lo de aquí trae algo que la nube no tiene, queda pendiente
 // de subir (así el otro dispositivo también lo recibe). Devuelve true si cambió lo local.
-function juntarCreditos(r) {
-  const remoto = leerLibro(r.datos);
-  const junto = unir(state.creditos, remoto);
-  const cambioLocal = !iguales(junto, state.creditos);
-  if (cambioLocal) escribirLocal(CREDITOS, junto);
-  if (!iguales(junto, remoto)) {
-    meta[CREDITOS] = { actualizado: Math.max(cfg.ahora(), r.actualizado + 1), pendiente: true };
+function juntar(r) {
+  const J = JUNTAR[r.juego], id = r.juego;
+  const remoto = J.leer(r.datos), local = J.leer(leerLocal(id));
+  const junto = J.unir(local, remoto);
+  const cambioLocal = !J.iguales(junto, local);
+  if (cambioLocal) escribirLocal(id, junto);
+  if (!J.iguales(junto, remoto)) {
+    meta[id] = { actualizado: Math.max(cfg.ahora(), r.actualizado + 1), pendiente: true };
     if (fs && state.nube.perfil) { clearTimeout(timerSubir); timerSubir = setTimeout(subirPendientes, cfg.espera); }
-  } else if (!meta[CREDITOS] || !meta[CREDITOS].pendiente) meta[CREDITOS] = { actualizado: r.actualizado, pendiente: false };
+  } else if (!meta[id] || !meta[id].pendiente) meta[id] = { actualizado: r.actualizado, pendiente: false };
   return cambioLocal;
 }
 
@@ -145,7 +154,7 @@ async function reconciliar() {
   aplicarRemotos(remotos);
   const enNube = new Map(remotos.map((r) => [r.juego, r.actualizado]));
   for (const id of idsLocales()) {
-    if (id === CREDITOS) { // si la nube ya los tenía, juntarCreditos decidió; si no, hay que subirlos
+    if (JUNTAR[id]) { // si la nube ya los tenía, juntar decidió; si no, hay que subirlos
       if (!enNube.has(id)) meta[id] = { actualizado: cfg.ahora(), pendiente: true };
       continue;
     }
@@ -301,7 +310,7 @@ export async function vincularOtro(codigo) {
 // Recuperar con el link de recuperación (perfilDelLink): vincula este dispositivo a ese perfil y trae TODO lo de la
 // nube aunque lo de aquí sea más nuevo (por ejemplo, si el navegador borró el progreso y la niña volvió a empezar).
 // Se olvidan las fechas de aquí, así que en cada juego gana la nube; lo que la nube no tiene se queda y se sube.
-// Los créditos se juntan como siempre. Si el perfil no existe, no se toca nada.
+// Los créditos y el mundo se juntan como siempre. Si el perfil no existe, no se toca nada.
 export async function recuperar(perfil) {
   poner({ estado: "conectando", error: "", aviso: "" }, "nube");
   try {
@@ -315,7 +324,7 @@ export async function recuperar(perfil) {
     return false;
   }
   if (dejarDeEscuchar) { dejarDeEscuchar(); dejarDeEscuchar = null; }
-  for (const id of Object.keys(meta)) if (id !== CREDITOS) delete meta[id];
+  for (const id of Object.keys(meta)) if (!JUNTAR[id]) delete meta[id];
   guardarMeta();
   ls.set(K.perfil, perfil);
   state.nube.perfil = perfil;

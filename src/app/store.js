@@ -18,7 +18,8 @@ export const state = {
   cols: 1,                   // columnas de la cuadrícula; la interfaz lo actualiza al dibujar
   jugando: null,             // el juego abierto (manifiesto) o null en el catálogo
   progreso: leerJsonLs("noli.progreso", {}), // por id: { estrellas (la mejor), veces, ultima (ms) }
-  celebrar: null,            // { id, estrellas, creditos, topado } recién terminado, para el aviso
+  celebrar: null,            // { id, estrellas, creditos, topado, mundo } recién terminado, para el aviso (mundo: estrellas del mundo, #164)
+  islaJuego: "noli",         // isla del mundo de donde se abrió el juego abierto (#164)
   creditos: leerLibro(leerJsonLs("noli.creditos", null)), // libro de movimientos de créditos (#20, engine/creditos.js)
   creditosAbierto: false,    // la ventana de créditos (saldo, cómo se ganan, historial y para papás)
   updateAvailable: false,

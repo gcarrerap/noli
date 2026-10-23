@@ -191,3 +191,20 @@ test("#160: el JSON escrito a mano debe ser un objeto", () => {
 test("#160: la página de administrador no tiene liga desde Noli", () => {
   for (const f of ["index.html", "src/main.js"]) assert.doesNotMatch(readFileSync(new URL(`../${f}`, import.meta.url), "utf8"), /admin\.html/);
 });
+
+// ---------- #164: islas y estrellas del mundo ----------
+
+test("#164: el administrador sobrescribe islas, conexiones y estrellas del mundo, y su versión gana al juntar", async () => {
+  const { conIslas, conCristales: cc, unirMundo, normalizarMundo, mismoMundo } = await import("../src/engine/index.js");
+  const op = { islas: ["noli", "cristal", "dulce"], conexiones: ["noli-cristal"], tope: 5 };
+  const antes = normalizarMundo({ visitadas: ["noli", "cristal"], conexiones: ["noli-cristal"], estrellas: { dadas: { noli: { spelling: 4 } } } });
+  const d = conIslas(antes, { visitadas: ["dulce", "no-existe"], conexiones: [], estrellas: { noli: { spelling: 0, "sumas-restas": 5 } } }, op);
+  assert.deepEqual(d.visitadas, ["noli", "dulce"], "Noli siempre; solo islas que existen");
+  assert.deepEqual(d.conexiones, []);
+  assert.deepEqual(d.estrellas.dadas, { noli: { "sumas-restas": 5 } });
+  assert.equal(d.rev, antes.rev + 1);
+  assert.ok(mismoMundo(unirMundo(antes, d), d), "al juntar con un aparato, lo que quitó el administrador no regresa");
+  assert.throws(() => conIslas(antes, { estrellas: { noli: { spelling: 9 } } }, op), /de 0 a 5/);
+  // Cristales en v2 también suben rev
+  assert.equal(cc(antes, ["c-fuente"], ["c-fuente"]).rev, antes.rev + 1);
+});

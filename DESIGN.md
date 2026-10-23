@@ -365,6 +365,10 @@ if (r.ok) empezar(); else mostrarCuantosFaltan(3 - (r.saldo || 0));
 
 Código: `src/engine/creditos.js` (lógica pura), `src/app/actions.js` (`terminar`, `gastar`, `regalarCreditos`), `src/app/sync.js` (`juntarCreditos`), `src/ui/components/creditos.js`, `kit/noli.js`. Pruebas: `tests/creditos.test.js`.
 
+### Estrellas del mundo (#164)
+
+Aparte de los créditos, los juegos educativos dan **estrellas del mundo** para construir los puentes entre las islas del mundo 3D (docs/MUNDO.md § Las islas). Las suma el catálogo al recibir `terminar` (el protocolo no cambia): las estrellas de la partida, **hasta 5 por isla y juego**, guardadas en `_mundo.estrellas.dadas[isla][juego]`. El reto del día no da; los juegos que gastan, tampoco. Se gastan al construir y no tocan los créditos. Se ven con una estrella azul (`ESTRELLA_MUNDO`), distinta de la moneda dorada.
+
 ## 13. El menú principal: un mundo mágico en 3D (#25)
 
 El menú principal es un **mundo en 3D**: un claro del bosque encantado con una plaza y una fuente en medio, de donde salen caminos hacia el edificio de cada juego (castillo de números, árbol de las letras, escenario, tiendita, fábrica, casita, granero, torre del reloj, cabaña, o un portal mágico para los que no tienen edificio propio). Noelia camina y **brinca**: hay plataformas (hongos gigantes, nenúfares, piedras flotantes, una escalera de cristal y un camino de nubes) con cristales mágicos para encontrar arriba. **Todos los juegos se alcanzan caminando, sin brincar.** Los cristales no dan créditos (esos se ganan en los juegos educativos, §12).

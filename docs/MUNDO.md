@@ -24,7 +24,7 @@ Issue: #25. En lugar de una cuadrícula de tarjetas, el menú principal es un **
 - **En la puerta de un juego, OK entra.** En cualquier otro lugar, OK brinca. El botón rojo y la barra espaciadora siempre brincan.
 - **"¿A dónde vamos?"** (el menú): una tarjeta por juego. Al escoger una, el personaje **camina solo** hasta su puerta, sin brincar y rodeando lo que estorba. Ahí mismo están el filtro por materia ("Brillan los juegos de:", que enciende un anillo dorado alrededor de esos edificios y apaga los letreros de los demás), los créditos, la nube, el control remoto (en la TV), el botón **Menú sencillo** y cuántos cristales lleva.
 - **Al salir de un juego**, el personaje aparece frente a la puerta de ese juego, viendo hacia la plaza.
-- **Cristales mágicos:** hay 6, arriba de las plataformas. Al tocarlos se guardan (y se sincronizan con la nube como los datos de un juego, id `_mundo`). **No dan créditos:** los créditos se ganan en los juegos educativos (§12 de DESIGN.md). Son algo que encontrar.
+- **Cristales mágicos:** hay 6, arriba de las plataformas. Al tocarlos se guardan (y se sincronizan con la nube, id `_mundo`). **No dan créditos:** los créditos se ganan en los juegos educativos (§12 de DESIGN.md). Sirven para construir los puentes a las otras islas (§ Las islas).
 - **Caerse nunca castiga:** no hay vidas, ni daño, ni hoyos. Si se cae de una plataforma, cae al pasto y sigue.
 - Al empezar sale "¡Hola, Noelia! Camina hasta un juego para entrar." (en la TV: "…con las flechas…"), una vez por visita.
 
@@ -108,12 +108,146 @@ Cada capítulo del libro de la Biblioteca (*Mari and the Pumpkin Spaceship*, #96
 
 Datos en `mundo/mundo.json → libros` (`libro`, `juego`, `porDia`, `pistaSeg`, `faroSeg`, `lugares: [{ capitulo, en | x, z }]`); lógica pura en `src/engine/libros.js` (`estadoLibros`, `conHallazgo`, `nivelPista`, `libroTocado`); dibujo en `src/mundo/escena-mundo.js` (`ponerLibro`, `tomarLibro`, `pistaLibro`). Pruebas: cada libro en el piso se alcanza caminando (con la física) y se toca al llegar; los de plataforma están en una ruta que se sube brincando; orden, tope diario, lo leído cuenta y la pista.
 
+## Las islas (#164)
+
+El mundo es un **archipiélago de 10 islas**. El claro de siempre es **Isla Noli** (ahí están los juegos). Las demás se unen en una **red** (no una cadena): cada isla se conecta con 2 a 4 islas y hay varios caminos de una a otra. Noelia **construye** cada conexión con **cristales** (los que encuentra en el mundo) y **estrellas del mundo** (las que gana en los juegos educativos). Un **mapa** enseña solo lo que conoce y en cada isla hay un **teletransportador** a las islas que ya visitó. Por ahora las islas nuevas solo tienen su suelo; las construcciones de cada isla van en issues posteriores.
+
+| En el muelle: construir | El puente creciendo | El mapa | El teletransportador |
+|---|---|---|---|
+| ![Muelle](img/islas-muelle.jpg) | ![Puente](img/islas-puente.jpg) | ![Mapa](img/islas-mapa.jpg) | ![Teletransportador](img/islas-teletransportador.jpg) |
+
+![Camino de plataformas (algunas se mueven) hacia el Bosque Encantado](img/islas-plataformas-tv.jpg)
+
+### Las islas y la red
+
+| Isla | Tema | | Isla | Tema |
+|---|---|---|---|---|
+| Isla Noli | El claro: plaza, fuente y juegos | | Isla Nieve | Hielo y pingüinos |
+| Isla Cristal | Cuevas de cristales | | Isla Sirena | Playa y corales |
+| Isla Dulce | Pasteles y chocolate | | Isla Volcán | Volcán amigable y dinosaurios |
+| Bosque Encantado | Hongos gigantes y hadas | | Isla Números | Torres de números |
+| Isla Pasarela | Moda y escenarios | | Isla de las Nubes | El castillo en el cielo (el final) |
+
+```
+                         nubes
+                    ⋰      |      ⋱
+              sirena ── numeros ── volcan
+             /  ⋮          ⋮          ⋮  \
+     pasarela   ⋮          ⋮          ⋮   nieve
+             \  ⋮          ⋮          ⋮  /
+               dulce ── cristal ── bosque
+                   ⋱       |       ⋰
+                          noli
+   ── puente (se camina)    ⋮ ⋰ ⋱ camino de plataformas (se brinca)
+```
+
+**17 conexiones** de dos tipos:
+
+- **Puente:** se camina sin brincar y lleva **barandales**: no se cae al agua.
+- **Plataformas:** discos sobre el agua para brincar de uno a otro (con la misma holgura que las rutas de Isla Noli). En los caminos `moviles`, una sí y una no **se mueve de lado** despacio, con una **pausa en cada punta** para subirse sin prisa; parado en una, el personaje se mueve con ella (`arrastre` en `kit/3d/fisica.js`).
+- **Regla:** solo con los puentes se llega a **todas** las islas. Las plataformas son atajos y retos, nunca el único camino (Noelia tiene 7 años y la TV tiene retraso). `revisarIslas` lo revisa.
+
+Arriba en el mapa = hacia el fondo del mundo (−z), que es hacia donde mira la cámara: lo que sigue siempre se ve adelante.
+
+### Construir
+
+- Cada conexión sin construir que sale de una isla visitada tiene un **muelle** de 3 m con un letrero (y baranda en la punta: no se cae). Parada en el muelle sale el aviso:
+  - «Construir el puente de cristal» con lo que tiene y lo que cuesta (💎 5/5 ⭐ 20/20): OK o tocar lo construye; el puente **crece** desde la orilla y queda guardado.
+  - Si no le alcanza: «Te faltan 8 estrellas. Gana estrellas en los juegos.»
+  - Sin costo todavía (`costo: null`): «muy pronto».
+- **Hoy solo `noli-cristal` tiene costo: 5 cristales y 20 estrellas.** Toda conexión cuesta al menos `costoMinimoEstrellas` (20) estrellas; `revisarIslas` lo revisa.
+- **Lo gastado no se guarda como contador:** sale de las conexiones construidas y sus costos (`disponibles`). Así juntar dos aparatos nunca cobra dos veces.
+- Regla de balance para cuando se pongan costos: lo que cuesta la siguiente conexión debe alcanzarse con las estrellas de los juegos de las islas ya alcanzables (`estrellasPosibles`; hay una prueba). Hoy: 12 juegos educativos × 5 = 60 estrellas en Isla Noli.
+
+### Estrellas del mundo
+
+- Las dan los **juegos educativos** (`"creditos": "gana"`) al terminar una partida (`terminar`), **solo desde que existe este mundo** (no cuenta el historial de antes).
+- **Tope de 5 por juego y por isla** (`islas.json → topeEstrellas`, igual a `TOPE_ESTRELLAS` del código): al llegar a 5, ese juego ya no da estrellas del mundo en esa isla (sigue dando créditos igual). Así hay que **usar varios juegos**.
+- **El mismo juego en otra isla** (issues de cada isla) tendrá su propio tope de 5 y empezará en niveles más avanzados: por eso se guardan por **isla y juego**. El catálogo sabe de qué isla se abrió el juego (`actions.abrir(id, { isla })`, `state.islaJuego`); lo jugado desde el menú 2D cuenta para Isla Noli.
+- El **reto del día no da** estrellas del mundo (se repite cada día). Los juegos que gastan (Pasarela) tampoco.
+- **Se gastan** al construir y son aparte de los créditos (gastarlas no toca los créditos). Se ven con una **estrella azul** (`ESTRELLA_MUNDO`), distinta de la moneda dorada de los créditos: en el HUD (las que tiene para construir), en el letrero de cada juego (`⭐ 3/5` o «¡Completo!») y en la celebración al regresar de un juego («+2 estrellas del mundo»).
+
+### Caerse al agua, teletransportador y "Ir a…"
+
+- En el mar no hay piso: si sale de una isla o cae de una plataforma, se hunde y **reaparece en el último punto de isla que pisó** (a más de 1 m de la orilla), con «¡Splash! Regresaste a la isla.» Sin castigo.
+- **Teletransportador:** un círculo de piedras mágicas en cada isla (en Isla Noli, junto a la plaza, al frente). Parada encima: «Viajar con el teletransportador» → la lista de islas visitadas → aparece junto al de esa isla. **Caminar siempre es posible**: el teletransportador es un atajo.
+- **"¿A dónde vamos?"** sigue igual (los juegos están en Isla Noli): desde otra isla se teletransporta a Isla Noli y camina a la puerta.
+- **Al pisar una isla** por primera vez se guarda en `visitadas` y sale «¡Llegaste a Isla Cristal!».
+- Tocar el piso camina hasta ahí solo si hay piso en toda la línea (no camina por el agua).
+
+### El mapa
+
+Botón 🗺 en el HUD del teléfono y **Mapa** en "¿A dónde vamos?" (en la TV, ahí). Mientras llega el dibujo de Petra (#165), es un SVG hecho en código con las mismas posiciones:
+
+- Islas **visitadas**: completas, con su nombre (el nombre siempre en HTML/SVG: el arte no lleva texto).
+- Islas **vecinas** de una visitada (por cualquier conexión): silueta con «?».
+- Las demás: tapadas por **nubes**.
+- Conexiones construidas: línea sólida (puente; azul si es de cristal) o de puntitos (plataformas). Las que se ven sin construir: punteadas tenues.
+- «Estás aquí»: el punto rojo.
+
+Lógica: `vistaMapa` en `src/engine/islas.js`; dibujo: `mapaSvg` en `src/ui/screens/mundo.js`.
+
+### Lo que se guarda (`_mundo`, versión 2)
+
+```json
+{ "v": 2, "rev": 0, "cristales": ["c-fuente"], "visitadas": ["noli", "cristal"], "conexiones": ["noli-cristal"],
+  "ultimaIsla": "cristal", "estrellas": { "dadas": { "noli": { "sumas-restas": 5, "spelling": 2 } } } }
+```
+
+- `normalizar` lee cualquier versión (la v1 `{ v: 1, cristales }` también) y siempre deja `noli` en `visitadas`.
+- **Se junta, no se pisa** (como los créditos, `src/app/sync.js`): `cristales`, `visitadas` y `conexiones` se unen y `dadas` toma el máximo por isla y juego (`unirMundo`). Dos aparatos sin conexión nunca pierden ni duplican nada.
+- **`rev`:** lo sube el administrador al sobrescribir; al juntar, gana el `rev` más alto (si no, la unión volvería a poner lo que quitó).
+- **Administrador (`admin.html`):** en «💎 Mundo», además de los cristales: islas visitadas, conexiones construidas (quitar una devuelve lo que costó) y las estrellas del mundo de cada juego en Isla Noli, y lo que tiene para construir.
+
+### Datos: `mundo/islas.json`
+
+| Campo | Qué es |
+|---|---|
+| `topeEstrellas` | Estrellas del mundo por isla y juego (5). |
+| `costoMinimoEstrellas` | Lo menos que puede costar una conexión (20). |
+| `radio` | Radio de las islas nuevas (24 m). |
+| `mar` | `color`, `nivel` (altura del agua) y `orilla` (ancho de la arena). |
+| `plataformas` | Cómo se arman los caminos de plataformas: `r`, `hueco` (agua entre una y otra), `alto` (se alternan), `grosor` y `mover` (`distancia`, `periodo`, `pausa`). |
+| `islas` | `{ id, nombre, tema, centro: {x, z} \| forma, teletransportador?, colores: { suelo, orilla } }`. Isla Noli tiene `forma` = la caja de `mundo.limites` (una prueba lo revisa). Sin `teletransportador`, va en el centro. |
+| `conexiones` | `{ id, de, a, tipo: "puente" \| "plataformas", material, moviles?, costo: { cristales, estrellas } \| null, desde?, hasta? }`. `desde`/`hasta`: el punto de la orilla (si no, el de la línea entre los centros). Las de Isla Noli salen por el fondo (`desde`), donde se llega caminando. |
+
+`revisarIslas` valida: ids, que las conexiones unan islas que existen, el costo mínimo, que se llegue a todas solo con puentes, que no se encimen islas, que ninguna conexión pase sobre otra isla ni cruce otra conexión, que sus extremos estén en la orilla, que cada brinco de un camino de plataformas se pueda dar con holgura (aun con las móviles en su peor punto) y que el teletransportador esté lejos de la orilla. Si algo falla, el mundo no se arma y queda el menú 2D (las pruebas lo atrapan antes).
+
+### Cómo está hecho
+
+```
+mundo/islas.json            las islas, la red, los costos y cómo se arman las plataformas
+src/engine/islas.js         lógica pura: forma y orillas, la red, plataformas que se mueven, revisar, guardar/juntar,
+                            estrellas del mundo, costos y construir, zonas de piso y barandales, mapa, teletransportador
+src/mundo/escena-islas.js   el mar, el suelo de cada isla (con su arena y decoración chiquita del tema), los puentes,
+                            los caminos de plataformas, los muelles y los teletransportadores
+kit/3d/fisica.js            piso solo en las zonas (`mapa.zonas`: islas, puentes, muelles), barandales (sólido
+                            "segmento") y `arrastre` (plataformas que se mueven)
+tests/islas.test.js         pruebas (abajo)
+```
+
+- **Física:** el mapa de choques junta lo de Isla Noli (plataformas, edificios, árboles) con los barandales y plataformas de las islas; el piso existe solo en las zonas y los límites son los de todo el archipiélago (`limitesRed`). Sin `zonas` (Isla Noli sola, las pruebas de antes) todo es piso, como antes.
+- **Rendimiento (TV):** cada isla es un grupo aparte y **solo se arman la isla donde está y sus vecinas** (`enfocar`); las demás se liberan. Las islas solo con suelo cuestan unos pocos dibujos; medido con `?fps` en Chromium sin tarjeta gráfica: 57–90 dibujos y 12 000–32 000 triángulos (la meta sigue siendo < 150 dibujos). Pendiente: medir en los aparatos reales.
+- **Isla Noli:** el pasto llega justo a sus límites y abajo hay un cuerpo de tierra hasta el agua. La decoración deja libres los pasillos hacia sus tres salidas y el teletransportador (`libresNoli`), y "Ir a…" los conoce como puntos de paso (`salidasNoli`).
+
+### Pruebas (`tests/islas.test.js`, y en `tests/creditos.test.js` y `tests/admin.test.js`)
+
+- Los datos están bien y `revisarIslas` encuentra los rotos (isla que no existe, costo menor a 20, islas encimadas, una isla solo con plataformas, Noli distinta de `mundo.limites`).
+- Es una red: cada isla con al menos 2 conexiones, varias con 3 o más; solo con puentes se llega a todas; quitando cualquier conexión todavía se llega a las Nubes.
+- El primer puente cuesta 5 cristales y 20 estrellas y las 60 estrellas de Isla Noli alcanzan (con un solo juego no).
+- Estrellas del mundo: suman hasta 5 por isla y juego; el reto del día y la Pasarela no dan; el mismo juego en otra isla tiene su tope.
+- Construir pide y gasta cristales y estrellas; no se construye dos veces; lo gastado ya no sirve para otro puente.
+- `_mundo`: v1 → v2; juntar no pierde ni duplica (aunque los dos aparatos construyan el mismo puente) y el administrador gana; dos aparatos sin conexión se juntan en la nube.
+- Física: en el mar se cae; **cada puente se cruza caminando** y empujando de lado no se cae; sin construir, el muelle se detiene en su punta; **cada camino de plataformas se cruza brincando de verdad, de ida y de vuelta, con las móviles moviéndose**; las móviles van y vienen con pausas.
+- Isla Noli: de la plaza se llega caminando a la entrada de cada puente y al teletransportador (con edificios en todos los sitios), y no hay árboles en los pasillos.
+
 ## Archivos
 
 ```
 mundo/
 ├── mundo.json                tamaño, plaza, colores, movimiento y brinco, plataformas, rutas, cristales, decoración
-└── lugares.json              edificios (radio de choque y alto), sitios, y en qué sitio y edificio va cada juego
+├── lugares.json              edificios (radio de choque y alto), sitios, y en qué sitio y edificio va cada juego
+└── islas.json                las islas, la red de puentes y plataformas, y sus costos (#164, § Las islas)
 kit/3d/                       lo 3D que comparten el mundo y la Pasarela
 ├── vendor/                   Three.js r160.1, GLTFLoader y BufferGeometryUtils (MIT)
 ├── escena.js                 renderer, cámara, luces, ciclo de cuadros, calidad que se ajusta sola, pausar, liberar
@@ -318,4 +452,4 @@ Además, las pruebas de la Pasarela siguen armando el personaje y cada prenda co
 - **Mediciones en aparatos reales** (arriba).
 - **El personaje del mundo es el de la Pasarela**, con su último atuendo y su tono de piel (si el juego está en el catálogo). Si nunca ha jugado la Pasarela, sale con el atuendo inicial.
 - **El filtro por materia** no esconde edificios: los resalta (anillo dorado) y apaga los letreros de los demás, en el mundo y en "¿A dónde vamos?". Así el mundo no cambia de forma según el filtro.
-- **Cristales:** 6 para empezar; no dan créditos. Más adelante podrían abrir algo en el mundo (una ruta nueva, un sombrero…); eso va en otro issue.
+- **Cristales:** 6 en Isla Noli; no dan créditos. Desde #164 sirven para **construir puentes** (§ Las islas). Regla para los issues de cada isla: cada isla debe tener cristales suficientes para la siguiente conexión, para que lo que detenga a Noelia sean las estrellas (los juegos educativos), nunca la falta de cristales.
