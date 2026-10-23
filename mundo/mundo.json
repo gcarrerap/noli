@@ -13,7 +13,7 @@
     "horizonte": { "cielo": "#ffb59a", "sol": "#ffc38a" }
   },
   "colores": { "pasto": "#bfe6a4", "pasto2": "#a9db93", "plaza": "#f4e4c9", "camino": "#ecd7b3", "agua": "#8fd3f4" },
-  "movimiento": { "velocidad": 3.4, "giro": 420, "radio": 0.35, "alto": 1.3, "escalon": 0.3, "brinco": 1.25, "gravedad": 20,
+  "movimiento": { "velocidad": 3.4, "turbo": 2, "giro": 420, "radio": 0.35, "alto": 1.3, "escalon": 0.3, "brinco": 1.25, "gravedad": 20,
     "coyote": 0.12, "memoria": 0.15, "impulsoTeclaMs": 200 },
   "estanque": { "x": 14.2, "z": 6.2, "r": 3.4 },
   "plataformas": [

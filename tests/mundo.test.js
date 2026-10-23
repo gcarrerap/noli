@@ -164,6 +164,28 @@ test("física: camina, se detiene y gira hacia donde va", () => {
   assert.equal(quieto.x, c.x);
 });
 
+test("física: el joystick modula la velocidad hasta `turbo` veces (más lejos del centro, más rápido)", () => {
+  assert.equal(CFG.turbo, 2, "el mundo deja ir al doble");
+  const medio = simular(crearCuerpo(0, 0), { x: 0.5, z: 0 }, 1, PISO);
+  const tope = simular(crearCuerpo(0, 0), { x: CFG.turbo, z: 0 }, 1, PISO);
+  const demas = simular(crearCuerpo(0, 0), { x: 5, z: 0 }, 1, PISO);
+  assert.ok(Math.abs(medio.x - CFG.velocidad * 0.5) < 0.1, `a la mitad: ${medio.x}`);
+  assert.ok(Math.abs(tope.x - CFG.velocidad * CFG.turbo) < 0.1, `hasta la orilla: ${tope.x}`);
+  assert.ok(Math.abs(demas.x - tope.x) < 1e-9, "no pasa del tope");
+  // Sin turbo (otros juegos que usan la física) el tope sigue siendo 1
+  const sin = Object.assign({}, CFG, { turbo: 1 });
+  let c = crearCuerpo(0, 0);
+  for (let i = 0; i < 60; i++) c = pasoFisico(c, { quiere: { x: 2, z: 0 } }, 1 / 60, sin, PISO).c;
+  assert.ok(Math.abs(c.x - CFG.velocidad) < 0.1, `sin turbo: ${c.x}`);
+});
+
+test("física: corriendo al doble con cuadros lentos no atraviesa nada", () => {
+  const muro = { solidos: [{ tipo: "caja", x0: 2, x1: 2.05, z0: -5, z1: 5, y0: 0, y1: 3 }], limites: MUNDO.limites };
+  let c = crearCuerpo(0, 0);
+  for (let i = 0; i < 40; i++) c = pasoFisico(c, { quiere: { x: CFG.turbo, z: 0 } }, 0.05, CFG, muro).c;
+  assert.ok(c.x < 2, `se quedó antes del muro: ${c.x}`);
+});
+
 test("física: brinca la altura configurada y vuelve al piso", () => {
   let c = crearCuerpo(0, 0), max = 0;
   for (let i = 0; i < 60; i++) { c = pasoFisico(c, { quiere: { x: 0, z: 0 }, brincar: i === 0 }, 1 / 60, CFG, PISO).c; max = Math.max(max, c.y); }

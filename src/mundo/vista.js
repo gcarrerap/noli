@@ -106,7 +106,7 @@ export function crearVistaMundo(cont, m, op) {
 
     av.raiz.position.set(c.x, c.y, c.z);
     av.raiz.rotation.y = (c.ang + 180) * Math.PI / 180;
-    av.animar(animacion, dt, Math.min(1, Math.hypot(q.x, q.z)));
+    av.animar(animacion, dt, Math.min(cfg.turbo || 1, Math.hypot(q.x, q.z))); // corriendo, los pasos van más rápido
     const h = alturaBajo(c.x, c.z, c.y + 0.01, mapa, cfg);
     av.sombra.position.set(c.x, h + 0.02, c.z);
     av.sombra.scale.setScalar(Math.max(0.45, 1 - (c.y - h) * 0.22));
