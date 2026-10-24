@@ -1,0 +1,21 @@
+{
+  "id": "laboratorio-pociones",
+  "titulo": "Laboratorio de Pociones",
+  "descripcion": "Descubre recetas secretas con pistas mágicas.",
+  "icono": "icono.svg",
+  "color": "#8456cf",
+  "materia": "lógica",
+  "edades": [
+    6,
+    11
+  ],
+  "controles": [
+    "tactil",
+    "flechas",
+    "remoto"
+  ],
+  "tv": true,
+  "ocultoEnTv": [],
+  "entrada": "index.html",
+  "version": "1"
+}
