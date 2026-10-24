@@ -156,3 +156,8 @@
 .buho-form input{flex:1 1 12rem;min-width:0;font:inherit;font-size:1.2rem;padding:.6em .9em;border-radius:999px;border:2px solid #d9c8ff;background:#fff;color:#2b2236}
 .buho-form input:focus{outline:3px solid #9b7bff;outline-offset:2px}
 .mundo-secreto{background:rgba(255,244,214,.95)}
+/* Lugares de juego de las otras islas (#176): los cerrados dicen «Muy pronto»; los abiertos, desde qué nivel empiezan */
+.mundo .letrero.cerrado .nombre{background:#9a8cc2}
+.mundo .letrero.cerrado .pie{color:#5b4f7a;font-size:.85rem}
+.mundo .letrero .desde{background:rgba(255,255,255,.92);color:#5b3aa0;font-weight:600;border-radius:999px;padding:0 .55em;font-size:.82rem;white-space:nowrap}
+.mundo .mundo-ir .ir .nombre small{display:block;font-size:.75em;font-weight:500;opacity:.8}

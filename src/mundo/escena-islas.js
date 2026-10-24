@@ -10,6 +10,7 @@ import { material } from "../../kit/3d/materiales.js";
 import { crearLote } from "../../kit/3d/lote.js";
 import { azar } from "../engine/mundo.js";
 import { vecinas, teletransportadorDe, posPlataforma, ANCHO_PUENTE, ENTRA, MUELLE, INICIO } from "../engine/islas.js";
+import { crearConstrucciones, crearEstallidos } from "./escena-construcciones.js";
 
 const RAD = Math.PI / 180;
 const MATERIAL = {
@@ -37,12 +38,18 @@ const DECO = {
 /**
  * @param {object} red armarIslas(...)
  * @param {object} cfg mundo/islas.json (mar, colores)
- * @param {{ reducir?: boolean }} op
+ * @param {{ reducir?: boolean, cons?: Map, lugaresIsla?: object[] }} op
+ *   cons: lo que hay en cada isla (engine/construcciones.js → armarConstrucciones); lugaresIsla: sus lugares de juego
  */
 export function crearIslas(red, cfg, op = {}) {
   const grupo = new THREE.Group(); grupo.name = "islas";
   const mar = cfg.mar || {};
   const animados = [];
+  const cons = op.cons || new Map(), lugaresIsla = op.lugaresIsla || [];
+  const construidas = new Map(); // id → crearConstrucciones(...) de las islas armadas
+  let efectosAhora = { alta: false, noche: 0 };
+  const estallidos = crearEstallidos({ reducir: op.reducir });
+  grupo.add(estallidos.puntos);
 
   // ---- El mar: un plano grande debajo de todo (la niebla lo funde con el cielo a lo lejos) ----
   {
@@ -67,6 +74,16 @@ export function crearIslas(red, cfg, op = {}) {
     // Arena (u orilla del tema) en el borde, el suelo adentro, y un cuerpo debajo que baja hasta el agua
     L.poner(new THREE.CylinderGeometry(f.r, f.r * 0.86, 3, 48), C.orilla || "#e9d9b4", { pos: [f.x, -1.5, f.z] });
     L.poner(new THREE.CylinderGeometry(f.r - borde, f.r - borde, 0.02, 48), C.suelo || "#bfe6a4", { pos: [f.x, 0.005, f.z] });
+    // Con construcciones (#176): las grutas, la pared de la orilla, el cristal del centro… (sin la decoración barata)
+    const K = cons.get(i.id);
+    if (K) {
+      const c = crearConstrucciones(K, i, lugaresIsla.filter((l) => l.isla === i.id), { reducir: op.reducir, alta: efectosAhora.alta });
+      c.efectos(efectosAhora);
+      g.add(c.grupo); construidas.set(i.id, c);
+      teletransportador(L, g, teletransportadorDe(i), i.id);
+      L.cerrar(g); grupo.add(g);
+      return g;
+    }
     // Decoración barata: lejos del centro (ahí van las construcciones y el teletransportador) y de donde llegan los puentes
     const r = azar(i.id.split("").reduce((s, c) => s * 31 + c.charCodeAt(0), 7));
     const llegadas = red.conexiones.filter((k) => k.de === i.id || k.a === i.id).map((k) => (k.de === i.id ? k.p0 : k.p1));
@@ -87,6 +104,8 @@ export function crearIslas(red, cfg, op = {}) {
     if (!g) return;
     g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); // los materiales son compartidos (materiales.js)
     grupo.remove(g); grupos.delete(id);
+    const c = construidas.get(id);
+    if (c) { c.liberar(); construidas.delete(id); }
     for (let n = animados.length - 1; n >= 0; n--) if (animados[n].isla === id) animados.splice(n, 1);
   }
   // El teletransportador: un círculo de piedras mágicas con un disco que brilla
@@ -206,6 +225,8 @@ export function crearIslas(red, cfg, op = {}) {
     moverPlataformas(t) { for (const m of movibles) { const q = posPlataforma(m.p, t); m.malla.position.x = q.x; m.malla.position.z = q.z; } },
     animar(dt, t) {
       for (const a of animados) a.animar(dt, t);
+      for (const c of construidas.values()) c.animar(dt, t);
+      estallidos.animar(dt);
       for (const c of creciendo) {
         c.t += dt;
         const k = Math.max(0.001, Math.min(1, c.t / c.dur)), e = 1 - Math.pow(1 - k, 3);
@@ -213,6 +234,17 @@ export function crearIslas(red, cfg, op = {}) {
       }
       creciendo = creciendo.filter((c) => c.t < c.dur);
     },
+    /** Calidad alta (efectos caros: refracción, luces de colores), noche (0 a 1) y en qué isla está */
+    efectos(o) {
+      efectosAhora = { ...efectosAhora, ...o };
+      for (const [id, c] of construidas) c.efectos({ ...efectosAhora, aqui: efectosAhora.isla === id });
+    },
+    /** Campanitas de los cristales de la isla donde está */
+    sonar(id, pos) { const c = construidas.get(id); if (c) c.sonar(pos); },
+    /** Estallido de destellos (al tomar un cristal) */
+    estallido: (x, y, z, hex) => estallidos.lanzar(x, y, z, hex),
+    /** Dónde va el letrero de cada lugar de las islas armadas: Map(id → Vector3) */
+    get marcas() { const m = new Map(); for (const c of construidas.values()) for (const [k, v] of c.marcas) m.set(k, v); return m; },
     /** ¿Qué islas están armadas? (para diagnosticar y para las pruebas en el navegador) */
     get armadas() { return [...grupos.keys()]; },
   };

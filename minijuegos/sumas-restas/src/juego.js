@@ -6,6 +6,7 @@ import { opciones } from "./generar.js";
 import { cargar, registrar, cerrarRonda, armarRonda, dominio, cumplirReto, racha, semana, resumen, fechaLocal, VENTANA } from "./progreso.js";
 import { retoDelDia } from "./reto.js";
 import { pista } from "./dibujos.js";
+import { pisoDe, conPiso, nivelActual, escogible, trasRonda } from "../../../kit/niveles.js";
 
 const $main = document.getElementById("juego");
 const rnd = Math.random;
@@ -16,7 +17,10 @@ let timer = null;
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const hoy = () => fechaLocal();
-const elegido = () => Math.min(pr.elegido || pr.nivel, pr.nivel);
+// Abierto desde otra isla del mundo (#176): empieza en su nivel (piso) y lo que se escoja ahí no se guarda
+const PISO = pisoDe(Noli.nivelInicial, NIVELES.length);
+let enIsla = 0;
+const elegido = () => nivelActual(pr, PISO, enIsla);
 const guardar = () => Noli.guardar(pr);
 // El problema en curso (en "sin errores" la lista se recorre en círculo si hace falta)
 const actual = () => juego.lista[juego.i % juego.lista.length];
@@ -157,7 +161,8 @@ function verPista(forzar) {
 
 function finRonda() {
   const { pr: nuevo, subio, estrellas } = cerrarRonda(pr, juego.n, juego.aciertos);
-  pr = subio ? { ...nuevo, elegido: subio } : nuevo;
+  pr = trasRonda(pr, subio ? { ...nuevo, elegido: subio } : nuevo, PISO);
+  if (PISO > 1 && subio) enIsla = subio;
   guardar();
   Noli.terminar({ estrellas });
   mostrar(`
@@ -249,8 +254,9 @@ function progreso() {
       const nv = pr.niveles[x.n], abierto = x.n <= pr.nivel, dm = dominio(pr, x.n);
       const estado = nv?.dominado ? `<span class="estrellas">${estrellasHtml(nv.estrellas)}</span>`
         : abierto ? `<span class="en-curso">${dm.intentos} de ${VENTANA}</span>` : `<span class="candado">${CANDADO}</span>`;
+      const puede = escogible(pr, PISO, x.n);
       return `<li><button class="nivel ${nv?.dominado ? "dominado" : abierto ? "abierto" : "cerrado"}${x.n === elegido() ? " actual" : ""}"
-        ${abierto ? `data-foco${x.n === elegido() ? '="inicial"' : ""} data-ir="elegir" data-n="${x.n}"` : "disabled"}>
+        ${puede ? `data-foco${x.n === elegido() ? '="inicial"' : ""} data-ir="elegir" data-n="${x.n}"` : "disabled"}>
         <b>${x.n}</b><span class="nom">${esc(x.nombre)}<small>${esc(x.ejemplo)}</small></span>${estado}</button></li>`;
     }).join("")}</ol>
     <div class="menu fila">
@@ -284,7 +290,7 @@ const IR = {
   inicio, progreso, papas, retoIntro, retoJugar,
   ronda: nuevaRonda,
   pista: () => verPista(false),
-  elegir: ({ n }) => { pr = { ...pr, elegido: +n }; guardar(); inicio(); },
+  elegir: ({ n }) => { if (PISO > 1) enIsla = +n; else { pr = { ...pr, elegido: +n }; guardar(); } inicio(); },
 };
 
 Noli.alEntrar((accion) => {
@@ -304,4 +310,4 @@ const CANDADO = `<svg class="ico" viewBox="0 0 24 24" aria-label="Bloqueado"><re
 
 // ---------- Arranque ----------
 // Sin "await" al nivel del módulo: algunos navegadores de TV todavía no lo soportan
-Noli.datos.then((d) => { pr = cargar(d); inicio(); });
+Noli.datos.then((d) => { const c = cargar(d); pr = conPiso(c, PISO); if (pr !== c) guardar(); inicio(); });

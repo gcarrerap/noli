@@ -1,6 +1,6 @@
 // API de la lógica pura del catálogo
 export { validarManifiesto, jugableEn, modoDe, CONTROLES } from "./manifiesto.js";
-export { materias, filtrar, mover } from "./catalogo.js";
+export { materias, filtrar, mover, urlDeJuego } from "./catalogo.js";
 export { nuevoCodigo, esCodigo, leerCodigo, salaVigente, controlVivo, urlControl,
   SALA_VIDA_MS, LATIDO_TV_MS, LATIDO_CONTROL_MS, CONTROL_VIVO_MS, ESPERA_WEBRTC_MS } from "./sala.js";
 export { qr, qrSvg } from "./qr.js";
@@ -19,3 +19,5 @@ export { formaDe, centroIsla, dentro, aOrilla, orillaHacia, armarIslas, platafor
   muelleEn, teletransportadorDe, enTeletransportador, vistaMapa, TOPE_ESTRELLAS, INICIO as ISLA_INICIO, salidasNoli, libresNoli,
   ANCHO_PUENTE, puntoMapa } from "./islas.js";
 export { normalizarFrase, sha256, esFraseSecreta, relojSecreto, otraPregunta, revisarBuho, solidoBuho, juntoAlBuho } from "./secreto.js";
+export { armarConstrucciones, lugaresIslas, cristalesIslas, solidosIslas, altosIslas, caminosIsla, revisarConstrucciones, salidasDe,
+  paredOrilla } from "./construcciones.js";

@@ -1,7 +1,7 @@
 // Acciones: lo único que cambia el estado. La interfaz y el control remoto (app/remoto.js) solo llaman aquí.
 import { cargarCatalogo, ls, leerDatosJuego, guardarDatosJuego } from "../services/index.js";
 import { mover, materias, jugableEn, ganancia, agregar, gastar, premio, compactar, saldoVisible, sumarEstrellas, normalizarMundo, TOPE_ESTRELLAS,
-  ISLA_INICIO } from "../engine/index.js";
+  ISLA_INICIO, urlDeJuego } from "../engine/index.js";
 import { estrellas as aEstrellas } from "../../kit/protocolo.js";
 import { state, notify, visibles } from "./store.js";
 import * as sync from "./sync.js";
@@ -69,10 +69,11 @@ export const actions = {
 
   // hash: para abrir el juego en un lugar (la Biblioteca en un capítulo: "#c3", #103)
   // isla: de qué isla del mundo se abrió (#164: sus estrellas del mundo cuentan para esa isla; sin isla, Isla Noli)
-  abrir(id, { hash, isla } = {}) {
+  // nivelInicial: desde qué nivel empieza el juego en esa isla (#176: va en la URL como ?isla=…&nivel=…; kit/niveles.js)
+  abrir(id, { hash, isla, nivelInicial } = {}) {
     const j = state.juegos.find((x) => x.id === id);
     if (!j || !jugableEn(j, state.modo)) return; // en la TV no se abre un juego que no es apto (#57)
-    state.jugando = hash ? { ...j, url: j.url.split("#")[0] + hash } : j; state.celebrar = null;
+    state.jugando = hash || (isla && isla !== ISLA_INICIO) ? { ...j, url: urlDeJuego(j.url, { hash, isla, nivelInicial }) } : j; state.celebrar = null;
     state.islaJuego = isla || ISLA_INICIO; notify();
   },
 

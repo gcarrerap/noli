@@ -22,7 +22,8 @@ const ORDEN = ["alta", "media", "baja"];
 /**
  * Crea la escena en un contenedor.
  * @param {HTMLElement} cont
- * @param {{ tv: boolean, calidad?: string, alBajarMucho?: () => void, fondo?: string, niebla?: [number, number], lejos?: number }} op
+ * @param {{ tv: boolean, calidad?: string, fija?: boolean, alBajarMucho?: () => void, fondo?: string, niebla?: [number, number], lejos?: number }} op
+ *   fija: la calidad no baja sola (para medir o revisar una calidad: ?calidad=alta en el mundo)
  *   fondo y niebla: color del cielo y desde/hasta dónde se desvanece (por omisión los del estudio de la Pasarela)
  */
 export function crearEscena(cont, op) {
@@ -54,10 +55,14 @@ export function crearEscena(cont, op) {
   }
 
   let calidad = op.calidad && CALIDADES[op.calidad] ? op.calidad : op.tv ? "media" : "alta";
+  // Resplandor (bloom, #176): solo lo que brilla más que `umbral` (cristales, destellos) irradia luz. Cuesta varias pasadas
+  // de pantalla, así que se baja (import) solo cuando alguien lo pide y solo se usa en calidad alta.
+  const brillo = { on: false, composer: null, pase: null, cargando: null };
   function tamano() {
     const w = cont.clientWidth || window.innerWidth, h = cont.clientHeight || window.innerHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, CALIDADES[calidad].pixeles));
     renderer.setSize(w, h, false);
+    if (brillo.composer) { brillo.composer.setPixelRatio(renderer.getPixelRatio()); brillo.composer.setSize(w, h); }
     camara.aspect = w / h;
     // En el teléfono parado (pantalla angosta) se abre el ángulo para que quepa el estudio a lo ancho
     camara.fov = w / h < 0.8 ? 62 : 48;
@@ -78,9 +83,9 @@ export function crearEscena(cont, op) {
       fps.cuadros = 0; fps.desde = ahora;
       // 3 segundos seguidos por debajo de 26 → bajar un nivel. En "baja" y por debajo de 15 → avisar.
       const ult = fps.historial.slice(-3);
-      if (ult.length === 3 && ult.every((v) => v < 26)) {
+      if (!op.fija && ult.length === 3 && ult.every((v) => v < 26)) {
         const i = ORDEN.indexOf(calidad);
-        if (i < ORDEN.length - 1) { calidad = ORDEN[i + 1]; tamano(); fps.historial = []; }
+        if (i < ORDEN.length - 1) { calidad = ORDEN[i + 1]; brillo.on = false; tamano(); fps.historial = []; }
         else if (ult.every((v) => v < 15) && op.alBajarMucho) { op.alBajarMucho(); fps.historial = []; }
       }
     }
@@ -95,7 +100,7 @@ export function crearEscena(cont, op) {
     const dt = Math.min(0.05, anterior ? (ahora - anterior) / 1000 : 0.016); // máximo 50 ms: si la TV se traba no "salta"
     anterior = ahora;
     for (const fn of alCuadro) fn(dt, ahora);
-    renderer.render(scene, camara);
+    if (brillo.composer && brillo.on) brillo.composer.render(dt); else renderer.render(scene, camara);
     medir(ahora);
   }
   requestAnimationFrame(ciclo);
@@ -128,9 +133,36 @@ export function crearEscena(cont, op) {
      * Ej.: panel a la derecha que tapa 44 % → dx = 0.22; panel abajo que tapa 54 % → dy = 0.27.
      */
     correr(dx, dy) { corrimiento.x = dx; corrimiento.y = dy; aplicarCorrimiento(); camara.updateProjectionMatrix(); },
+    /**
+     * Enciende o apaga el resplandor (bloom). Solo se dibuja en calidad alta; si la calidad baja, se apaga solo.
+     * @param {boolean} si
+     * @param {{ fuerza?: number, radio?: number, umbral?: number }} [op]
+     */
+    async ponerBrillo(si, o = {}) {
+      brillo.quiere = !!si;
+      if (si && !brillo.composer) {
+        brillo.cargando = brillo.cargando || Promise.all([import("./vendor/post/EffectComposer.js"), import("./vendor/post/RenderPass.js"),
+          import("./vendor/post/UnrealBloomPass.js"), import("./vendor/post/OutputPass.js")]);
+        try {
+          const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await brillo.cargando;
+          if (!vivo || brillo.composer) return;
+          const w = cont.clientWidth || window.innerWidth, h = cont.clientHeight || window.innerHeight;
+          const c = new EffectComposer(renderer);
+          c.setPixelRatio(renderer.getPixelRatio()); c.setSize(w, h);
+          c.addPass(new RenderPass(scene, camara));
+          brillo.pase = new UnrealBloomPass(new THREE.Vector2(w, h), o.fuerza ?? 0.7, o.radio ?? 0.5, o.umbral ?? 1);
+          c.addPass(brillo.pase);
+          c.addPass(new OutputPass());
+          brillo.composer = c;
+        } catch (e) { console.warn("[escena] sin resplandor", e); brillo.quiere = false; }
+      }
+      if (brillo.pase) { if (o.fuerza != null) brillo.pase.strength = o.fuerza; if (o.radio != null) brillo.pase.radius = o.radio; if (o.umbral != null) brillo.pase.threshold = o.umbral; }
+      brillo.on = brillo.quiere && calidad === "alta" && !!brillo.composer;
+    },
+    get brillo() { return brillo.on; },
     get fps() { return fps.valor; },
     get calidad() { return calidad; },
-    ponerCalidad(c) { if (CALIDADES[c]) { calidad = c; tamano(); } },
+    ponerCalidad(c) { if (CALIDADES[c]) { calidad = c; brillo.on = brillo.quiere && c === "alta" && !!brillo.composer; tamano(); } },
     tamano,
     /** Deja de dibujar (por ejemplo, mientras hay un juego abierto encima) o vuelve a dibujar */
     pausar(si) { detenido = !!si; if (!si) { fps.historial = []; fps.desde = 0; fps.cuadros = 0; } },
@@ -141,6 +173,7 @@ export function crearEscena(cont, op) {
       document.removeEventListener("visibilitychange", alVer);
       scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
       liberarFormas(); liberarMateriales(); liberarTexturas();
+      if (brillo.composer) { brillo.composer.dispose(); if (brillo.pase) brillo.pase.dispose(); brillo.composer = null; }
       renderer.dispose();
       renderer.domElement.remove();
     },

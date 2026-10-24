@@ -54,12 +54,16 @@ test("red: es una red, no una cadena; solo con puentes (sin brincar) se llega a 
   assert.ok(RED.conexiones.some((k) => k.tipo === "plataformas" && !k.moviles));
 });
 
-test("red: el primer puente (Noli → Cristal) es de cristal y cuesta 5 cristales y 20 estrellas; los demás, muy pronto", () => {
+test("red: el primer puente (Noli → Cristal) es de cristal y cuesta 5 cristales y 20 estrellas; los que salen de Cristal (#176) tienen costo; los demás, muy pronto", () => {
   const k = RED.porCon.get("noli-cristal");
   assert.equal(k.tipo, "puente"); assert.equal(k.material, "cristal");
   assert.deepEqual(k.costo, { cristales: 5, estrellas: 20 });
   assert.ok(CRISTALES.length >= 5, "Isla Noli tiene los cristales del primer puente");
-  for (const o of RED.conexiones) if (o.id !== "noli-cristal") assert.equal(o.costo, null, o.id);
+  assert.deepEqual(RED.porCon.get("cristal-dulce").costo, { cristales: 5, estrellas: 25 });
+  assert.deepEqual(RED.porCon.get("cristal-bosque").costo, { cristales: 5, estrellas: 25 });
+  assert.deepEqual(RED.porCon.get("cristal-numeros").costo, { cristales: 5, estrellas: 20 });
+  const conCosto = new Set(["noli-cristal", "cristal-dulce", "cristal-bosque", "cristal-numeros"]);
+  for (const o of RED.conexiones) if (!conCosto.has(o.id)) assert.equal(o.costo, null, o.id);
 });
 
 test("balance: las estrellas que dan los juegos de Isla Noli alcanzan para el primer puente", () => {
@@ -105,7 +109,7 @@ test("construir: hacen falta cristales y estrellas; se gastan los dos; no se con
   assert.equal(puedeConstruir(h, RED, "noli-cristal", CRISTALES).hecha, true);
   assert.equal(construir(h, RED, "noli-cristal", CRISTALES), null, "no dos veces");
   // Sin costo todavía: muy pronto
-  assert.equal(puedeConstruir(h, RED, "cristal-dulce", CRISTALES).pronto, true);
+  assert.equal(puedeConstruir(h, RED, "dulce-pasarela", CRISTALES).pronto, true);
   // Las estrellas gastadas ya no sirven para otro puente (se resta lo de las construidas)
   assert.equal(disponibles(h, RED, CRISTALES).estrellas, 5);
 });

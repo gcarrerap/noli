@@ -16,6 +16,7 @@ import {
 import { RANURAS, PIEZAS, pieza, ciclarRanura, pisosFabrica } from "./deco.js";
 import { retoDelDia } from "./reto.js";
 import { enIngles } from "./palabras.js";
+import { pisoDe, conPiso, nivelActual, escogible, trasRonda } from "../../../kit/niveles.js";
 import {
   siguientePaso, puedeHablarDeCanje, pistaCorta, fasePista, cuentaParaDominio,
   textoRomper, canjeEsLargo, exigeCanje, textoEnPantalla, avisoDiez, repetirAvisoDiez,
@@ -138,7 +139,10 @@ function animarDeco(raiz) {
 }
 
 const guardar = () => Noli.guardar(pr);
-const elegido = () => Math.min(pr.elegido || pr.nivel, pr.nivel);
+// Abierto desde otra isla del mundo (#176): empieza en su nivel (piso) y lo que se escoja ahí no se guarda
+const PISO = pisoDe(Noli.nivelInicial, NIVELES.length);
+let enIsla = 0;
+const elegido = () => nivelActual(pr, PISO, enIsla);
 
 // ---------- Dibujo ----------
 
@@ -942,7 +946,8 @@ function finTurno() {
   const antes = piezasDe(pr).map((p) => p.id);
   const n = partida.n;
   const r = cerrarTurno(pr, n, partida.aciertos);
-  pr = r.pr;
+  pr = trasRonda(pr, r.pr, PISO);
+  if (PISO > 1 && r.subio) enIsla = r.subio;
   guardar();
   Noli.terminar({ estrellas: r.estrellas });
   const nuevas = piezasDe(pr).filter((p) => !antes.includes(p.id));
@@ -1043,7 +1048,7 @@ function progreso() {
       const abierto = x.n <= pr.nivel;
       const dm = dominio(pr, x.n);
       const estado = nv?.dominado ? estrellasHtml(nv.estrellas || 0) : abierto ? `<span>${dm.intentos} de ${VENTANA}</span>` : CANDADO;
-      return `<li><button type="button" class="nivel ${nv?.dominado ? "dominado" : abierto ? "abierto" : "cerrado"}${x.n === elegido() ? " actual" : ""}" ${abierto ? `data-foco${x.n === elegido() ? '="inicial"' : ""} data-act="ir" data-ir="elegir" data-n="${x.n}"` : "disabled"}>
+      return `<li><button type="button" class="nivel ${nv?.dominado ? "dominado" : abierto ? "abierto" : "cerrado"}${x.n === elegido() ? " actual" : ""}" ${escogible(pr, PISO, x.n) ? `data-foco${x.n === elegido() ? '="inicial"' : ""} data-act="ir" data-ir="elegir" data-n="${x.n}"` : "disabled"}>
         <b class="num">${x.n}</b><span class="nom">${esc(x.nombre)}<small>${esc(x.ejemplo)}</small></span>${estado}</button></li>`;
     }).join("")}</ol>
     <div class="menu fila">
@@ -1077,7 +1082,7 @@ const IR = {
   "seguir-juego": () => cerrarSalir(false),
   "salir-juego": () => cerrarSalir(true),
   avanzar,
-  elegir: (ds) => { pr = { ...pr, elegido: +ds.n }; guardar(); inicio(); },
+  elegir: (ds) => { if (PISO > 1) enIsla = +ds.n; else { pr = { ...pr, elegido: +ds.n }; guardar(); } inicio(); },
 };
 
 $main.addEventListener("click", (ev) => {
@@ -1162,4 +1167,4 @@ document.addEventListener("pointerdown", () => {
   desbloquear();
 }, true);
 
-Noli.datos.then((d) => { pr = cargar(d); return cargarArte(); }).then(() => inicio());
+Noli.datos.then((d) => { const c = cargar(d); pr = conPiso(c, PISO); if (pr !== c) guardar(); return cargarArte(); }).then(() => inicio());

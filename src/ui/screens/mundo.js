@@ -11,7 +11,7 @@ import { cargarMundo, BASE_MUNDO } from "../../services/index.js";
 import { revisarMundo, colocarLugares, decorar, todosLosSitios, mapaMundo, fisicaDe, crearCaminos, cristalesDe, materias,
   jugableEn, acomodarLetreros, librosDe, estadoLibros, conHallazgo, dia, revisarIslas, armarIslas, libresNoli, salidasNoli,
   teletransportadorDe, puedeConstruir, construir, conVisita, disponibles, vistaMapa, estrellasDeJuego, puntoMapa, revisarBuho, solidoBuho,
-  esFraseSecreta, relojSecreto, otraPregunta } from "../../engine/index.js";
+  esFraseSecreta, relojSecreto, otraPregunta, armarConstrucciones, lugaresIslas, cristalesIslas, revisarConstrucciones } from "../../engine/index.js";
 import { crearJoystick } from "../../../kit/3d/joystick.js";
 import { direccionDeTeclas, crearPulsador } from "../../../kit/3d/movimiento.js";
 import { moverFoco, focoInicial } from "../../../kit/foco.js";
@@ -34,6 +34,7 @@ const ICONO = {
   mapa: `<svg viewBox="0 0 24 24" width="1.4em" height="1.4em" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#8fd3f4" stroke="#2b2236" stroke-width="1.6"/><ellipse cx="9" cy="10" rx="3.4" ry="2.6" fill="#bfe6a4" stroke="#2b2236" stroke-width="1.1"/><ellipse cx="15.5" cy="15" rx="2.6" ry="2" fill="#ffd3e8" stroke="#2b2236" stroke-width="1.1"/><path d="M11.5 11.5l2.6 2.4" stroke="#2b2236" stroke-width="1.2" stroke-dasharray="1.2 1"/></svg>`,
   tele: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><ellipse cx="12" cy="18" rx="8" ry="3" fill="#d9c8ff" stroke="#2b2236" stroke-width="1.4"/><path d="M7 17V8M17 17V8" stroke="#c9a6ff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 4.5l1.2 2.5 2.6.3-2 1.8.6 2.6-2.4-1.4-2.4 1.4.6-2.6-2-1.8 2.6-.3z" fill="#ffd166" stroke="#2b2236" stroke-width="1"/></svg>`,
   buho: `<svg viewBox="0 0 24 24" width="1.3em" height="1.3em" aria-hidden="true"><ellipse cx="12" cy="14" rx="7.5" ry="8" fill="#b07a4a" stroke="#2b2236" stroke-width="1.4"/><path d="M5 6.5l2.5 3M19 6.5l-2.5 3" stroke="#2b2236" stroke-width="1.4"/><circle cx="9" cy="12" r="2.8" fill="#fff" stroke="#e6b13a" stroke-width="1.2"/><circle cx="15" cy="12" r="2.8" fill="#fff" stroke="#e6b13a" stroke-width="1.2"/><circle cx="9" cy="12" r="1.2" fill="#2b2236"/><circle cx="15" cy="12" r="1.2" fill="#2b2236"/><path d="M12 14l-1.2 1.6h2.4z" fill="#f39a2e"/><path d="M6.5 5.5h11l-5.5-2.5z" fill="#7b4fc0" stroke="#2b2236" stroke-width="1"/></svg>`,
+  candado: `<svg viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="#d9c8ff" stroke="#2b2236" stroke-width="1.5"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5" fill="none" stroke="#2b2236" stroke-width="1.6"/><circle cx="12" cy="15.3" r="1.5" fill="#2b2236"/></svg>`,
   sencillo: `<svg viewBox="0 0 24 24" width="1.2em" height="1.2em" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="#ffc43d" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="#4cb3ff" stroke="#2b2236" stroke-width="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="#3ccf8e" stroke="#2b2236" stroke-width="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="#ff6b4a" stroke="#2b2236" stroke-width="1.4"/></svg>`,
 };
 
@@ -114,6 +115,7 @@ async function armar() {
     if (!cache) {
       const [datos, mod] = await Promise.all([cargarMundo(), import("../../mundo/vista.js")]);
       const errores = [...revisarMundo(datos.mundo, datos.lugares), ...revisarIslas(datos.islas, datos.mundo, fisicaDe(datos.mundo)), ...revisarBuho(datos.buho)];
+      if (!errores.length) errores.push(...revisarConstrucciones(datos.islas, armarIslas(datos.islas), fisicaDe(datos.mundo)));
       if (errores.length) throw new Error("mundo/: " + errores.join("; "));
       cache = { ...datos, mod };
     }
@@ -131,11 +133,14 @@ async function armar() {
     mapa.solidos.push(solidoBuho(buho));
     const salidas = salidasNoli(red);
     const caminos = crearCaminos(mundo, lugares, mapa, cfg, [...salidas.map((x) => x.adentro), ...salidas.map((x) => x.lejos), teletransportadorDe(red.por.get("noli"))]);
-    const cristales = cristalesDe(mundo);
+    // Lo que hay en las otras islas (#176): lugares de juego (todos; los que no tienen juego, cerrados) y cristales
+    const cons = armarConstrucciones(red);
+    const lugaresIsla = lugaresIslas(cons, juegos);
+    const cristales = [...cristalesDe(mundo), ...cristalesIslas(cons)];
     const guardado = actions.datosMundo();
     const tiene = new Set(guardado && Array.isArray(guardado.cristales) ? guardado.cristales.filter((id) => cristales.some((c) => c.id === id)) : []);
     const reducir = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    Object.assign(m, { mundo, lugares, cristales, tiene, cfg, red, muelle: null, tele: null, claveIslas: claveIslas(guardado), buho,
+    Object.assign(m, { mundo, lugares, lugaresIsla, cristales, tiene, cfg, red, muelle: null, tele: null, claveIslas: claveIslas(guardado), buho,
       junto: false, secreto: null, ultimaConocida: "noli", pregunta: "", contesta: "" });
     m.libros = prepararLibros(mundo, juegos);
     m.vista = mod.crearVistaMundo(m.raiz.querySelector("#mundoLienzo"), { mundo, lugares, deco, mapa, caminos, cfg, cristales, red, islas }, {
@@ -154,6 +159,9 @@ async function armar() {
       buho,
       alBuho: (x) => { m.junto = x; dibujarAviso(); },
       puedeTomar: () => !m.secreto,
+      cons, lugaresIsla,
+      // ?calidad=alta|media|baja: fija la calidad (no baja sola), para revisar los efectos o medir (#176)
+      calidad: ["alta", "media", "baja"].includes(parametros.get("calidad")) ? parametros.get("calidad") : undefined,
     });
     volverA = null;
     m.estado = "listo";
@@ -264,15 +272,18 @@ function actualizar() {
   $("mundoMenuBtn").onclick = () => abrirMenu();
   if ($("mundoMapaBtn")) $("mundoMapaBtn").onclick = () => abrirMenu("mapa");
 
-  // Letreros: uno por juego (se acomodan cada cuadro sobre su edificio)
+  // Letreros: uno por lugar (se acomodan cada cuadro sobre su edificio). En las otras islas (#176) los lugares cerrados
+  // dicen «Muy pronto»; los abiertos, en qué nivel empieza el juego ahí y sus estrellas del mundo de esa isla.
   const sel = state.materia;
-  $("mundoLetreros").innerHTML = M.lugares.map((l) => {
+  $("mundoLetreros").innerHTML = [...M.lugares, ...M.lugaresIsla].map((l) => {
+    if (l.cerrado) return `<button class="letrero cerrado" data-id="${esc(l.id)}" style="--c:#9a8cc2" tabindex="-1" aria-label="Muy pronto">
+      <span class="ico">${ICONO.candado}</span><span class="nombre">Muy pronto</span><span class="pie">Aquí habrá un juego nuevo</span></button>`;
     const j = l.juego, p = state.progreso[j.id];
-    const pie = (j.creditos === "gasta" && j.costo ? `<span class="costo">${MONEDA}${j.costo}</span>` : estrellasHtml(p ? p.estrellas : 0)) + estrellasMundoHtml(j, guardado);
+    const pie = (j.creditos === "gasta" && j.costo ? `<span class="costo">${MONEDA}${j.costo}</span>` : estrellasHtml(p ? p.estrellas : 0)) + estrellasMundoHtml(j, guardado, l.isla);
     const apagado = sel && j.materia !== sel ? " apagado" : "";
-    return `<button class="letrero${apagado}" data-id="${esc(j.id)}" style="--c:${esc(j.color || "#c86bfa")}" tabindex="-1" aria-label="${esc(j.titulo)}">
+    return `<button class="letrero${apagado}" data-id="${esc(l.id)}" style="--c:${esc(j.color || "#c86bfa")}" tabindex="-1" aria-label="${esc(j.titulo)}">
       <span class="ico">${j.iconoUrl ? `<img src="${esc(j.iconoUrl)}" alt="">` : esc(j.icono)}</span>
-      <span class="nombre">${esc(j.titulo)}</span><span class="pie">${pie}</span></button>`;
+      <span class="nombre">${esc(j.titulo)}</span>${l.isla && l.nivelInicial > 1 ? `<span class="desde">Desde el nivel ${l.nivelInicial}</span>` : ""}<span class="pie">${pie}</span></button>`;
   }).join("");
   for (const b of $("mundoLetreros").children) b.onclick = () => entrar(b.dataset.id);
   M.vista.resaltar(sel ? new Set(M.lugares.filter((l) => l.juego.materia === sel).map((l) => l.id)) : null);
@@ -362,10 +373,10 @@ function toast(txt) {
 /** Lo que cambia las islas que se dibujan (visitadas y construidas) */
 const claveIslas = (d) => `${[...d.visitadas].sort().join(",")}|${[...d.conexiones].sort().join(",")}`;
 
-/** En el letrero de un juego educativo: cuántas estrellas del mundo le quedan por dar en Isla Noli */
-function estrellasMundoHtml(j, datos) {
+/** En el letrero de un juego educativo: cuántas estrellas del mundo le quedan por dar en su isla (cada isla, su tope) */
+function estrellasMundoHtml(j, datos, isla = "noli") {
   if (j.creditos !== "gana") return "";
-  const tope = actions.topeEstrellas, n = estrellasDeJuego(datos, "noli", j.id);
+  const tope = actions.topeEstrellas, n = estrellasDeJuego(datos, isla || "noli", j.id);
   return `<span class="em${n >= tope ? " completo" : ""}" title="Estrellas del mundo">${ESTRELLA_MUNDO}${n >= tope ? "¡Completo!" : `${n}/${tope}`}</span>`;
 }
 
@@ -509,14 +520,25 @@ function leerCapitulo(n) {
   actions.abrir(id, { hash: "#c" + n });
 }
 
+/** Entrar al juego de un lugar (id del lugar: en Isla Noli es el id del juego; en otra isla, "isla:sitio") */
 function entrar(id) {
   if (!M) return;
+  const l = [...M.lugares, ...M.lugaresIsla].find((x) => x.id === id);
+  if (!l) return;
+  if (l.cerrado) return toast("Muy pronto habrá un juego nuevo aquí.");
   cerrarMenu();
-  volverA = id;
-  actions.abrir(id);
+  volverA = l.id;
+  if (l.isla) actions.abrir(l.juego.id, { isla: l.isla, nivelInicial: l.nivelInicial });
+  else actions.abrir(l.juego.id);
 }
 
 // ---------- Menú del mundo (Atrás o el botón "Menú") ----------
+
+/** Los lugares de "¿A dónde vamos?": los de Isla Noli y los abiertos de las islas que ya visitó (todas, con la magia) */
+function irLugares() {
+  const vis = new Set(actions.datosMundo().visitadas);
+  return [...M.lugares, ...M.lugaresIsla.filter((l) => !l.cerrado && (M.secreto || vis.has(l.isla)))];
+}
 
 function abrirMenu(tipo = "menu") {
   if (!M || M.estado !== "listo") return;
@@ -620,12 +642,12 @@ function dibujarMenu() {
   const tv = state.modo === "tv";
   el.innerHTML = `<div class="mundo-menu-caja">
     <h2 id="mundoMenuTitulo">¿A dónde vamos?</h2>
-    <div class="mundo-ir">${M.lugares.map((l, i) => {
+    <div class="mundo-ir">${irLugares().map((l, i) => {
       const j = l.juego, p = state.progreso[j.id];
       const apagado = state.materia && j.materia !== state.materia ? " apagado" : "";
-      return `<button class="ir${apagado}" data-ira="${esc(j.id)}" data-k="ir-${esc(j.id)}" ${i === 0 ? 'data-foco="inicial"' : "data-foco"} style="--c:${esc(j.color || "#c86bfa")}">
+      return `<button class="ir${apagado}" data-ira="${esc(l.id)}" data-k="ir-${esc(l.id)}" ${i === 0 ? 'data-foco="inicial"' : "data-foco"} style="--c:${esc(j.color || "#c86bfa")}">
         <span class="ico">${j.iconoUrl ? `<img src="${esc(j.iconoUrl)}" alt="">` : esc(j.icono)}</span>
-        <span class="nombre">${esc(j.titulo)}</span>
+        <span class="nombre">${esc(j.titulo)}${l.isla ? `<small>${esc(M.red.por.get(l.isla).nombre)}</small>` : ""}</span>
         <span class="pie">${j.creditos === "gasta" && j.costo ? `<span class="costo">${MONEDA}${j.costo}</span>` : estrellasHtml(p ? p.estrellas : 0)}</span></button>`;
     }).join("")}</div>
     ${mats.length > 1 ? `<p class="mundo-menu-sub">Brillan los juegos de:</p><nav class="chips mundo-chips" aria-label="Materias">

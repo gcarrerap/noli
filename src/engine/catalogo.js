@@ -29,3 +29,17 @@ export function mover(i, accion, cols, total) {
     default: return i;
   }
 }
+
+/**
+ * La URL con la que se abre un juego (#176): con `?isla=…&nivel=…` si se abre desde otra isla del mundo (el juego lo lee
+ * con kit/niveles.js) y con el `#hash` que pida (la Biblioteca en un capítulo, #103).
+ */
+export function urlDeJuego(url, { hash, isla, nivelInicial } = {}) {
+  let [base, h] = String(url).split("#");
+  if (isla && isla !== "noli") {
+    const q = `isla=${encodeURIComponent(isla)}` + (nivelInicial > 1 ? `&nivel=${Math.trunc(nivelInicial)}` : "");
+    base += (base.includes("?") ? "&" : "?") + q;
+  }
+  const fin = hash || (h ? "#" + h : "");
+  return base + fin;
+}

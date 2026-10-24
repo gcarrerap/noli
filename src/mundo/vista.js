@@ -14,6 +14,7 @@ import { juntoAlBuho } from "../engine/secreto.js";
 import { estadoRed, mapaIslas, limitesRed, islaEn, muelleEn, enTeletransportador, teletransportadorDe, aOrilla, posPlataforma,
   INICIO } from "../engine/islas.js";
 import { lugarCercano, cristalTocado, rutaPorCaminos, puntoLibre, brazoCamara } from "../engine/mundo.js";
+import { solidosIslas, altosIslas, caminosIsla } from "../engine/construcciones.js";
 import { libroTocado, nivelPista } from "../engine/libros.js";
 import { luzAhora } from "../engine/luz.js";
 
@@ -26,6 +27,8 @@ import { luzAhora } from "../engine/luz.js";
  *   libro?: { n, x, y, z }|null, alLibro?: (l) => void, alPista?: (nivel) => void }} op
  *   libro: el libro escondido que toca buscar (#103); mundo.libros da los segundos de cada pista
  * Islas (#164): { datosIslas, alIsla(isla), alMuelle(muelle|null), alTele(isla|null), alCaida() }
+ * Construcciones (#176): { cons (armarConstrucciones), lugaresIsla (lugaresIslas: los lugares de juego de las islas; los
+ *   cerrados se ven pero no se entra) }
  * Búho (#166): { buho (mundo/buho.json), alBuho(junto: boolean), puedeTomar(): boolean } — puedeTomar: si es false
  *   (modo secreto) no se toman cristales ni libros
  *   datosIslas: "_mundo" (islas visitadas, conexiones construidas); alIsla: pisó otra isla; alMuelle / alTele: está
@@ -34,13 +37,18 @@ import { luzAhora } from "../engine/luz.js";
  */
 export function crearVistaMundo(cont, m, op) {
   const { mundo, lugares, deco, mapa, caminos, cfg, cristales, red } = m;
-  const esc = crearEscena(cont, { tv: op.tv, alBajarMucho: op.alBajarMucho, fondo: mundo.cielo || "#eee3ff", niebla: mundo.niebla || [22, 52], lejos: 58 });
+  const esc = crearEscena(cont, { tv: op.tv, calidad: op.calidad, fija: !!op.calidad, alBajarMucho: op.alBajarMucho, fondo: mundo.cielo || "#eee3ff", niebla: mundo.niebla || [22, 52], lejos: 58 });
   const mun = crearMundo(mundo, lugares, deco, cristales, { reducir: op.reducir });
   esc.scene.add(mun.grupo);
   for (const id of op.tiene) mun.quitarCristal(id, false);
 
   // ---- Las islas (#164): mar, islas, puentes, plataformas, muelles y teletransportadores ----
-  const isl = crearIslas(red, m.islas, { reducir: op.reducir });
+  const cons = op.cons || new Map(), lugaresIsla = op.lugaresIsla || [];
+  const abiertosIsla = lugaresIsla.filter((l) => !l.cerrado);
+  const todosLugares = [...lugares, ...abiertosIsla];
+  const solidosCons = solidosIslas(cons);
+  const caminosDe = new Map([...cons.values()].map((C) => [C.isla, caminosIsla(red, C, cfg)]));
+  const isl = crearIslas(red, m.islas, { reducir: op.reducir, cons, lugaresIsla });
   esc.scene.add(isl.grupo);
   let datosIslas = op.datosIslas, todas = false, estado = null, fisMapa = null, moviles = [], tRed = 0;
   let islaActual = INICIO, muelle = null, tele = null;
@@ -49,7 +57,7 @@ export function crearVistaMundo(cont, m, op) {
     const mi = mapaIslas(red, estado);
     // La física: lo de Isla Noli (plataformas, edificios, árboles) + barandales y plataformas de las islas; el piso solo
     // en las zonas (islas, puentes, muelles) y los límites, los de todo el archipiélago
-    fisMapa = { solidos: [...mapa.solidos, ...mi.solidos], zonas: mi.zonas, limites: limitesRed(red) };
+    fisMapa = { solidos: [...mapa.solidos, ...mi.solidos, ...solidosCons], zonas: mi.zonas, limites: limitesRed(red) };
     moviles = fisMapa.solidos.filter((x) => x.plataforma && x.plataforma.mueve);
     // En el modo secreto (#166) todas las conexiones existen; las que no se han construido de verdad se ven mágicas
     const reales = new Set(datosIslas.conexiones || []);
@@ -78,11 +86,20 @@ export function crearVistaMundo(cont, m, op) {
   // ---- Dónde empieza: en la plaza, o frente a la puerta del juego del que regresa ----
   let c = crearCuerpo(mundo.inicio.x, mundo.inicio.z, 0);
   let firme = { x: c.x, z: c.z, ang: 0 }; // último punto firme de una isla (al caer al agua regresa aquí)
-  const irAIsla = (id) => { if (islaActual !== id) { islaActual = id; isl.enfocar(id); } };
+  const irAIsla = (id) => { if (islaActual !== id) { islaActual = id; isl.enfocar(id); efectos(); } };
   const salirDe = (id) => {
-    const l = lugares.find((x) => x.id === id);
-    if (l) { c = crearCuerpo(l.punto.x, l.punto.z, l.mira + 180); firme = { x: c.x, z: c.z, ang: c.ang }; irAIsla(INICIO); } // de espaldas al edificio, viendo a la plaza
+    const l = todosLugares.find((x) => x.id === id);
+    if (l) { c = crearCuerpo(l.punto.x, l.punto.z, l.mira + 180); firme = { x: c.x, z: c.z, ang: c.ang }; irAIsla(l.isla || INICIO); } // de espaldas al edificio, viendo a la plaza
   };
+  // Efectos de las construcciones (#176): los caros (refracción, luces, resplandor) solo en calidad alta, y el resplandor
+  // solo en una isla que tenga construcciones
+  let noche = 0, ultimaCalidad = null;
+  function efectos() {
+    const alta = esc.calidad === "alta" && !op.reducir;
+    isl.efectos({ alta, noche, isla: islaActual });
+    esc.ponerBrillo(alta && cons.has(islaActual), { fuerza: 0.32 + noche * 0.3, radio: 0.5, umbral: 1.2 });
+    ultimaCalidad = esc.calidad;
+  }
   if (op.desde) salirDe(op.desde);
 
   let quiere = { x: 0, z: 0 }, brincar = false, ruta = [], alLlegar = null, cerca = null, animacion = "quieto";
@@ -91,7 +108,7 @@ export function crearVistaMundo(cont, m, op) {
   // ---- Cámara: atrás y arriba, siempre con la misma orientación (no marea); sube y baja suave con el personaje ----
   const cam = { p: new THREE.Vector3(), m: new THREE.Vector3() }, obj = { p: new THREE.Vector3(), m: new THREE.Vector3() };
   let saltar = true, camY = 0, brazo = 1;
-  const altos = mapa.solidos.filter((s) => s.tipo === "cilindro" && String(s.id).startsWith("edificio:"));
+  const altos = [...mapa.solidos.filter((s) => s.tipo === "cilindro" && String(s.id).startsWith("edificio:")), ...altosIslas(cons)];
   function camaraObjetivo(dt) {
     const ancho = cont.clientWidth > cont.clientHeight * 1.15;
     // Pantalla ancha (TV, tableta acostada) o teléfono parado (más arriba y más atrás, para ver lo de los lados).
@@ -120,6 +137,8 @@ export function crearVistaMundo(cont, m, op) {
     luzSol.color.set(L.sol); luzSol.intensity = L.solI;
     luzSol.position.set(L.direccion.x * 10, L.direccion.y * 10, L.direccion.z * 10);
     mun.ajustarEstrellas(L.estrellas);
+    noche = L.estrellas;
+    efectos();
   }
   aplicarLuz();
   const reloj = { t: 0, luz: 0 };
@@ -127,6 +146,7 @@ export function crearVistaMundo(cont, m, op) {
     reloj.t += dt;
     reloj.luz += dt;
     if (reloj.luz > 2) { reloj.luz = 0; aplicarLuz(); } // el sol se mueve despacio: cada 2 s basta
+    else if (esc.calidad !== ultimaCalidad) efectos(); // bajó la calidad: se apagan los efectos caros
     // ---- Moverse ----
     let q = quiere;
     if (ruta.length) {
@@ -170,7 +190,8 @@ export function crearVistaMundo(cont, m, op) {
     av.sombra.scale.setScalar(Math.max(0.45, 1 - (c.y - h) * 0.22));
 
     // ---- Puertas y cristales ----
-    const l = lugarCercano(c, lugares);
+    const l = lugarCercano(c, todosLugares);
+    if (cons.has(islaActual)) isl.sonar(islaActual, c);
     if ((l && l.id) !== (cerca && cerca.id)) { cerca = l; op.alLugar(l); }
     // Muelles (para construir) y teletransportadores (#164)
     const mu = c.y < 0.05 && c.enSuelo ? muelleEn(estado, c.x, c.z) : null;
@@ -184,7 +205,7 @@ export function crearVistaMundo(cont, m, op) {
     }
     const toma = !op.puedeTomar || op.puedeTomar();
     const cr = toma ? cristalTocado(c, cristales, op.tiene) : null;
-    if (cr) { op.tiene.add(cr.id); mun.quitarCristal(cr.id); op.alCristal(cr); }
+    if (cr) { op.tiene.add(cr.id); mun.quitarCristal(cr.id); isl.estallido(cr.x, cr.y + 0.9, cr.z, cr.color); op.alCristal(cr); }
     if (libro && toma) {
       if (libroTocado(c, libro)) { const l = libro; libro = null; mun.tomarLibro(); if (op.alLibro) op.alLibro(l); }
       else {
@@ -226,7 +247,8 @@ export function crearVistaMundo(cont, m, op) {
   };
 
   const caminarA = (destino, alFin) => {
-    const r = rutaPorCaminos(caminos, c, destino);
+    const cam = islaActual === INICIO ? caminos : caminosDe.get(islaActual);
+    const r = cam ? rutaPorCaminos(cam, c, destino) : null;
     ruta = r || [destino];
     atorado = { t: 0, d: Infinity };
     alLlegar = alFin || null;
@@ -239,10 +261,11 @@ export function crearVistaMundo(cont, m, op) {
     brincar() { brincar = true; ruta = []; alLlegar = null; },
     /** Camina sola hasta la puerta de un juego; la promesa se cumple al llegar */
     irA(id) {
-      const l = lugares.find((x) => x.id === id);
+      const l = todosLugares.find((x) => x.id === id);
       if (!l) return Promise.resolve();
-      // Los juegos están en Isla Noli: desde otra isla (o un puente) se llega por el teletransportador
-      if (islaActual !== INICIO || !islaEn(red, c.x, c.z)) teletransportar(INICIO);
+      // Desde otra isla (o un puente) se llega a la isla del juego por su teletransportador
+      const isla = l.isla || INICIO;
+      if (islaActual !== isla || !islaEn(red, c.x, c.z)) teletransportar(isla);
       return new Promise((res) => caminarA(l.punto, () => { c = Object.assign({}, c, { ang: l.mira }); res(); }));
     },
     /** Camina sola hasta un punto del piso tocado (en Isla Noli por los caminos; en las demás islas, en línea recta) */
@@ -250,6 +273,7 @@ export function crearVistaMundo(cont, m, op) {
       const p = { x, z };
       if (!hayPiso(x, z, fisMapa, cfg) || chocaEn(x, 0, z, fisMapa, cfg) || c.y > 0.05) return;
       if (islaActual === INICIO && islaEn(red, x, z) === red.por.get(INICIO) && puntoLibre(p, mapa, cfg)) caminarA(p);
+      else if (caminosDe.has(islaActual) && islaEn(red, x, z) === red.por.get(islaActual)) caminarA(p);
       else if (conPiso(c, p)) { ruta = [p]; atorado = { t: 0, d: Infinity }; alLlegar = null; }
     },
     /** Viajar con el teletransportador a una isla */
@@ -276,7 +300,7 @@ export function crearVistaMundo(cont, m, op) {
     /** Posición en pantalla del letrero de cada juego, con su distancia a la cámara: Map(id → {x, y, d}) */
     letreros() {
       const r = new Map();
-      for (const [id, v] of mun.marcas) { const p = esc.aPantalla(v); if (p) r.set(id, { ...p, d: v.distanceTo(esc.camara.position) }); }
+      for (const marcas of [mun.marcas, isl.marcas]) for (const [id, v] of marcas) { const p = esc.aPantalla(v); if (p) r.set(id, { ...p, d: v.distanceTo(esc.camara.position) }); }
       return r;
     },
     resaltar: (ids) => mun.resaltar(ids),

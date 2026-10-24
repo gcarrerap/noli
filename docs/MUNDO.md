@@ -112,7 +112,7 @@ Datos en `mundo/mundo.json → libros` (`libro`, `juego`, `porDia`, `pistaSeg`, 
 
 ## Las islas (#164)
 
-El mundo es un **archipiélago de 10 islas**. El claro de siempre es **Isla Noli** (ahí están los juegos). Las demás se unen en una **red** (no una cadena): cada isla se conecta con 2 a 4 islas y hay varios caminos de una a otra. Noelia **construye** cada conexión con **cristales** (los que encuentra en el mundo) y **estrellas del mundo** (las que gana en los juegos educativos). Un **mapa** enseña solo lo que conoce y en cada isla hay un **teletransportador** a las islas que ya visitó. Por ahora las islas nuevas solo tienen su suelo; las construcciones de cada isla van en issues posteriores.
+El mundo es un **archipiélago de 10 islas**. El claro de siempre es **Isla Noli** (ahí están los juegos). Las demás se unen en una **red** (no una cadena): cada isla se conecta con 2 a 4 islas y hay varios caminos de una a otra. Noelia **construye** cada conexión con **cristales** (los que encuentra en el mundo) y **estrellas del mundo** (las que gana en los juegos educativos). Un **mapa** enseña solo lo que conoce y en cada isla hay un **teletransportador** a las islas que ya visitó. Cada isla se va armando en su propio issue (§ Cómo se arma una isla): la primera completa es **Isla Cristal** (#176); las demás, por ahora, solo tienen su suelo.
 
 | En el muelle: construir | El puente creciendo | El mapa | El teletransportador |
 |---|---|---|---|
@@ -159,7 +159,7 @@ Arriba en el mapa = hacia el fondo del mundo (−z), que es hacia donde mira la 
   - «Construir el puente de cristal» con lo que tiene y lo que cuesta (💎 5/5 ⭐ 20/20): OK o tocar lo construye; el puente **crece** desde la orilla y queda guardado.
   - Si no le alcanza: «Te faltan 8 estrellas. Gana estrellas en los juegos.»
   - Sin costo todavía (`costo: null`): «muy pronto».
-- **Hoy solo `noli-cristal` tiene costo: 5 cristales y 20 estrellas.** Toda conexión cuesta al menos `costoMinimoEstrellas` (20) estrellas; `revisarIslas` lo revisa.
+- **Hoy tienen costo `noli-cristal` (5 cristales y 20 estrellas) y las tres que salen de Isla Cristal (#176): `cristal-dulce` y `cristal-bosque` (5 y 25) y `cristal-numeros` (5 y 20).** Toda conexión cuesta al menos `costoMinimoEstrellas` (20) estrellas; `revisarIslas` lo revisa.
 - **Lo gastado no se guarda como contador:** sale de las conexiones construidas y sus costos (`disponibles`). Así juntar dos aparatos nunca cobra dos veces.
 - Regla de balance para cuando se pongan costos: lo que cuesta la siguiente conexión debe alcanzarse con las estrellas de los juegos de las islas ya alcanzables (`estrellasPosibles`; hay una prueba). Hoy: 12 juegos educativos × 5 = 60 estrellas en Isla Noli.
 
@@ -245,6 +245,71 @@ tests/islas.test.js         pruebas (abajo)
 - `_mundo`: v1 → v2; juntar no pierde ni duplica (aunque los dos aparatos construyan el mismo puente) y el administrador gana; dos aparatos sin conexión se juntan en la nube.
 - Física: en el mar se cae; **cada puente se cruza caminando** y empujando de lado no se cae; sin construir, el muelle se detiene en su punta; **cada camino de plataformas se cruza brincando de verdad, de ida y de vuelta, con las móviles moviéndose**; las móviles van y vienen con pausas.
 - Isla Noli: de la plaza se llega caminando a la entrada de cada puente y al teletransportador (con edificios en todos los sitios), y no hay árboles en los pasillos.
+
+## Isla Cristal (#176) y cómo se arma una isla
+
+| Llegando de día | Llegando de noche | Una gruta abierta | Una gruta cerrada (al fondo) |
+|---|---|---|---|
+| ![Llegada de día](img/cristal-llegada-dia.jpg) | ![Llegada de noche](img/cristal-llegada-noche.jpg) | ![Gruta abierta](img/cristal-gruta-abierta.jpg) | ![Gruta cerrada](img/cristal-gruta-cerrada.jpg) |
+
+Isla Cristal es la primera isla completa y la **plantilla** para las otras 8. El arte es de Petra (#177): la hoja de concepto, la gruta en tres vistas y las texturas de roca y de suelo (`mundo/arte/cristal-*.png`; las copias para la web, `cristal-roca-1024.jpg` y `cristal-suelo-1024.jpg`, se hicieron **repetibles** mezclando las orillas).
+
+### Cómo se arma una isla
+
+Todo va en `mundo/islas.json → islas[].construcciones`, en metros **relativos al centro de la isla** (x a la derecha, z hacia la cámara). Una isla lleva:
+
+1. **Lugares de juego, todos construidos desde el principio** (`lugares`). Los que tienen `juego` (y está en el catálogo) se abren; los demás quedan **cerrados**: la gruta se ve completa, con una reja de cristal apagada y el letrero «Muy pronto»; no hay «Entrar a…» y no salen en "¿A dónde vamos?". **Abrir uno es solo datos:** ponerle `juego` y `nivelInicial`. La puerta siempre mira a la cámara (+z), así siempre se ve. El edificio de la isla va en `edificio` (`{ tipo, radio, alto }`).
+2. **Juegos que ya existen, empezando más adelante** (`nivelInicial`), cada uno con su **propio tope de 5 estrellas del mundo** en esa isla (DESIGN.md § Juegos en otras islas: `?isla=…&nivel=…` y `kit/niveles.js`). El juego tiene que usar `kit/niveles.js`.
+3. **Cristales para encontrar** (`cristales`): en el piso (`x`, `z`) o arriba de una roca (`en`). Regla: que alcancen para las conexiones que salen de la isla (lo que detiene a Noelia son las estrellas, nunca los cristales).
+4. **Costo de las conexiones que salen** (en `conexiones`): al menos 20 estrellas, y que se alcance con las estrellas de las islas ya alcanzables (prueba de balance).
+5. **Tema y paredes:** `orilla` (una pared de rocas al fondo y a los lados, con un hueco y un arco donde llega cada conexión; al frente no hay pared para no tapar la vista), `rocas` (para brincar: a lo más 1.06 m, un brinco fácil), `centro` (la pieza del centro: en Cristal, el cristal gigante) y `arte` (las texturas de Petra, compartidas por todas las rocas y el piso).
+6. **Efectos propios** (abajo) y **el issue de arte para Petra** (concepto, edificio en tres vistas y texturas repetibles).
+
+### Isla Cristal
+
+| Lugar | Juego | Empieza en |
+|---|---|---|
+| c1 | Fábrica de Números | nivel 4 |
+| c2 | Sumas y restas | nivel 7 |
+| c3 | Robot de Palabras | nivel 3 |
+| c4, c5, c6 | (cerrados, «Muy pronto») | — |
+
+- **15 cristales** (7 en rocas, 8 en el piso, en rincones y detrás del cristal gigante). Con los 6 de Isla Noli son 21.
+- **Teletransportador** cerca de la entrada (`teletransportador`); el puente de Isla Noli llega al frente.
+- **Estrellas:** 12 juegos educativos × 5 en Isla Noli + 3 × 5 en Isla Cristal = 75; el primer puente cuesta 20 y los siguientes 20 o 25.
+
+### Efectos de los cristales
+
+Baratos (todas las calidades): todos los cristales de la isla son **UNA malla** con **un material**: prismas facetados con **degradado por vértice** (punta clara), **matcap** de gema hecho en código, **borde luminoso** (Fresnel) y **latido** (cada cristal con su fase, en el shader). **Destellos y halos** en un solo sistema de puntos aditivos. **De noche brillan más** (la hora real: `luzAhora → estrellas`). Al acercarse a un racimo grande **suena una campanita** (cada uno su nota) y al tomar un cristal hay un **estallido de destellos** (en cualquier isla).
+
+Solo en **calidad alta** (se apagan solos si la calidad baja): **resplandor** (bloom, `kit/3d/escena.js → ponerBrillo`, solo estando en una isla con construcciones; las piezas de postproceso de Three.js r160.1 están en `kit/3d/vendor/post/` y se bajan solo cuando hacen falta), el **cristal gigante con refracción** (`transmission`, con un corazón que brilla adentro) y **dos luces de colores** que pulsan.
+
+`?calidad=alta|media|baja` fija la calidad (no baja sola): sirve para revisar los efectos y para medir.
+
+### Cómo está hecho
+
+```
+mundo/islas.json → islas[].construcciones   los datos (relativos al centro)
+src/engine/construcciones.js                lógica pura: armar (lugares, pared de la orilla, arcos, rocas, cristales),
+                                            lugares de juego (abiertos y cerrados), sólidos para la física, caminos de la
+                                            isla para "Ir a…" y tocar el piso, revisar
+src/mundo/escena-construcciones.js          el dibujo: grutas, pared y arcos, rocas, cristal gigante, cristales, destellos,
+                                            campanitas y estallidos
+kit/niveles.js                              el nivel de un juego abierto desde otra isla
+tests/construcciones.test.js                pruebas (abajo)
+```
+
+- **Rendimiento:** las rocas, el piso y las grutas comparten dos texturas proyectadas en metros (`kit/3d/lote.js → uvMundo`; con `tinte` el color tiñe la textura), así que todo lo quieto se junta en pocas mallas. Medido con `?fps` en Chromium sin tarjeta gráfica, a 412 × 915 en calidad media: **64–89 dibujos** y 30 000–36 000 triángulos en Isla Cristal (la meta: < 150). En calidad alta se suma el resplandor (unas pasadas de pantalla). Pendiente: medir en el teléfono y la tableta de Noelia con `…/?fps&calidad=alta`.
+- La isla solo se arma cuando está cerca (`enfocar`), como las demás, y se libera (geometrías y materiales propios) al alejarse.
+
+### Pruebas (`tests/construcciones.test.js`)
+
+- Los datos están bien y `revisarConstrucciones` encuentra los rotos (ids repetidos, rocas muy altas, cristales en rocas que no existen, `nivelInicial` mal, algo que tapa una salida).
+- 6 lugares (3 abiertos con su juego y nivel, 3 cerrados); abrir uno es solo datos; sin el juego en el catálogo se cierra; «Entrar a…» solo en los abiertos.
+- **Caminando de verdad** (con la física): desde el puente de Isla Noli y desde el teletransportador se llega a la puerta de cada lugar y a las otras salidas; cruzando el puente se entra sin chocar con la pared.
+- Los 15 cristales se toman de verdad (los del piso caminando; los de las rocas con un brinco); alcanzan para las conexiones; la prueba de balance de estrellas.
+- `kit/niveles.js` (piso, lo ganado no baja, Isla Noli no cambia), la URL con `?isla=&nivel=`, y que los 3 juegos lo usan.
+- Los efectos caros solo existen en calidad alta, todos los cristales son una malla y la isla cabe en menos de 40 mallas; la pared deja libres las salidas y al frente no hay.
 
 ## Modo secreto del búho (#166)
 
