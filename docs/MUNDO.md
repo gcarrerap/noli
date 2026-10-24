@@ -1,5 +1,7 @@
 # El mundo mágico (menú principal en 3D)
 
+> **Sin soporte de TV desde el 23 oct 2026 (#174).** El mundo 3D es solo para teléfono, tableta y computadora. En la TV el menú es la cuadrícula de tarjetas y los juegos aptos para TV se siguen jugando igual. Lo que este documento dice de la TV (controles, rendimiento, mediciones en LG y Samsung) es historia del prototipo: ya no se prueba ni se mantiene.
+
 Issue: #25. En lugar de una cuadrícula de tarjetas, el menú principal es un **mundo mágico en 3D**: Noelia camina (y brinca) con su personaje por un claro del bosque y entra a cada juego por la puerta de su edificio. Se hizo con el mismo método que la Pasarela (#19, #24): Three.js copiado en el repo y sin compilación, el personaje de partes, choques con formas sencillas, lugares descritos en JSON, una cámara que sigue al personaje y nunca gira, una calidad que se ajusta sola y un respaldo 2D.
 
 **Respaldo:** si el aparato no aguanta el 3D, el menú es **la cuadrícula de siempre** (`src/ui/screens/catalogo.js`, sin cambios). Lo mismo si no hay WebGL, si la escena truena al armarse o si va muy lento y se dice que sí al menú sencillo. Nunca queda la pantalla en blanco.
@@ -449,7 +451,7 @@ Mediciones:
 | LG webOS | | *pendiente* | | | | |
 | Samsung OLED 77" (Tizen) | | *pendiente* | | | | |
 
-**Pendiente:** las mediciones en los tres aparatos reales (como en la Pasarela, no hay acceso a ellos desde la sesión donde se programó). Cómo medir: abrir `https://gcarrerap.github.io/noli/?fps` (en la TV, `…/?modo=tv&fps`). Abajo a la derecha sale `fps · calidad · dibujos · triángulos`. Anotar el dato en la plaza, caminando 10 s y en una puerta.
+**Pendiente:** la medición en el teléfono de Noelia (las de las TVs se cancelaron con #174) (como en la Pasarela, no hay acceso a ellos desde la sesión donde se programó). Cómo medir: abrir `https://gcarrerap.github.io/noli/?fps` (en la TV, `…/?modo=tv&fps`). Abajo a la derecha sale `fps · calidad · dibujos · triángulos`. Anotar el dato en la plaza, caminando 10 s y en una puerta.
 
 **Si una TV no llega a 30 fps**, en este orden (de lo que más ayuda y menos se nota a lo que más se nota):
 
