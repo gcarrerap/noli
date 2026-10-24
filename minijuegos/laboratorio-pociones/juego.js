@@ -24,7 +24,8 @@ function mostrar(html){
  foco=siguiente?bs.indexOf(siguiente):0;
  if(siguiente)siguiente.focus({preventScroll:true});
 }
-function siguientePendiente(){return Array.from({length:TOTAL_MISIONES},(_,i)=>i+1).find(i=>!mejor[i])??null;}\nfunction inicio(){
+function siguientePendiente(){return Array.from({length:TOTAL_MISIONES},(_,i)=>i+1).find(i=>!mejor[i])??null;}
+function inicio(){
  pantalla="inicio";
  mostrar(`<section class="panel"><div class="cauldron">🧙‍♀️🧪</div><h1>Laboratorio de Pociones</h1><p class="story">¡Bienvenida, alquimista! Descubre las recetas secretas. Cada experimento te dirá cuántos ingredientes están en el lugar correcto y cuántos están en otro lugar.</p><p class="progress">Misiones completadas: ${Object.keys(mejor).length} de ${TOTAL_MISIONES}</p><div class="actions"><button class="primary" data-action="seguir">${siguientePendiente()===null?"Elegir misión":"Jugar"}</button><button class="secondary" data-action="salir">Salir</button></div></section>`);
 }
@@ -63,7 +64,8 @@ function probar(){
  dibujar();
 }
 function ejecutar(accion,el){
- if(accion==="seguir"){const pendiente=siguientePendiente();if(pendiente===null)elegirMision();else empezar(pendiente);}\n if(accion==="elegida")empezar(Number(el.dataset.index));
+ if(accion==="seguir"){const pendiente=siguientePendiente();if(pendiente===null)elegirMision();else empezar(pendiente);}
+ if(accion==="elegida")empezar(Number(el.dataset.index));
  if(accion==="salir")Noli.salir();
  if(accion==="menu")inicio();
  if(accion==="poner"&&seleccion.length<configuracion(mision).longitud&&!seleccion.includes(el.dataset.id)){seleccion.push(el.dataset.id);dibujar();}
