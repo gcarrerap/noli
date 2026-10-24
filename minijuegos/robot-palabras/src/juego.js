@@ -17,6 +17,7 @@ import {
 import { RETO, retoDelDia } from "./reto.js";
 import { responder, ignoraEntrada, toqueEnVelo, alTerminarPremio } from "./salida.js";
 import { clic, listo, abrir, desbloquear as desbloquearSonido } from "./sonido.js";
+import { pisoDe, conPiso, nivelActual, escogible, trasRonda } from "../../../kit/niveles.js";
 import { SALIR, CAJAS, NIVELES, UI, FRASES, PIEZAS, hintDePuerta, hintDeTaller, seRevela, vozDePista } from "./textos.js";
 import {
   callar, decirEs, decirIngles, decirPalabra, decirPalabraLuego, decirTrozos, desbloquear as desbloquearVoz,
@@ -75,6 +76,10 @@ function arte() {
 }
 
 const guardar = () => Noli.guardar(pr);
+// Abierto desde otra isla del mundo (#176): empieza en su nivel (piso) y lo que se escoja ahí no se guarda
+const PISO = pisoDe(Noli.nivelInicial, NIVELES.length);
+let enIsla = 0;
+const elegido = () => nivelActual(pr, PISO, enIsla);
 
 function interior(svg) {
   return String(svg || "")
@@ -195,12 +200,12 @@ function inicio(focoId) {
   callar();
   clearTimeout(guiaTimer);
   clearTimeout(pistaTimer);
-  const nivel = Math.min(pr.elegido || pr.nivel, pr.nivel);
+  const nivel = elegido();
   const d = dominio(pr, nivel);
   const nombre = NIVELES[nivel - 1]?.nombre || "";
   const hecho = !!pr.retos[hoy()]?.cumplido;
   const chips = [];
-  for (let n = 1; n <= pr.nivel; n++) {
+  for (let n = PISO; n <= pr.nivel; n++) {
     chips.push(`<button type="button" class="boton chip${n === nivel ? " primario" : ""}" data-foco${n === nivel ? "" : ""} data-foco-id="n${n}" data-act="nivel" data-n="${n}">${n}</button>`);
   }
   mostrar(`
@@ -368,7 +373,7 @@ function alTocarGuia(tipo, categoria) {
 // ---------- Juego ----------
 
 function empezarTurno(esReto) {
-  const nivel = Math.min(pr.elegido || pr.nivel, pr.nivel);
+  const nivel = elegido();
   look = { pintura: "", escala: "", efecto: false, anim: "", cara: "normal" };
   const puertas = esReto
     ? retoDelDia(hoy(), nivel, pr.fallos).puertas
@@ -781,7 +786,8 @@ function finTurno() {
   const primeras = partida.aciertos;
   const n = partida.nivel;
   const r = cerrarTurno(pr, n, primeras);
-  pr = r.pr;
+  pr = trasRonda(pr, r.pr, PISO);
+  if (PISO > 1 && r.subio) enIsla = r.subio;
   guardar();
   Noli.terminar({ estrellas: r.estrellas });
   const pieza = r.pieza ? (PIEZAS[r.pieza] || r.pieza) : "";
@@ -805,7 +811,7 @@ function finReto() {
   const cumplido = primeras >= RETO.necesita;
   const antes = !!pr.retos[hoy()]?.cumplido;
   const cerrado = cerrarTurno(pr, partida.nivel, primeras);
-  pr = cumplirReto(cerrado.pr, hoy(), RETO.tipo, primeras, cumplido);
+  pr = cumplirReto(trasRonda(pr, cerrado.pr, PISO), hoy(), RETO.tipo, primeras, cumplido);
   guardar();
   if (cumplido && !antes) Noli.terminar({ estrellas: 3, reto: true });
   const titulo = cumplido ? UI.retoHecho : UI.retoCasi;
@@ -944,9 +950,10 @@ function tocar(act, el) {
     return;
   }
   if (act === "nivel") {
-    pr = { ...pr, elegido: +el.dataset.n || pr.elegido };
-    guardar();
-    inicio("n" + pr.elegido);
+    const n = +el.dataset.n || elegido();
+    if (PISO > 1) { if (escogible(pr, PISO, n)) enIsla = n; }
+    else { pr = { ...pr, elegido: n }; guardar(); }
+    inicio("n" + elegido());
     return;
   }
   if (act === "inicio") { inicio(); return; }
@@ -1054,7 +1061,7 @@ Noli.alEntrar((accion) => {
   return true;
 });
 
-Noli.datos.then((d) => { pr = cargar(d); return arte(); }).then(() => {
+Noli.datos.then((d) => { const c = cargar(d); pr = conPiso(c, PISO); if (pr !== c) guardar(); return arte(); }).then(() => {
   if (!pr.guiaHecha) abrirGuia("jugar");
   else inicio();
 }).catch(() => inicio());

@@ -119,6 +119,7 @@ Noli.terminar({ estrellas: 2 });          // reto: true si fue el reto del día 
 const saldo = await Noli.creditos;          // solo juegos que gastan créditos (§12); si no, null
 const { ok, saldo: queda } = await Noli.gastar(3, "pasarela");
 Noli.salir();
+Noli.isla; Noli.nivelInicial;     // abierto desde otra isla del mundo: cuál y desde qué nivel (§12, Juegos en otras islas)
 moverFoco(accion);                // flechas entre los botones [data-foco] según dónde están dibujados (kit/foco.js)
 ```
 
@@ -368,6 +369,27 @@ Código: `src/engine/creditos.js` (lógica pura), `src/app/actions.js` (`termina
 ### Estrellas del mundo (#164)
 
 Aparte de los créditos, los juegos educativos dan **estrellas del mundo** para construir los puentes entre las islas del mundo 3D (docs/MUNDO.md § Las islas). Las suma el catálogo al recibir `terminar` (el protocolo no cambia): las estrellas de la partida, **hasta 5 por isla y juego**, guardadas en `_mundo.estrellas.dadas[isla][juego]`. El reto del día no da; los juegos que gastan, tampoco. Se gastan al construir y no tocan los créditos. Se ven con una estrella azul (`ESTRELLA_MUNDO`), distinta de la moneda dorada.
+
+### Juegos en otras islas (#176)
+
+Un juego puede estar también en otras islas del mundo, **empezando en un nivel más avanzado** y con su **propio tope de 5 estrellas del mundo** en cada isla. El catálogo lo abre con `actions.abrir(id, { isla, nivelInicial })`, que le pone a la URL del juego `?isla=cristal&nivel=7` (`urlDeJuego` en `src/engine/catalogo.js`; las estrellas de esa partida cuentan para esa isla). El protocolo no cambia.
+
+En el juego, el kit lo lee: `Noli.isla` (`"noli"` si no) y `Noli.nivelInicial` (1 si no). Para los juegos que guardan `{ nivel, elegido }` (el más alto desbloqueado y el escogido en el mapa de niveles), `kit/niveles.js` trae las reglas, que son las mismas para todos:
+
+```js
+import { pisoDe, conPiso, nivelActual, escogible, trasRonda } from "../../../kit/niveles.js";
+const PISO = pisoDe(Noli.nivelInicial, NIVELES.length);   // 1 = sin piso (Isla Noli)
+let enIsla = 0;                                            // lo escogido en esta visita (no se guarda)
+const elegido = () => nivelActual(pr, PISO, enIsla);
+// al cargar: pr = conPiso(cargar(datos), PISO)  → desbloquea hasta el piso (si cambió, guardar)
+// al escoger un nivel: si PISO > 1, enIsla = n (si no, pr.elegido = n y guardar)
+// al cerrar una ronda: pr = trasRonda(pr, nuevo, PISO); si subió, enIsla = el nivel nuevo
+// en el mapa de niveles: se puede escoger n si escogible(pr, PISO, n)
+```
+
+- **El piso desbloquea hasta ahí** y lo ganado nunca baja. En la isla se juega en el nivel más alto desbloqueado (o el que escoja ahí, nunca abajo del piso).
+- **Lo de la isla no cambia Isla Noli:** lo que se escoge en la isla no se guarda, y `elegido` se queda con el nivel que se jugaba antes. Así, en Isla Noli el juego sigue donde estaba.
+- Hoy lo usan Sumas y restas, Fábrica de Números y Robot de Palabras (Isla Cristal). Un juego nuevo que se ponga en otra isla tiene que hacer lo mismo (una prueba de `tests/construcciones.test.js` lo revisa para los de Isla Cristal).
 
 ## 13. El menú principal: un mundo mágico en 3D (#25)
 

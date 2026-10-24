@@ -9,6 +9,7 @@
 //   const { ok, saldo } = await Noli.gastar(3, "pasarela");  // cobrar créditos (#20); ok=false si no alcanza
 //   Noli.premiar("capitulo", "halloween-c3");  // cobrar un premio de juego.json → premios (una vez por clave)
 //   Noli.salir();                        // regresar al catálogo
+//   Noli.isla, Noli.nivelInicial         // abierto desde otra isla del mundo: cuál y desde qué nivel (kit/niveles.js)
 //
 // Dentro del catálogo (en un iframe) las acciones llegan del catálogo, que ya juntó dedo, teclado, control de
 // la TV y teléfono remoto, y el catálogo guarda los datos (así después se pueden sincronizar entre dispositivos
@@ -16,7 +17,10 @@
 // guarda en localStorage y "salir" regresa a la página anterior.
 import { mensaje, esMensaje, estrellas as aEstrellas } from "./protocolo.js";
 import { teclaAAccion } from "./teclas.js";
+import { deUrl } from "./niveles.js";
 export { moverFoco, focoInicial } from "./foco.js";
+
+const enIsla = deUrl(typeof location !== "undefined" ? location.search : "");
 
 const enCatalogo = typeof window !== "undefined" && window.parent && window.parent !== window;
 const oyentes = new Set();
@@ -111,6 +115,10 @@ export const Noli = {
     });
   },
   salir() { if (enCatalogo) aCatalogo(mensaje("salir")); else history.back(); },
+  // De qué isla del mundo se abrió el juego ("noli" si no) y desde qué nivel empieza ahí (1 = desde el principio).
+  // Ver kit/niveles.js y DESIGN.md § Juegos en otras islas (#176).
+  isla: enIsla.isla,
+  nivelInicial: enIsla.nivelInicial,
   // "tactil" o "tv": en la TV conviene letra más grande y no depender del dedo
   get modo() { return modo; },
   get enCatalogo() { return enCatalogo; },
