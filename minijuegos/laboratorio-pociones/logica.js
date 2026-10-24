@@ -31,5 +31,5 @@ export function evaluar(receta,intento) {
   return {verdes,doradas:comunes-verdes,completa:verdes===receta.length};
 }
 export function estrellas(intentos,meta,ayuda=false) {
-  return ayuda?1:intentos<=meta?3:intentos<=meta+3?2:1;
+  return intentos<=meta?3:intentos<=meta+3?2:1;
 }
