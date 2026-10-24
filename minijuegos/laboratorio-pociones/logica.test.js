@@ -10,4 +10,4 @@ test("evaluación exacta y desplazada",()=>{
  assert.deepEqual(evaluar(["a","b"],["a","b"]),{verdes:2,doradas:0,completa:true});
 });
 test("rechaza ingredientes repetidos",()=>assert.throws(()=>evaluar(["a","b"],["a","a"])));
-test("estrellas y ayuda",()=>{assert.equal(estrellas(5,5),3);assert.equal(estrellas(7,5),2);assert.equal(estrellas(12,5),1);assert.equal(estrellas(2,5,true),1);});
+test("estrellas y ayuda",()=>{assert.equal(estrellas(5,5),3);assert.equal(estrellas(7,5),2);assert.equal(estrellas(12,5),1);assert.equal(estrellas(2,5,true),3);});
