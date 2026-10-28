@@ -21,3 +21,4 @@ export { formaDe, centroIsla, dentro, aOrilla, orillaHacia, armarIslas, platafor
 export { normalizarFrase, sha256, esFraseSecreta, relojSecreto, otraPregunta, revisarBuho, solidoBuho, juntoAlBuho } from "./secreto.js";
 export { armarConstrucciones, lugaresIslas, cristalesIslas, solidosIslas, altosIslas, caminosIsla, revisarConstrucciones, salidasDe,
   paredOrilla } from "./construcciones.js";
+export { PUERTA, nuevaPregunta, leerPuerta, guardable, cerrada, entrar, tocar, responder, faltaTexto } from "./puerta.js";

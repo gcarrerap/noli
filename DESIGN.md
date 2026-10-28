@@ -347,7 +347,7 @@ Motivos: `estrellas`, `reto`, `gasto`, `regalo`, `ajuste` (los dos últimos, de 
 
 - Pastilla con la moneda y el saldo, arriba a la izquierda (`ui/components/creditos.js`). En la TV: desde los filtros, arriba llega a la nube; izquierda/derecha cambia entre nube y créditos.
 - Ventana de créditos: saldo, cómo se ganan con lo ganado hoy por juego (`x de 15 hoy`), en qué se usan (juegos que gastan con su costo), historial de los últimos 20 movimientos.
-- **Para papás:** regalar (+1, +5, +10) o quitar (−1, −5). Antes pide una multiplicación de una cifra (6–9 × 6–9) con tres opciones, suficiente para que Noelia no lo haga por accidente. Queda en el historial como "Regalo de papás" o "Ajuste de papás".
+- **Para papás:** regalar (+1, +5, +10) o quitar (−1, −5). Antes pide dos multiplicaciones seguidas de una cifra (6–9 × 6–9) con tres opciones; la correcta cae en cualquier botón y puede ser la menor, la de en medio o la mayor. Contra toques al azar (#67): las respuestas cuentan solo después de 1.5 s sin tocar (cualquier toque, flecha u OK reinicia la espera), un error espera 2 s, y con 2 fallos la puerta descansa 30 s → 2 min → 5 min (se guarda en `noli.puerta` y se reinicia cuando entra un adulto). El foco empieza en Volver, nunca en una opción. Lógica: `src/engine/puerta.js`. Queda en el historial como "Regalo de papás" o "Ajuste de papás".
 - Al regresar de un juego, la celebración dice "+3 créditos".
 - La tarjeta de un juego que gasta muestra su costo en lugar de las estrellas.
 

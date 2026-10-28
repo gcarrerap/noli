@@ -3,8 +3,9 @@
 // Vive fuera de #app (en #modalCreditos) para no redibujar el catálogo. Se maneja con el dedo o con flechas
 // (kit/foco.js). Sin emojis (#5): la moneda es SVG.
 import { state, actions, saldoActual } from "../../app/index.js";
-import { REGLAS, MOTIVOS, ganadoHoy, historial } from "../../engine/index.js";
+import { REGLAS, MOTIVOS, ganadoHoy, historial, entrar, tocar, responder, cerrada, guardable, faltaTexto } from "../../engine/index.js";
 import { esc } from "../dom.js";
+import { ls, leerJsonLs } from "../../services/index.js";
 import { focoInicial } from "../../../kit/foco.js";
 
 /** Moneda de Noli (SVG): estrella sobre círculo dorado. */
@@ -19,13 +20,18 @@ export function botonCreditos() {
   return `<button class="creditos-btn" id="creditosBtn" aria-label="${s} créditos" title="Créditos">${MONEDA}<b>${s}</b></button>`;
 }
 
-// Estado propio de la ventana (no es del juego ni se guarda): la pregunta para papás
-let papas = { abierto: false, ok: false, pregunta: null, error: "" };
-const nuevaPregunta = () => {
-  const a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4), r = a * b;
-  const opciones = [r, r + a, r - b].sort(() => Math.random() - 0.5);
-  return { a, b, r, opciones };
-};
+// Estado propio de la ventana: la puerta de papás (#67, engine/puerta.js). Fallos y cierres se guardan en
+// localStorage para que recargar o salir y volver no se salte el descanso.
+const CLAVE_PUERTA = "noli.puerta";
+let papas = null;          // null = puerta sin abrir; si no, el estado de engine/puerta.js
+let timerPuerta = 0;
+let cambioPregunta = false; // pregunta nueva o puerta recién cerrada: el foco va a Volver
+const guardarPuerta = () => ls.set(CLAVE_PUERTA, JSON.stringify(guardable(papas)));
+
+/** Cualquier toque en la puerta, o flecha u OK en la TV (ui/entrada.js), reinicia la espera de la pregunta. */
+export function tocarCreditos() {
+  if (papas && !papas.abierta) papas = tocar(papas, Date.now());
+}
 
 let dibujado = "";
 /** Dibuja (o quita) la ventana según state.creditosAbierto. */
@@ -34,26 +40,44 @@ export function renderCreditos() {
   if (!cont) return;
   if (!state.creditosAbierto) {
     if (cont.innerHTML) { cont.innerHTML = ""; dibujado = ""; }
-    papas = { abierto: false, ok: false, pregunta: null, error: "" };
+    papas = null; clearTimeout(timerPuerta);
     return;
   }
   const html = ventana();
   if (html === dibujado) return;
   const habiaFoco = cont.contains(document.activeElement) ? document.activeElement.id : null;
+  const otraPregunta = cambioPregunta;
+  cambioPregunta = false;
   dibujado = html;
   cont.innerHTML = html;
   const on = (s, fn) => { const e = cont.querySelector(s); if (e) e.onclick = fn; };
   on("#creditosCerrar", actions.cerrarCreditos);
   on(".fondo", (e) => { if (e.target === e.currentTarget) actions.cerrarCreditos(); });
-  on("#papasAbrir", () => { papas = { abierto: true, ok: false, pregunta: nuevaPregunta(), error: "" }; renderCreditos(); });
+  on("#papasAbrir", () => { papas = entrar(leerJsonLs(CLAVE_PUERTA, null), Date.now()); cambioPregunta = true; programarPuerta(); renderCreditos(); });
+  on("#papasVolver", () => { papas = null; clearTimeout(timerPuerta); renderCreditos(); enfocar(cont, "#papasAbrir"); });
+  const puerta = cont.querySelector(".puerta");
+  if (puerta) puerta.addEventListener("pointerdown", tocarCreditos, true);
   for (const b of cont.querySelectorAll("[data-respuesta]")) b.onclick = () => {
-    if (+b.dataset.respuesta === papas.pregunta.r) papas = { ...papas, ok: true, error: "" };
-    else papas = { ...papas, pregunta: nuevaPregunta(), error: "Esa no es. Intenta otra vez." };
+    const antes = papas.pregunta;
+    papas = responder(papas, +b.dataset.respuesta, Date.now());
+    guardarPuerta();
+    cambioPregunta = papas.pregunta !== antes;
+    programarPuerta();
     renderCreditos();
   };
   for (const b of cont.querySelectorAll("[data-regalo]")) b.onclick = () => actions.regalarCreditos(+b.dataset.regalo);
+  // Pregunta nueva o puerta cerrada: el foco va a Volver, nunca a una opción (un OK en ráfaga no debe responder)
+  if (otraPregunta && enfocar(cont, "#papasVolver")) return;
   const f = habiaFoco && cont.querySelector("#" + habiaFoco);
   if (f) f.focus(); else focoInicial(cont);
+}
+
+const enfocar = (cont, sel) => { const e = cont.querySelector(sel); if (e) e.focus({ preventScroll: true }); return !!e; };
+
+// Si la puerta quedó cerrada, vuelve a dibujarla cuando abra
+function programarPuerta() {
+  clearTimeout(timerPuerta);
+  if (papas && cerrada(papas, Date.now())) timerPuerta = setTimeout(() => { cambioPregunta = true; renderCreditos(); }, papas.cerradaHasta - Date.now() + 50);
 }
 
 const titulo = (id) => { const j = state.juegos.find((x) => x.id === id); return j ? j.titulo : id || ""; };
@@ -86,12 +110,18 @@ function ventana() {
 }
 
 function papasHtml() {
-  if (!papas.abierto) return `<div class="botones"><button class="boton chico" id="papasAbrir" data-foco>Regalar o quitar créditos</button></div>`;
-  if (!papas.ok) {
+  if (!papas) return `<div class="botones"><button class="boton chico" id="papasAbrir" data-foco>Regalar o quitar créditos</button></div>`;
+  const volver = `<div class="botones"><button class="boton chico" id="papasVolver" data-foco>Volver</button></div>`;
+  const ahora = Date.now();
+  if (!papas.abierta && cerrada(papas, ahora)) {
+    return `<div class="puerta"><p class="aviso mal" role="alert">Vamos a descansar un ratito. Se puede intentar otra vez en ${faltaTexto(papas, ahora)}.</p>${volver}</div>`;
+  }
+  if (!papas.abierta) {
     const p = papas.pregunta;
-    return `<p>Para seguir, ¿cuánto es <b>${p.a} × ${p.b}</b>?</p>
+    return `<div class="puerta"><p>Para seguir, ¿cuánto es <b>${p.a} × ${p.b}</b>?${papas.racha ? " Una más." : ""}</p>
       ${papas.error ? `<p class="aviso mal" role="alert">${esc(papas.error)}</p>` : ""}
-      <div class="botones">${p.opciones.map((o, i) => `<button class="boton" id="resp${i}" data-respuesta="${o}" data-foco>${o}</button>`).join("")}</div>`;
+      <div class="botones">${p.opciones.map((o, i) => `<button class="boton" id="resp${i}" data-respuesta="${o}" data-foco>${o}</button>`).join("")}</div>
+      ${volver}</div>`;
   }
   return `<div class="botones">${[1, 5, 10].map((n) => `<button class="boton primario" id="reg${n}" data-regalo="${n}" data-foco>+${n}</button>`).join("")}
     ${[-1, -5].map((n) => `<button class="boton" id="qui${-n}" data-regalo="${n}" data-foco>−${-n}</button>`).join("")}</div>
