@@ -6,6 +6,7 @@ import { teclaAAccion } from "../../kit/teclas.js";
 import { moverFoco as moverFocoEn } from "../../kit/foco.js";
 import { moverFoco, teclaEnFiltros, enfocarFiltros, enfocarTarjeta } from "./screens/catalogo.js";
 import { accionEnPanel } from "./components/remoto.js";
+import { tocarCreditos } from "./components/creditos.js";
 import { accionMundo, mundoActivo } from "./screens/mundo.js";
 
 // ¿Las teclas van al mundo 3D? (ahí la barra espaciadora y el botón rojo del control brincan, #25)
@@ -40,6 +41,7 @@ export function aplicarAccion(accion) {
   if (state.creditosAbierto) {
     const modal = document.getElementById("modalCreditos");
     if (accion === "atras") return actions.cerrarCreditos();
+    tocarCreditos(); // cualquier flecha u OK reinicia la espera de la puerta de papás (#67)
     if (moverFocoEn(accion, modal)) return;
     if (accion === "ok" && modal.contains(document.activeElement)) document.activeElement.click();
     return;
